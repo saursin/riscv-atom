@@ -5,6 +5,11 @@
 #include "../build/obj_dir/VAtomRVSoC_AtomRV.h"
 #include "../build/obj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
 
+/**
+ * @brief TESTBENCH Class
+ * 
+ * @tparam VTop module to be instantiated
+ */
 template <class VTop>
 class TESTBENCH 
 {
@@ -15,6 +20,10 @@ class TESTBENCH
 	unsigned long 	m_tickcount;     			// TickCounter to count clock cycles fom last reset
 	unsigned long 	m_tickcount_total;   		// TickCounter to count clock cycles
 
+	/**
+	 * @brief Construct a new TESTBENCH object
+	 * 
+	 */
 	TESTBENCH(void)                // Constructor: Instantiates a new VTop
     {
 		m_core = new VTop;
@@ -22,6 +31,10 @@ class TESTBENCH
 		m_tickcount = 0l;
 	}
 
+	/**
+	 * @brief Destroy the TESTBENCH object
+	 * 
+	 */
 	virtual ~TESTBENCH(void)       // Destructor 
     {
 		delete m_core;
@@ -56,6 +69,10 @@ class TESTBENCH
 		}
 	}
 
+	/**
+	 * @brief Reset topmodule
+	 * 
+	 */
 	virtual void reset(void) 
     {
 		m_core-> rst_i = 1;
@@ -64,6 +81,10 @@ class TESTBENCH
 		m_core-> rst_i = 0;
 	}
 
+	/**
+	 * @brief Run for one cycle
+	 * 
+	 */
 	virtual void tick(void) 
     {
 		// Increment our own internal time reference
@@ -107,19 +128,35 @@ class TESTBENCH
 		}
 	}
 
+	/**
+	 * @brief Check if simulation ended
+	 * 
+	 * @return true if verilator has encountered $finish
+	 * @return false if verilator hasn't encountered $finish yet
+	 */
 	virtual bool  done(void)
 	{
 		return (Verilated::gotFinish()); 
 	}
 };
 
-
+/**
+ * @brief Memory class
+ * This class is used to emulate the memories in simulation backend
+ * 
+ */
 class Memory
 {
 	public:
 	uint8_t * mem;
 	uint32_t size;
 
+	/**
+	 * @brief Construct a new Memory object
+	 * 
+	 * @param max_addr size of memory
+	 * @param filename name of init file
+	 */
 	Memory(uint32_t max_addr, std::string filename)
 	{
 		size = max_addr;
@@ -139,17 +176,34 @@ class Memory
 		}
 	}
 
+	/**
+	 * @brief Destroy the Memory object
+	 * 
+	 */
 	~Memory()
 	{
 		delete [] mem;
 		size = 0;
 	}
 
+	/**
+	 * @brief Check if the address is valid
+	 * 
+	 * @param addr address
+	 * @return true if address is within bounds
+	 * @return false if address is out of bounds
+	 */
 	bool isValidAddress(uint32_t addr)
 	{
 		return (addr < size-4);
 	}
 
+	/**
+	 * @brief Fetch a 32-bit word from memory
+	 * 
+	 * @param addr address
+	 * @return uint32_t data
+	 */
 	uint32_t fetchWord(uint32_t addr)
 	{
 		uint32_t data;
@@ -168,13 +222,21 @@ class Memory
 	}
 };
 
-
+/**
+ * @brief Backend class
+ * Backend class encapsulates the data 
+ * probing and printing operations
+ */
 class Backend
 {
 	public:
+	// Testbench
 	TESTBENCH<VAtomRVSoC> *tb;
+
+	// Instruction memory
 	Memory * imem;
 
+	// ==== STATE ====
 	enum CpuState{FETCH, EXECUTE};
 	CpuState cpu_state;
 
@@ -183,7 +245,11 @@ class Backend
 
 	unsigned int ir;
 	
-
+	/**
+	 * @brief Construct a new Backend object
+	 * 
+	 * @param imem_init_file init_file
+	 */
 	Backend(std::string imem_init_file)
 	{
 		tb = new TESTBENCH<VAtomRVSoC>();
@@ -191,17 +257,27 @@ class Backend
 		refreshData();
 	}
 
+	/**
+	 * @brief Destroy the Backend object
+	 */
 	~Backend()
 	{
 		delete tb;
 		delete imem;
 	}
 
+	/**
+	 * @brief reset the backend
+	 */
 	void reset()
 	{
 		tb->reset();
 	}
 
+	/**
+	 * @brief probe all internal signals and regsters and 
+	 * update backend state
+	 */
 	void refreshData()
 	{
 		cpu_state = (CpuState)tb->m_core->AtomRVSoC->atom->ProcessorState;
@@ -211,6 +287,9 @@ class Backend
 			rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i];
 	}
 
+	/**
+	 * @brief Display state data on console
+	 */
 	void displayData()
 	{
 		if(cpu_state == FETCH)
@@ -223,14 +302,14 @@ class Backend
 		
 		printf(" pc : 0x%08X   ir : 0x%08X \n\n", pc , ir); 
 
-		int cols = 4;
-		/*for(int i=0; i<32; i++)
+		int cols = 4; // no of coloumns per rows
+		/*for(int i=0; i<32; i++)	// print in left-right fashion
 		{
 			printf("r%-2d: 0x%08X   ", i, rf[i]);
 			if(i%cols == cols-1)
 				printf("\n");
 		}*/
-		for(int i=0; i<32/cols; i++)
+		for(int i=0; i<32/cols; i++)	// print in topdown fashion
 		{
 			for(int j=0; j<cols; j++)
 			{
@@ -241,12 +320,22 @@ class Backend
 
 	}
 
+	/**
+	 * @brief Tick for one cycle
+	 * 
+	 */
 	void tick()
 	{
 		tb->m_core->imem_data_i = imem->fetchWord(tb->m_core->imem_addr_o);
 		tb->tick();
 	}
 
+	/**
+	 * @brief check if simulation is done
+	 * 
+	 * @return true 
+	 * @return false 
+	 */
 	bool done()
 	{
 		return tb->done();
