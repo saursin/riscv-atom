@@ -13,6 +13,7 @@ cpp_driver_source = sim/$(cpp_driver)
 build_dir = build
 bin_dir = $(build_dir)/bin
 object_dir = $(build_dir)/obj_dir
+trace_dir = $(build_dir)/trace
 
 # Executable
 executable_name = atomsim
@@ -21,9 +22,9 @@ executable_name = atomsim
 ###	ADVANCED CONFIGURATIONS
 verilator_includes = -I obj_dir -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
 linking = #-lncurses
-verilated_path = /usr/share/verilator/include/verilated.cpp
+verilated_path = /usr/share/verilator/include/verilated.cpp /usr/share/verilator/include/verilated_vcd_c.cpp
 gpp_flags = #-pthread
-verilator_flags = -cc -Wall --relative-includes
+verilator_flags = -cc -Wall --relative-includes --trace
 
 ########################################################################
 default: clean atomsim
@@ -47,6 +48,10 @@ $(bin_dir):
 	mkdir $(bin_dir)
 	@echo ">> Creating directory $(bin_dir) -- done\n"
 
+$(trace_dir):
+	@echo ">> Creating directory $(trace_dir)"
+	mkdir $(trace_dir)
+	@echo ">> Creating directory $(trace_dir) -- done\n"
 
 # Verilate verilog
 $(object_dir)/V$(topmodule)__ALL.a: 
@@ -66,7 +71,7 @@ $(bin_dir)/$(executable_name): $(object_dir)/V$(topmodule)__ALL.a
 
 
 .PHONY: atomsim
-atomsim: $(build_dir) $(bin_dir) $(bin_dir)/$(executable_name)
+atomsim: $(build_dir) $(bin_dir) $(trace_dir) $(bin_dir)/$(executable_name)
 
 
 #.PHONY: sim
