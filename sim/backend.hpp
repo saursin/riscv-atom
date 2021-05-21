@@ -1,22 +1,25 @@
 #include "verilated.h"
+#include <verilated_vcd_c.h>
 #include "../build/obj_dir/VAtomRVSoC.h"
 #include "../build/obj_dir/VAtomRVSoC_AtomRVSoC.h"
 #include "../build/obj_dir/VAtomRVSoC_AtomRV.h"
 #include "../build/obj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
 
-template <class VTop> 
+template <class VTop>
 class TESTBENCH 
 {
 	public:
 
-	VTop * m_core;
-	unsigned long tickcount;     		// TickCounter to count clock cycles fom last reset
-	unsigned long tickcount_total;     	// TickCounter to count clock cycles
+	VTop 			* m_core;
+	VerilatedVcdC	* m_trace;
+	unsigned long 	m_tickcount;     			// TickCounter to count clock cycles fom last reset
+	unsigned long 	m_tickcount_total;   		// TickCounter to count clock cycles
 
 	TESTBENCH(void)                // Constructor: Instantiates a new VTop
     {
 		m_core = new VTop;
-		tickcount = 0l;
+		Verilated::traceEverOn(true);
+		m_tickcount = 0l;
 	}
 
 	virtual ~TESTBENCH(void)       // Destructor 
@@ -25,20 +28,47 @@ class TESTBENCH
 		m_core = NULL;
 	}
 
+	/**
+	 * @brief Open/create a trace file
+	 * 
+	 * @param vcdname name of vcd file
+	 */
+	virtual	void openTrace(const char *vcdname) 
+	{
+		if (!m_trace) 
+		{
+			m_trace = new VerilatedVcdC;
+			m_core->trace(m_trace, 99);
+			m_trace->open(vcdname);
+		}
+	}
+
+	/**
+	 * @brief Close a trace file
+	 * 
+	 */
+	virtual void closeTrace(void) 
+	{
+		if (m_trace) 
+		{
+			m_trace->close();
+			m_trace = NULL;
+		}
+	}
+
 	virtual void reset(void) 
     {
 		m_core-> rst_i = 1;
-
 		this -> tick();	// Make sure any inheritance gets applied
-		tickcount = 0;
+		m_tickcount = 0;
 		m_core-> rst_i = 0;
 	}
 
 	virtual void tick(void) 
     {
 		// Increment our own internal time reference
-		tickcount ++;
-		tickcount_total++;
+		m_tickcount++;
+		m_tickcount_total++;
 
         // Make sure any combinatorial logic depending upon
 		// inputs that may have changed before we called tick()
@@ -46,15 +76,35 @@ class TESTBENCH
 		m_core -> clk_i = 0;
 		m_core -> eval();
 
+		//	Dump values to our trace file before clock edge
+		if(m_trace) m_trace->dump(10*m_tickcount-2);
+
 		// ---------- Toggle the clock ------------
 
 		// Rising edge
 		m_core -> clk_i = 1;
 		m_core -> eval();
 
+		//	Dump values to our trace file after clock edge
+		if(m_trace) m_trace->dump(10*m_tickcount);
+
+
 		// Falling edge
 		m_core -> clk_i = 0;
 		m_core -> eval();
+
+
+		if (m_trace) {
+			// This portion, though, is a touch different.
+			// After dumping our values as they exist on the
+			// negative clock edge ...
+			m_trace->dump(10*m_tickcount+5);
+			//
+			// We'll also need to make sure we flush any I/O to
+			// the trace file, so that we can use the assert()
+			// function between now and the next tick if we want to.
+			m_trace->flush();
+		}
 	}
 
 	virtual bool  done(void)
@@ -165,10 +215,10 @@ class Backend
 	{
 		if(cpu_state == FETCH)
 		{
-			std::cout << "\nF-< "<<tb->tickcount<<" >\n";
+			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
 			return;
 		}
-		std::cout << "E-< " << tb->tickcount <<" >------------------------------------------------------------\n";
+		std::cout << "E-< " << tb->m_tickcount <<" >------------------------------------------------------------\n";
 
 		
 		printf(" pc : 0x%08X   ir : 0x%08X \n\n", pc , ir); 
