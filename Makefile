@@ -14,6 +14,8 @@ build_dir = build
 bin_dir = $(build_dir)/bin
 object_dir = $(build_dir)/obj_dir
 trace_dir = $(build_dir)/trace
+doc_dir = doc
+doxygen_config_file = Doxyfile
 
 # Executable
 executable_name = atomsim
@@ -53,6 +55,12 @@ $(trace_dir):
 	mkdir $(trace_dir)
 	@echo ">> Creating directory $(trace_dir) -- done\n"
 
+$(doc_dir):
+	@echo ">> Creating directory $(doc_dir)"
+	mkdir $(doc_dir)
+	@echo ">> Creating directory $(doc_dir) -- done\n"
+
+
 # Verilate verilog
 $(object_dir)/V$(topmodule)__ALL.a: 
 	@echo ">> Compiling verilog into cpp"
@@ -73,7 +81,9 @@ $(bin_dir)/$(executable_name): $(object_dir)/V$(topmodule)__ALL.a
 .PHONY: atomsim
 atomsim: $(build_dir) $(bin_dir) $(trace_dir) $(bin_dir)/$(executable_name)
 
-
+.PHONY: doc
+doc: $(doc_dir) 
+	doxygen $(doxygen_config_file)
 #.PHONY: sim
 #sim: $(build_dir) $(bin_dir)
 #	@echo ">> Compiling verilog into cpp"
@@ -95,3 +105,9 @@ clean:
 	rm -rf $(bin_dir)/*
 	rm -rf $(build_dir)/*
 	@echo ">> Clearing $(bin_dir) & $(build_dir) directories -- done\n"
+
+.PHONY: clean-doc
+clean-doc:
+	@echo ">> Clearing $(doc_dir) directory"
+	rm -rf $(doc_dir)/*
+	@echo ">> Clearing $(doc_dir) directory -- done\n"
