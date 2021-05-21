@@ -8,9 +8,8 @@
 
 
 // Definitions
-
-const unsigned int Sec = 1000000;
-const unsigned int mSec = 1000;
+const unsigned int Sec = 1000000;	// microseconds in 1s
+const unsigned int mSec = 1000;		// mictoseconds in 1ms
 
 // Simulation Parameters
 unsigned int delay_amt = 100 * mSec; //default 
@@ -21,13 +20,15 @@ std::string end_simulation_reason;
 #include "defs.hpp"
 #include "backend.hpp"
 
-
+// Global flags
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
 
+// Input file
 std::string ifile = "";
 
+// Trace directory
 std::string trace_dir;
 
 /**
@@ -56,23 +57,27 @@ bool parse_commandline_args(const int argc, char**argv)
         // check if it is a flag
         if(argument[0] == '-')
         {
-            if(argument == "-v")                                    // turn on verbose
+            if(argument == "-v")
             {
+				// turn on verbose
                 verbose_flag = true;
                 i++;
             }
-			else if(argument == "-d")                                    // turn on verbose
+			else if(argument == "-d")
             {
+				// run in debug mode
                 debug_mode = true;
                 i++;
             }
-            else if(argument == "-h")                                    // show short help message
+            else if(argument == "-h")
             {
+				// show short help message
                 std::cout << Info_short_help_msg;
                 return true;
             }
-			else if(argument == "--trace-dir")                           // print long help message
+			else if(argument == "--trace-dir")
             {
+				// print long help message
                 if(i == argc-1)
 				{
 					std::cerr << "!Error: Trace directory not provided\n";
@@ -82,13 +87,15 @@ bool parse_commandline_args(const int argc, char**argv)
 				trace_dir = argv[i];
 				i++;
             }
-            else if(argument == "--help")                           // print long help message
+            else if(argument == "--help")
             {
+				// print long help message
                 std::cout << Info_long_help_msg;
                 return true;
             }
-            else if(argument == "--version")                        // print charon version info
+            else if(argument == "--version")
             {
+				// print charon version info
                 std::cout << Info_version << std::endl << Info_copyright;
                 return true;
             }
@@ -114,12 +121,19 @@ bool parse_commandline_args(const int argc, char**argv)
 
 	if (ifile == "")
 	{
+		// No input file povided
 		std::cerr << "!ERROR: No input file povided\n";
 		return true;
 	}
     return false;
 }
 
+/**
+ * @brief Run specified cycles of simulation
+ * 
+ * @param cycles no to cycles to run for
+ * @param b pointer to backend object
+ */
 void tick(long unsigned int cycles, Backend * b)
 {
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
@@ -135,13 +149,20 @@ void tick(long unsigned int cycles, Backend * b)
 }
 
 
-
-
+/**
+ * @brief Main function
+ * 
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return int exit code
+ */
 int main(int argc, char **argv)
 {
+	// Parse commandline arguments
 	if(parse_commandline_args(argc, argv))
 		return 0;
 	
+	// Display Atomsim banner
 	std::cout << "|=================================================== \n";
 	std::cout << "|                   AtomSim v1.0\n";
 	std::cout << "|=================================================== \n\n";
@@ -151,30 +172,30 @@ int main(int argc, char **argv)
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 
+	// Create a new backend instance
 	Backend bkend(ifile);
 
-	std::string input;
+	// Run simulation
 	if(debug_mode)
 	{
+		std::string input;
 		while(true)
 		{
-			if(bkend.done())
+			if(bkend.done())	// if $finish encountered by verilator
 			{
 				end_simulation_reason = "Backend encountered a $finish";
 				break;
 			}
+
 			// Parse Input
 			std::cout << ": ";
 			getline(std::cin, input);
 			
+			// Tokenize
 			std::vector<std::string> token;
 			tokenize(input, token, ' ');
 
-			//std::cout <<"[";
-			//for(int i=0; i<token.size(); i++)
-			//	std::cout <<" \""<< token[i] <<"\"";
-			//std::cout <<" ]\n";
-
+			// Parse Command
 			if(token[0] == "q" | token[0] == "quit")
 			{
 				// Quit simulator
@@ -238,7 +259,6 @@ int main(int argc, char **argv)
 			{
 				std::cout << "!ERROR: Unknown command" <<"\n";
 			}
-
 			input.clear();
 		}
 	}
@@ -246,9 +266,11 @@ int main(int argc, char **argv)
 	{
 		tick(-1, &bkend);
 	}
-	std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
-	if(trace_enabled)
+
+	if(trace_enabled) // if trace file is open, close it before exiting
 		bkend.tb->closeTrace();
+	
+	std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
 	exit(EXIT_SUCCESS);    
 }
 
