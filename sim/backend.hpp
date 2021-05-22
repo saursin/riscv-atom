@@ -1,3 +1,6 @@
+#include "../lib/elfio/elfio.hpp"
+
+
 #include "verilated.h"
 #include <verilated_vcd_c.h>
 #include "../build/obj_dir/VAtomRVSoC.h"
@@ -31,6 +34,7 @@ class TESTBENCH
 		m_tickcount = 0l;
 	}
 
+
 	/**
 	 * @brief Destroy the TESTBENCH object
 	 * 
@@ -40,6 +44,7 @@ class TESTBENCH
 		delete m_core;
 		m_core = NULL;
 	}
+
 
 	/**
 	 * @brief Open/create a trace file
@@ -56,6 +61,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Close a trace file
 	 * 
@@ -69,6 +75,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Reset topmodule
 	 * 
@@ -80,6 +87,7 @@ class TESTBENCH
 		m_tickcount = 0;
 		m_core-> rst_i = 0;
 	}
+
 
 	/**
 	 * @brief Run for one cycle
@@ -128,6 +136,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Check if simulation ended
 	 * 
@@ -139,6 +148,7 @@ class TESTBENCH
 		return (Verilated::gotFinish()); 
 	}
 };
+
 
 /**
  * @brief Memory class
@@ -157,22 +167,14 @@ class Memory
 	 * @param max_addr size of memory
 	 * @param filename name of init file
 	 */
-	Memory(uint32_t max_addr, std::string filename)
+	Memory(uint32_t max_addr)
 	{
 		size = max_addr;
 
 		// Allocate memory
 		if(!(mem = new uint8_t[max_addr])) 
 		{
-			std::cerr << "!Error: out of memory; memory allocation failed" <<std::endl;
-			exit(1);
-		}
-
-		// Initialize with ff
-		std::vector<char> fcontents = fReadBin(filename);
-		for(unsigned int i = 0; i<fcontents.size(); i++)
-		{
-			mem[i] = (uint8_t)fcontents[i];
+			throwError("MEM0", "out of memory; memory allocation failed\n", true);
 		}
 	}
 
@@ -208,19 +210,124 @@ class Memory
 	{
 		uint32_t data;
 		if(!isValidAddress(addr))
-			std::cerr << "!Error : Address out of bounds " << addr << "\n";
+			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
+
+		uint32_t byte0 = (uint32_t)mem[addr];
+		uint32_t byte1 = (uint32_t)mem[addr+1];
+		uint32_t byte2 = (uint32_t)mem[addr+2];
+		uint32_t byte3 = (uint32_t)mem[addr+3];
+
+		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) |(byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+	}
+
+	/**
+	 * @brief Fetch a 8-bitbyte word from memory
+	 * 
+	 * @param addr address
+	 * @return uint32_t data
+	 */
+	uint8_t fetchByte(uint32_t addr)
+	{
+		uint32_t data;
+		if(!isValidAddress(addr))
+			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
+		
+		return (uint32_t)mem[addr];
+	}
+
+	/**
+	 * @brief Store a 8-bit byte word from memory
+	 * 
+	 * @param addr address
+	 * @param byte byte
+	 */
+	void storeByte(uint32_t addr, uint8_t byte)
+	{
+		uint32_t data;
+		if(!isValidAddress(addr))
+			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
 		else
 		{
-			uint32_t byte0 = (uint32_t)mem[addr];
-			uint32_t byte1 = (uint32_t)mem[addr+1];
-			uint32_t byte2 = (uint32_t)mem[addr+2];
-			uint32_t byte3 = (uint32_t)mem[addr+3];
-
-			return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) |(byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+			mem[addr] = byte;
 		}
-		return 0;
 	}
 };
+
+
+
+/**
+ * @brief Initialize IMEM & DMEM fom an elf file
+ * 
+ * @param imem pointer to imem object
+ * @param dmem pointer to dmem object
+ * @param ifile elf file name
+ * @throws char *
+ */
+void initMem(Memory * imem, Memory * dmem, std::string ifile)
+{
+    // Initialize Memory object from input ELF File
+    ELFIO::elfio reader;
+
+    // Load file into elf reader
+    if (!reader.load(ifile)) 
+    {
+        throwError("INIT0", "Can't find or process ELF file : " + ifile + "\n", true);
+    }
+
+    // Check ELF Class, Endiness & segment count
+    if(reader.get_class() == ELFCLASS32)
+		throwError("INIT1", "Elf file format invalid: should be 32-bit elf\n", true);
+    if(reader.get_encoding() == ELFDATA2LSB)
+		throwError("INIT2", "Elf file format invalid: should be little Endian\n", true);
+    if(reader.segments.size() < 2)
+		throwError("INIT3", "Elf file format invalid: should consist of atleast two sections\n", true);
+
+    ELFIO::Elf_Half seg_num = reader.segments.size();
+
+    // Read elf and initialize memory
+    bool imem_done = false;
+    bool dmem_done = false;
+
+    for (int i = 0; i < seg_num; ++i) // iterate over all segments
+    {
+        const ELFIO::segment * pseg = reader.segments[i];
+
+        // Access segments's data
+        if(pseg->get_type() == SHT_PROGBITS)
+        {
+            const char* p = reader.segments[i]->get_data();
+            const uint sz = reader.segments[i]->get_file_size();
+
+            std::string segType = "UNKNOWN";
+            if(reader.segments[i]->get_flags() == 5) // Read & Execute Pemission =>> TEXT Segment
+            {
+                segType = "TEXT";
+                imem_done = true;
+            }
+            else if(reader.segments[i]->get_flags() == 6) // Read & Write Pemission =>> DATA Segment
+            {
+                segType = "DATA";
+                imem_done = true;
+            }
+
+
+            // Initialize
+            unsigned int i = 0;
+            while(i<sz)
+            {
+                if(segType == "TEXT")       // initialize imem
+                {
+                    imem->storeByte(i, p[i]);
+                }
+                else if (segType == "DATA") // initialize dmem
+                {
+                    dmem->storeByte(i, p[i]);
+                }
+                i++;
+            }
+        }
+    }
+}
 
 /**
  * @brief Backend class
@@ -253,9 +360,10 @@ class Backend
 	Backend(std::string imem_init_file)
 	{
 		tb = new TESTBENCH<VAtomRVSoC>();
-		imem = new Memory(2000, imem_init_file);
+		imem = new Memory(65536);
 		refreshData();
 	}
+
 
 	/**
 	 * @brief Destroy the Backend object
@@ -266,6 +374,7 @@ class Backend
 		delete imem;
 	}
 
+
 	/**
 	 * @brief reset the backend
 	 */
@@ -273,6 +382,7 @@ class Backend
 	{
 		tb->reset();
 	}
+
 
 	/**
 	 * @brief probe all internal signals and regsters and 
@@ -287,38 +397,41 @@ class Backend
 			rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i];
 	}
 
+
 	/**
 	 * @brief Display state data on console
 	 */
 	void displayData()
 	{
-		if(cpu_state == FETCH)
+		/*if(cpu_state == FETCH)
 		{
 			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
 			return;
-		}
-		std::cout << "E-< " << tb->m_tickcount <<" >------------------------------------------------------------\n";
-
-		
-		printf(" pc : 0x%08X   ir : 0x%08X \n\n", pc , ir); 
-
-		int cols = 4; // no of coloumns per rows
-		/*for(int i=0; i<32; i++)	// print in left-right fashion
-		{
-			printf("r%-2d: 0x%08X   ", i, rf[i]);
-			if(i%cols == cols-1)
-				printf("\n");
 		}*/
-		for(int i=0; i<32/cols; i++)	// print in topdown fashion
-		{
-			for(int j=0; j<cols; j++)
-			{
-				printf(" r%-2d: 0x%08X  ", i+4*j, rf[i]);
-			}
-			printf("\n");
-		}
+		std::cout << "E-< " << tb->m_tickcount <<" >---------------------------------------------------------------\n";
 
+		printf(" pc : 0x%08X   ir : 0x%08X   []\n\n", pc , ir); 
+
+		if(verbose_flag)
+		{
+			int cols = 4; // no of coloumns per rows
+			/*for(int i=0; i<32; i++)	// print in left-right fashion
+			{
+				printf("r%-2d: 0x%08X   ", i, rf[i]);
+				if(i%cols == cols-1)
+					printf("\n");
+			}*/
+			for(int i=0; i<32/cols; i++)	// print in topdown fashion
+			{
+				for(int j=0; j<cols; j++)
+				{
+					printf(" r%-2d: 0x%08X  ", i+(32/cols)*j, rf[i+(32/cols)*j]);
+				}
+				printf("\n");
+			}
+		}
 	}
+
 
 	/**
 	 * @brief Tick for one cycle
@@ -330,6 +443,7 @@ class Backend
 		tb->tick();
 	}
 
+
 	/**
 	 * @brief check if simulation is done
 	 * 
@@ -340,8 +454,8 @@ class Backend
 	{
 		return tb->done();
 	}
-
 };
+
 
 
 

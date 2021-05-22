@@ -109,7 +109,14 @@ always @(*) begin
     //    /* SB    */ 10'b000_0100011: 
     //    /* SH    */ 10'b001_0100011: 
     //    /* SW    */ 10'b010_0100011: 
-    //    /* ADDI  */ 10'b000_0010011: 
+        /* ADDI  */ 10'b000_0010011: begin
+            rf_din_sel_o = 2'd2;
+            rf_we_o = 1'b1;
+            a_op_sel_o = 1'b0;
+            b_op_sel_o = 1'b1;
+            alu_op_sel_o = `__ALU_ADD__;
+            instr_format = `__U_IMMIDIATE__;
+        end
     //    /* SLTI  */ 10'b010_0010011: 
     //    /* SLTIU */ 10'b011_0010011: 
     //    /* XORI  */ 10'b100_0010011: 

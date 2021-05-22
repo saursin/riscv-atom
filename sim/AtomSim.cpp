@@ -17,13 +17,13 @@ unsigned int delay_amt = 100 * mSec; //default
 // This is used to display reason for simulation termination
 std::string end_simulation_reason;
 
-#include "defs.hpp"
-#include "backend.hpp"
-
 // Global flags
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
+
+#include "defs.hpp"
+#include "backend.hpp"
 
 // Input file
 std::string ifile = "";
@@ -46,8 +46,7 @@ bool parse_commandline_args(const int argc, char**argv)
     // ============= STEP-2: PARSE COMMAND-LINE ARGUMENTS ================
     if(argc < 2)
     {
-        std::cerr << "!Error: too few arguments\n For help, try : atomsim --help\n";
-        return true;
+		throwError("CLI0", "Too few arguments\n For help, try : atomsim --help\n", true);
     }
     int i = 1;
     while(i < argc)
@@ -80,8 +79,7 @@ bool parse_commandline_args(const int argc, char**argv)
 				// print long help message
                 if(i == argc-1)
 				{
-					std::cerr << "!Error: Trace directory not provided\n";
-                	return true;
+					throwError("CLI1", "Trace directory not provided\n", true);
 				}
 				i++;
 				trace_dir = argv[i];
@@ -97,12 +95,10 @@ bool parse_commandline_args(const int argc, char**argv)
             {
 				// print charon version info
                 std::cout << Info_version << std::endl << Info_copyright;
-                return true;
             }
             else
             {
-                std::cerr << "!Error: Unknown argument: " << argument << "\n";
-                return true;
+				throwError("CLI2", "Unknown argument: " + argument + "\n", true);
             }
         }
         else
@@ -110,8 +106,7 @@ bool parse_commandline_args(const int argc, char**argv)
             // specify input files
             if(ifile != "")
             {
-                std::cerr << "!ERROR: Multiple Input files povided\n";
-                return true;
+				throwError("CLI3", "Multiple Input files povided\n", true);
             }
             else
                 ifile = argument;
@@ -122,8 +117,7 @@ bool parse_commandline_args(const int argc, char**argv)
 	if (ifile == "")
 	{
 		// No input file povided
-		std::cerr << "!ERROR: No input file povided\n";
-		return true;
+		throwError("CLI4", "No input file povided\n", true);
 	}
     return false;
 }
@@ -134,7 +128,7 @@ bool parse_commandline_args(const int argc, char**argv)
  * @param cycles no to cycles to run for
  * @param b pointer to backend object
  */
-void tick(long unsigned int cycles, Backend * b)
+void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 {
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
@@ -142,9 +136,18 @@ void tick(long unsigned int cycles, Backend * b)
 		{
 			break;
 		}
-	 	b->refreshData();
-	 	b->displayData();
-	 	b->tick();
+		if(show_data)
+		{
+			b->refreshData();
+			b->displayData();
+			b->tick();
+		}
+		else
+		{
+			b->refreshData();
+			b->tick();
+		}
+	 	
 	}
 }
 
@@ -161,13 +164,6 @@ int main(int argc, char **argv)
 	// Parse commandline arguments
 	if(parse_commandline_args(argc, argv))
 		return 0;
-	
-	// Display Atomsim banner
-	std::cout << "|=================================================== \n";
-	std::cout << "|                   AtomSim v1.0\n";
-	std::cout << "|=================================================== \n\n";
-	std::cout << "  Author : Saurabh Singh (saurabh.s99100@gmail.com)\n\n";
-	std::cout << "  File : "<< ifile <<"      Ready...\n\n";
 
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
@@ -178,6 +174,13 @@ int main(int argc, char **argv)
 	// Run simulation
 	if(debug_mode)
 	{
+		// Display Atomsim banner
+		std::cout << "|===================================================|\n";
+		std::cout << "|                   AtomSim v1.0                    |\n";
+		std::cout << "|===================================================|\n\n";
+		std::cout << "  Author : Saurabh Singh (saurabh.s99100@gmail.com)\n\n";
+		std::cout << "  File : "<< ifile <<"      Ready...\n\n";
+		
 		std::string input;
 		while(true)
 		{
@@ -214,14 +217,24 @@ int main(int argc, char **argv)
 			}
 			else if(token[0] == "")
 			{
-				// Run for 2 cycles
-				tick(2, &bkend);
+				// Run for 1 cycles
+				tick(1, &bkend);
+			}
+			else if(token[0] == "verbose-on")
+			{
+				// turn on verbose
+				verbose_flag = true;
+			}
+			else if(token[0] == "verbose-off")
+			{
+				// turn on verbose
+				verbose_flag = false;
 			}
 			else if(token[0] == "run")
 			{
 				// run for specified cycles
 				if(token.size()<2)
-					std::cout << "!ERROR: run expects one argument" <<"\n";
+					throwError("DBG0", "\"run\" command expects one argument\n");
 				else
 					tick(std::stoi(token[1]), &bkend);
 			}
@@ -229,7 +242,7 @@ int main(int argc, char **argv)
 			{
 				// Enable trace
 				if(token.size()<2)
-					std::cout << "!ERROR: trace command expects a filename" <<"\n";
+					throwError("DBG1", "Trace command expects a filename\n");
 				else
 				{
 					if(trace_enabled == false)
@@ -257,14 +270,14 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				std::cout << "!ERROR: Unknown command" <<"\n";
+				throwError("DBG2", "Unknown command \"" + token[0] + "\"\n");
 			}
 			input.clear();
 		}
 	}
 	else
 	{
-		tick(-1, &bkend);
+		tick(-1, &bkend, false);
 	}
 
 	if(trace_enabled) // if trace file is open, close it before exiting
