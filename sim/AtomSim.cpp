@@ -22,6 +22,8 @@ bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
 
+const int default_mem_size = 262144;
+
 #include "defs.hpp"
 #include "backend.hpp"
 
@@ -138,9 +140,9 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		if(show_data)
 		{
+			b->tick();
 			b->refreshData();
 			b->displayData();
-			b->tick();
 		}
 		else
 		{
@@ -169,7 +171,7 @@ int main(int argc, char **argv)
 	Verilated::commandArgs(argc, argv);
 
 	// Create a new backend instance
-	Backend bkend(ifile);
+	Backend bkend(ifile, default_mem_size);
 
 	// Run simulation
 	if(debug_mode)
@@ -181,6 +183,12 @@ int main(int argc, char **argv)
 		std::cout << "  Author : Saurabh Singh (saurabh.s99100@gmail.com)\n\n";
 		std::cout << "  File : "<< ifile <<"      Ready...\n\n";
 		
+		// Get initial state
+		bkend.tb->m_core->eval();
+		bkend.refreshData();
+		
+		// bkend.displayData();
+
 		std::string input;
 		while(true)
 		{
@@ -229,6 +237,21 @@ int main(int argc, char **argv)
 			{
 				// turn on verbose
 				verbose_flag = false;
+			}
+			else if(token[0] == "dumpmem")
+			{
+				if(token.size()<2)
+					throwError("DBG~", "\"dumpmem\" command expects filename as argument\n");
+				
+				// turn on verbose
+				std::vector<std::string> fcontents;
+				for(int i=0; i<bkend.imem->size-4; i+=4)
+				{	
+					char hex [30];
+					sprintf(hex, "0x%08X\t:\t0x%08X", i, bkend.imem->fetchWord(i));
+					fcontents.push_back(hex);
+				}
+				fWrite(fcontents, token[1]);
 			}
 			else if(token[0] == "run")
 			{

@@ -165,7 +165,6 @@ class Memory
 	 * @brief Construct a new Memory object
 	 * 
 	 * @param max_addr size of memory
-	 * @param filename name of init file
 	 */
 	Memory(uint32_t max_addr)
 	{
@@ -263,7 +262,7 @@ class Memory
  * @param ifile elf file name
  * @throws char *
  */
-void initMem(Memory * imem, Memory * dmem, std::string ifile)
+void initMemElf(Memory * imem, /*Memory * dmem*/ std::string ifile)
 {
     // Initialize Memory object from input ELF File
     ELFIO::elfio reader;
@@ -275,22 +274,27 @@ void initMem(Memory * imem, Memory * dmem, std::string ifile)
     }
 
     // Check ELF Class, Endiness & segment count
-    if(reader.get_class() == ELFCLASS32)
+    if(reader.get_class() != ELFCLASS32)
 		throwError("INIT1", "Elf file format invalid: should be 32-bit elf\n", true);
-    if(reader.get_encoding() == ELFDATA2LSB)
+    if(reader.get_encoding() != ELFDATA2LSB)
 		throwError("INIT2", "Elf file format invalid: should be little Endian\n", true);
-    if(reader.segments.size() < 2)
-		throwError("INIT3", "Elf file format invalid: should consist of atleast two sections\n", true);
+    //if(reader.segments.size() < 2)
+	//	throwError("INIT3", "Elf file format invalid: should consist of atleast two sections\n", true);
 
     ELFIO::Elf_Half seg_num = reader.segments.size();
 
+	if(seg_num == 0)
+		throwError("INIT~", "Elf file does not contain any segments\n", true);
+
     // Read elf and initialize memory
-    bool imem_done = false;
-    bool dmem_done = false;
+    //bool imem_done = false;
+    //bool dmem_done = false;
+	std::cout << " Segments found : "<< seg_num <<"\n";
 
     for (int i = 0; i < seg_num; ++i) // iterate over all segments
     {
         const ELFIO::segment * pseg = reader.segments[i];
+		std::cout << " Loading Segment @ "<< reader.segments[i]->get_physical_address() <<"\n";
 
         // Access segments's data
         if(pseg->get_type() == SHT_PROGBITS)
@@ -298,31 +302,33 @@ void initMem(Memory * imem, Memory * dmem, std::string ifile)
             const char* p = reader.segments[i]->get_data();
             const uint sz = reader.segments[i]->get_file_size();
 
+
             std::string segType = "UNKNOWN";
             if(reader.segments[i]->get_flags() == 5) // Read & Execute Pemission =>> TEXT Segment
             {
                 segType = "TEXT";
-                imem_done = true;
+                //imem_done = true;
             }
             else if(reader.segments[i]->get_flags() == 6) // Read & Write Pemission =>> DATA Segment
             {
                 segType = "DATA";
-                imem_done = true;
+                //imem_done = true;
             }
 
-
             // Initialize
-            unsigned int i = 0;
+            ELFIO::Elf64_Addr starting_address = reader.segments[i]->get_physical_address();
+							std::cout << "---5\n";
+			unsigned int i=0;
             while(i<sz)
             {
                 if(segType == "TEXT")       // initialize imem
                 {
-                    imem->storeByte(i, p[i]);
+                    imem->storeByte(i+starting_address, p[i]);
                 }
-                else if (segType == "DATA") // initialize dmem
+                /*else if (segType == "DATA") // initialize dmem
                 {
                     dmem->storeByte(i, p[i]);
-                }
+                }*/
                 i++;
             }
         }
@@ -344,23 +350,29 @@ class Backend
 	Memory * imem;
 
 	// ==== STATE ====
-	enum CpuState{FETCH, EXECUTE};
-	CpuState cpu_state;
+	unsigned int pc_f;
+	unsigned int ins_f;
 
-	unsigned int pc;
+	unsigned int pc_e;
+	unsigned int ins_e;
+	
 	unsigned int rf[32];
 
-	unsigned int ir;
+	
 	
 	/**
 	 * @brief Construct a new Backend object
 	 * 
 	 * @param imem_init_file init_file
 	 */
-	Backend(std::string imem_init_file)
+	Backend(std::string imem_init_file, unsigned int mem_size)
 	{
 		tb = new TESTBENCH<VAtomRVSoC>();
-		imem = new Memory(65536);
+		imem = new Memory(mem_size);
+
+		initMemElf(imem, imem_init_file);
+
+		tb->m_core->AtomRVSoC->atom->ProgramCounter = 0x00010054;		// [ THIS FORCES PC TO given address :  FOR EXPERIMENTAL PURPOSES ONLY]
 		refreshData();
 	}
 
@@ -383,6 +395,11 @@ class Backend
 		tb->reset();
 	}
 
+	void serviceMemoryRequest()
+	{
+		tb->m_core->imem_data_i = imem->fetchWord(tb->m_core->imem_addr_o);
+		printf("Memory Requested : 0x%08X   Serviced : 0x%08X\n", tb->m_core->imem_addr_o, imem->fetchWord(tb->m_core->imem_addr_o));
+	}
 
 	/**
 	 * @brief probe all internal signals and regsters and 
@@ -390,11 +407,17 @@ class Backend
 	 */
 	void refreshData()
 	{
-		cpu_state = (CpuState)tb->m_core->AtomRVSoC->atom->ProcessorState;
-		pc = tb->m_core->AtomRVSoC->atom->ProgramCounter;
-		ir = tb->m_core->AtomRVSoC->atom->InstructionRegister;
+		pc_f = tb->m_core->AtomRVSoC->atom->ProgramCounter;
+		pc_e = tb->m_core->AtomRVSoC->atom->ProgramCounter_Old;
+
+		ins_e = tb->m_core->AtomRVSoC->atom->InstructionRegister;
 		for(int i=0; i<32; i++)
-			rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i];
+		{
+			if(i==0)
+				rf[i] = 0;
+			else
+				rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i-1];
+		}
 	}
 
 
@@ -408,9 +431,10 @@ class Backend
 			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
 			return;
 		}*/
-		std::cout << "E-< " << tb->m_tickcount <<" >---------------------------------------------------------------\n";
-
-		printf(" pc : 0x%08X   ir : 0x%08X   []\n\n", pc , ir); 
+		std::cout << "-< " << tb->m_tickcount <<" >---------------------------------------------------------------\n";
+		printf("F-STAGE  |  pc : 0x%08X   \n"/*&ir : 0x%08X   []\n"*/, pc_f /*, ins_f*/); 
+		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
+		std::cout << "---------------------------------------------------------------------\n";
 
 		if(verbose_flag)
 		{
@@ -439,8 +463,10 @@ class Backend
 	 */
 	void tick()
 	{
-		tb->m_core->imem_data_i = imem->fetchWord(tb->m_core->imem_addr_o);
+		serviceMemoryRequest();
 		tb->tick();
+		ins_f = tb->m_core->imem_data_i;
+
 	}
 
 

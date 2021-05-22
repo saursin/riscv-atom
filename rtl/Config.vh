@@ -1,9 +1,6 @@
 // Config file
 `define RESET_PC_ADDRESS 32'h00000000
 
-`define __R0_IS_ZERO__
-
-
 `define __NOP_INSTRUCTION__ 32'd0
 
 // DECODER

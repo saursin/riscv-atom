@@ -13,6 +13,8 @@
 ///////////////////////////////////////////////////////////////////
 `default_nettype none
 
+`define __R0_IS_ZERO__
+
 `include "../Timescale.vh"
 `include "../Config.vh"
 
@@ -37,36 +39,43 @@ module AtomRV
 );
 
 ////////////////////////////////////////////////////////////////////
-localparam FETCH    = 1'b0;
-localparam EXECUTE  = 1'b1;
-
-/*
-    This register is used to store current state of processor
-    Possible states : FETCH, EXECUTE
-*/
-reg ProcessorState  /*verilator public*/;
-always @(posedge clk_i) begin 
-    if(rst_i)
-        ProcessorState <= EXECUTE;
-    else if(!hlt_i)
-        ProcessorState <= ! ProcessorState;
-end
-
-
+//  STAGE 1 - FETCH
+////////////////////////////////////////////////////////////////////
 /*
     Program Counter
 */
 reg [31:0] ProgramCounter   /*verilator public*/;
 wire [31:0] pc_plus_four = ProgramCounter + 4;
+
 always @(posedge clk_i) begin 
     if(rst_i)
         ProgramCounter <= `RESET_PC_ADDRESS;
+
     else if(d_pc_we)
         ProgramCounter <= alu_out;
-    else if(ProcessorState == EXECUTE)
+
+    else
         ProgramCounter <= pc_plus_four;
 end
+
+// Connect pc to imem address input
 assign i_addr_o = ProgramCounter;
+
+
+//-------------------------------
+// PIPELINE REGISTERS
+//-------------------------------
+
+/*
+    This register is used to store old value of program counter
+*/
+reg [31:0]  ProgramCounter_Old /* verilator public */;
+always @(posedge clk_i) begin 
+    if(rst_i)
+        ProgramCounter_Old <= 32'd0;
+    else
+        ProgramCounter_Old <= ProgramCounter;
+end
 
 /*
     This register is used to store current instruction that is being 
@@ -76,11 +85,15 @@ reg [31:0] InstructionRegister  /*verilator public*/;
 always @(posedge clk_i) begin
     if(rst_i)
         InstructionRegister <= `__NOP_INSTRUCTION__;
-    else if(ProcessorState == FETCH)
+    else
         InstructionRegister <= i_data_i;
 end
 
 
+
+////////////////////////////////////////////////////////////////////
+//  STAGE 2 - DECODE & EXECUTE
+////////////////////////////////////////////////////////////////////
 /*
     Instruction Decode
 */
