@@ -74,27 +74,29 @@ always @(*) begin
         end
         /* AUIPC */ 10'b???_0010111: begin
             rf_din_sel_o = 2'd2;
+            a_op_sel_o = 1'b1;
+            b_op_sel_o = 1'b1;
             rf_we_o = 1'b1;
             instr_format = `__U_IMMIDIATE__;
             alu_op_sel_o = `__ALU_ADD__;
         end
-        /* JAL   */ 10'b???_1101111: begin
-            pc_we_o = 1'b1;
-            rf_we_o = 1'b1;
-            rf_din_sel_o = 2'b1;
-            instr_format = `__J_IMMIDIATE__;
-        end
-        /* JALR  */ 10'b000_1100111: begin
-            pc_we_o = 1'b1;
-            rf_we_o = 1'b1;
-            rf_din_sel_o = 2'b1;
-            instr_format = `__I_IMMIDIATE__;
-        end
-        /* BEQ   */ 10'b000_1100011: begin
-            pc_we_o = branch_taken_i;
-            rf_we_o = branch_taken_i;
-            rf_din_sel_o = 2'b1;
-            instr_format = `__I_IMMIDIATE__;
+        // /* JAL   */ 10'b???_1101111: begin
+        //     pc_we_o = 1'b1;
+        //     rf_we_o = 1'b1;
+        //     rf_din_sel_o = 2'b1;
+        //     instr_format = `__J_IMMIDIATE__;
+        // end
+        // /* JALR  */ 10'b000_1100111: begin
+        //     pc_we_o = 1'b1;
+        //     rf_we_o = 1'b1;
+        //     rf_din_sel_o = 2'b1;
+        //     instr_format = `__I_IMMIDIATE__;
+        // end
+         /* BEQ   */ 10'b000_1100011: begin         // NOT VERIFIED YET
+             pc_we_o = branch_taken_i;
+             rf_we_o = branch_taken_i;
+             rf_din_sel_o = 2'b1;
+             instr_format = `__I_IMMIDIATE__;
         end
     //    /* BNE   */ 10'b001_1100011: 
     //    /* BLT   */ 10'b100_1100011: 
@@ -115,7 +117,7 @@ always @(*) begin
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
             alu_op_sel_o = `__ALU_ADD__;
-            instr_format = `__U_IMMIDIATE__;
+            instr_format = `__I_IMMIDIATE__;
         end
     //    /* SLTI  */ 10'b010_0010011: 
     //    /* SLTIU */ 10'b011_0010011: 
@@ -125,8 +127,20 @@ always @(*) begin
     //    /* SLLI  */ 10'b001_0010011: 
     //    /* SRLI  */ 10'b101_0010011: 
     //    /* SRAI  */ 10'b101_0010011: 
-    //    /* ADD   */ 10'b000_0110011: 
-    //    /* SUB   */ 10'b000_0110011: 
+        /* ADD   */ 10'b000_0110011: begin
+            rf_din_sel_o = 2'd2;
+            rf_we_o = 1'b1;
+            a_op_sel_o = 1'b0;
+            b_op_sel_o = 1'b0;
+            alu_op_sel_o = `__ALU_ADD__;
+        end
+        /* SUB   */ 10'b000_0110011: begin
+            rf_din_sel_o = 2'd2;
+            rf_we_o = 1'b1;
+            a_op_sel_o = 1'b0;
+            b_op_sel_o = 1'b0;
+            alu_op_sel_o = `__ALU_SUB__;
+        end
     //    /* SLL   */ 10'b001_0110011: 
     //    /* SLT   */ 10'b010_0110011: 
     //    /* SLTU  */ 10'b011_0110011: 
