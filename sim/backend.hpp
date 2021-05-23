@@ -372,7 +372,6 @@ class Backend
 
 		initMemElf(imem, imem_init_file);
 
-		tb->m_core->AtomRVSoC->atom->ProgramCounter = 0x00010054;		// [ THIS FORCES PC TO given address :  FOR EXPERIMENTAL PURPOSES ONLY]
 		refreshData();
 	}
 
@@ -431,8 +430,15 @@ class Backend
 			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
 			return;
 		}*/
+		unsigned int change = pc_f-pc_e;
+		std::string jump = "    ";
+		if(tb->m_core->AtomRVSoC->atom->__PVT__jump_decision)
+			jump = "jump";
+		else
+			jump = "    ";
+
 		std::cout << "-< " << tb->m_tickcount <<" >---------------------------------------------------------------\n";
-		printf("F-STAGE  |  pc : 0x%08X   \n"/*&ir : 0x%08X   []\n"*/, pc_f /*, ins_f*/); 
+		printf("F-STAGE  |  pc : 0x%08X  (%d) (%s)\n"/*&ir : 0x%08X   []\n"*/, pc_f , change, jump.c_str()/*, ins_f*/); 
 		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
 		std::cout << "---------------------------------------------------------------------\n";
 

@@ -14,8 +14,14 @@ module AtomRVSoC
     input        clk_i,    // external clock
     input        rst_i,    // external reset
     
-    output [31:0] imem_addr_o,
-    input [31:0] imem_data_i
+    output [31:0]   imem_addr_o,
+    input [31:0]    imem_data_i,
+
+    output  [31:0]  dmem_addr_o,            // DMEM address
+    input   [31:0]  dmem_data_i,            // DMEM data in
+    output  [31:0]  dmem_data_o,            // DMEM data out
+    output  [2:0]   dmem_access_width_o,    // DMEM Access width
+    output          dmem_we_o               // DMEM WriteEnable
 
     //input        uart_rxd,  // UART receive line
     //output       uart_txd,  // UART transmit line
@@ -30,10 +36,10 @@ module AtomRVSoC
 
     //////////////////////////////////////////////////////
     // DMEM
-    wire [31:0] d_addr_o /*verilator public*/;
-    wire [31:0] d_data_i = 32'd0;
-    wire [31:0] d_data_o;
-    wire d_we_o;
+    //wire [31:0] d_addr_o /*verilator public*/;
+    //wire [31:0] d_data_i = 32'd0;
+    //wire [31:0] d_data_o;
+    //wire d_we_o;
     
     //////////////////////////////////////////////////////
     // Atom RISCV CORE
@@ -45,12 +51,14 @@ module AtomRVSoC
         .rst_i(rst_i),    // reset
         .hlt_i(hlt),    // hault cpu
 
-        .i_data_i(imem_data_i),   // IMEM data
-        .i_addr_o(imem_addr_o),   // IMEM Address
-        .d_addr_o(d_addr_o),   // DMEM address
-        .d_data_i(d_data_i),   // DMEM data in
-        .d_data_o(d_data_o),   // DMEM data out
-        .d_we_o(d_we_o)      // DMEM WriteEnable
+        .imem_data_i            (imem_data_i),   // IMEM data
+        .imem_addr_o            (imem_addr_o),   // IMEM Address
+
+        .dmem_addr_o            (dmem_addr_o),   // DMEM address
+        .dmem_data_i            (dmem_data_i),   // DMEM data in
+        .dmem_data_o            (dmem_data_o),   // DMEM data out
+        .dmem_access_width_o    (dmem_access_width_o),
+        .dmem_we_o              (dmem_we_o)      // DMEM WriteEnable
     );
 
 

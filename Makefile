@@ -15,6 +15,7 @@ bin_dir = $(build_dir)/bin
 object_dir = $(build_dir)/obj_dir
 trace_dir = $(build_dir)/trace
 doc_dir = doc
+doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = Doxyfile
 
 # Executable
@@ -60,6 +61,10 @@ $(doc_dir):
 	mkdir $(doc_dir)
 	@echo ">> Creating directory $(doc_dir) -- done\n"
 
+$(doxygen_doc_dir):
+	@echo ">> Creating directory $(doxygen_doc_dir)"
+	mkdir $(doxygen_doc_dir)
+	@echo ">> Creating directory $(doxygen_doc_dir) -- done\n"
 
 # Verilate verilog
 $(object_dir)/V$(topmodule)__ALL.a: 
@@ -82,7 +87,7 @@ $(bin_dir)/$(executable_name): $(object_dir)/V$(topmodule)__ALL.a
 atomsim: $(build_dir) $(bin_dir) $(trace_dir) $(bin_dir)/$(executable_name)
 
 .PHONY: doc
-doc: $(doc_dir) 
+doc: $(doc_dir) $(doxygen_doc_dir)
 	doxygen $(doxygen_config_file)
 #.PHONY: sim
 #sim: $(build_dir) $(bin_dir)
@@ -109,5 +114,5 @@ clean:
 .PHONY: clean-doc
 clean-doc:
 	@echo ">> Clearing $(doc_dir) directory"
-	rm -rf $(doc_dir)/*
+	rm -rf $(dexygen_doc_dir)/*
 	@echo ">> Clearing $(doc_dir) directory -- done\n"

@@ -22,6 +22,8 @@ Atom is an embedded-class processor based on the open-source 32-bit RISC-V instr
 
 ## AtomRV Architecture
 
+![AtomRV Architecture](doc/diagrams/atomRV_architecture_diagram.png)
+
 
 
 ## AtomRVSoC
