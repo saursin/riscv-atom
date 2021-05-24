@@ -8,6 +8,43 @@
 #include "../build/obj_dir/VAtomRVSoC_AtomRV.h"
 #include "../build/obj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
 
+const std::vector<std::string> reg_names = 
+{
+	"x0  (zero) ",
+	"x1  (ra)   ",
+	"x2  (sp)   ",
+	"x3  (gp)   ",
+	"x4  (tp)   ",
+	"x5  (t0)   ",
+	"x6  (t1)   ",
+	"x7  (t2)   ",
+	"x8  (s0/fp)",
+	"x9  (s1)   ",
+	"x10 (a0)   ",
+	"x11 (a1)   ",
+	"x12 (a2)   ",
+	"x13 (a3)   ",
+	"x14 (a4)   ",
+	"x15 (a5)   ",
+	"x16 (a6)   ",
+	"x17 (a7)   ",
+	"x18 (s2)   ",
+	"x19 (s3)   ",
+	"x20 (s4)   ",
+	"x21 (s5)   ",
+	"x22 (s6)   ",
+	"x23 (s7)   ",
+	"x24 (s8)   ",
+	"x25 (s9)   ",
+	"x26 (s10)  ",
+	"x27 (s11)  ",
+	"x28 (t3)   ",
+	"x29 (t4)   ",
+	"x30 (t5)   ",
+	"x31 (t6)   "
+};
+
+
 /**
  * @brief TESTBENCH Class
  * 
@@ -262,7 +299,7 @@ class Memory
  * @param ifile elf file name
  * @throws char *
  */
-void initMemElf(Memory * imem, /*Memory * dmem*/ std::string ifile)
+void initMemElf(Memory * imem, Memory * dmem, std::string ifile)
 {
     // Initialize Memory object from input ELF File
     ELFIO::elfio reader;
@@ -325,10 +362,10 @@ void initMemElf(Memory * imem, /*Memory * dmem*/ std::string ifile)
                 {
                     imem->storeByte(i+starting_address, p[i]);
                 }
-                /*else if (segType == "DATA") // initialize dmem
+                else if (segType == "DATA") // initialize dmem
                 {
-                    dmem->storeByte(i, p[i]);
-                }*/
+                    dmem->storeByte(i+starting_address, p[i]);
+                }
                 i++;
             }
         }
@@ -348,6 +385,9 @@ class Backend
 
 	// Instruction memory
 	Memory * imem;
+	
+	// Data memory
+	Memory * dmem;
 
 	// ==== STATE ====
 	unsigned int pc_f;
@@ -370,7 +410,7 @@ class Backend
 		tb = new TESTBENCH<VAtomRVSoC>();
 		imem = new Memory(mem_size);
 
-		initMemElf(imem, imem_init_file);
+		initMemElf(imem, dmem, imem_init_file);
 
 		refreshData();
 	}
@@ -444,7 +484,7 @@ class Backend
 
 		if(verbose_flag)
 		{
-			int cols = 4; // no of coloumns per rows
+			int cols = 2; // no of coloumns per rows
 			/*for(int i=0; i<32; i++)	// print in left-right fashion
 			{
 				printf("r%-2d: 0x%08X   ", i, rf[i]);
@@ -455,7 +495,7 @@ class Backend
 			{
 				for(int j=0; j<cols; j++)
 				{
-					printf(" r%-2d: 0x%08X  ", i+(32/cols)*j, rf[i+(32/cols)*j]);
+					printf(" %s: 0x%08X  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
 				}
 				printf("\n");
 			}
@@ -487,46 +527,3 @@ class Backend
 		return tb->done();
 	}
 };
-
-
-
-
-/*void runBackend()
-{
-	while(true)
-	{
-		if(backend_finished || frontend_finished)
-				return;
-
-		if(backend_run | backend_tick)
-		{
-			if (backend_tick)	// uns fo this current cycle only and turns backend tick as false, backennd_tick needs to be settue by frontend to again execute next cycle
-				backend_tick = false;
-
-			backend_finished = tb->done();
-
-			// Registers
-			d.PC = tb->m_core->Top->luna_soc->CPU->PC;
-			
-			// Signals
-			d.Signals[0] = tb->m_core->Top->luna_soc->CPU->D_Opcode;
-			d.Signals[1] = tb->m_core->Top->luna_soc->CPU->D_Func;
-			d.Signals[2] = tb->m_core->Top->luna_soc->CPU->D_Rd_Sel;
-			d.Signals[3] = tb->m_core->Top->luna_soc->CPU->D_Rs_Sel;
-			d.Signals[4] = tb->m_core->Top->luna_soc->CPU->D_Imm;
-			d.Signals[5] = tb->m_core->Top->luna_soc->CPU->D_BrReg;
-			d.Signals[6] = tb->m_core->Top->luna_soc->CPU->D_BrLink;
-
-			for(int i=0; i<16; i++)
-			{
-				d.REG[i] = tb->m_core->Top->luna_soc->CPU->rf->regs[i];
-			}
-			
-
-			
-
-			usleep(backend_delay);
-		}
-	}
-}
-*/
