@@ -53,11 +53,13 @@ always @(posedge clk_i) begin
     if(rst_i)
         ProgramCounter <= `RESET_PC_ADDRESS;
 
-    else if(jump_decision)
-        ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addrressesm, also JALR enforces this
+    if(!hlt_i) begin
+        if(jump_decision)
+            ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addrressesm, also JALR enforces this
 
-    else
-        ProgramCounter <= pc_plus_four;
+        else
+            ProgramCounter <= pc_plus_four;
+    end
 end
 
 // Connect pc to imem address input
@@ -258,7 +260,7 @@ wire comparison_result = compare
     DATA MEMORY ACCESS
 */
 assign dmem_addr_o = alu_out;
-assign dmem_data_o = rf_rs1;
+assign dmem_data_o = rf_rs2;
 assign dmem_access_width_o = d_mem_access_width;
 assign dmem_we_o = d_mem_we;
 
