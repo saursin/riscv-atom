@@ -47,25 +47,23 @@ reg    [2:0] imm_format;
 /*
     Decode Immidiate
 */
-function [31:0] getExtImm;
-    input   [31:7]  instr /* verilator lint_off UNUSED */;
-    input   [2:0]   fmt;
+reg [31:0] getExtImm;
 
-    begin
-        case(fmt)
-            `__I_IMMIDIATE__    :   getExtImm = {{21{instr[31]}}, instr[30:25], instr[24:21], instr[20]};
-            `__S_IMMIDIATE__    :   getExtImm = {{21{instr[31]}}, instr[30:25], instr[11:8], instr[7]};
-            `__B_IMMIDIATE__    :   getExtImm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
-            `__U_IMMIDIATE__    :   getExtImm = {instr[31], instr[30:20], instr[19:12], {12{1'b0}}};
-            `__J_IMMIDIATE__    :   getExtImm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:25], instr[24:21], 1'b0};
+always @(*) /*COMBINATIONAL*/ 
+begin
+    case(imm_format)
+            `__I_IMMIDIATE__    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[24:21], instr_i[20]};
+            `__S_IMMIDIATE__    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[11:8], instr_i[7]};
+            `__B_IMMIDIATE__    :   getExtImm = {{20{instr_i[31]}}, instr_i[7], instr_i[30:25], instr_i[11:8], 1'b0};
+            `__U_IMMIDIATE__    :   getExtImm = {instr_i[31], instr_i[30:20], instr_i[19:12], {12{1'b0}}};
+            `__J_IMMIDIATE__    :   getExtImm = {{12{instr_i[31]}}, instr_i[19:12], instr_i[20], instr_i[30:25], instr_i[24:21], 1'b0};
 
             default:
                 getExtImm = 32'd0;
-        endcase
-    end
-endfunction
+    endcase
+end
 
-assign imm_o = getExtImm(instr_i[31:7], imm_format);
+assign imm_o = getExtImm;
 
 
 always @(*) begin
@@ -213,7 +211,7 @@ always @(*) begin
         end
 
         /* SB, SH, SW */ 
-        17'b???????_000_0100011: 
+        17'b???????_???_0100011: 
         begin
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
