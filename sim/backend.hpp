@@ -1,9 +1,49 @@
+#include "../lib/elfio/elfio.hpp"
+
+
 #include "verilated.h"
 #include <verilated_vcd_c.h>
 #include "../build/obj_dir/VAtomRVSoC.h"
 #include "../build/obj_dir/VAtomRVSoC_AtomRVSoC.h"
 #include "../build/obj_dir/VAtomRVSoC_AtomRV.h"
 #include "../build/obj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
+
+const std::vector<std::string> reg_names = 
+{
+	"x0  (zero) ",
+	"x1  (ra)   ",
+	"x2  (sp)   ",
+	"x3  (gp)   ",
+	"x4  (tp)   ",
+	"x5  (t0)   ",
+	"x6  (t1)   ",
+	"x7  (t2)   ",
+	"x8  (s0/fp)",
+	"x9  (s1)   ",
+	"x10 (a0)   ",
+	"x11 (a1)   ",
+	"x12 (a2)   ",
+	"x13 (a3)   ",
+	"x14 (a4)   ",
+	"x15 (a5)   ",
+	"x16 (a6)   ",
+	"x17 (a7)   ",
+	"x18 (s2)   ",
+	"x19 (s3)   ",
+	"x20 (s4)   ",
+	"x21 (s5)   ",
+	"x22 (s6)   ",
+	"x23 (s7)   ",
+	"x24 (s8)   ",
+	"x25 (s9)   ",
+	"x26 (s10)  ",
+	"x27 (s11)  ",
+	"x28 (t3)   ",
+	"x29 (t4)   ",
+	"x30 (t5)   ",
+	"x31 (t6)   "
+};
+
 
 /**
  * @brief TESTBENCH Class
@@ -31,6 +71,7 @@ class TESTBENCH
 		m_tickcount = 0l;
 	}
 
+
 	/**
 	 * @brief Destroy the TESTBENCH object
 	 * 
@@ -40,6 +81,7 @@ class TESTBENCH
 		delete m_core;
 		m_core = NULL;
 	}
+
 
 	/**
 	 * @brief Open/create a trace file
@@ -56,6 +98,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Close a trace file
 	 * 
@@ -69,6 +112,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Reset topmodule
 	 * 
@@ -80,6 +124,7 @@ class TESTBENCH
 		m_tickcount = 0;
 		m_core-> rst_i = 0;
 	}
+
 
 	/**
 	 * @brief Run for one cycle
@@ -128,6 +173,7 @@ class TESTBENCH
 		}
 	}
 
+
 	/**
 	 * @brief Check if simulation ended
 	 * 
@@ -139,6 +185,7 @@ class TESTBENCH
 		return (Verilated::gotFinish()); 
 	}
 };
+
 
 /**
  * @brief Memory class
@@ -155,24 +202,15 @@ class Memory
 	 * @brief Construct a new Memory object
 	 * 
 	 * @param max_addr size of memory
-	 * @param filename name of init file
 	 */
-	Memory(uint32_t max_addr, std::string filename)
+	Memory(uint32_t max_addr)
 	{
 		size = max_addr;
 
 		// Allocate memory
 		if(!(mem = new uint8_t[max_addr])) 
 		{
-			std::cerr << "!Error: out of memory; memory allocation failed" <<std::endl;
-			exit(1);
-		}
-
-		// Initialize with ff
-		std::vector<char> fcontents = fReadBin(filename);
-		for(unsigned int i = 0; i<fcontents.size(); i++)
-		{
-			mem[i] = (uint8_t)fcontents[i];
+			throwError("MEM0", "out of memory; memory allocation failed\n", true);
 		}
 	}
 
@@ -195,7 +233,7 @@ class Memory
 	 */
 	bool isValidAddress(uint32_t addr)
 	{
-		return (addr < size-4);
+		return (addr < size);
 	}
 
 	/**
@@ -207,20 +245,170 @@ class Memory
 	uint32_t fetchWord(uint32_t addr)
 	{
 		uint32_t data;
-		if(!isValidAddress(addr))
-			std::cerr << "!Error : Address out of bounds " << addr << "\n";
-		else
-		{
-			uint32_t byte0 = (uint32_t)mem[addr];
-			uint32_t byte1 = (uint32_t)mem[addr+1];
-			uint32_t byte2 = (uint32_t)mem[addr+2];
-			uint32_t byte3 = (uint32_t)mem[addr+3];
+		uint32_t byte0 = (uint32_t)fetchByte(addr);
+		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
+		uint32_t byte2 = (uint32_t)fetchByte(addr+2);
+		uint32_t byte3 = (uint32_t)fetchByte(addr+3);
 
-			return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) |(byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) | (byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+	}
+
+	/**
+	 * @brief Fetch a 16-bit half word from memory
+	 * 
+	 * @param addr address
+	 * @return uint16_t data
+	 */
+	uint16_t fetchHalfWord(uint32_t addr)
+	{
+		uint32_t data;
+		uint32_t byte0 = (uint32_t)fetchByte(addr);
+		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
+
+		return (byte1<<8 & 0xff00) | (byte0 & 0x00ff);
+	}
+
+	/**
+	 * @brief Fetch a 8-bitbyte word from memory
+	 * 
+	 * @param addr address
+	 * @return uint8_t data
+	 */
+	uint8_t fetchByte(uint32_t addr)
+	{
+		if(!isValidAddress(addr))
+		{
+			char errmsg[40];
+			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			throwError("MEM1", errmsg, true);
+			return 0;
 		}
-		return 0;
+		return (uint8_t) mem[addr];
+	}
+
+	/**
+	 * @brief Store a 32-bit word to memory
+	 * 
+	 * @param addr address
+	 * @param w Word
+	 */
+	void storeWord(uint32_t addr, uint32_t w)
+	{
+		storeByte(addr, (uint8_t)(w & 0x000000ff));
+		storeByte(addr+1, (uint8_t)(w & 0x0000ff00) >> 8);
+		storeByte(addr+2, (uint8_t)(w & 0x00ff0000) >> 16);
+		storeByte(addr+3, (uint8_t)(w & 0xff000000) >> 24);
+	}
+
+	/**
+	 * @brief Store a 16-bit half word from memory
+	 * 
+	 * @param addr address
+	 * @param hw halfWord
+	 */
+	void storeHalfWord(uint32_t addr, uint16_t hw)
+	{
+		storeByte(addr, (uint8_t)(hw & 0x00ff));
+		storeByte(addr+1, (uint8_t)(hw & 0xff00) >> 8);
+	}
+
+	/**
+	 * @brief Store a 8-bit byte word from memory
+	 * 
+	 * @param addr address
+	 * @param byte byte
+	 */
+	void storeByte(uint32_t addr, uint8_t byte)
+	{
+		if(!isValidAddress(addr))
+		{
+			char errmsg[40];
+			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			throwError("MEM1", errmsg, true);
+			return;
+		}
+		mem[addr] = byte;
+	}
+
+	/**
+	 * @brief Initialize memory from an elf file
+	 * only sections that match flag signatures are loaded
+	 * 
+	 * @param ifile filename
+	 * @param flags_signatures allowed flag signatures
+	 */
+	unsigned int initFromElf(std::string ifile, std::vector<int> flags_signatures)
+	{
+		// Initialize Memory object from input ELF File
+		ELFIO::elfio reader;
+
+		// Load file into elf reader
+		if (!reader.load(ifile)) 
+		{
+			throwError("INIT0", "Can't find or process ELF file : " + ifile + "\n", true);
+		}
+
+		// Check ELF Class, Endiness & segment count
+		if(reader.get_class() != ELFCLASS32)
+			throwError("INIT1", "Elf file format invalid: should be 32-bit elf\n", true);
+		if(reader.get_encoding() != ELFDATA2LSB)
+			throwError("INIT2", "Elf file format invalid: should be little Endian\n", true);
+
+		ELFIO::Elf_Half seg_num = reader.segments.size();
+
+		if(seg_num == 0)
+			throwError("INIT3", "Elf file format invalid: should consist of atleast one section\n", true);
+
+
+		// Read elf and initialize memory
+		std::cout << "Segments found : "<< seg_num <<"\n";
+
+		unsigned int i = 0;
+		while (i < seg_num) // iterate over all segments
+		{
+			const ELFIO::segment * seg = reader.segments[i];
+
+			// Get segment properties
+			
+			if (seg->get_type() == SHT_PROGBITS)
+			{
+				int seg_flags = reader.segments[i]->get_flags();
+
+				if(flags_signatures.end() != std::find(flags_signatures.begin(), flags_signatures.end(), seg_flags))	// Flag found in signature list
+				{
+
+					const char* seg_data = reader.segments[i]->get_data();
+					const uint seg_size = reader.segments[i]->get_file_size();
+					ELFIO::Elf64_Addr seg_strt_addr = reader.segments[i]->get_physical_address();
+
+					printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+					
+					long unsigned int offset = 0;
+					while(offset<seg_size)
+					{
+						storeByte(seg_strt_addr + offset, seg_data[offset]);
+						offset++;
+					}
+
+					printf("done\n");
+				}
+			}
+			i++;
+		}
+	
+		//unsigned int entry_point = 
+		/*bool entry_point_found = false;
+		if (!entry_point_found)
+		{
+			char errmsg[60];
+			sprintf(errmsg, "Entry point not found in elf; defaulting to 0x%08X", default_entry_point);
+			throwWarning("INIT~", errmsg);
+		}
+		else*/
+		return (unsigned int) reader.get_entry();
 	}
 };
+
 
 /**
  * @brief Backend class
@@ -233,29 +421,43 @@ class Backend
 	// Testbench
 	TESTBENCH<VAtomRVSoC> *tb;
 
-	// Instruction memory
-	Memory * imem;
+	// memory
+	Memory * mem;
 
 	// ==== STATE ====
-	enum CpuState{FETCH, EXECUTE};
-	CpuState cpu_state;
+	unsigned int pc_f;
+	unsigned int ins_f;
 
-	unsigned int pc;
+	unsigned int pc_e;
+	unsigned int ins_e;
+	
 	unsigned int rf[32];
 
-	unsigned int ir;
-	
+
 	/**
 	 * @brief Construct a new Backend object
 	 * 
-	 * @param imem_init_file init_file
+	 * @param mem_init_file init_file
 	 */
-	Backend(std::string imem_init_file)
+	Backend(std::string mem_init_file, unsigned int mem_size)
 	{
 		tb = new TESTBENCH<VAtomRVSoC>();
-		imem = new Memory(2000, imem_init_file);
+		mem = new Memory(mem_size);
+
+		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
+		printf("Entry point : 0x%08X\n", entry_point);
+
+		// Set entry point
+		tb->m_core->AtomRVSoC->atom->ProgramCounter = entry_point;
+
+		tb->m_core->eval();
+
+		// get initial signal values
 		refreshData();
+		
+		std::cout << "Initialization complete!\n";
 	}
+
 
 	/**
 	 * @brief Destroy the Backend object
@@ -263,8 +465,9 @@ class Backend
 	~Backend()
 	{
 		delete tb;
-		delete imem;
+		delete mem;
 	}
+
 
 	/**
 	 * @brief reset the backend
@@ -274,51 +477,92 @@ class Backend
 		tb->reset();
 	}
 
+	void serviceMemoryRequest()
+	{
+		// Imem Port Read
+		tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+
+		// Dmem Port Read
+		uint opcode = (tb->m_core->AtomRVSoC->atom->InstructionRegister) & 0x0000007f;
+		if(opcode == 0b0000011)	// Load instruction
+		{
+			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
+		}
+
+		// Dmem Port Write
+		if(tb->m_core->dmem_we_o)
+		{
+			switch(tb->m_core->dmem_access_width_o)
+			{
+				case 0b000:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
+				case 0b001:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
+				case 0b010:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
+			}
+		}
+	}
+
 	/**
 	 * @brief probe all internal signals and regsters and 
 	 * update backend state
 	 */
 	void refreshData()
 	{
-		cpu_state = (CpuState)tb->m_core->AtomRVSoC->atom->ProcessorState;
-		pc = tb->m_core->AtomRVSoC->atom->ProgramCounter;
-		ir = tb->m_core->AtomRVSoC->atom->InstructionRegister;
+		pc_f = tb->m_core->AtomRVSoC->atom->ProgramCounter;
+		pc_e = tb->m_core->AtomRVSoC->atom->ProgramCounter_Old;
+
+		ins_e = tb->m_core->AtomRVSoC->atom->InstructionRegister;
 		for(int i=0; i<32; i++)
-			rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i];
+		{
+			if(i==0)
+				rf[i] = 0;
+			else
+				rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i-1];
+		}
 	}
+
 
 	/**
 	 * @brief Display state data on console
 	 */
 	void displayData()
 	{
-		if(cpu_state == FETCH)
+		/*if(cpu_state == FETCH)
 		{
 			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
 			return;
-		}
-		std::cout << "E-< " << tb->m_tickcount <<" >------------------------------------------------------------\n";
-
-		
-		printf(" pc : 0x%08X   ir : 0x%08X \n\n", pc , ir); 
-
-		int cols = 4; // no of coloumns per rows
-		/*for(int i=0; i<32; i++)	// print in left-right fashion
-		{
-			printf("r%-2d: 0x%08X   ", i, rf[i]);
-			if(i%cols == cols-1)
-				printf("\n");
 		}*/
-		for(int i=0; i<32/cols; i++)	// print in topdown fashion
-		{
-			for(int j=0; j<cols; j++)
-			{
-				printf(" r%-2d: 0x%08X  ", i+4*j, rf[i]);
-			}
-			printf("\n");
-		}
+		unsigned int change = pc_f-pc_e;
+		std::string jump = "    ";
+		if(tb->m_core->AtomRVSoC->atom->__PVT__jump_decision)
+			jump = "jump";
+		else
+			jump = "    ";
 
+		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
+		printf("F-STAGE  |  pc : 0x%08X  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
+		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
+		std::cout << "---------------------------------------------------\n";
+						
+		if(verbose_flag)
+		{
+			int cols = 2; // no of coloumns per rows
+			/*for(int i=0; i<32; i++)	// print in left-right fashion
+			{
+				printf("r%-2d: 0x%08X   ", i, rf[i]);
+				if(i%cols == cols-1)
+					printf("\n");
+			}*/
+			for(int i=0; i<32/cols; i++)	// print in topdown fashion
+			{
+				for(int j=0; j<cols; j++)
+				{
+					printf(" %s: 0x%08X  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
+				}
+				printf("\n");
+			}
+		}
 	}
+
 
 	/**
 	 * @brief Tick for one cycle
@@ -326,9 +570,16 @@ class Backend
 	 */
 	void tick()
 	{
-		tb->m_core->imem_data_i = imem->fetchWord(tb->m_core->imem_addr_o);
+		serviceMemoryRequest();
 		tb->tick();
+		ins_f = tb->m_core->imem_data_i;
+		if (tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		{
+			throwSuccessMessage("Exiting due to EBREAK");
+			exit(EXIT_SUCCESS);
+		}
 	}
+
 
 	/**
 	 * @brief check if simulation is done
@@ -340,47 +591,4 @@ class Backend
 	{
 		return tb->done();
 	}
-
 };
-
-
-
-/*void runBackend()
-{
-	while(true)
-	{
-		if(backend_finished || frontend_finished)
-				return;
-
-		if(backend_run | backend_tick)
-		{
-			if (backend_tick)	// uns fo this current cycle only and turns backend tick as false, backennd_tick needs to be settue by frontend to again execute next cycle
-				backend_tick = false;
-
-			backend_finished = tb->done();
-
-			// Registers
-			d.PC = tb->m_core->Top->luna_soc->CPU->PC;
-			
-			// Signals
-			d.Signals[0] = tb->m_core->Top->luna_soc->CPU->D_Opcode;
-			d.Signals[1] = tb->m_core->Top->luna_soc->CPU->D_Func;
-			d.Signals[2] = tb->m_core->Top->luna_soc->CPU->D_Rd_Sel;
-			d.Signals[3] = tb->m_core->Top->luna_soc->CPU->D_Rs_Sel;
-			d.Signals[4] = tb->m_core->Top->luna_soc->CPU->D_Imm;
-			d.Signals[5] = tb->m_core->Top->luna_soc->CPU->D_BrReg;
-			d.Signals[6] = tb->m_core->Top->luna_soc->CPU->D_BrLink;
-
-			for(int i=0; i<16; i++)
-			{
-				d.REG[i] = tb->m_core->Top->luna_soc->CPU->rf->regs[i];
-			}
-			
-
-			
-
-			usleep(backend_delay);
-		}
-	}
-}
-*/

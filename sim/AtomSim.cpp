@@ -12,18 +12,21 @@ const unsigned int Sec = 1000000;	// microseconds in 1s
 const unsigned int mSec = 1000;		// mictoseconds in 1ms
 
 // Simulation Parameters
-unsigned int delay_amt = 100 * mSec; //default 
+unsigned int delay_amt = 1000 * mSec; //default 
 
 // This is used to display reason for simulation termination
 std::string end_simulation_reason;
-
-#include "defs.hpp"
-#include "backend.hpp"
 
 // Global flags
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
+
+const unsigned int default_mem_size = 131072;	// 128KB
+const unsigned int default_entry_point = 0x00000000;
+
+#include "defs.hpp"
+#include "backend.hpp"
 
 // Input file
 std::string ifile = "";
@@ -46,8 +49,7 @@ bool parse_commandline_args(const int argc, char**argv)
     // ============= STEP-2: PARSE COMMAND-LINE ARGUMENTS ================
     if(argc < 2)
     {
-        std::cerr << "!Error: too few arguments\n For help, try : atomsim --help\n";
-        return true;
+		throwError("CLI0", "Too few arguments\n For help, try : atomsim --help\n", true);
     }
     int i = 1;
     while(i < argc)
@@ -75,19 +77,7 @@ bool parse_commandline_args(const int argc, char**argv)
                 std::cout << Info_short_help_msg;
                 return true;
             }
-			else if(argument == "--trace-dir")
-            {
-				// print long help message
-                if(i == argc-1)
-				{
-					std::cerr << "!Error: Trace directory not provided\n";
-                	return true;
-				}
-				i++;
-				trace_dir = argv[i];
-				i++;
-            }
-            else if(argument == "--help")
+			else if(argument == "--help")
             {
 				// print long help message
                 std::cout << Info_long_help_msg;
@@ -97,12 +87,22 @@ bool parse_commandline_args(const int argc, char**argv)
             {
 				// print charon version info
                 std::cout << Info_version << std::endl << Info_copyright;
-                return true;
             }
+			else if(argument == "--trace-dir")
+            {
+				// print long help message
+                if(i == argc-1)
+				{
+					throwError("CLI1", "Trace directory not provided\n", true);
+				}
+				i++;
+				trace_dir = argv[i];
+				i++;
+            }
+            
             else
             {
-                std::cerr << "!Error: Unknown argument: " << argument << "\n";
-                return true;
+				throwError("CLI2", "Unknown argument: " + argument + "\n", true);
             }
         }
         else
@@ -110,8 +110,7 @@ bool parse_commandline_args(const int argc, char**argv)
             // specify input files
             if(ifile != "")
             {
-                std::cerr << "!ERROR: Multiple Input files povided\n";
-                return true;
+				throwError("CLI3", "Multiple Input files povided\n", true);
             }
             else
                 ifile = argument;
@@ -122,8 +121,7 @@ bool parse_commandline_args(const int argc, char**argv)
 	if (ifile == "")
 	{
 		// No input file povided
-		std::cerr << "!ERROR: No input file povided\n";
-		return true;
+		throwError("CLI4", "No input file povided\n", true);
 	}
     return false;
 }
@@ -134,7 +132,7 @@ bool parse_commandline_args(const int argc, char**argv)
  * @param cycles no to cycles to run for
  * @param b pointer to backend object
  */
-void tick(long unsigned int cycles, Backend * b)
+void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 {
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
@@ -142,9 +140,23 @@ void tick(long unsigned int cycles, Backend * b)
 		{
 			break;
 		}
-	 	b->refreshData();
-	 	b->displayData();
-	 	b->tick();
+		if(show_data)
+		{
+			b->tick();
+			b->refreshData();
+			b->displayData();
+		}
+		else
+		{
+			b->refreshData();
+			b->tick();
+			
+			// Rx Listener
+			if(b->mem->fetchByte(0x0001fffe) == 1)
+			{
+				std::cout << (char)b->mem->fetchByte(0x0001ffff);
+			}
+		}
 	}
 }
 
@@ -161,19 +173,12 @@ int main(int argc, char **argv)
 	// Parse commandline arguments
 	if(parse_commandline_args(argc, argv))
 		return 0;
-	
-	// Display Atomsim banner
-	std::cout << "|=================================================== \n";
-	std::cout << "|                   AtomSim v1.0\n";
-	std::cout << "|=================================================== \n\n";
-	std::cout << "  Author : Saurabh Singh (saurabh.s99100@gmail.com)\n\n";
-	std::cout << "  File : "<< ifile <<"      Ready...\n\n";
 
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 
 	// Create a new backend instance
-	Backend bkend(ifile);
+	Backend bkend(ifile, default_mem_size);
 
 	// Run simulation
 	if(debug_mode)
@@ -214,14 +219,47 @@ int main(int argc, char **argv)
 			}
 			else if(token[0] == "")
 			{
-				// Run for 2 cycles
-				tick(2, &bkend);
+				// Run for 1 cycles
+				tick(1, &bkend);
 			}
-			else if(token[0] == "run")
+			else if(token[0] == "verbose-on")
+			{
+				// turn on verbose
+				verbose_flag = true;
+			}
+			else if(token[0] == "verbose-off")
+			{
+				// turn on verbose
+				verbose_flag = false;
+			}
+			else if(token[0] == "mem")
+			{
+				if(token.size()<2)
+					throwError("DBG~", "\"mem\" command expects address as argument\n");
+				unsigned int addr = std::stoi(token[1]);
+				printf("%08X : %02X %02X %02X %02X\n", addr, bkend.mem->fetchByte(addr),
+				 bkend.mem->fetchByte(addr+1),bkend.mem->fetchByte(addr+2), bkend.mem->fetchByte(addr+3));
+			}
+			else if(token[0] == "dumpmem")
+			{
+				if(token.size()<2)
+					throwError("DBG~", "\"dumpmem\" command expects filename as argument\n");
+				
+				// turn on verbose
+				std::vector<std::string> fcontents;
+				for(int i=0; i<bkend.mem->size-4; i+=4)
+				{	
+					char hex [30];
+					sprintf(hex, "0x%08X\t:\t0x%08X", i, bkend.mem->fetchWord(i));
+					fcontents.push_back(hex);
+				}
+				fWrite(fcontents, token[1]);
+			}
+			else if(token[0] == "for")
 			{
 				// run for specified cycles
 				if(token.size()<2)
-					std::cout << "!ERROR: run expects one argument" <<"\n";
+					throwError("DBG0", "\"for\" command expects one argument\n");
 				else
 					tick(std::stoi(token[1]), &bkend);
 			}
@@ -229,7 +267,7 @@ int main(int argc, char **argv)
 			{
 				// Enable trace
 				if(token.size()<2)
-					std::cout << "!ERROR: trace command expects a filename" <<"\n";
+					throwError("DBG1", "Trace command expects a filename\n");
 				else
 				{
 					if(trace_enabled == false)
@@ -257,14 +295,15 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				std::cout << "!ERROR: Unknown command" <<"\n";
+				throwError("DBG2", "Unknown command \"" + token[0] + "\"\n");
 			}
 			input.clear();
 		}
 	}
 	else
 	{
-		tick(-1, &bkend);
+		std::cout << "_________________________________________________________________\n";
+		tick(-1, &bkend, false);
 	}
 
 	if(trace_enabled) // if trace file is open, close it before exiting
