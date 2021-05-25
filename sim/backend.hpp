@@ -233,7 +233,7 @@ class Memory
 	 */
 	bool isValidAddress(uint32_t addr)
 	{
-		return (addr < size-4);
+		return (addr < size);
 	}
 
 	/**
@@ -245,30 +245,71 @@ class Memory
 	uint32_t fetchWord(uint32_t addr)
 	{
 		uint32_t data;
-		if(!isValidAddress(addr))
-			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
+		uint32_t byte0 = (uint32_t)fetchByte(addr);
+		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
+		uint32_t byte2 = (uint32_t)fetchByte(addr+2);
+		uint32_t byte3 = (uint32_t)fetchByte(addr+3);
 
-		uint32_t byte0 = (uint32_t)mem[addr];
-		uint32_t byte1 = (uint32_t)mem[addr+1];
-		uint32_t byte2 = (uint32_t)mem[addr+2];
-		uint32_t byte3 = (uint32_t)mem[addr+3];
+		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) | (byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+	}
 
-		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) |(byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+	/**
+	 * @brief Fetch a 16-bit half word from memory
+	 * 
+	 * @param addr address
+	 * @return uint16_t data
+	 */
+	uint16_t fetchHalfWord(uint32_t addr)
+	{
+		uint32_t data;
+		uint32_t byte0 = (uint32_t)fetchByte(addr);
+		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
+
+		return (byte1<<8 & 0xff00) | (byte0 & 0x00ff);
 	}
 
 	/**
 	 * @brief Fetch a 8-bitbyte word from memory
 	 * 
 	 * @param addr address
-	 * @return uint32_t data
+	 * @return uint8_t data
 	 */
 	uint8_t fetchByte(uint32_t addr)
 	{
-		uint32_t data;
 		if(!isValidAddress(addr))
-			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
-		
-		return (uint32_t)mem[addr];
+		{
+			char errmsg[40];
+			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			throwError("MEM1", errmsg, true);
+			return 0;
+		}
+		return (uint8_t) mem[addr];
+	}
+
+	/**
+	 * @brief Store a 32-bit word to memory
+	 * 
+	 * @param addr address
+	 * @param w Word
+	 */
+	void storeWord(uint32_t addr, uint32_t w)
+	{
+		storeByte(addr, (uint8_t)(w & 0x000000ff));
+		storeByte(addr+1, (uint8_t)(w & 0x0000ff00) >> 8);
+		storeByte(addr+2, (uint8_t)(w & 0x00ff0000) >> 16);
+		storeByte(addr+3, (uint8_t)(w & 0xff000000) >> 24);
+	}
+
+	/**
+	 * @brief Store a 16-bit half word from memory
+	 * 
+	 * @param addr address
+	 * @param hw halfWord
+	 */
+	void storeHalfWord(uint32_t addr, uint16_t hw)
+	{
+		storeByte(addr, (uint8_t)(hw & 0x00ff));
+		storeByte(addr+1, (uint8_t)(hw & 0xff00) >> 8);
 	}
 
 	/**
@@ -279,98 +320,95 @@ class Memory
 	 */
 	void storeByte(uint32_t addr, uint8_t byte)
 	{
-		uint32_t data;
 		if(!isValidAddress(addr))
-			throwError("MEM1", "Address out of bounds " + std::to_string(addr) + "\n", true);
-		else
 		{
-			mem[addr] = byte;
+			char errmsg[40];
+			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			throwError("MEM1", errmsg, true);
+			return;
 		}
+		mem[addr] = byte;
+	}
+
+	/**
+	 * @brief Initialize memory from an elf file
+	 * only sections that match flag signatures are loaded
+	 * 
+	 * @param ifile filename
+	 * @param flags_signatures allowed flag signatures
+	 */
+	unsigned int initFromElf(std::string ifile, std::vector<int> flags_signatures)
+	{
+		// Initialize Memory object from input ELF File
+		ELFIO::elfio reader;
+
+		// Load file into elf reader
+		if (!reader.load(ifile)) 
+		{
+			throwError("INIT0", "Can't find or process ELF file : " + ifile + "\n", true);
+		}
+
+		// Check ELF Class, Endiness & segment count
+		if(reader.get_class() != ELFCLASS32)
+			throwError("INIT1", "Elf file format invalid: should be 32-bit elf\n", true);
+		if(reader.get_encoding() != ELFDATA2LSB)
+			throwError("INIT2", "Elf file format invalid: should be little Endian\n", true);
+
+		ELFIO::Elf_Half seg_num = reader.segments.size();
+
+		if(seg_num == 0)
+			throwError("INIT3", "Elf file format invalid: should consist of atleast one section\n", true);
+
+
+		// Read elf and initialize memory
+		std::cout << "Segments found : "<< seg_num <<"\n";
+
+		unsigned int i = 0;
+		while (i < seg_num) // iterate over all segments
+		{
+			const ELFIO::segment * seg = reader.segments[i];
+
+			// Get segment properties
+			
+			if (seg->get_type() == SHT_PROGBITS)
+			{
+				int seg_flags = reader.segments[i]->get_flags();
+
+				if(flags_signatures.end() != std::find(flags_signatures.begin(), flags_signatures.end(), seg_flags))	// Flag found in signature list
+				{
+
+					const char* seg_data = reader.segments[i]->get_data();
+					const uint seg_size = reader.segments[i]->get_file_size();
+					ELFIO::Elf64_Addr seg_strt_addr = reader.segments[i]->get_physical_address();
+
+					printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+					
+					long unsigned int offset = 0;
+					while(offset<seg_size)
+					{
+						storeByte(seg_strt_addr + offset, seg_data[offset]);
+						offset++;
+					}
+
+					printf("done\n");
+				}
+			}
+			i++;
+		}
+	
+		//unsigned int entry_point = 
+		/*bool entry_point_found = false;
+		if (!entry_point_found)
+		{
+			char errmsg[60];
+			sprintf(errmsg, "Entry point not found in elf; defaulting to 0x%08X", default_entry_point);
+			throwWarning("INIT~", errmsg);
+		}
+		else*/
+		return (unsigned int) reader.get_entry();
 	}
 };
 
-
-
-/**
- * @brief Initialize IMEM & DMEM fom an elf file
- * 
- * @param imem pointer to imem object
- * @param dmem pointer to dmem object
- * @param ifile elf file name
- * @throws char *
- */
-void initMemElf(Memory * imem, Memory * dmem, std::string ifile)
-{
-    // Initialize Memory object from input ELF File
-    ELFIO::elfio reader;
-
-    // Load file into elf reader
-    if (!reader.load(ifile)) 
-    {
-        throwError("INIT0", "Can't find or process ELF file : " + ifile + "\n", true);
-    }
-
-    // Check ELF Class, Endiness & segment count
-    if(reader.get_class() != ELFCLASS32)
-		throwError("INIT1", "Elf file format invalid: should be 32-bit elf\n", true);
-    if(reader.get_encoding() != ELFDATA2LSB)
-		throwError("INIT2", "Elf file format invalid: should be little Endian\n", true);
-    //if(reader.segments.size() < 2)
-	//	throwError("INIT3", "Elf file format invalid: should consist of atleast two sections\n", true);
-
-    ELFIO::Elf_Half seg_num = reader.segments.size();
-
-	if(seg_num == 0)
-		throwError("INIT~", "Elf file does not contain any segments\n", true);
-
-    // Read elf and initialize memory
-    //bool imem_done = false;
-    //bool dmem_done = false;
-	std::cout << " Segments found : "<< seg_num <<"\n";
-
-    for (int i = 0; i < seg_num; ++i) // iterate over all segments
-    {
-        const ELFIO::segment * pseg = reader.segments[i];
-		std::cout << " Loading Segment @ "<< reader.segments[i]->get_physical_address() <<"\n";
-
-        // Access segments's data
-        if(pseg->get_type() == SHT_PROGBITS)
-        {
-            const char* p = reader.segments[i]->get_data();
-            const uint sz = reader.segments[i]->get_file_size();
-
-
-            std::string segType = "UNKNOWN";
-            if(reader.segments[i]->get_flags() == 5) // Read & Execute Pemission =>> TEXT Segment
-            {
-                segType = "TEXT";
-                //imem_done = true;
-            }
-            else if(reader.segments[i]->get_flags() == 6) // Read & Write Pemission =>> DATA Segment
-            {
-                segType = "DATA";
-                //imem_done = true;
-            }
-
-            // Initialize
-            ELFIO::Elf64_Addr starting_address = reader.segments[i]->get_physical_address();
-							std::cout << "---5\n";
-			unsigned int i=0;
-            while(i<sz)
-            {
-                if(segType == "TEXT")       // initialize imem
-                {
-                    imem->storeByte(i+starting_address, p[i]);
-                }
-                else if (segType == "DATA") // initialize dmem
-                {
-                    dmem->storeByte(i+starting_address, p[i]);
-                }
-                i++;
-            }
-        }
-    }
-}
 
 /**
  * @brief Backend class
@@ -383,11 +421,8 @@ class Backend
 	// Testbench
 	TESTBENCH<VAtomRVSoC> *tb;
 
-	// Instruction memory
-	Memory * imem;
-	
-	// Data memory
-	Memory * dmem;
+	// memory
+	Memory * mem;
 
 	// ==== STATE ====
 	unsigned int pc_f;
@@ -398,21 +433,29 @@ class Backend
 	
 	unsigned int rf[32];
 
-	
-	
+
 	/**
 	 * @brief Construct a new Backend object
 	 * 
-	 * @param imem_init_file init_file
+	 * @param mem_init_file init_file
 	 */
-	Backend(std::string imem_init_file, unsigned int mem_size)
+	Backend(std::string mem_init_file, unsigned int mem_size)
 	{
 		tb = new TESTBENCH<VAtomRVSoC>();
-		imem = new Memory(mem_size);
+		mem = new Memory(mem_size);
 
-		initMemElf(imem, dmem, imem_init_file);
+		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
+		printf("Entry point : 0x%08X\n", entry_point);
 
+		// Set entry point
+		tb->m_core->AtomRVSoC->atom->ProgramCounter = entry_point;
+
+		tb->m_core->eval();
+
+		// get initial signal values
 		refreshData();
+		
+		std::cout << "Initialization complete!\n";
 	}
 
 
@@ -422,7 +465,7 @@ class Backend
 	~Backend()
 	{
 		delete tb;
-		delete imem;
+		delete mem;
 	}
 
 
@@ -436,8 +479,26 @@ class Backend
 
 	void serviceMemoryRequest()
 	{
-		tb->m_core->imem_data_i = imem->fetchWord(tb->m_core->imem_addr_o);
-		printf("Memory Requested : 0x%08X   Serviced : 0x%08X\n", tb->m_core->imem_addr_o, imem->fetchWord(tb->m_core->imem_addr_o));
+		// Imem Port Read
+		tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+
+		// Dmem Port Read
+		uint opcode = (tb->m_core->AtomRVSoC->atom->InstructionRegister) & 0x0000007f;
+		if(opcode == 0b0000011)	// Load instruction
+		{
+			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
+		}
+
+		// Dmem Port Write
+		if(tb->m_core->dmem_we_o)
+		{
+			switch(tb->m_core->dmem_access_width_o)
+			{
+				case 0b000:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
+				case 0b001:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
+				case 0b010:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
+			}
+		}
 	}
 
 	/**
@@ -477,11 +538,11 @@ class Backend
 		else
 			jump = "    ";
 
-		std::cout << "-< " << tb->m_tickcount <<" >---------------------------------------------------------------\n";
-		printf("F-STAGE  |  pc : 0x%08X  (%d) (%s)\n"/*&ir : 0x%08X   []\n"*/, pc_f , change, jump.c_str()/*, ins_f*/); 
+		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
+		printf("F-STAGE  |  pc : 0x%08X  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
 		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
-		std::cout << "---------------------------------------------------------------------\n";
-
+		std::cout << "---------------------------------------------------\n";
+						
 		if(verbose_flag)
 		{
 			int cols = 2; // no of coloumns per rows
@@ -512,7 +573,11 @@ class Backend
 		serviceMemoryRequest();
 		tb->tick();
 		ins_f = tb->m_core->imem_data_i;
-
+		if (tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		{
+			throwSuccessMessage("Exiting due to EBREAK");
+			exit(EXIT_SUCCESS);
+		}
 	}
 
 

@@ -179,7 +179,7 @@ In this mode of simulation, Contents of Program counter (in both stages), Instru
 To invoke interactive debug mode, invoke atomsim with `-d` & `-v`flag:
 
 ```
-$ atomsim hello.elf -d -v
+$ ./build/bin/atomsim hello.elf -d -v
 Segments found : 2
 Loading Segment 0 @ 0x00000000 --- done
 Loading Segment 1 @ 0x00010000 --- done
@@ -334,7 +334,7 @@ You can advance by one instruction by pressing the ***enter-key***. You can also
 In this mode of simulation, no debug information is printed. Instead memory addresses `TX_ADDRESS=0x0001ffff` & `TX_ACK_ADDRESS = 0x0001fffe` are listened. The contents of `TX_ADDRESS` is printed on stdout whenever LSB of `TX_ACK_ADDRESS` shows `0->1` transition.
 
 ```
-$ atomsim hello.elf 
+$ ./build/bin/atomsim hello.elf 
 Segments found : 2
 Loading Segment 0 @ 0x00000000 --- done
 Loading Segment 1 @ 0x00010000 --- done
