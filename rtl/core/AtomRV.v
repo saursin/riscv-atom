@@ -225,34 +225,30 @@ Alu alu
 
 
 
-function compare;
-    input   [31:0]  A;
-    input   [31:0]  B;
-    input   [2:0]   comparison_type;
+/*
+    COMPARATOR
+*/
+reg comparison_result;
 
-    reg signed  [31:0]  A_signed = A;
-    reg signed  [31:0]  B_signed = B;
-    begin
-        case(comparison_type)
-            `__CMP_UN__   :   compare = 1'b1;
-            `__CMP_EQ__   :   compare = (A == B);
-            `__CMP_NQ__   :   compare = (A != B);
-            `__CMP_LT__   :   compare = (A_signed < B_signed);
-            `__CMP_GE__   :   compare = (A_signed >= B_signed);
-            `__CMP_LTU__  :   compare = (A < B);
-            `__CMP_GEU__  :   compare = (A >= B);
+wire [31:0] cmp_A = rf_rs1;
+wire [31:0] cmp_B = (d_cmp_b_op_sel) ? d_imm : rf_rs2;
+wire signed  [31:0]  cmp_A_signed = cmp_A;
+wire signed  [31:0]  cmp_B_signed = cmp_B;
 
-            default:    compare = 1'b0;
-        endcase
-    end
-endfunction
+always @(*) /* COMBINATORIAL*/    
+begin
+    case(d_comparison_type)
+        `__CMP_UN__   :   comparison_result = 1'b1;
+        `__CMP_EQ__   :   comparison_result = (cmp_A == cmp_B);
+        `__CMP_NQ__   :   comparison_result = (cmp_A != cmp_B);
+        `__CMP_LT__   :   comparison_result = (cmp_A_signed < cmp_B_signed);
+        `__CMP_GE__   :   comparison_result = (cmp_A_signed >= cmp_B_signed);
+        `__CMP_LTU__  :   comparison_result = (cmp_A < cmp_B);
+        `__CMP_GEU__  :   comparison_result = (cmp_A >= cmp_B);
 
-wire comparison_result = compare
-                        (
-                            rf_rs1, 
-                            ((d_cmp_b_op_sel) ? d_imm : rf_rs2), 
-                            d_comparison_type
-                        );
+        default:    comparison_result = 1'b0;
+    endcase
+end
 
 
 /*
