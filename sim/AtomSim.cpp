@@ -11,6 +11,10 @@
 const unsigned int Sec = 1000000;	// microseconds in 1s
 const unsigned int mSec = 1000;		// microseconds in 1ms
 
+// Dummy Communication
+const unsigned int TX_ADDRESS = 0x00012001;
+const unsigned int TX_ACK_ADDRESS = 0x00012002;
+
 // Simulation Parameters
 unsigned int delay_amt = 1000 * mSec; //default 
 
@@ -152,9 +156,9 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			b->tick();
 			
 			// Rx Listener
-			if(b->mem->fetchByte(0x0001fffe) == 1)
+			if(b->mem->fetchByte(TX_ACK_ADDRESS) == 1)
 			{
-				std::cout << (char)b->mem->fetchByte(0x0001ffff);
+				std::cout << (char)b->mem->fetchByte(TX_ADDRESS);
 			}
 		}
 	}
