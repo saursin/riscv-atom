@@ -9,7 +9,7 @@
 
 // Definitions
 const unsigned int Sec = 1000000;	// microseconds in 1s
-const unsigned int mSec = 1000;		// mictoseconds in 1ms
+const unsigned int mSec = 1000;		// microseconds in 1ms
 
 // Simulation Parameters
 unsigned int delay_amt = 1000 * mSec; //default 

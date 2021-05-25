@@ -38,24 +38,25 @@ Atom, when integrated with the system bus and Peripherals like counters, timers,
 Tentative specs are listed below:
 
 - Core: Atom (2-stage pipelined)
-
 - Bus Interface: Wishbone b4
-
 - ROM: 64Kb
-
 - RAM: 8Kb
-
 - Interrupts: 1 NMI + 32 Physical interrupts (PLIC)
-
 - GPIO: 16 (PWM enabled: 6)
-
 - SPI : 2
-
 - I2C: 2
-
 - Clock : []
 
-  
+Memory Map
+
+| Address                  | Description              |
+| ------------------------ | ------------------------ |
+| 0x00000000 - 0x00000FFFF | ROM (64 KB)              |
+| 0x00010000 - 0x000011FFF | RAM (8 KB)               |
+| 0x00012000               | RX                       |
+| 0x00012001               | TX                       |
+| 0x00012002               | TX_ACK                   |
+
 
 ## Prerequisites
 
