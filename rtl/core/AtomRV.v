@@ -154,22 +154,21 @@ Decode decode
 /*
     MEM_LOAD
 */
-function [31:0] memload;
-    input   [31:0]  value;
-    input   [2:0]   load_type;
+reg [31:0] memload;
 
-    begin
-        case(load_type)
-            3'b000:   memload = {{24{value[7]}}, value[7:0]};     // LB
-            3'b001:   memload = {{16{value[15]}}, value[15:0]};   // LH
-            3'b010:   memload = value;                            // LW
-            3'b100:   memload = {{24{1'b0}}, value[7:0]};         // LBU
-            3'b101:   memload = {{16{1'b0}}, value[15:0]};        // LHU
+always @(*) /* COMBINATORIAL */
+begin
+    case(d_mem_access_width)
+        3'b000:   memload = {{24{dmem_data_i[7]}}, dmem_data_i[7:0]};     // LB
+        3'b001:   memload = {{16{dmem_data_i[15]}}, dmem_data_i[15:0]};   // LH
+        3'b010:   memload = dmem_data_i;                            // LW
+        3'b100:   memload = {{24{1'b0}}, dmem_data_i[7:0]};         // LBU
+        3'b101:   memload = {{16{1'b0}}, dmem_data_i[15:0]};        // LHU
 
-            default: memload = 32'd0;
-        endcase 
-    end
-endfunction
+        default: memload = 32'd0;
+    endcase 
+end
+
 
 /*
     Regster File
@@ -183,7 +182,7 @@ always @(*) begin
         3'd1:   rf_rd_data = link_address;
         3'd2:   rf_rd_data = alu_out;
         3'd3:   rf_rd_data = {31'd0, comparison_result};
-        3'd4:   rf_rd_data = memload(dmem_data_i, d_mem_access_width);
+        3'd4:   rf_rd_data = memload;
 
         default: rf_rd_data = 32'd0;
     endcase
