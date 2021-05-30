@@ -1,6 +1,11 @@
+#ifndef __STDIO_H___
+#define __STDIO_H___
+
 #include "atomrv.h"
 
-void putchr(char c)
+#include "math.h"
+
+void putchar(char c)
 {
     volatile char* tx = (volatile char*) STDIO_TX_ADDRESS;
     volatile char* tx_ack = (volatile char*) STDIO_TX_ACK_ADDRESS;
@@ -11,17 +16,32 @@ void putchr(char c)
     *tx_ack = (char) 0;
 }
 
-char getchr()
+char getchar()
 {
     volatile char* rx = (volatile char*) STDIO_RX_ADDRESS;
     return *rx;
 }
 
-void prints(char* str)
+void putstring(char* str)
 {
     volatile char* tx = (volatile char*) STDIO_TX_ADDRESS;
     while (*str) {
-        putchr(*str);
+        putchar(*str);
         str++;
     }
 }
+
+void printnumber(int i)
+{
+    if(i/10!=0)
+    {
+        putchar(i%10);
+        printnumber((i-i%10)/10);
+    }
+    else if((i/10==0) && (i%10!=0) && (i>0))
+        putchar(i%10);
+    else if((i/10==0) && (i%10!=0) && (i<=0))
+        putchar(-i%10);
+}
+
+#endif // __STDIO_H___
