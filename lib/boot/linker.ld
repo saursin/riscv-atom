@@ -1,11 +1,12 @@
 /*
     LINKER SCRIPT
+
+    @See : https://sourceware.org/binutils/docs/ld/Basic-Script-Concepts.html
+    @See : https://interrupt.memfault.com/blog/how-to-write-linker-scripts-for-firmware
 */
 
-/*
-@ See : https://sourceware.org/binutils/docs/ld/Basic-Script-Concepts.html
-@ See : https://interrupt.memfault.com/blog/how-to-write-linker-scripts-for-firmware
-*/
+OUTPUT_ARCH( "riscv" )
+ENTRY(_start)
 
 /* MEMORY LAYOUT */
 MEMORY
