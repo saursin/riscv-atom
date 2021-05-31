@@ -1,3 +1,4 @@
+#include "../include/cxxopts/cxxopts.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
@@ -6,37 +7,29 @@
 #include <string>
 #include <vector>
 
-
 // Definitions
-const unsigned int Sec = 1000000;	// microseconds in 1s
-const unsigned int mSec = 1000;		// microseconds in 1ms
+const char default_tace_dir[] = "build/trace";
 
-// Dummy Communication
+const unsigned int default_mem_size = 131072;	// 128KB
+const unsigned int default_entry_point = 0x00000000;
+
 const unsigned int TX_ADDRESS = 0x00012001;
 const unsigned int TX_ACK_ADDRESS = 0x00012002;
-
-// Simulation Parameters
-unsigned int delay_amt = 1000 * mSec; //default 
-
-// This is used to display reason for simulation termination
-std::string end_simulation_reason;
 
 // Global flags
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
 
-const unsigned int default_mem_size = 131072;	// 128KB
-const unsigned int default_entry_point = 0x00000000;
+// Global vars
+
+// This is used to display reason for simulation termination
+std::string end_simulation_reason;
+
 
 #include "defs.hpp"
 #include "backend.hpp"
 
-// Input file
-std::string ifile = "";
-
-// Trace directory
-std::string trace_dir;
 
 /**
  * @brief parses command line arguments given to the assembler and 
@@ -45,89 +38,76 @@ std::string trace_dir;
  * 
  * @param argc argument count
  * @param argv argument vector
- * @return true if we need to exit after this step
- * @return false otherwise
+ * @param ifile input file name (pointer)
+ * @param tdir trace_dir (pointer)
  */
-bool parse_commandline_args(const int argc, char**argv)
+void parse_commandline_args(int argc, char**argv, std::string &ifile, std::string &tdir)
 {
-    // ============= STEP-2: PARSE COMMAND-LINE ARGUMENTS ================
-    if(argc < 2)
-    {
-		throwError("CLI0", "Too few arguments\n For help, try : atomsim --help\n", true);
-    }
-    int i = 1;
-    while(i < argc)
-    {
-        std::string argument = argv[i];
-
-        // check if it is a flag
-        if(argument[0] == '-')
-        {
-            if(argument == "-v")
-            {
-				// turn on verbose
-                verbose_flag = true;
-                i++;
-            }
-			else if(argument == "-d")
-            {
-				// run in debug mode
-                debug_mode = true;
-                i++;
-            }
-            else if(argument == "-h")
-            {
-				// show short help message
-                std::cout << Info_short_help_msg;
-                return true;
-            }
-			else if(argument == "--help")
-            {
-				// print long help message
-                std::cout << Info_long_help_msg;
-                return true;
-            }
-            else if(argument == "--version")
-            {
-				// print charon version info
-                std::cout << Info_version << std::endl << Info_copyright;
-            }
-			else if(argument == "--trace-dir")
-            {
-				// print long help message
-                if(i == argc-1)
-				{
-					throwError("CLI1", "Trace directory not provided\n", true);
-				}
-				i++;
-				trace_dir = argv[i];
-				i++;
-            }
-            
-            else
-            {
-				throwError("CLI2", "Unknown argument: " + argument + "\n", true);
-            }
-        }
-        else
-        {
-            // specify input files
-            if(ifile != "")
-            {
-				throwError("CLI3", "Multiple Input files povided\n", true);
-            }
-            else
-                ifile = argument;
-            i++;
-        }
-    }
-
-	if (ifile == "")
+	try
 	{
-		// No input file povided
-		throwError("CLI4", "No input file povided\n", true);
+		// Usage Message Header
+		cxxopts::Options options(argv[0], std::string(Info_version)+"\nSimulator for AtomRVSoC");
+		
+		options.positional_help("input").show_positional_help();
+
+
+		// Adding CLI options
+		options.add_options("General")
+		("h,help", "Show this message")
+		("version", "Show version information")
+		("i, input", "Specify an input file", cxxopts::value<std::string>(ifile));
+
+		options.add_options("Debug")
+		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
+		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
+		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
+		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(tdir)->default_value(tdir));
+
+
+	    options.parse_positional({"input"});
+
+		//options.allow_unrecognised_options();
+		
+		// parse CLI options
+		auto result = options.parse(argc, argv);
+
+		if(result.unmatched().size() != 0)
+		{
+			std::string unknown_args;
+			for(int i=0; i<result.unmatched().size(); i++)
+				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
+			throwError("ARGPARSE~", "Unrecognized aguments [" + unknown_args + "]", true);
+		}
+
+
+		if (result.count("help"))
+		{
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+		if (result.count("version"))
+		{
+			std::cout << Info_version << std::endl << Info_copyright << std::endl;
+			exit(0);
+		}
+		if (result.count("input")>1)
+		{
+			throwError("CLIPARSE~", "Multiple input files specified", true);
+			exit(0);
+		}
+		if (result.count("input")==0)
+		{
+			throwError("CLIPARSE~", "No input files specified", true);
+			exit(0);
+		}
+
+		std::cout << "Input File:" << ifile << "\n";
+
 	}
-    return false;
+	catch(const cxxopts::OptionException& e)
+	{
+		throwError("CLIPARSE~", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
+	}	
 }
 
 /**
@@ -174,10 +154,12 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
-	// Parse commandline arguments
-	if(parse_commandline_args(argc, argv))
-		return 0;
+	std::string ifile;
+	std::string trace_dir = default_tace_dir;
 
+	// Parse commandline arguments
+	parse_commandline_args(argc, argv, ifile, trace_dir);
+	
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 
