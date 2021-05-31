@@ -1,5 +1,5 @@
 # Simple Bootloader for c programs in atomRV core
-.global _start
+.globl _start
 
 .equ __SP_INIT, 0x00fc00
 
@@ -13,3 +13,5 @@ _start:
 
 _exit:
     ebreak
+
+main:

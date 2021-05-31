@@ -1,4 +1,4 @@
-#include "../include/cxxopts/cxxopts.hpp"
+#include "include/cxxopts/cxxopts.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>

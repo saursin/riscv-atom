@@ -1,4 +1,4 @@
-#include "../include/elfio/elfio.hpp"
+#include "include/elfio/elfio.hpp"
 
 
 #include "verilated.h"
