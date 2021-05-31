@@ -14,14 +14,14 @@ module Memory #(parameter ADDR_WIDTH = 16, parameter LINE_WIDTH = 16)
     /////////////// PORT LIST //////////////////
 
     // Read Port    (ASYNC)
-    input       [ADDR_WIDTH-1 : 0]  addr_i,
-    output      [LINE_WIDTH-1 : 0]  rd_data_o,
+    input   wire    [ADDR_WIDTH-1 : 0]  addr_i,
+    output  wire    [LINE_WIDTH-1 : 0]  rd_data_o,
 
     // Write Port   (SYNC)
-    input       [LINE_WIDTH-1 : 0]  wr_data_i,
-    input                           we_i,
+    input   wire    [LINE_WIDTH-1 : 0]  wr_data_i,
+    input   wire                        we_i,
 
-    input                           clk_i
+    input   wire                        clk_i
 );
 
     localparam DEPTH = (1<<ADDR_WIDTH);

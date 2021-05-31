@@ -11,9 +11,9 @@
 
 module Alu
 (
-    input [31:0]    A,
-    input [31:0]    B,
-    input [2:0]     Sel,
+    input   wire    [31:0]  A,
+    input   wire    [31:0]  B,
+    input   wire    [2:0]   Sel,
 
     output reg [31:0] Out
 );
