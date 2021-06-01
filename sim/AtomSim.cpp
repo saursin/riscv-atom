@@ -8,7 +8,7 @@
 #include <vector>
 
 // Definitions
-const char default_tace_dir[] = "build/trace";
+const char default_trace_dir[] = "build/trace";
 
 const unsigned int default_mem_size = 131072;	// 128KB
 const unsigned int default_entry_point = 0x00000000;
@@ -61,7 +61,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
 		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
 		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
-		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(tdir)->default_value(tdir));
+		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(tdir)->default_value(default_trace_dir));
 
 
 	    options.parse_positional({"input"});
@@ -154,17 +154,26 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
+	// Initialize verilator
+	Verilated::commandArgs(argc, argv);
+	
 	std::string ifile;
-	std::string trace_dir = default_tace_dir;
+	std::string trace_dir;
 
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile, trace_dir);
-	
-	// Initialize verilator
-	Verilated::commandArgs(argc, argv);
+
 
 	// Create a new backend instance
 	Backend bkend(ifile, default_mem_size);
+
+	if(trace_enabled == true)
+	{
+		std::string tracefile = trace_dir;
+		bkend.tb->openTrace(tracefile.c_str());
+		std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
+		trace_enabled = true;
+	}
 
 	// Run simulation
 	if(debug_mode)
@@ -258,7 +267,7 @@ int main(int argc, char **argv)
 				{
 					if(trace_enabled == false)
 					{
-						std::string tracefile = trace_dir+"/"+token[1];
+						std::string tracefile = trace_dir + "/"+token[1];
 						bkend.tb->openTrace(tracefile.c_str());
 						std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
 						trace_enabled = true;
