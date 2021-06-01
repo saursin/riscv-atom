@@ -132,7 +132,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		else
 		{
-			b->refreshData();
+			// b->refreshData();
 			b->tick();
 			
 			// Rx Listener
@@ -140,6 +140,12 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			{
 				std::cout << (char)b->mem->fetchByte(TX_ADDRESS);
 			}
+		}
+
+		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		{
+			throwSuccessMessage("Exiting due to EBREAK");
+			exit(EXIT_SUCCESS);
 		}
 	}
 }

@@ -576,11 +576,6 @@ class Backend
 		serviceMemoryRequest();
 		tb->tick();
 		ins_f = tb->m_core->imem_data_i;
-		if (tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
-		{
-			throwSuccessMessage("Exiting due to EBREAK");
-			exit(EXIT_SUCCESS);
-		}
 	}
 
 
