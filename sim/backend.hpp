@@ -573,13 +573,9 @@ class Backend
 	 */
 	void tick()
 	{
-		std::cout <<"ok-12-a\n";
 		serviceMemoryRequest();
-		std::cout <<"ok-12-b\n";
 		tb->tick();
-		std::cout <<"ok-12-c\n";
 		ins_f = tb->m_core->imem_data_i;
-		std::cout <<"ok-12-d\n";
 		if (tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
 		{
 			throwSuccessMessage("Exiting due to EBREAK");
