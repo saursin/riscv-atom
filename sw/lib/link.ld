@@ -11,22 +11,27 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    rom (rx) : ORIGIN = 0x00000000, LENGTH = 0x0000ffff /* 64 kb @ 0x0*/
-    ram (rwx): ORIGIN = 0x00010000, LENGTH = 0x00002000 /* 8 kb @ 0xffff (65535)*/
+    ROM (rx) : ORIGIN = 0x00000000, LENGTH = 64K /* 64 kb @ 0x0*/
+    RAM (rwx): ORIGIN = 0x00010000, LENGTH = 16K  /* 8 kb @ 0xffff (65535)*/
 }
-
-STACK_SIZE = 0x1000; /* 4kb */
 
 SECTIONS
 {
     /* ==== ROM ==== */
     .text : 
     { 
+        *(.boot*)
+        . = ORIGIN(ROM) + 0x100;
+        
+        _svector = .;
         KEEP(*(.vector*))   /* Keep all interrupt vector tables at very start of text section */
+
         *(.text)            /* Load all text sections (from all files) */
         *(.rodata)
+
+        . = ALIGN(4);
         _etext = .;
-    } > rom
+    } > ROM
 
 
 
@@ -34,27 +39,26 @@ SECTIONS
     /* The .data section contains static variables which have an initial value at boot. */
     .data :
     {
-        __sdata = .;
+        _sdata = .;
         *(.data*)
-        __edata = .;
-    } > ram /*> ram AT >rom*/
+        _global_pointer = . + 0x800;
 
-
-    /* stack section */
-    .stack (NOLOAD):
-    {
-        . = ALIGN(16);
-        . = . + STACK_SIZE;
-        . = ALIGN(16);
-    } > ram
+        . = ALIGN(4);
+        _edata = .;
+    } > RAM /*> ram AT >rom*/
 
     /* .bss section which is used for uninitialized data */
     .bss (NOLOAD) :
-    {   __sbss = .;
+    {   _sbss = .;
         *(.bss*)
         *(COMMON)
-        __ebss = .;
-    } > ram
+
+        . = ALIGN(4);
+        _ebss = .;
+    } > RAM
 
     _end = . ;
 }
+
+PROVIDE(_start_heap = _ebss);
+PROVIDE(_stack_pointer  = ORIGIN(RAM) + LENGTH(RAM));
