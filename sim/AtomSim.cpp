@@ -10,11 +10,13 @@
 // Definitions
 const char default_trace_dir[] = "build/trace";
 
-const unsigned int default_mem_size = 131072;	// 128KB
+const unsigned int default_mem_size = 98304;	// 96KB
 const unsigned int default_entry_point = 0x00000000;
 
-const unsigned int TX_ADDRESS = 0x00012001;
-const unsigned int TX_ACK_ADDRESS = 0x00012002;
+const unsigned int RX_ADDRESS   	=	0x00014000;
+const unsigned int TX_ADDRESS       =	0x00014001;
+const unsigned int RX_ACK_ADDRESS   =	0x00014002;
+const unsigned int TX_ACK_ADDRESS   =	0x00014003;
 
 // Global flags
 bool verbose_flag = false;
