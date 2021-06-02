@@ -349,7 +349,46 @@ Hello World!
 SUCCESS : Exiting due to EBREAK
 ```
 
+```
+$ ./build/bin/atomsim banner.elf
+Input File: banner.elf
+Segments found : 2
+Loading Segment 0 @ 0x00000000 --- done
+Loading Segment 1 @ 0x00010000 --- done
+Entry point : 0x00000000
+Initialization complete!
+_________________________________________________________________
 
+                  .';,.           ....;;;.  
+                 .ll,:o,                ':c,. 
+                 .dd;co'                  .cl,  
+                .:o:;,.                     'o:  
+                co.                          .oc  
+               ,o'          .coddoc.          'd,  
+               lc         .lXMMMMMMXl.         ll  
+              .o:         ;KMMMMMMMMK,         :o. 
+              .o:         'OMMMMMMMMO.         :o. 
+               co.         .o0XNNX0o.         .oc  
+               .o:           ..''..           :o.  
+                'o:                          :o'  
+                 .lc.                      .ll.  
+                   ,lc'                  'cl,   
+                     'cc:,..        ..,:c:'   
+                        .;::::;;;;::::;.    
+                              ....        
+     ____  _________ _______    __         __                 
+    / __ \/  _/ ___// ____/ |  / /  ____ _/ /_____  ____ ___  
+   / /_/ // / \__ \/ /    | | / /  / __ `/ __/ __ \/ __ `__ \ 
+  / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / /      
+ /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/  
+/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/
+
+UART tx at : 0x00014001
+UART rx at : 0x00014000
+Booting...
+5 + 6 = 11
+Exiting @ tick 9308 due to ebreak
+```
 
 ## FPGA Implementation
 
