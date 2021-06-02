@@ -13,10 +13,9 @@ const char default_trace_dir[] = "build/trace";
 const unsigned int default_mem_size = 98304;	// 96KB
 const unsigned int default_entry_point = 0x00000000;
 
-const unsigned int RX_ADDRESS   	=	0x00014000;
-const unsigned int TX_ADDRESS       =	0x00014001;
-const unsigned int RX_ACK_ADDRESS   =	0x00014002;
-const unsigned int TX_ACK_ADDRESS   =	0x00014003;
+const unsigned int UART_RX_ADDRESS   	=	0x00014000;
+const unsigned int UART_TX_ADDRESS      =	0x00014001;
+const unsigned int UART_SREG_ADDRESS    =	0x00014002;
 
 // Global flags
 bool verbose_flag = false;
@@ -119,7 +118,8 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
  * @param b pointer to backend object
  */
 void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
-{
+{	
+	static bool prev_tx_we = false;
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
 		if(b->done())
@@ -134,14 +134,16 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		else
 		{
-			// b->refreshData();
+			//b->refreshData();
 			b->tick();
 			
 			// Rx Listener
-			if(b->mem->fetchByte(TX_ACK_ADDRESS) == 1)
+			bool cur_tx_we = (b->mem->fetchByte(UART_SREG_ADDRESS) & 1);
+			if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
 			{
-				std::cout << (char)b->mem->fetchByte(TX_ADDRESS);
+				std::cout << (char)b->mem->fetchByte(UART_TX_ADDRESS);
 			}
+			prev_tx_we = cur_tx_we;
 		}
 
 		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)

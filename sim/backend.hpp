@@ -297,10 +297,10 @@ class Memory
 	 */
 	void storeWord(uint32_t addr, uint32_t w)
 	{
-		storeByte(addr, (uint8_t)(w & 0x000000ff));
-		storeByte(addr+1, (uint8_t)(w & 0x0000ff00) >> 8);
-		storeByte(addr+2, (uint8_t)(w & 0x00ff0000) >> 16);
-		storeByte(addr+3, (uint8_t)(w & 0xff000000) >> 24);
+		storeByte(addr,   (uint8_t) (w & 0x000000ff));
+		storeByte(addr+1, (uint8_t) ((w & 0x0000ff00) >> 8));
+		storeByte(addr+2, (uint8_t) ((w & 0x00ff0000) >> 16));
+		storeByte(addr+3, (uint8_t) ((w & 0xff000000) >> 24));
 	}
 
 	/**
@@ -311,8 +311,8 @@ class Memory
 	 */
 	void storeHalfWord(uint32_t addr, uint16_t hw)
 	{
-		storeByte(addr, (uint8_t)(hw & 0x00ff));
-		storeByte(addr+1, (uint8_t)(hw & 0xff00) >> 8);
+		storeByte(addr, (uint8_t) (hw & 0x00ff));
+		storeByte(addr+1, (uint8_t) ((hw & 0xff00) >> 8));
 	}
 
 	/**
@@ -497,9 +497,10 @@ class Backend
 		{
 			switch(tb->m_core->dmem_access_width_o)
 			{
-				case 0b000:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
-				case 0b001:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
-				case 0b010:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
+				case 0:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
+				case 1:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
+				case 2:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
+				default: mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
 			}
 		}
 	}
