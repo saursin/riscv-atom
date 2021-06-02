@@ -4,9 +4,10 @@
     ========================================
 */
 
+.section .boot, "ax", @progbits
 .global _start
+.global _exit
 
-.section .boot
 _start:
     # ===== initialization =====
 

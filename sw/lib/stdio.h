@@ -24,15 +24,11 @@ void print_str(const char* str);
  * 
  * @param val integer value
  */
-void print_dec(unsigned int val);
+//void print_dec(unsigned int val);
 
 
-/**
- * @brief Sends a hexadecimal value to std out
- * 
- * @param val 
- * @param digits 
- */
+void print_int(long int n, int base);
+
 void print_hex(unsigned int val, int digits);
 
 // ================= output functions =======================
@@ -52,5 +48,5 @@ char scan_chr();
  * @param str address of a string
  */
 void scan_str(char * str);
-    
+
 #endif // __STDIO_H__

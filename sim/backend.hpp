@@ -253,7 +253,7 @@ class Memory
 		uint32_t byte2 = (uint32_t)fetchByte(addr+2);
 		uint32_t byte3 = (uint32_t)fetchByte(addr+3);
 
-		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) | (byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+		return ((byte3<<24) & 0xff000000) | ((byte2<<16) & 0x00ff0000) | ((byte1<<8) & 0x0000ff00) | (byte0 & 0x000000ff);
 	}
 
 	/**
@@ -268,7 +268,7 @@ class Memory
 		uint32_t byte0 = (uint32_t)fetchByte(addr);
 		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
 
-		return (byte1<<8 & 0xff00) | (byte0 & 0x00ff);
+		return ((byte1<<8) & 0xff00) | (byte0 & 0x00ff);
 	}
 
 	/**

@@ -12,7 +12,6 @@
 // =========== IO Peripheral Register Addresses ========
 #define IO_UART_RX_ADDRESS        0x00014000
 #define IO_UART_TX_ADDRESS        0x00014001
-#define IO_UART_RX_ACK_ADDRESS    0x00014002
-#define IO_UART_TX_ACK_ADDRESS    0x00014003
+#define IO_UART_SREG_ADDRESS    0x00014002
 
 #endif //__ATOMRVSOC_H__

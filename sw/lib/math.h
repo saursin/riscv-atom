@@ -2,36 +2,6 @@
 #define __MATH_H__
 
 /**
- * @brief Computes multiplication of two ints
- * @see http://f.javier.io/rep/books/The%20Elements%20of%20Computing%20Systems.pdf [pg-292]
- * @param x num1
- * @param y num2
- * @return int product
- */
-int __mulsi3(int x, int y);
-
-
-/**
- * @brief Computes division of two ints
- * @see http://f.javier.io/rep/books/The%20Elements%20of%20Computing%20Systems.pdf [pg-292]
- * @param x dividend
- * @param y divisor
- * @return int quotient
- */
-int __divsi3(int x, int y);
-
-
-/**
- * @brief Computes remainder of division of two ints
- * 
- * @param x dividend
- * @param y divisor
- * @return int remainder
- */
-int __modsi3(int x, int y);
-
-
-/**
  * @brief Computes square root of given number
  * @see http://f.javier.io/rep/books/The%20Elements%20of%20Computing%20Systems.pdf [pg-293]
  * @param x num
