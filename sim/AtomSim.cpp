@@ -23,6 +23,8 @@ bool debug_mode = false;
 bool trace_enabled = false;
 
 // Global vars
+unsigned long int maxitr = 100000;
+
 
 // This is used to display reason for simulation termination
 std::string end_simulation_reason;
@@ -56,7 +58,8 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
-		("i, input", "Specify an input file", cxxopts::value<std::string>(ifile));
+		("i,input", "Specify an input file", cxxopts::value<std::string>(ifile))
+		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr));
 
 		options.add_options("Debug")
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
@@ -148,7 +151,12 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 
 		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
 		{
-			throwSuccessMessage("Exiting due to EBREAK");
+			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
+			exit(EXIT_SUCCESS);
+		}
+		if(b->tb->m_tickcount > maxitr)
+		{
+			throwError("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
 			exit(EXIT_SUCCESS);
 		}
 	}
