@@ -9,6 +9,7 @@
 
 // Definitions
 const char default_trace_dir[] = "build/trace";
+const char default_dump_dir[] = "build/trace";
 
 const unsigned int default_mem_size = 98304;	// 96KB
 const unsigned int default_entry_point = 0x00000000;
@@ -21,9 +22,11 @@ const unsigned int UART_SREG_ADDRESS    =	0x00014002;
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
+bool dump_on_ebreak = false;
 
 // Global vars
 unsigned long int maxitr = 100000;
+std::string trace_dir = default_trace_dir;
 
 
 // This is used to display reason for simulation termination
@@ -44,7 +47,7 @@ std::string end_simulation_reason;
  * @param ifile input file name (pointer)
  * @param tdir trace_dir (pointer)
  */
-void parse_commandline_args(int argc, char**argv, std::string &ifile, std::string &tdir)
+void parse_commandline_args(int argc, char**argv, std::string &ifile, std::string &trdir)
 {
 	try
 	{
@@ -65,7 +68,9 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
 		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
 		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
-		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(tdir)->default_value(default_trace_dir));
+		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trdir)->default_value(default_trace_dir))
+		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_on_ebreak)->default_value("false"));
+
 
 
 	    options.parse_positional({"input"});
@@ -137,7 +142,8 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		else
 		{
-			//b->refreshData();
+			if(dump_on_ebreak) 
+				b->refreshData();
 			b->tick();
 			
 			// Rx Listener
@@ -152,6 +158,28 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
 		{
 			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
+
+			if(dump_on_ebreak)
+			{
+				std::vector<std::string> fcontents;
+				
+				for(int i=0; i<34; i++)
+				{
+					char temp [50];
+					unsigned int tmpval;
+
+					switch(i-2)
+					{
+						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08X", tmpval); break;
+						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08X", tmpval); break;break;
+						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08X",i-2, tmpval); break;
+					}
+					fcontents.push_back(std::string(temp));
+				}
+				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
+			}
+
+
 			exit(EXIT_SUCCESS);
 		}
 		if(b->tb->m_tickcount > maxitr)
@@ -176,7 +204,6 @@ int main(int argc, char **argv)
 	Verilated::commandArgs(argc, argv);
 	
 	std::string ifile;
-	std::string trace_dir;
 
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile, trace_dir);
