@@ -29,33 +29,6 @@ const char Info_copyright[] =
 "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
 "SOFTWARE.\n";
 
-
-/**
- * @brief Short help message
- */
-const char Info_short_help_msg [] =
-"<needs update> \n"
-"Usage: atomsim  [-a] [-v] [-n] [-o <file>] [-h]\n" 
-"                    [--help] [--version] [--time] file(s)\n";
-
-
-/**
- * @brief long help message
- * 
- */
-const char Info_long_help_msg [] =
-"<needs update> \n"
-"Usage: atomsim [options] file(s)\n\n"
-"Options:\n"
-"    -p              Preprocess only\n"
-"    -a              Assemble only\n"
-"    -v              Turn on verbose mode\n"
-"    -n              Suppress warnings"
-"    -o <file>       Place the output into <file>\n"
-"    -h | --help     Display help information\n"
-"    --version       Display Assembler version information\n"
-"    --time          Time the execution of Assembler\n";
-
 // ================== Color codes for output formatting ====================
 const std::string  COLOR_RESET  = "\033[0m";
 const std::string  COLOR_RED    =  "\033[31m";      

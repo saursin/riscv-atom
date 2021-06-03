@@ -26,7 +26,7 @@ executable_name = atomsim
 verilator_includes = -I obj_dir -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
 linking = #-lncurses
 verilated_path = /usr/share/verilator/include/verilated.cpp /usr/share/verilator/include/verilated_vcd_c.cpp
-gpp_flags = -static#-pthread
+gpp_flags = #-static#-pthread
 verilator_flags = -cc -Wall --relative-includes --trace
 
 ########################################################################

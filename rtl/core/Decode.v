@@ -11,24 +11,24 @@
 
 module Decode
 (
-    input   [31:0]  instr_i,
+    input   wire    [31:0]  instr_i,
 
-    output  [4:0]   rd_sel_o,
-    output  [4:0]   rs1_sel_o,
-    output  [4:0]   rs2_sel_o,
+    output  wire    [4:0]   rd_sel_o,
+    output  wire    [4:0]   rs1_sel_o,
+    output  wire    [4:0]   rs2_sel_o,
 
-    output  [31:0]  imm_o,
+    output  wire    [31:0]  imm_o,
 
-    output  reg         jump_en_o,
-    output  reg [2:0]   comparison_type_o,
-    output  reg         rf_we_o,
-    output  reg [2:0]   rf_din_sel_o,
-    output  reg         a_op_sel_o,
-    output  reg         b_op_sel_o,
-    output  reg         cmp_b_op_sel_o,
-    output  reg [2:0]   alu_op_sel_o,
-    output  [2:0]       mem_access_width_o,
-    output  reg         mem_we_o
+    output  reg             jump_en_o,
+    output  reg     [2:0]   comparison_type_o,
+    output  reg             rf_we_o,
+    output  reg     [2:0]   rf_din_sel_o,
+    output  reg             a_op_sel_o,
+    output  reg             b_op_sel_o,
+    output  reg             cmp_b_op_sel_o,
+    output  reg     [2:0]   alu_op_sel_o,
+    output  wire    [2:0]   mem_access_width_o,
+    output  reg             mem_we_o
 );
 
 // Decode fields

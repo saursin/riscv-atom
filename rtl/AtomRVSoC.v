@@ -6,22 +6,22 @@
 //  Desciption  : System on Chip based on RISCV atom processor
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
-
+`include "Timescale.vh"
 `include "core/AtomRV.v"
 
 module AtomRVSoC
 (
-    input        clk_i,    // external clock
-    input        rst_i,    // external reset
+    input   wire            clk_i,    // external clock
+    input   wire            rst_i,    // external reset
     
-    output [31:0]   imem_addr_o,
-    input [31:0]    imem_data_i,
+    output  wire    [31:0]  imem_addr_o,
+    input   wire    [31:0]  imem_data_i,
 
-    output  [31:0]  dmem_addr_o,            // DMEM address
-    input   [31:0]  dmem_data_i,            // DMEM data in
-    output  [31:0]  dmem_data_o,            // DMEM data out
-    output  [2:0]   dmem_access_width_o,    // DMEM Access width
-    output          dmem_we_o               // DMEM WriteEnable
+    output  wire    [31:0]  dmem_addr_o,            // DMEM address
+    input   wire    [31:0]  dmem_data_i,            // DMEM data in
+    output  wire    [31:0]  dmem_data_o,            // DMEM data out
+    output  wire    [2:0]   dmem_access_width_o,    // DMEM Access width
+    output  wire            dmem_we_o               // DMEM WriteEnable
 
     //input        uart_rxd,  // UART receive line
     //output       uart_txd,  // UART transmit line

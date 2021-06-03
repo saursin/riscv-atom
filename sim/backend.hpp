@@ -1,4 +1,4 @@
-#include "../include/elfio/elfio.hpp"
+#include "include/elfio/elfio.hpp"
 
 
 #include "verilated.h"
@@ -55,8 +55,8 @@ class TESTBENCH
 {
 	public:
 
-	VTop 			* m_core;
-	VerilatedVcdC	* m_trace;
+	VTop 			* m_core = NULL;
+	VerilatedVcdC	* m_trace = NULL;
 	unsigned long 	m_tickcount;     			// TickCounter to count clock cycles fom last reset
 	unsigned long 	m_tickcount_total;   		// TickCounter to count clock cycles
 
@@ -143,7 +143,10 @@ class TESTBENCH
 		m_core -> eval();
 
 		//	Dump values to our trace file before clock edge
-		if(m_trace) m_trace->dump(10*m_tickcount-2);
+		if(m_trace) 
+		{
+			m_trace->dump(10*m_tickcount-2);
+		}
 
 		// ---------- Toggle the clock ------------
 
@@ -250,7 +253,7 @@ class Memory
 		uint32_t byte2 = (uint32_t)fetchByte(addr+2);
 		uint32_t byte3 = (uint32_t)fetchByte(addr+3);
 
-		return (byte3<<24 & 0xff000000) | (byte2<<16 & 0x00ff0000) | (byte1<<8 & 0x0000ff00) | (byte0 & 0x000000ff);
+		return ((byte3<<24) & 0xff000000) | ((byte2<<16) & 0x00ff0000) | ((byte1<<8) & 0x0000ff00) | (byte0 & 0x000000ff);
 	}
 
 	/**
@@ -265,7 +268,7 @@ class Memory
 		uint32_t byte0 = (uint32_t)fetchByte(addr);
 		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
 
-		return (byte1<<8 & 0xff00) | (byte0 & 0x00ff);
+		return ((byte1<<8) & 0xff00) | (byte0 & 0x00ff);
 	}
 
 	/**
@@ -294,10 +297,10 @@ class Memory
 	 */
 	void storeWord(uint32_t addr, uint32_t w)
 	{
-		storeByte(addr, (uint8_t)(w & 0x000000ff));
-		storeByte(addr+1, (uint8_t)(w & 0x0000ff00) >> 8);
-		storeByte(addr+2, (uint8_t)(w & 0x00ff0000) >> 16);
-		storeByte(addr+3, (uint8_t)(w & 0xff000000) >> 24);
+		storeByte(addr,   (uint8_t) (w & 0x000000ff));
+		storeByte(addr+1, (uint8_t) ((w & 0x0000ff00) >> 8));
+		storeByte(addr+2, (uint8_t) ((w & 0x00ff0000) >> 16));
+		storeByte(addr+3, (uint8_t) ((w & 0xff000000) >> 24));
 	}
 
 	/**
@@ -308,8 +311,8 @@ class Memory
 	 */
 	void storeHalfWord(uint32_t addr, uint16_t hw)
 	{
-		storeByte(addr, (uint8_t)(hw & 0x00ff));
-		storeByte(addr+1, (uint8_t)(hw & 0xff00) >> 8);
+		storeByte(addr, (uint8_t) (hw & 0x00ff));
+		storeByte(addr+1, (uint8_t) ((hw & 0xff00) >> 8));
 	}
 
 	/**
@@ -494,9 +497,10 @@ class Backend
 		{
 			switch(tb->m_core->dmem_access_width_o)
 			{
-				case 0b000:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
-				case 0b001:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
-				case 0b010:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
+				case 0:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
+				case 1:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
+				case 2:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
+				default: mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
 			}
 		}
 	}
@@ -573,11 +577,6 @@ class Backend
 		serviceMemoryRequest();
 		tb->tick();
 		ins_f = tb->m_core->imem_data_i;
-		if (tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
-		{
-			throwSuccessMessage("Exiting due to EBREAK");
-			exit(EXIT_SUCCESS);
-		}
 	}
 
 

@@ -24,18 +24,18 @@
 
 module AtomRV
 (
-    input clk_i,    // clock
-    input rst_i,    // reset
-    input hlt_i,    // hault cpu
+    input   wire            clk_i,    // clock
+    input   wire            rst_i,    // reset
+    input   wire            hlt_i,    // hault cpu
 
-    input   [31:0]  imem_data_i,   // IMEM data
-    output  [31:0]  imem_addr_o,   // IMEM Address
+    input   wire    [31:0]  imem_data_i,   // IMEM data
+    output  wire    [31:0]  imem_addr_o,   // IMEM Address
 
-    output  [31:0]  dmem_addr_o,            // DMEM address
-    input   [31:0]  dmem_data_i,            // DMEM data in
-    output  [31:0]  dmem_data_o,            // DMEM data out
-    output  [2:0]   dmem_access_width_o,    // DMEM Access width
-    output          dmem_we_o               // DMEM WriteEnable
+    output  wire    [31:0]  dmem_addr_o,            // DMEM address
+    input   wire    [31:0]  dmem_data_i,            // DMEM data in
+    output  wire    [31:0]  dmem_data_o,            // DMEM data out
+    output  wire    [2:0]   dmem_access_width_o,    // DMEM Access width
+    output  wire            dmem_we_o               // DMEM WriteEnable
 );
 
 wire jump_decision = d_jump_en & comparison_result; // final jump decision signal

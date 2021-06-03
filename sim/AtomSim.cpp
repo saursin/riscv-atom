@@ -1,3 +1,4 @@
+#include "include/cxxopts/cxxopts.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
@@ -6,37 +7,35 @@
 #include <string>
 #include <vector>
 
-
 // Definitions
-const unsigned int Sec = 1000000;	// microseconds in 1s
-const unsigned int mSec = 1000;		// microseconds in 1ms
+const char default_trace_dir[] = "build/trace";
+const char default_dump_dir[] = "build/trace";
 
-// Dummy Communication
-const unsigned int TX_ADDRESS = 0x00012001;
-const unsigned int TX_ACK_ADDRESS = 0x00012002;
+const unsigned int default_mem_size = 98304;	// 96KB
+const unsigned int default_entry_point = 0x00000000;
 
-// Simulation Parameters
-unsigned int delay_amt = 1000 * mSec; //default 
-
-// This is used to display reason for simulation termination
-std::string end_simulation_reason;
+const unsigned int UART_RX_ADDRESS   	=	0x00014000;
+const unsigned int UART_TX_ADDRESS      =	0x00014001;
+const unsigned int UART_SREG_ADDRESS    =	0x00014002;
 
 // Global flags
 bool verbose_flag = false;
 bool debug_mode = false;
 bool trace_enabled = false;
+bool dump_on_ebreak = false;
 
-const unsigned int default_mem_size = 131072;	// 128KB
-const unsigned int default_entry_point = 0x00000000;
+// Global vars
+unsigned long int maxitr = 100000;
+std::string trace_dir = default_trace_dir;
+
+
+// This is used to display reason for simulation termination
+std::string end_simulation_reason;
+
 
 #include "defs.hpp"
 #include "backend.hpp"
 
-// Input file
-std::string ifile = "";
-
-// Trace directory
-std::string trace_dir;
 
 /**
  * @brief parses command line arguments given to the assembler and 
@@ -45,89 +44,79 @@ std::string trace_dir;
  * 
  * @param argc argument count
  * @param argv argument vector
- * @return true if we need to exit after this step
- * @return false otherwise
+ * @param ifile input file name (pointer)
+ * @param tdir trace_dir (pointer)
  */
-bool parse_commandline_args(const int argc, char**argv)
+void parse_commandline_args(int argc, char**argv, std::string &ifile, std::string &trdir)
 {
-    // ============= STEP-2: PARSE COMMAND-LINE ARGUMENTS ================
-    if(argc < 2)
-    {
-		throwError("CLI0", "Too few arguments\n For help, try : atomsim --help\n", true);
-    }
-    int i = 1;
-    while(i < argc)
-    {
-        std::string argument = argv[i];
-
-        // check if it is a flag
-        if(argument[0] == '-')
-        {
-            if(argument == "-v")
-            {
-				// turn on verbose
-                verbose_flag = true;
-                i++;
-            }
-			else if(argument == "-d")
-            {
-				// run in debug mode
-                debug_mode = true;
-                i++;
-            }
-            else if(argument == "-h")
-            {
-				// show short help message
-                std::cout << Info_short_help_msg;
-                return true;
-            }
-			else if(argument == "--help")
-            {
-				// print long help message
-                std::cout << Info_long_help_msg;
-                return true;
-            }
-            else if(argument == "--version")
-            {
-				// print charon version info
-                std::cout << Info_version << std::endl << Info_copyright;
-            }
-			else if(argument == "--trace-dir")
-            {
-				// print long help message
-                if(i == argc-1)
-				{
-					throwError("CLI1", "Trace directory not provided\n", true);
-				}
-				i++;
-				trace_dir = argv[i];
-				i++;
-            }
-            
-            else
-            {
-				throwError("CLI2", "Unknown argument: " + argument + "\n", true);
-            }
-        }
-        else
-        {
-            // specify input files
-            if(ifile != "")
-            {
-				throwError("CLI3", "Multiple Input files povided\n", true);
-            }
-            else
-                ifile = argument;
-            i++;
-        }
-    }
-
-	if (ifile == "")
+	try
 	{
-		// No input file povided
-		throwError("CLI4", "No input file povided\n", true);
+		// Usage Message Header
+		cxxopts::Options options(argv[0], std::string(Info_version)+"\nSimulator for AtomRVSoC");
+		
+		options.positional_help("input").show_positional_help();
+
+
+		// Adding CLI options
+		options.add_options("General")
+		("h,help", "Show this message")
+		("version", "Show version information")
+		("i,input", "Specify an input file", cxxopts::value<std::string>(ifile))
+		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr));
+
+		options.add_options("Debug")
+		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
+		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
+		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
+		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trdir)->default_value(default_trace_dir))
+		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_on_ebreak)->default_value("false"));
+
+
+
+	    options.parse_positional({"input"});
+
+		//options.allow_unrecognised_options();
+		
+		// parse CLI options
+		auto result = options.parse(argc, argv);
+
+		if(result.unmatched().size() != 0)
+		{
+			std::string unknown_args;
+			for(int i=0; i<result.unmatched().size(); i++)
+				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
+			throwError("ARGPARSE~", "Unrecognized aguments [" + unknown_args + "]", true);
+		}
+
+
+		if (result.count("help"))
+		{
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+		if (result.count("version"))
+		{
+			std::cout << Info_version << std::endl << Info_copyright << std::endl;
+			exit(0);
+		}
+		if (result.count("input")>1)
+		{
+			throwError("CLIPARSE~", "Multiple input files specified", true);
+			exit(0);
+		}
+		if (result.count("input")==0)
+		{
+			throwError("CLIPARSE~", "No input files specified", true);
+			exit(0);
+		}
+
+		std::cout << "Input File:" << ifile << "\n";
+
 	}
-    return false;
+	catch(const cxxopts::OptionException& e)
+	{
+		throwError("CLIPARSE~", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
+	}	
 }
 
 /**
@@ -137,7 +126,8 @@ bool parse_commandline_args(const int argc, char**argv)
  * @param b pointer to backend object
  */
 void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
-{
+{	
+	static bool prev_tx_we = false;
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
 		if(b->done())
@@ -152,14 +142,50 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		else
 		{
-			b->refreshData();
+			if(dump_on_ebreak) 
+				b->refreshData();
 			b->tick();
 			
 			// Rx Listener
-			if(b->mem->fetchByte(TX_ACK_ADDRESS) == 1)
+			bool cur_tx_we = (b->mem->fetchByte(UART_SREG_ADDRESS) & 1);
+			if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
 			{
-				std::cout << (char)b->mem->fetchByte(TX_ADDRESS);
+				std::cout << (char)b->mem->fetchByte(UART_TX_ADDRESS);
 			}
+			prev_tx_we = cur_tx_we;
+		}
+
+		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		{
+			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
+
+			if(dump_on_ebreak)
+			{
+				std::vector<std::string> fcontents;
+				
+				for(int i=0; i<34; i++)
+				{
+					char temp [50];
+					unsigned int tmpval;
+
+					switch(i-2)
+					{
+						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08X", tmpval); break;
+						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08X", tmpval); break;break;
+						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08X",i-2, tmpval); break;
+					}
+					fcontents.push_back(std::string(temp));
+				}
+				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
+			}
+
+
+			exit(EXIT_SUCCESS);
+		}
+		if(b->tb->m_tickcount > maxitr)
+		{
+			throwError("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
+			exit(EXIT_SUCCESS);
 		}
 	}
 }
@@ -174,15 +200,25 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
-	// Parse commandline arguments
-	if(parse_commandline_args(argc, argv))
-		return 0;
-
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
+	
+	std::string ifile;
+
+	// Parse commandline arguments
+	parse_commandline_args(argc, argv, ifile, trace_dir);
+
 
 	// Create a new backend instance
 	Backend bkend(ifile, default_mem_size);
+
+	if(trace_enabled == true)
+	{
+		std::string tracefile = trace_dir;
+		bkend.tb->openTrace(tracefile.c_str());
+		std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
+		trace_enabled = true;
+	}
 
 	// Run simulation
 	if(debug_mode)
@@ -276,7 +312,7 @@ int main(int argc, char **argv)
 				{
 					if(trace_enabled == false)
 					{
-						std::string tracefile = trace_dir+"/"+token[1];
+						std::string tracefile = trace_dir + "/"+token[1];
 						bkend.tb->openTrace(tracefile.c_str());
 						std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
 						trace_enabled = true;

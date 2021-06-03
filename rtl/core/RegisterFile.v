@@ -14,19 +14,20 @@ module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
 	////////////////////  PORTLIST  /////////////////////
 
 	// read port 1 (Asynchronous Read)
-	input  	[REG_ADDR_WIDTH-1:0] 	Ra_Sel_i,
-	output  [REG_WIDTH-1:0] 		Ra_o,
+	input 	wire	[REG_ADDR_WIDTH-1:0]	Ra_Sel_i,
+	output	wire	[REG_WIDTH-1:0] 		Ra_o,
 	
 	// read port 2 (Asynchronous Read)
-	input  	[REG_ADDR_WIDTH-1:0] 	Rb_Sel_i,
-	output  [REG_WIDTH-1:0] 		Rb_o,
+	input  	wire 	[REG_ADDR_WIDTH-1:0] 	Rb_Sel_i,
+	output  wire 	[REG_WIDTH-1:0] 		Rb_o,
 
 	// write port (Synchronous Write)
-	input							Data_We_i,
-	input  	[REG_ADDR_WIDTH-1:0] 	Rd_Sel_i,
-	input  	[REG_WIDTH-1:0] 		Data_i,
+	input	wire							Data_We_i,
+	input  	wire	[REG_ADDR_WIDTH-1:0] 	Rd_Sel_i,
+	input  	wire	[REG_WIDTH-1:0] 		Data_i,
 
-	input   Clk_i, Rst_i
+	input   wire	Clk_i, 
+	input	wire	Rst_i
 );
 
 	localparam REG_COUNT = 2**REG_ADDR_WIDTH;
