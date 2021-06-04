@@ -3,10 +3,10 @@
 
 #include "verilated.h"
 #include <verilated_vcd_c.h>
-#include "../build/obj_dir/VAtomRVSoC.h"
-#include "../build/obj_dir/VAtomRVSoC_AtomRVSoC.h"
-#include "../build/obj_dir/VAtomRVSoC_AtomRV.h"
-#include "../build/obj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
+#include "../build/vobj_dir/VAtomRVSoC.h"
+#include "../build/vobj_dir/VAtomRVSoC_AtomRVSoC.h"
+#include "../build/vobj_dir/VAtomRVSoC_AtomRV.h"
+#include "../build/vobj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
 
 const std::vector<std::string> reg_names = 
 {

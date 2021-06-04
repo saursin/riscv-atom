@@ -9,7 +9,7 @@
 
 // Definitions
 const char default_trace_dir[] = "build/trace";
-const char default_dump_dir[] = "build/trace";
+const char default_dump_dir[] = "build/dump";
 
 const unsigned int default_mem_size = 98304;	// 96KB
 const unsigned int default_entry_point = 0x00000000;

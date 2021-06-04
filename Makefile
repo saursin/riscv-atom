@@ -1,107 +1,194 @@
-#####################################################################
-###	BASIC CONFIGURATIONS
+#================================================================#
+#      ____  _________ _______    __         __                  #
+#     / __ \/  _/ ___// ____/ |  / /  ____ _/ /_____  ____ ___   #
+#    / /_/ // / \__ \/ /    | | / /  / __ `/ __/ __ \/ __ `__ \  #
+#   / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / /  #
+#  /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/   #
+#                                                                #
+#================================================================#
+#
+# README:
+#
+# 	This is a self documenting Makefile, see 'help' target for 
+#	more info. Whenever adding a new taget document it a comment 
+# 	that stats with a hash(#) symbol folllowed by a tilde(~) 
+# 	symbol. Anything after # followed by ~ will be displayed 
+#	whenever "make help: is called.
+#================================================================#
+# 
+# Directory tree:
+#	.
+#	├── build
+#	│   ├── bin
+#	│   ├── dump
+#	│   ├── cobj_dir
+#	│   ├── vobj_dir
+#	│   └── trace
+#	├── doc
+#	│   └── diagrams
+#	├── rtl
+#	│   ├── core
+#	│   └── uncore
+#	├── sim
+#	│   └── include
+#	├── sw
+#	│   ├── examples
+#	│   └── lib
+#	└── test
+#	    └── scar
+#	        └── work
+#=================================================================
+# Build Configurations
 
-# Verilog
-topmodule = AtomRVSoC
-verilog_source = rtl/$(topmodule).v
+build_dir 	= build
+doc_dir 	= doc
+rtl_dir 	= rtl
+sim_dir 	= sim
 
-# CPP Driver
-cpp_driver = AtomSim.cpp
-cpp_driver_source = sim/$(cpp_driver)
-
-# Build configuration
-build_dir = build
-bin_dir = $(build_dir)/bin
-object_dir = $(build_dir)/obj_dir
-trace_dir = $(build_dir)/trace
-doc_dir = doc
+#=================================================================
+bin_dir 		= $(build_dir)/bin
+vobject_dir 	= $(build_dir)/vobj_dir
+cobject_dir 	= $(build_dir)/cobj_dir
+trace_dir 		= $(build_dir)/trace
+dump_dir		= $(build_dir)/dump
 doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = $(doc_dir)/Doxyfile
 
-# Executable
-executable_name = atomsim
+# Cpp
+cpp_driver = $(sim_dir)/AtomSim.cpp
+cpp_files = $(sim_dir)
+sim_executable = atomsim
 
-########################################################################
-###	ADVANCED CONFIGURATIONS
-verilator_includes = -I obj_dir -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
-linking = #-lncurses
-verilated_path = /usr/share/verilator/include/verilated.cpp /usr/share/verilator/include/verilated_vcd_c.cpp
-gpp_flags = #-static#-pthread
-verilator_flags = -cc -Wall --relative-includes --trace
+# Verilog
+verilog_topmodule = AtomRVSoC
+verilog_topmodule_file = $(rtl_dir)/AtomRVSoC.v
+verilog_files = rtl/AtomRVSoC.v rtl/Timescale.vh rtl/Config.vh rtl/core/Alu.v rtl/core/AtomRV.v rtl/core/Decode.v rtl/core/RegisterFile.v
 
-########################################################################
-default: clean atomsim
+# CPP Configs
+CC = g++
+CFLAGS = -c -Wall
+LFLAGS =
+INCLUDES = -I $(vobject_dir) -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
+
+# Verilog Configs
+VC = verilator
+VFLAGS = -cc -Wall --relative-includes --trace
+
+#======================================================================
+# Recepies
+#======================================================================
+default: sim
+all : sim pdf-docs
+
+#======== Help ========
+# See : https://swcarpentry.github.io/make-novice/08-self-doc/index.html
+
+#~	help		:	Show help message
+
+.PHONY : help
+help : Makefile
+	@echo "RISCV-Atom root Makefile"
+	@echo "Usage: make [Target]"
+	@echo ""
+	@echo "Tagets:"
+	@sed -n 's/^#~//p' $<
 
 
+# ======== Sim ========
+#~	sim		:	Build atomsim simulator
+.PHONY : sim
+sim: directories $(bin_dir)/$(sim_executable)
 
-.PHONY: help
-help:
-	@echo "make clean	: to clean compiler generated files"
-	@echo "make sim		: to build the simulator"
-	@echo "make		    : to do all of the above (sequentially)"
+# Check directories
+directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(doc_dir) $(doxygen_doc_dir)
 
-
-.PHONY: atomsim
-atomsim: directories $(bin_dir)/$(executable_name)
-
-
-# create directories if necessary
-directories : $(build_dir) $(bin_dir) $(trace_dir) $(doc_dir) $(doxygen_doc_file)
-
-# Setup Directories
 $(build_dir):
-	mkdir $(build_dir)
+	mkdir $@
 
 $(bin_dir):
-	mkdir $(bin_dir)
+	mkdir $@
+
+$(cobject_dir):
+	mkdir $@
+
+$(vobject_dir):
+	mkdir $@
 
 $(trace_dir):
-	mkdir $(trace_dir)
+	mkdir $@
+
+$(dump_dir):
+	mkdir $@
 
 $(doc_dir):
-	mkdir $(doc_dir)
+	mkdir $@
 
 $(doxygen_doc_dir):
-	mkdir $(doxygen_doc_dir)
-
+	mkdir $@
 
 # Verilate verilog
-$(object_dir)/V$(topmodule)__ALL.a: 
-	@echo ">> Compiling verilog into cpp"
-	verilator $(verilator_flags) $(verilog_source) --Mdir $(object_dir)
+$(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o: $(verilog_files)
+	@echo ">> Compiling verilog into c++ classes..."
+	$(VC) $(VFLAGS) $(verilog_topmodule_file) --Mdir $(vobject_dir)
 
-	@echo ">> Generating shared object"
-	cd $(build_dir)/obj_dir && make -f V$(topmodule).mk	
+	@echo ">> Generating shared object..."
+	cd $(vobject_dir) && make -f V$(verilog_topmodule).mk
+
+# Compile C++ files
+$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp
+	@echo ">> Compiling driver cpp file..."
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
+
+$(cobject_dir)/verilated.o: /usr/share/verilator/include/verilated.cpp 
+	@echo ">> Compiling cpp include <$<>..."
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(cobject_dir)/verilated_vcd.o: /usr/share/verilator/include/verilated_vcd_c.cpp
+	@echo ">> Compiling cpp include <$<>..."
+	$(CC) $(CFLAGS) $^ -o $@
+
+# Link & Create executable
+$(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(cobject_dir)/atomsim.o $(cobject_dir)/verilated.o $(cobject_dir)/verilated_vcd.o
+	@echo ">> Linking shared object and driver to create executable..."
+	$(CC) $(LFLAGS) $^ -o $@
 
 
-# Compile Cpp Driver
-$(bin_dir)/$(executable_name): $(object_dir)/V$(topmodule)__ALL.a
-	@echo ">> Compiling driver cpp file with shared object"
-	g++ $(gpp_flags) $(cpp_driver_source) $(verilator_includes) $(verilated_path) $(object_dir)/V$(topmodule)__ALL.a $(linking) -o $(bin_dir)/$(executable_name)
 
-
-
-.PHONY: documentation
-documentation: $(doc_dir) $(doxygen_doc_dir)
+# ======== Documentation ========
+#~	docs		:	Generate doxygen documentation for atomsim source code
+.PHONY: docs
+docs: $(doc_dir) $(doxygen_doc_dir)
 	doxygen $(doxygen_config_file)
 
+#~	pdf-docs	:	Generate doxygen documentation for atomsim source code
+.PHONY: pdf-docs
+pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
+	cd doc/doxygen/latex && make
+	mv doc/doxygen/latex/refman.pdf doc/Atomsim_source_documentation.pdf
 
-# Clean build files
+# ======== clean ========
+#~	clean		:	Clean all autogenerated build files
 .PHONY: clean
 clean:
 	rm -rf $(bin_dir)/*
-	rm -rf $(build_dir)/obj_dir/*
+	rm -rf $(vobject_dir)/*
+	rm -rf $(cobject_dir)/*
 
-# Clean trace directory
+#~	clean-trace 	:	Clean trace directory
 .PHONY: clean-trace
 clean-trace:
 	rm -rf $(trace_dir)/*
 
-# Clean doc dirctory
+#~	clean-dump 	:	Clean dump directory
+.PHONY: clean-dump
+clean-dump:
+	rm -rf $(dump_dir)/*
+
+#~	clean-doc	: 	Clean doc dirctory
 .PHONY: clean-doc
 clean-doc:
 	rm -rf $(doxygen_doc_dir)/*
 
-# Clean everything
+#~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
-clean-all: clean clean-trace clean-doc
+clean-all: clean clean-trace clean-dump clean-doc
