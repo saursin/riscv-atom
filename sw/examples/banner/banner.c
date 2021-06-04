@@ -35,6 +35,5 @@ int main()
 
     print_str("UART tx at : 0x"); print_hex(IO_UART_TX_ADDRESS, 8); print_chr('\n');
     print_str("UART rx at : 0x"); print_hex(IO_UART_RX_ADDRESS, 8); print_chr('\n');
-    print_str("Booting...\n");
-    print_str("5 + 6 = "); print_int(5 + 6, 10); print_chr('\n');
+    return 0;
 }

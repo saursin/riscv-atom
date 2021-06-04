@@ -22,7 +22,7 @@ _start:
     lh a3, 0(t0)
     lh a4, 1(t0)
     lh a5, 2(t0)
-    lhu a5, 2(t0)
+    lhu a6, 2(t0)
 
 
     nop
