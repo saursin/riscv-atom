@@ -1,3 +1,5 @@
+<img align="right" src="doc/diagrams/atom_icon.png" width= "150" />
+
 # riscv-atom
 
 Atom is an embedded-class processor based on the RISC-V instruction set architecture.
