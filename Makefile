@@ -152,7 +152,11 @@ $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(v
 	@echo ">> Linking shared object and driver to create executable..."
 	$(CC) $(LFLAGS) $^ -o $@
 
-
+# ======== SCAR ========
+#~	scar		:	verify using scar
+.PHONY: scar
+scar: $(bin_dir)/$(sim_executable)
+	cd test/scar/ && make
 
 # ======== Documentation ========
 #~	docs		:	Generate doxygen documentation for atomsim source code

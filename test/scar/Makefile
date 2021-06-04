@@ -2,7 +2,7 @@
 PY = python3
 
 verify: directories
-	$(PY) verify.py
+	$(PY) scar.py
 
 directories: work
 
