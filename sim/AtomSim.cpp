@@ -8,25 +8,29 @@
 #include <vector>
 
 // Definitions
-const char default_trace_dir[] = "build/trace";
-const char default_dump_dir[] = "build/dump";
+const char default_trace_dir[] 		= "build/trace";
+const char default_dump_dir[] 		= "build/dump";
 
-const unsigned int default_mem_size = 98304;	// 96KB
-const unsigned int default_entry_point = 0x00000000;
+const unsigned long int default_mem_size 	= 0x100000;	// 1MB
+const unsigned int default_entry_point 		= 0x00000000;
+const unsigned long int default_maxitr 		= 100000;
 
-const unsigned int UART_RX_ADDRESS   	=	0x00014000;
-const unsigned int UART_TX_ADDRESS      =	0x00014001;
-const unsigned int UART_SREG_ADDRESS    =	0x00014002;
+const unsigned int default_UART_RX_ADDRESS   	=	0x00014000;
+const unsigned int default_UART_TX_ADDRESS      =	0x00014001;
+const unsigned int default_UART_SREG_ADDRESS    =	0x00014002;
 
 // Global flags
-bool verbose_flag = false;
-bool debug_mode = false;
-bool trace_enabled = false;
-bool dump_on_ebreak = false;
+bool verbose_flag 			= false;
+bool debug_mode 			= false;
+bool trace_enabled 			= false;
+bool dump_regs_on_ebreak 	= false;
+bool dump_signature 		= false;
 
 // Global vars
-unsigned long int maxitr = 100000;
-std::string trace_dir = default_trace_dir;
+unsigned long int mem_size 	= default_mem_size;
+unsigned long int maxitr 	= default_maxitr;
+std::string trace_dir 		= default_trace_dir;
+std::string dump_dir 		= default_dump_dir;
 
 
 // This is used to display reason for simulation termination
@@ -47,7 +51,7 @@ std::string end_simulation_reason;
  * @param ifile input file name (pointer)
  * @param tdir trace_dir (pointer)
  */
-void parse_commandline_args(int argc, char**argv, std::string &ifile, std::string &trdir)
+void parse_commandline_args(int argc, char**argv, std::string &ifile)
 {
 	try
 	{
@@ -56,20 +60,24 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
 		
 		options.positional_help("input").show_positional_help();
 
-
 		// Adding CLI options
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
-		("i,input", "Specify an input file", cxxopts::value<std::string>(ifile))
-		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr));
+		("i,input", "Specify an input file", cxxopts::value<std::string>(ifile));
+		
+		options.add_options("Config")
+		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr))
+		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size));
 
 		options.add_options("Debug")
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
 		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
 		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
-		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trdir)->default_value(default_trace_dir))
-		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_on_ebreak)->default_value("false"));
+		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
+		("dump-dir", "Specify a dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
+		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
+		("signature", "Dump signature after hault (Used for riscv compliance tests)", cxxopts::value<bool>(dump_signature)->default_value("false"));
 
 
 
@@ -83,7 +91,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile, std::strin
 		if(result.unmatched().size() != 0)
 		{
 			std::string unknown_args;
-			for(int i=0; i<result.unmatched().size(); i++)
+			for(unsigned int i=0; i<result.unmatched().size(); i++)
 				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
 			throwError("ARGPARSE~", "Unrecognized aguments [" + unknown_args + "]", true);
 		}
@@ -142,15 +150,15 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		else
 		{
-			if(dump_on_ebreak) 
+			if(dump_regs_on_ebreak) 
 				b->refreshData();
 			b->tick();
 			
 			// Rx Listener
-			bool cur_tx_we = (b->mem->fetchByte(UART_SREG_ADDRESS) & 1);
+			bool cur_tx_we = (b->mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
 			if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
 			{
-				std::cout << (char)b->mem->fetchByte(UART_TX_ADDRESS);
+				std::cout << (char)b->mem->fetchByte(default_UART_TX_ADDRESS);
 			}
 			prev_tx_we = cur_tx_we;
 		}
@@ -159,7 +167,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		{
 			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
 
-			if(dump_on_ebreak)
+			if(dump_regs_on_ebreak)
 			{
 				std::vector<std::string> fcontents;
 				
@@ -206,7 +214,7 @@ int main(int argc, char **argv)
 	std::string ifile;
 
 	// Parse commandline arguments
-	parse_commandline_args(argc, argv, ifile, trace_dir);
+	parse_commandline_args(argc, argv, ifile);
 
 
 	// Create a new backend instance
@@ -241,7 +249,7 @@ int main(int argc, char **argv)
 			tokenize(input, token, ' ');
 
 			// Parse Command
-			if(token[0] == "q" | token[0] == "quit")
+			if((token[0] == "q") | (token[0] == "quit"))
 			{
 				// Quit simulator
 				end_simulation_reason = "User interruption";
@@ -287,7 +295,7 @@ int main(int argc, char **argv)
 				
 				// turn on verbose
 				std::vector<std::string> fcontents;
-				for(int i=0; i<bkend.mem->size-4; i+=4)
+				for(unsigned int i=0; i<bkend.mem->size-4; i+=4)
 				{	
 					char hex [30];
 					sprintf(hex, "0x%08X\t:\t0x%08X", i, bkend.mem->fetchWord(i));

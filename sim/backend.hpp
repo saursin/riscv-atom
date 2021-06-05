@@ -247,7 +247,6 @@ class Memory
 	 */
 	uint32_t fetchWord(uint32_t addr)
 	{
-		uint32_t data;
 		uint32_t byte0 = (uint32_t)fetchByte(addr);
 		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
 		uint32_t byte2 = (uint32_t)fetchByte(addr+2);
@@ -264,7 +263,6 @@ class Memory
 	 */
 	uint16_t fetchHalfWord(uint32_t addr)
 	{
-		uint32_t data;
 		uint32_t byte0 = (uint32_t)fetchByte(addr);
 		uint32_t byte1 = (uint32_t)fetchByte(addr+1);
 
