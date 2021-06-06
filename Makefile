@@ -44,6 +44,7 @@ build_dir 	= build
 doc_dir 	= doc
 rtl_dir 	= rtl
 sim_dir 	= sim
+tool_dir 	= tools
 
 #=================================================================
 bin_dir 		= $(build_dir)/bin
@@ -78,7 +79,7 @@ VFLAGS = -cc -Wall --relative-includes --trace
 # Recepies
 #======================================================================
 default: sim
-all : sim pdf-docs
+all : sim elfdump pdf-docs
 
 
 
@@ -164,6 +165,16 @@ $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(v
 scar: $(bin_dir)/$(sim_executable)
 	cd test/scar/ && make
 
+
+
+# ======== ElfDump ========
+#~	elfdump		:	build Elfdump
+.PHONY: elfdump
+elfdump: $(bin_dir)/elfdump
+
+$(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
+	@echo ">> Building elfdump..."
+	$(CC) -Wall $^ -o $@
 
 
 
