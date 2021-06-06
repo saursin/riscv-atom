@@ -1,4 +1,3 @@
-#include "include/cxxopts/cxxopts.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
@@ -6,6 +5,8 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
+
+#include "include/cxxopts/cxxopts.hpp"
 
 // Definitions
 const char default_trace_dir[] 		= "build/trace";
@@ -32,9 +33,10 @@ unsigned long int maxitr 	= default_maxitr;
 std::string trace_dir 		= default_trace_dir;
 std::string dump_dir 		= default_dump_dir;
 
+std::string end_simulation_reason; // This is used to display reason for simulation termination
 
-// This is used to display reason for simulation termination
-std::string end_simulation_reason;
+// Configurations
+#define DEBUG_PRINT_T2B	// print registers in top to bottom fashion 
 
 
 #include "defs.hpp"
@@ -80,7 +82,6 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		("signature", "Dump signature after hault (Used for riscv compliance tests)", cxxopts::value<bool>(dump_signature)->default_value("false"));
 
 
-
 	    options.parse_positional({"input"});
 
 		//options.allow_unrecognised_options();
@@ -95,7 +96,6 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
 			throwError("ARGPARSE~", "Unrecognized aguments [" + unknown_args + "]", true);
 		}
-
 
 		if (result.count("help"))
 		{
@@ -126,6 +126,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		throwError("CLIPARSE~", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
 	}	
 }
+
 
 /**
  * @brief Run specified cycles of simulation
@@ -186,8 +187,6 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 				}
 				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
 			}
-
-
 			exit(EXIT_SUCCESS);
 		}
 		if(b->tb->m_tickcount > maxitr)
@@ -360,5 +359,3 @@ int main(int argc, char **argv)
 	std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
 	exit(EXIT_SUCCESS);    
 }
-
-

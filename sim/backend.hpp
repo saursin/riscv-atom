@@ -1,6 +1,5 @@
 #include "include/elfio/elfio.hpp"
 
-
 #include "verilated.h"
 #include <verilated_vcd_c.h>
 #include "../build/vobj_dir/VAtomRVSoC.h"
@@ -8,6 +7,10 @@
 #include "../build/vobj_dir/VAtomRVSoC_AtomRV.h"
 #include "../build/vobj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
 
+/**
+ * @brief Register ABI names used in debug display 
+ * 
+ */
 const std::vector<std::string> reg_names = 
 {
 	"x0  (zero) ",
@@ -198,8 +201,18 @@ class TESTBENCH
 class Memory
 {
 	public:
+	/**
+	 * @brief pointer to memory array
+	 * 
+	 */
 	uint8_t * mem;
+
+	/**
+	 * @brief size of memory
+	 * 
+	 */
 	uint32_t size;
+
 
 	/**
 	 * @brief Construct a new Memory object
@@ -217,6 +230,7 @@ class Memory
 		}
 	}
 
+
 	/**
 	 * @brief Destroy the Memory object
 	 * 
@@ -226,6 +240,7 @@ class Memory
 		delete [] mem;
 		size = 0;
 	}
+
 
 	/**
 	 * @brief Check if the address is valid
@@ -238,6 +253,7 @@ class Memory
 	{
 		return (addr < size);
 	}
+
 
 	/**
 	 * @brief Fetch a 32-bit word from memory
@@ -255,6 +271,7 @@ class Memory
 		return ((byte3<<24) & 0xff000000) | ((byte2<<16) & 0x00ff0000) | ((byte1<<8) & 0x0000ff00) | (byte0 & 0x000000ff);
 	}
 
+
 	/**
 	 * @brief Fetch a 16-bit half word from memory
 	 * 
@@ -268,6 +285,7 @@ class Memory
 
 		return ((byte1<<8) & 0xff00) | (byte0 & 0x00ff);
 	}
+
 
 	/**
 	 * @brief Fetch a 8-bitbyte word from memory
@@ -287,6 +305,7 @@ class Memory
 		return (uint8_t) mem[addr];
 	}
 
+
 	/**
 	 * @brief Store a 32-bit word to memory
 	 * 
@@ -301,6 +320,7 @@ class Memory
 		storeByte(addr+3, (uint8_t) ((w & 0xff000000) >> 24));
 	}
 
+
 	/**
 	 * @brief Store a 16-bit half word from memory
 	 * 
@@ -312,6 +332,7 @@ class Memory
 		storeByte(addr, (uint8_t) (hw & 0x00ff));
 		storeByte(addr+1, (uint8_t) ((hw & 0xff00) >> 8));
 	}
+
 
 	/**
 	 * @brief Store a 8-bit byte word from memory
@@ -330,6 +351,7 @@ class Memory
 		}
 		mem[addr] = byte;
 	}
+
 
 	/**
 	 * @brief Initialize memory from an elf file
@@ -362,7 +384,8 @@ class Memory
 
 
 		// Read elf and initialize memory
-		std::cout << "Segments found : "<< seg_num <<"\n";
+		if(verbose_flag)
+			std::cout << "Segments found : "<< seg_num <<"\n";
 
 		unsigned int i = 0;
 		while (i < seg_num) // iterate over all segments
@@ -382,7 +405,8 @@ class Memory
 					const uint seg_size = reader.segments[i]->get_file_size();
 					ELFIO::Elf64_Addr seg_strt_addr = reader.segments[i]->get_physical_address();
 
-					printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+					if(verbose_flag)
+						printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
 					
 					long unsigned int offset = 0;
 					while(offset<seg_size)
@@ -391,21 +415,13 @@ class Memory
 						offset++;
 					}
 
-					printf("done\n");
+					if(verbose_flag)
+						printf("done\n");
 				}
 			}
 			i++;
 		}
-	
-		//unsigned int entry_point = 
-		/*bool entry_point_found = false;
-		if (!entry_point_found)
-		{
-			char errmsg[60];
-			sprintf(errmsg, "Entry point not found in elf; defaulting to 0x%08X", default_entry_point);
-			throwWarning("INIT~", errmsg);
-		}
-		else*/
+
 		return (unsigned int) reader.get_entry();
 	}
 };
@@ -419,19 +435,41 @@ class Memory
 class Backend
 {
 	public:
-	// Testbench
+	/**
+	 * @brief Pointer to testbench object
+	 */
 	TESTBENCH<VAtomRVSoC> *tb;
 
 	// memory
+	/**
+	 * @brief Pointer to memoy object
+	 */
 	Memory * mem;
 
 	// ==== STATE ====
+	/**
+	 * @brief Program counter value in fetch stage
+	 */
 	unsigned int pc_f;
+
+	/**
+	 * @brief Instruction in fetch stage
+	 */
 	unsigned int ins_f;
 
+	/**
+	 * @brief Program counter value in execute stage
+	 */
 	unsigned int pc_e;
+
+	/**
+	 * @brief Instuction value in execute stage
+	 */
 	unsigned int ins_e;
 	
+	/**
+	 * @brief Registe file values
+	 */
 	unsigned int rf[32];
 
 
@@ -478,6 +516,7 @@ class Backend
 		tb->reset();
 	}
 
+
 	void serviceMemoryRequest()
 	{
 		// Imem Port Read
@@ -502,6 +541,7 @@ class Backend
 			}
 		}
 	}
+
 
 	/**
 	 * @brief probe all internal signals and regsters and 
@@ -528,11 +568,6 @@ class Backend
 	 */
 	void displayData()
 	{
-		/*if(cpu_state == FETCH)
-		{
-			std::cout << "\nF-< "<<tb->m_tickcount<<" >\n";
-			return;
-		}*/
 		unsigned int change = pc_f-pc_e;
 		std::string jump = "    ";
 		if(tb->m_core->AtomRVSoC->atom->__PVT__jump_decision)
@@ -548,12 +583,14 @@ class Backend
 		if(verbose_flag)
 		{
 			int cols = 2; // no of coloumns per rows
-			/*for(int i=0; i<32; i++)	// print in left-right fashion
+			#ifndef DEBUG_PRINT_T2B
+			for(int i=0; i<32; i++)	// print in left-right fashion
 			{
 				printf("r%-2d: 0x%08X   ", i, rf[i]);
 				if(i%cols == cols-1)
 					printf("\n");
-			}*/
+			}
+			#else
 			for(int i=0; i<32/cols; i++)	// print in topdown fashion
 			{
 				for(int j=0; j<cols; j++)
@@ -562,6 +599,7 @@ class Backend
 				}
 				printf("\n");
 			}
+			#endif
 		}
 	}
 
