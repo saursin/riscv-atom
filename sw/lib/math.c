@@ -17,7 +17,7 @@ int sqrt(int x)
 
     int y = 0;
     for(int j=15; j>=0; j--)
-        if(__mulsi3((y + (1 << j)), (y + (1 << j))) <= x)
+        if((y + (1 << j)) * (y + (1 << j)) <= x)
             y = y + (1 << j);
     return y;
 }
