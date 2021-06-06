@@ -4,7 +4,7 @@
 
 Atom is an embedded-class processor based on the RISC-V instruction set architecture.
 
-- Atom has a non pipe-lined architecture, optimised for small FPGAs.
+- Atom has a 2-stage pipe-lined architecture, optimised for small FPGAs.
 
 - Atom Implements RV32I  instruction set architecture.
 
@@ -134,12 +134,24 @@ $ ./atomsim ../example/hello/hello.elf
 
 
 
+**Adding to Path **
+
+For convenience, `build/bin` directory can be added to path by adding the following line to your `.bashrc` file. This will allow you to invoke atomsim from anywhere.
+
+```
+export PATH=<your_path>:$PATH
+```
+
+just replace `your_path` with the path to the `riscv-atom/build/bin` directory on your machine.
+
+
+
 **Generating atomsim code documentation using doxygen**
 
 Run make from the parent directory
 
 ```bash
-$ make doxy-doc
+$ make docs
 ```
 
 This will generate *latex* and *html* documentation in their respective folders under the doc directory
@@ -151,31 +163,19 @@ To generate *pdf* file from the latex files, go to `doc/latex` directory and run
 **Generating "Documentation & User Manual" pdf**
 
 ```bash
-$ make documentation
+$ make pdf-docs
 ```
 
 
 
 ## AtomSim
 
-**CLI Options**
-
-```
-Usage:
-$ atomsim [options] <executable_file>
-
-options:
--d 					: run simulation in debug mode
--h	| --help 	    : display this message
--v          		: turn on verbose
--t <file>			: turn on vcd tracing
---version			: display version information
---trace-dir <dir>	: specify trace directory (default is current directory)
-```
-
 ### Modes of operation
 
-Atomsim supports two modes of simulation: a). debug/interactive, & b) test. 
+Atomsim supports two modes of simulation: 
+
+1. debug/interactive, 
+2. test
 
 #### 1. Debug/Interactive Mode
 
@@ -391,158 +391,6 @@ Booting...
 5 + 6 = 11
 Exiting @ tick 9308 due to ebreak
 ```
-
-## FPGA Implementation
-
-Yosys systhesis results:
-
-````
-=== $paramod\RegisterFile\REG_WIDTH=32\REG_ADDR_WIDTH=5 ===
-
-   Number of wires:               2144
-   Number of wire bits:           3222
-   Number of public wires:          40
-   Number of public wire bits:    1106
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:               3169
-     FDRE                          992
-     LUT1                            8
-     LUT2                           31
-     LUT3                           59
-     LUT4                          938
-     LUT5                          176
-     LUT6                          764
-     MUXCY                          12
-     MUXF7                         174
-     XORCY                          15
-
-   Estimated number of LCs:       1937
-
-=== Alu ===
-
-   Number of wires:               1124
-   Number of wire bits:           1281
-   Number of public wires:           4
-   Number of public wire bits:      99
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:               1212
-     LUT1                           32
-     LUT2                          137
-     LUT3                           29
-     LUT4                           22
-     LUT5                           33
-     LUT6                          529
-     MUXCY                          62
-     MUXF7                         226
-     MUXF8                          78
-     XORCY                          64
-
-   Estimated number of LCs:        656
-
-=== AtomRV ===
-
-   Number of wires:                314
-   Number of wire bits:           1142
-   Number of public wires:          37
-   Number of public wire bits:     648
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:                749
-     $paramod\RegisterFile\REG_WIDTH=32\REG_ADDR_WIDTH=5      1
-     Alu                             1
-     Decode                          1
-     FDRE                          128
-     LUT1                            1
-     LUT2                          131
-     LUT3                          154
-     LUT4                            8
-     LUT5                           39
-     LUT6                          113
-     MUXCY                          95
-     MUXF7                          40
-     MUXF8                           4
-     XORCY                          33
-
-   Estimated number of LCs:        314
-
-=== AtomRVSoC ===
-
-   Number of wires:                 10
-   Number of wire bits:            167
-   Number of public wires:          10
-   Number of public wire bits:     167
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:                  1
-     AtomRV                          1
-
-   Estimated number of LCs:          0
-
-=== Decode ===
-
-   Number of wires:                126
-   Number of wire bits:            253
-   Number of public wires:          19
-   Number of public wire bits:     146
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:                153
-     LUT2                           21
-     LUT3                           11
-     LUT4                           16
-     LUT5                            5
-     LUT6                           71
-     MUXF7                          24
-     MUXF8                           5
-
-   Estimated number of LCs:        103
-
-=== design hierarchy ===
-
-   AtomRVSoC                         1
-     AtomRV                          1
-       $paramod\RegisterFile\REG_WIDTH=32\REG_ADDR_WIDTH=5      1
-       Alu                           1
-       Decode                        1
-
-   Number of wires:               3718
-   Number of wire bits:           6065
-   Number of public wires:         110
-   Number of public wire bits:    2166
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:               5280
-     FDRE                         1120
-     LUT1                           41
-     LUT2                          320
-     LUT3                          253
-     LUT4                          984
-     LUT5                          253
-     LUT6                         1477
-     MUXCY                         169
-     MUXF7                         464
-     MUXF8                          87
-     XORCY                         112
-
-   Estimated number of LCs:       2967
-````
-
-
-
-Xilinx vivado synthesis results: 
-
-| FPGA                     | LUT Utilization | Power Consumption | Fmax |
-| ------------------------ | --------------- | ----------------- | ---- |
-| Xilinx Spartan-6 XC6SLX9 | -               | -                 | -    |
-| Xilinx Atrix-7           | -               | -                 | -    |
 
 
 
