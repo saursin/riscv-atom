@@ -33,11 +33,11 @@ _start:
 # eq t1 0x00007155
 # eq t2 0x00008955
 # eq a0 0x00007155
-# eq a1 0xFFFF8955
+# eq a1 0xffff8955
 # eq a2 0x00008955
 
 # eq t3 0x00009999
-# eq a3 0xFFFF9955
-# eq a4 0xFFFF9999
-# eq a5 0xFFFF8999
+# eq a3 0xffff9955
+# eq a4 0xffff9999
+# eq a5 0xffff8999
 # eq a6 0x00008999

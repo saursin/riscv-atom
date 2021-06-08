@@ -69,7 +69,8 @@ def search():
 
 def compile(tests):
     for t in tests:
-        print(Fore.GREEN+'compile: '+Style.RESET_ALL+t, end =": ")
+        print(40*"-")
+        print(Fore.GREEN+'compile: '+Style.RESET_ALL+t)
         dump = subprocess.run(
             [RVPREFIX+CC]+CFLAGS+LDFLAGS+[t, '-o', work_dir+'/'+t[0:-2]+'.elf'] , capture_output=True, text=True
         )
@@ -81,15 +82,15 @@ def compile(tests):
         if (dump.returncode != 0):
             print(Fore.RED+"EXITING due to compile error!"+Style.RESET_ALL)
             exit()
-        print(Fore.GREEN+'--- ok'+Style.RESET_ALL)
 
 
 
 
 
 def execute(test, mute=True):
+    print(40*"-")
     elf = work_dir+'/'+test[0:-2]+'.elf'
-    print(Fore.GREEN+'execute: '+Style.RESET_ALL + elf, end=': ')
+    print(Fore.GREEN+'execute: '+Style.RESET_ALL + elf)
 
     if not mute:
         for item in [EXEC]+EXEC_FLAGS+[elf]:
@@ -107,14 +108,13 @@ def execute(test, mute=True):
     if (dump.returncode != 0):
         print(Fore.RED+"EXITING due to execution error!"+Style.RESET_ALL)
         exit()
-    print(Fore.GREEN+'--- ok'+Style.RESET_ALL)
 
 
 
 
 
 def verify(test):
-    print(Fore.GREEN+'verify: '+Style.RESET_ALL + test, end=': ')
+    print(Fore.GREEN+'verify: '+Style.RESET_ALL + test)
     fcontents = []
 
     # read assembly files
@@ -191,11 +191,8 @@ def verify(test):
             print(Fore.RED+"ASSERTION FAILED! : "+Style.RESET_ALL)
             print("Expected: "+ str(assr[1]) +" = "+ str(assr[2]))
             print("Got:      "+ str(assr[1]) +" = "+ str(data[0]))
-
-
             return False
     
-    print(Fore.GREEN+"--- ok"+Style.RESET_ALL)
     return True
 
 
@@ -213,20 +210,22 @@ if __name__ == "__main__":
 
 
     # Search tests
-    print(Fore.CYAN+"\n> Stage-1:"+Style.RESET_ALL+" Seaching for tests...")
+    print(Fore.CYAN+"> Stage-1:"+Style.RESET_ALL+" Seaching for tests...")
     tests = search()
     print("Found "+str(len(tests))+' tests')
     for t in tests:
         print(t)
     
+    print(80*"=")
 
     # Compile all
-    print(Fore.CYAN+"\n> Stage-2:"+Style.RESET_ALL+" Compiling tests...")
+    print(Fore.CYAN+"> Stage-2:"+Style.RESET_ALL+" Compiling tests...")
     compile(tests)
 
+    print(80*"=")
 
     # Execute one by one
-    print(Fore.CYAN+"\n> Stage-3:"+Style.RESET_ALL+" Executing & verifying dumps...")
+    print(Fore.CYAN+"> Stage-3:"+Style.RESET_ALL+" Executing & verifying dumps...")
     
     failed_tests = []
     for t in tests:
@@ -234,9 +233,10 @@ if __name__ == "__main__":
         if verify(t) == False:
             failed_tests = failed_tests+[t]
 
+    print(80*"=")
 
     # Conclude
-    print(Fore.CYAN+"\n> Stage-4:"+Style.RESET_ALL+" Generating report...")
+    print(Fore.CYAN+"> Stage-4:"+Style.RESET_ALL+" Generating report...")
     print("|----------------------------|")
     print("|    Verification Report     |")
     print("|----------------------------|")
@@ -251,9 +251,3 @@ if __name__ == "__main__":
     print(Fore.RED+"\nFailed tests : " + str(len(failed_tests)) + '/' +str(len(tests))+ Style.RESET_ALL)
     for t in failed_tests:
         print("\t"+t)
-
-        
-
-
-
-

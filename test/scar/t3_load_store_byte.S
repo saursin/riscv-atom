@@ -24,5 +24,5 @@ _start:
 # eq t1 0x00000071
 # eq t2 0x00000089
 # eq a0 0x00000071
-# eq a1 0xFFFFFF89
+# eq a1 0xffffff89
 # eq a2 0x00000089

@@ -179,9 +179,9 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 
 					switch(i-2)
 					{
-						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08X", tmpval); break;
-						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08X", tmpval); break;break;
-						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08X",i-2, tmpval); break;
+						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08x", tmpval); break;
+						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;break;
+						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08x",i-2, tmpval); break;
 					}
 					fcontents.push_back(std::string(temp));
 				}
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 				if(token.size()<2)
 					throwError("DBG~", "\"mem\" command expects address as argument\n");
 				unsigned int addr = std::stoi(token[1]);
-				printf("%08X : %02X %02X %02X %02X\n", addr, bkend.mem->fetchByte(addr),
+				printf("%08x : %02x %02x %02x %02x\n", addr, bkend.mem->fetchByte(addr),
 				 bkend.mem->fetchByte(addr+1),bkend.mem->fetchByte(addr+2), bkend.mem->fetchByte(addr+3));
 			}
 			else if(token[0] == "dumpmem")
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
 				for(unsigned int i=0; i<bkend.mem->size-4; i+=4)
 				{	
 					char hex [30];
-					sprintf(hex, "0x%08X\t:\t0x%08X", i, bkend.mem->fetchWord(i));
+					sprintf(hex, "0x%08x\t:\t0x%08x", i, bkend.mem->fetchWord(i));
 					fcontents.push_back(hex);
 				}
 				fWrite(fcontents, token[1]);

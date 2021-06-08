@@ -298,7 +298,7 @@ class Memory
 		if(!isValidAddress(addr))
 		{
 			char errmsg[40];
-			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			sprintf(errmsg, "Address out of bounds : 0x%08x", addr);
 			throwError("MEM1", errmsg, true);
 			return 0;
 		}
@@ -345,7 +345,7 @@ class Memory
 		if(!isValidAddress(addr))
 		{
 			char errmsg[40];
-			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			sprintf(errmsg, "Address out of bounds : 0x%08x", addr);
 			throwError("MEM1", errmsg, true);
 			return;
 		}
@@ -406,7 +406,7 @@ class Memory
 					ELFIO::Elf64_Addr seg_strt_addr = reader.segments[i]->get_physical_address();
 
 					if(verbose_flag)
-						printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+						printf("Loading Segment %d @ 0x%08x --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
 					
 					long unsigned int offset = 0;
 					while(offset<seg_size)
@@ -484,7 +484,7 @@ class Backend
 		mem = new Memory(mem_size);
 
 		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
-		printf("Entry point : 0x%08X\n", entry_point);
+		printf("Entry point : 0x%08x\n", entry_point);
 
 		// Set entry point
 		tb->m_core->AtomRVSoC->atom->ProgramCounter = entry_point;
@@ -576,8 +576,8 @@ class Backend
 			jump = "    ";
 
 		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
-		printf("F-STAGE  |  pc : 0x%08X  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
-		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
+		printf("F-STAGE  |  pc : 0x%08x  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
+		printf("E-STAGE  V  pc : 0x%08x   ir : 0x%08x   []\n", pc_e , ins_e); 
 		std::cout << "---------------------------------------------------\n";
 						
 		if(verbose_flag)
@@ -586,7 +586,7 @@ class Backend
 			#ifndef DEBUG_PRINT_T2B
 			for(int i=0; i<32; i++)	// print in left-right fashion
 			{
-				printf("r%-2d: 0x%08X   ", i, rf[i]);
+				printf("r%-2d: 0x%08x   ", i, rf[i]);
 				if(i%cols == cols-1)
 					printf("\n");
 			}
@@ -595,7 +595,7 @@ class Backend
 			{
 				for(int j=0; j<cols; j++)
 				{
-					printf(" %s: 0x%08X  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
+					printf(" %s: 0x%08x  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
 				}
 				printf("\n");
 			}
