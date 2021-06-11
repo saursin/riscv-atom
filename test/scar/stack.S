@@ -24,5 +24,5 @@ ebreak
 
 # $-ASSERTIONS-$
 # eq a0 0x43234323
-# eq a1 0x0000443C
-# eq a2 0x000000DE
+# eq a1 0x0000443c
+# eq a2 0x000000de
