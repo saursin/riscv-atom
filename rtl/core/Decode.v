@@ -28,6 +28,7 @@ module Decode
     output  reg             cmp_b_op_sel_o,
     output  reg     [2:0]   alu_op_sel_o,
     output  wire    [2:0]   mem_access_width_o,
+    output  reg             d_mem_load_store,
     output  reg             mem_we_o
 );
 
@@ -77,6 +78,7 @@ always @(*) begin
     cmp_b_op_sel_o = 1'b0;
     alu_op_sel_o = `__ALU_ADD__;
     mem_we_o = 1'b0;
+    d_mem_load_store = 1'b0;
     imm_format = `__U_IMMIDIATE__;
 
 
@@ -207,6 +209,7 @@ always @(*) begin
             b_op_sel_o = 1'b1;
             alu_op_sel_o = `__ALU_ADD__;
             mem_we_o = 1'b0;
+            d_mem_load_store = 1'b1;
             imm_format = `__I_IMMIDIATE__;
         end
 
@@ -217,6 +220,7 @@ always @(*) begin
             b_op_sel_o = 1'b1;
             alu_op_sel_o = `__ALU_ADD__;
             mem_we_o = 1'b1;
+            d_mem_load_store = 1'b1;
             imm_format = `__S_IMMIDIATE__;
         end
 
@@ -430,57 +434,5 @@ always @(*) begin
 
     endcase
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-0000 pred succ 00000 000 00000 0001111 FENCE
-0000 0000 0000 00000 001 00000 0001111 FENCE.I
-000000000000 00000 000 00000 1110011 ECALL
-000000000001 00000 000 00000 1110011 EBREAK
-csr rs1 001 rd 1110011 CSRRW
-csr rs1 010 rd 1110011 CSRRS
-csr rs1 011 rd 1110011 CSRRC
-csr zimm 101 rd 1110011 CSRRWI
-csr zimm 110 rd 1110011 CSRRSI
-csr zimm 111 rd 1110011 CSRRCI
-*/
 
 endmodule
