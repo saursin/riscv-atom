@@ -13,8 +13,8 @@ module AtomRV_wb
 	output  wire    [31:0]  wb_ibus_adr_o,
     input   wire    [31:0]  wb_ibus_dat_i,
 
-    input   wire            wb_ibus_ack_i,
-    output  wire            wb_ibus_cyc_o,
+    output  wire             wb_ibus_stb_o,
+	input   wire            wb_ibus_ack_i,
 
     // === DBUS Wishbone Master Interface === 
     output  wire    [31:0]  wb_dbus_adr_o,
@@ -76,9 +76,28 @@ module AtomRV_wb
 	
 	////////////////////////////////////////////////////////////
 	/// IBUS Wishbone Logic
+	// parameter IDLE = 0;
+	// parameter WAIT = 1;
+
+	// reg state = IDLE;
+
+	// always @(posedge wb_clk_i) begin
+	// 	wb_ibus_stb_o <= 0;
+	// 	case(state)
+	// 		IDLE:	if(imem_valid_o) begin
+	// 					wb_ibus_stb_o <= 1;
+	// 					state <= WAIT;
+	// 				end
+
+	// 		WAIT:	if(imem_ack_i)
+	// 					state <= IDLE;
+
+	// 	endcase
+	// end
+
 	assign wb_ibus_adr_o = imem_addr_o;
 	assign imem_data_i = wb_ibus_dat_i;
-	assign wb_ibus_cyc_o = imem_valid_o;
+	assign wb_ibus_stb_o = imem_valid_o;
 	assign imem_ack_i = wb_ibus_ack_i;
 
 	////////////////////////////////////////////////////////////
@@ -90,8 +109,8 @@ module AtomRV_wb
 	assign wb_dbus_sel_o = dmem_sel_o;
 	assign wb_dbus_we_o = dmem_we_o;
 
-	assign wb_dbus_cyc_o = dmem_valid_o;
+	assign wb_dbus_stb_o = dmem_valid_o;
 	assign dmem_ack_i = wb_dbus_ack_i;
 
-	assign wb_dbus_stb_o = wb_dbus_cyc_o;
+	assign wb_dbus_cyc_o = wb_dbus_stb_o;
 endmodule

@@ -77,7 +77,7 @@ wire jump_decision = d_jump_en & comparison_result; // final jump decision signa
 ////////////////////////////////////////////////////////////////////
 //  STAGE 1 - FETCH
 ////////////////////////////////////////////////////////////////////
-assign imem_valid_o = 1'b1;  // Always valid
+assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
 wire   imem_handshake = imem_valid_o & imem_ack_i;
 wire   stall_stage1 = !imem_handshake | stall_stage2;
 /*

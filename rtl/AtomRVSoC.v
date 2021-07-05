@@ -8,20 +8,15 @@
 `default_nettype none
 `include "Timescale.vh"
 `include "core/AtomRV.v"
+`include "uncore/SinglePortRAM.v"
+`include "uncore/GPIO.v"
 
 module AtomRVSoC
 (
     input   wire            clk_i,    // external clock
     input   wire            rst_i,    // external reset
     
-    output  wire    [31:0]  imem_addr_o,
-    input   wire    [31:0]  imem_data_i,
 
-    output  wire    [31:0]  dmem_addr_o,            // DMEM address
-    input   wire    [31:0]  dmem_data_i,            // DMEM data in
-    output  wire    [31:0]  dmem_data_o,            // DMEM data out
-    output  wire    [2:0]   dmem_access_width_o,    // DMEM Access width
-    output  wire            dmem_we_o               // DMEM WriteEnable
 
     //input        uart_rxd,  // UART receive line
     //output       uart_txd,  // UART transmit line
@@ -29,46 +24,86 @@ module AtomRVSoC
     //output [3:0] leds,      // on-board leds
     //output [3:0] debug      // osciloscope
 );
-    //////////////////////////////////////////////////////
-    // IMEM
-    // wire [31:0] imem_addr;
-    // wire [31:0] imem_data;
-
-    //////////////////////////////////////////////////////
-    // DMEM
-    //wire [31:0] d_addr_o /*verilator public*/;
-    //wire [31:0] d_data_i = 32'd0;
-    //wire [31:0] d_data_o;
-    //wire d_we_o;
     
     //////////////////////////////////////////////////////
-    // Atom RISCV CORE
-    wire hlt = 0;
+    // IMEM (8Kb)
+    wire    [31:0]      imem_wb_adr_i;
+    wire    [31:0]      imem_wb_dat_i;
+    wire    [3:0]       imem_wb_sel_i;
+    wire                imem_wb_we_i;
+    wire                imem_wb_cyc_i;
+    wire    [31:0]      imem_wb_rdt_o;
+    wire                imem_wb_ack_o;
     
-    AtomRV atom
-    (
-        .clk_i(clk_i),    // clock
-        .rst_i(rst_i),    // reset
-        .hlt_i(hlt),    // hault cpu
+    SinglePortRAM #(
+        // Parameters
+        .ADDR_WIDTH (16),
+        .MEM_FILE   ("imem_init.hex")
+    ) imem (
+        // Wishbone Interface
+        .wb_clk_i   (clk_i),
+        .wb_rst_i   (rst_i),
 
-        .imem_data_i            (imem_data_i),   // IMEM data
-        .imem_addr_o            (imem_addr_o),   // IMEM Address
-
-        .dmem_addr_o            (dmem_addr_o),   // DMEM address
-        .dmem_data_i            (dmem_data_i),   // DMEM data in
-        .dmem_data_o            (dmem_data_o),   // DMEM data out
-        .dmem_access_width_o    (dmem_access_width_o),
-        .dmem_we_o              (dmem_we_o)      // DMEM WriteEnable
+        .wb_adr_i   (imem_wb_adr_i),
+        .wb_dat_i   (imem_wb_dat_i),
+        .wb_sel_i   (imem_wb_sel_i),
+        .wb_we_i    (imem_wb_we_i), 
+        .wb_cyc_i   (imem_wb_cyc_i),  
+        .wb_rdt_o   (imem_wb_rdt_o),  
+        .wb_ack_o   (imem_wb_ack_o)
     );
 
 
     //////////////////////////////////////////////////////
-    // Tick Counter
-    //reg [32:0]  TickCounter;
+    // DMEM
+    wire    [31:0]      dmem_wb_adr_i;
+    wire    [31:0]      dmem_wb_dat_i;
+    wire    [3:0]       dmem_wb_sel_i;
+    wire                dmem_wb_we_i;
+    wire                dmem_wb_cyc_i;
+    wire    [31:0]      dmem_wb_rdt_o;
+    wire                dmem_wb_ack_o;
+    
+    SinglePortRAM #(
+        // Parameters
+        .ADDR_WIDTH (16),
+        .MEM_FILE   ("dmem_init.hex")
+    ) dmem (
+        // Wishbone Interface
+        .wb_clk_i   (clk_i),
+        .wb_rst_i   (rst_i),
 
-    //always @(posedge xclk_i) begin
-      //  if(xrst_i) TickCounter = 32'd0;
-        //else TickCounter = TickCounter + 1;
-    //end
+        .wb_adr_i   (dmem_wb_adr_i),
+        .wb_dat_i   (dmem_wb_dat_i),
+        .wb_sel_i   (dmem_wb_sel_i),
+        .wb_we_i    (dmem_wb_we_i), 
+        .wb_cyc_i   (dmem_wb_cyc_i),  
+        .wb_rdt_o   (dmem_wb_rdt_o),  
+        .wb_ack_o   (dmem_wb_ack_o)
+    );
+
     //////////////////////////////////////////////////////
+    // RISC-V Atom Core (With Wishbone interface)
+    
+    AtomRV_wb atom
+    (
+        .clk_i                  (clk_i),    // clock
+        .rst_i                  (rst_i),    // reset
+
+        .imem_addr_o            (imem_addr_o),      // IMEM Address
+        .imem_data_i            (imem_data_i),      // IMEM data
+
+        .imem_valid_o           (imem_valid_o),
+        .imem_ack_i             (imem_ack_i),
+
+        .dmem_addr_o            (dmem_addr_o),      // DMEM address
+        .dmem_data_i            (dmem_data_i),      // DMEM data in
+        .dmem_data_o            (dmem_data_o),      // DMEM data out   
+        .dmem_sel_o             (dmem_sel_o),       // DMEM Strobe
+        .dmem_we_o              (dmem_we_o),        // DMEM WriteEnable
+
+        .dmem_valid_o           (dmem_valid_o),     // DMEM valid
+        .dmem_ack_i             (dmem_ack_i)        // DMEM ack
+    );
+
 endmodule

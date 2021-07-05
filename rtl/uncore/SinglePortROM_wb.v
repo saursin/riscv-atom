@@ -37,7 +37,7 @@ always @(posedge clk_i) begin
   if(rst_i)
     ack_o <= 0;
   else
-    ack_o <= stb_i;
+    ack_o <= stb_i && !ack_o;
 end
 
 

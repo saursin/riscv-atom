@@ -11,12 +11,14 @@ module SinglePortRAM #(
   input   wire 		                wb_rst_i,
 
   input   wire  [ADDR_WIDTH-1:2]  wb_adr_i,
+  output  reg   [31:0] 	          wb_dat_o,
   input   wire  [31:0] 	          wb_dat_i,
-  input   wire  [3:0] 	          wb_sel_i,
   input   wire 		                wb_we_i,
-  input   wire 		                wb_cyc_i,
-  output  reg   [31:0] 	          wb_rdt_o,
-  output  reg 		                wb_ack_o
+  input   wire  [3:0] 	          wb_sel_i,
+  
+  input   wire                    wb_stb_i,
+  output  reg 		                wb_ack_o,
+  input   wire 		                wb_cyc_i
 );
 
 // Calculate depth from address width
@@ -49,7 +51,7 @@ always @(posedge wb_clk_i) begin
   if (we[2]) mem[addr][23:16] <= wb_dat_i[23:16];
   if (we[3]) mem[addr][31:24] <= wb_dat_i[31:24];
   
-  wb_rdt_o <= mem[addr];
+  wb_dat_o <= mem[addr];
 end
 
 endmodule
