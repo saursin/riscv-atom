@@ -9,10 +9,6 @@
 
 #include "Testbench.hpp"
 
-const unsigned long int default_mem_size 	= 0x100000;	// 1MB
-const unsigned int default_entry_point 		= 0x00000000;
-const unsigned long int default_maxitr 		= 100000;
-
 const unsigned int default_UART_RX_ADDRESS   	=	0x00014000;
 const unsigned int default_UART_TX_ADDRESS      =	0x00014001;
 const unsigned int default_UART_SREG_ADDRESS    =	0x00014002;

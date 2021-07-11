@@ -20,6 +20,11 @@ bool dump_regs_on_ebreak 	= false;
 bool dump_signature 		= false;
 
 // Global vars
+const unsigned long int default_mem_size 	= 0x100000;	// 1MB
+const unsigned int default_entry_point 		= 0x00000000;
+const unsigned long int default_maxitr 		= 100000;
+
+unsigned long int mem_size 	= default_mem_size;
 unsigned long int maxitr 	= default_maxitr;
 std::string trace_dir 		= default_trace_dir;
 std::string dump_dir 		= default_dump_dir;
@@ -61,7 +66,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		
 		options.add_options("Config")
 		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr))
-		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size));
+		("memsize", "Specify size of memory to simulate (Supported in AtomBones)", cxxopts::value<unsigned long int>(mem_size));
 
 		options.add_options("Debug")
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
