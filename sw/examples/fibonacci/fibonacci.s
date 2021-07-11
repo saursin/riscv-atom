@@ -1,7 +1,7 @@
 .global main
 
-.equ TX_ADDRESS, 0x00012001               
-.equ TX_ACK_ADDRESS, 0x00012002               
+.equ TX_ADDRESS, 0x00014001               
+.equ TX_ACK_ADDRESS, 0x00014002               
 
 .text
 

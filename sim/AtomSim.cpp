@@ -22,7 +22,7 @@ bool dump_signature 		= false;
 // Global vars
 const unsigned long int default_mem_size 	= 0x100000;	// 1MB
 const unsigned int default_entry_point 		= 0x00000000;
-const unsigned long int default_maxitr 		= 100000;
+const unsigned long int default_maxitr 		= 10000000;
 
 unsigned long int mem_size 	= default_mem_size;
 unsigned long int maxitr 	= default_maxitr;

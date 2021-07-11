@@ -1,5 +1,5 @@
-#ifndef __ATOMRVSOC_H__
-#define __ATOMRVSOC_H__
+#ifndef __ATOMBONES_H__
+#define __ATOMBONES_H__
 
 // =================== MEMORY MAP ======================
 #define MEM_ROM_BEGIN   0x00000000
@@ -14,4 +14,4 @@
 #define IO_UART_TX_ADDRESS      0x00014001
 #define IO_UART_SREG_ADDRESS    0x00014002
 
-#endif //__ATOMRVSOC_H__
+#endif //__ATOMBONES_H__

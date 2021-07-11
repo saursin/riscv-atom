@@ -1,7 +1,6 @@
 #include "stdio.h"
 #include "uart.h"
 //#include "math.h"
-#include "atomrvsoc.h"
 
 // ================= output functions =======================
 
