@@ -12,14 +12,6 @@
 const char default_trace_dir[] 		= "build/trace";
 const char default_dump_dir[] 		= "build/dump";
 
-const unsigned long int default_mem_size 	= 0x100000;	// 1MB
-const unsigned int default_entry_point 		= 0x00000000;
-const unsigned long int default_maxitr 		= 100000;
-
-const unsigned int default_UART_RX_ADDRESS   	=	0x00014000;
-const unsigned int default_UART_TX_ADDRESS      =	0x00014001;
-const unsigned int default_UART_SREG_ADDRESS    =	0x00014002;
-
 // Global flags
 bool verbose_flag 			= false;
 bool debug_mode 			= false;
@@ -28,7 +20,6 @@ bool dump_regs_on_ebreak 	= false;
 bool dump_signature 		= false;
 
 // Global vars
-unsigned long int mem_size 	= default_mem_size;
 unsigned long int maxitr 	= default_maxitr;
 std::string trace_dir 		= default_trace_dir;
 std::string dump_dir 		= default_dump_dir;
@@ -40,7 +31,7 @@ std::string end_simulation_reason; // This is used to display reason for simulat
 
 
 #include "defs.hpp"
-#include "backend.hpp"
+#include "Backend_AtomBones.hpp"
 
 
 /**
@@ -164,7 +155,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			prev_tx_we = cur_tx_we;
 		}
 
-		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)
 		{
 			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
 
@@ -191,7 +182,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		if(b->tb->m_tickcount > maxitr)
 		{
-			throwError("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
+			throwWarning("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
 			exit(EXIT_SUCCESS);
 		}
 	}

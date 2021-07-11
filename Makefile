@@ -60,10 +60,7 @@ cpp_driver = $(sim_dir)/AtomSim.cpp
 cpp_files = $(sim_dir)
 sim_executable = atomsim
 
-# Verilog
-verilog_topmodule = AtomRVSoC
-verilog_topmodule_file = $(rtl_dir)/AtomRVSoC.v
-verilog_files = rtl/AtomRVSoC.v rtl/Timescale.vh rtl/Config.vh rtl/core/Alu.v rtl/core/AtomRV.v rtl/core/Decode.v rtl/core/RegisterFile.v
+include AtomBones.mk
 
 # CPP Configs
 CC = g++
@@ -93,7 +90,7 @@ help : Makefile
 	@echo "RISCV-Atom root Makefile"
 	@echo "Usage: make [Target]"
 	@echo ""
-	@echo "Tagets:"
+	@echo "Targets:"
 	@sed -n 's/^#~//p' $<
 
 
@@ -139,7 +136,7 @@ $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodu
 	cd $(vobject_dir) && make -f V$(verilog_topmodule).mk
 
 # Compile C++ files
-$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/backend.hpp $(sim_dir)/defs.hpp
+$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/Backend_AtomBones.hpp $(sim_dir)/defs.hpp
 	@echo ">> Compiling driver cpp file..."
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
@@ -184,7 +181,7 @@ $(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
 docs: $(doc_dir) $(doxygen_doc_dir)
 	doxygen $(doxygen_config_file)
 
-#~	pdf-docs	:	Generate doxygen documentation for atomsim source code
+#~	pdf-docs	:	Generate doxygen documentation for atomsim source code (in pdf fomat)
 .PHONY: pdf-docs
 pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
 	cd doc/doxygen/latex && make
