@@ -244,3 +244,59 @@ void fWrite (std::vector<std::string> data, std::string filepath)
     }
     File.close();
 }
+
+// ================================ Runtime disassembly =================================
+std::string GetStdoutFromCommand(std::string cmd) {
+
+  std::string data;
+  FILE * stream;
+  const int max_buffer = 256;
+  char buffer[max_buffer];
+  cmd.append(" 2>&1");
+
+  stream = popen(cmd.c_str(), "r");
+
+  if (stream) {
+    while (!feof(stream))
+      if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+    pclose(stream);
+  }
+  return data;
+}
+
+std::map<uint32_t, std::string> getDisassembly(std::string filename)
+{
+	std::string command = "";
+	#ifdef RV32_COMPILER
+		command +="riscv32-unknown-elf-objdump -d ";
+	#else
+		command += "riscv64-unknown-elf-objdump -d ";
+	#endif
+	command+=filename;
+	
+	// Get command output
+	std::string output = GetStdoutFromCommand(command);
+	
+	std::stringstream s(output);
+
+	// Parse command output
+	std::map<uint32_t, std::string> dis;
+
+	unsigned long int linebreak = 0;
+	
+	std::string line;
+	while(std::getline(s, line))
+	{
+		for(int i=0; i<line.length(); i++)
+		{
+			if(line[0]==' ' && line[i]==':')
+			{
+				uint32_t adr = std::stoi(strip(line.substr(0, i)).c_str(), 0, 16);
+				std::string op = strip(line.substr(i+21, line.length()));
+				dis.insert({adr, op});
+				break;
+			}
+		}
+	}
+	return dis;
+}

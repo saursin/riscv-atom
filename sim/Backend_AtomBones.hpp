@@ -334,6 +334,10 @@ class Backend
 	 */
 	unsigned int rf[32];
 
+	/**
+	 * @brief Disassembly of input file
+	 */
+	std::map<uint32_t, std::string> disassembly;
 
 	/**
 	 * @brief Construct a new Backend object
@@ -345,8 +349,6 @@ class Backend
 		tb = new Testbench<VAtomBones>();
 		mem = new Memory(mem_size);
 
-		//tb->reset();
-
 		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
 		printf("Entry point : 0x%08x\n", entry_point);
 
@@ -357,6 +359,9 @@ class Backend
 
 		// get initial signal values
 		refreshData();
+
+		// get input file disassembly
+		disassembly = getDisassembly(mem_init_file);
 		
 		std::cout << "Initialization complete!\n";
 	}
@@ -444,14 +449,25 @@ class Backend
 	{
 		unsigned int change = pc_f-pc_e;
 		std::string jump = "    ";
-		if(tb->m_core->AtomBones->atom_core->__PVT__jump_decision)
+		bool isJump = tb->m_core->AtomBones->atom_core->__PVT__jump_decision;
+		if(isJump)
 			jump = "jump";
 		else
 			jump = "    ";
-
+		static bool wasJump = false;
 		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
 		printf("F-STAGE  |  pc : 0x%08x  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
-		printf("E-STAGE  V  pc : 0x%08x   ir : 0x%08x   []\n", pc_e , ins_e); 
+		printf("E-STAGE  V  pc : 0x%08x   ir : 0x%08x \n", pc_e , ins_e); 
+		
+		std::cout << "[ " <<  disassembly[pc_e] << " ] ";
+		
+		if(wasJump)
+			std::cout << " => nop (pipeline flush)";
+
+		std::cout << "\n";
+
+		wasJump = isJump;
+
 		std::cout << "---------------------------------------------------\n";
 						
 		if(verbose_flag)
