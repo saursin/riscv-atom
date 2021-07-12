@@ -145,4 +145,4 @@ class Testbench
 		return (Verilated::gotFinish()); 
 	}
 };
-#endif __TESTBENCH_H__
+#endif // __TESTBENCH_H__

@@ -36,8 +36,12 @@ std::string end_simulation_reason; // This is used to display reason for simulat
 
 
 #include "defs.hpp"
-#include "Backend_AtomBones.hpp"
 
+// Backend selection
+// These macros are defined in command line during compiling.
+#ifdef TARGET_ATOMBONES
+#include "Backend_AtomBones.hpp"
+#endif
 
 /**
  * @brief parses command line arguments given to the assembler and 
