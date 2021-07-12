@@ -9,9 +9,9 @@
 
 #include "Testbench.hpp"
 
-const unsigned int default_UART_RX_ADDRESS   	=	0x00014000;
-const unsigned int default_UART_TX_ADDRESS      =	0x00014001;
-const unsigned int default_UART_SREG_ADDRESS    =	0x00014002;
+const unsigned int default_UART_RX_ADDRESS   	=	0x08000000;
+const unsigned int default_UART_TX_ADDRESS      =	0x08000001;
+const unsigned int default_UART_SREG_ADDRESS    =	0x08000002;
 
 
 
@@ -487,6 +487,15 @@ class Backend
 		serviceMemoryRequest();
 		tb->tick();
 		ins_f = tb->m_core->imem_data_i;
+
+		// Serial port Emulator: Rx Listener
+		static bool prev_tx_we = false;
+		bool cur_tx_we = (mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
+		if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
+		{
+			std::cout << (char)mem->fetchByte(default_UART_TX_ADDRESS);
+		}
+		prev_tx_we = cur_tx_we;
 	}
 
 

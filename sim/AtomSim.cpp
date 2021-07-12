@@ -20,7 +20,7 @@ bool dump_regs_on_ebreak 	= false;
 bool dump_signature 		= false;
 
 // Global vars
-const unsigned long int default_mem_size 	= 0x100000;	// 1MB
+const unsigned long int default_mem_size 	= 134217731;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
 const unsigned int default_entry_point 		= 0x00000000;
 const unsigned long int default_maxitr 		= 10000000;
 
@@ -41,6 +41,7 @@ std::string end_simulation_reason; // This is used to display reason for simulat
 // These macros are defined in command line during compiling.
 #ifdef TARGET_ATOMBONES
 #include "Backend_AtomBones.hpp"
+const std::string AtomSimBackend = "AtomBones";
 #endif
 
 /**
@@ -118,7 +119,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 			exit(0);
 		}
 
-		std::cout << "Input File:" << ifile << "\n";
+		std::cout << "Input File: " << ifile << "\n";
 
 	}
 	catch(const cxxopts::OptionException& e)
@@ -136,7 +137,6 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
  */
 void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 {	
-	static bool prev_tx_we = false;
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
 		if(b->done())
@@ -154,14 +154,6 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			if(dump_regs_on_ebreak) 
 				b->refreshData();
 			b->tick();
-			
-			// Rx Listener
-			bool cur_tx_we = (b->mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
-			if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
-			{
-				std::cout << (char)b->mem->fetchByte(default_UART_TX_ADDRESS);
-			}
-			prev_tx_we = cur_tx_we;
 		}
 
 		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)
@@ -207,13 +199,17 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
+    std::cout << "AtomSim [" << AtomSimBackend << "]\n";
+
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 	
+
 	std::string ifile;
 
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile);
+
 
 
 	// Create a new backend instance
