@@ -246,6 +246,12 @@ void fWrite (std::vector<std::string> data, std::string filepath)
 }
 
 // ================================ Runtime disassembly =================================
+/**
+ * @brief Get the Stdout From shell Command
+ * 
+ * @param cmd shell command to execute
+ * @return std::string command output
+ */
 std::string GetStdoutFromCommand(std::string cmd) {
 
   std::string data;
@@ -264,6 +270,12 @@ std::string GetStdoutFromCommand(std::string cmd) {
   return data;
 }
 
+/**
+ * @brief Get the Disassembly of input file using riscv objdump
+ * 
+ * @param filename input filename
+ * @return std::map<uint32_t, std::string> map of disassembly
+ */
 std::map<uint32_t, std::string> getDisassembly(std::string filename)
 {
 	std::string command = "";
