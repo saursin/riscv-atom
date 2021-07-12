@@ -1,12 +1,12 @@
 #ifndef __UART_H__
 #define __UART_H__
 
-#include "atomrvsoc.h"
+#include "atombones.h"
 
 /*
     Uart Status register format
-    b0: dout_we_o
-    b1: 
+    b0: Tx_valid
+    b1: Rx_ack
     b2: 
     b3: 
     b4:
@@ -33,7 +33,7 @@ char uart_recieve()
 
 char uart_status()
 {
-    return *((volatile char*) IO_UART_TX_ADDRESS);
+    return *((volatile char*) IO_UART_SREG_ADDRESS);
 }
 
 #endif //__UART_H__

@@ -13,7 +13,7 @@ li x3, 0x01234567
 nop
 ebreak
 # $-ASSERTIONS-$
-# eq t0 0x000000FF
-# eq t1 0x0000FFFF
-# eq t2 0xFFFFF343
+# eq t0 0x000000ff
+# eq t1 0x0000ffff
+# eq t2 0xfffff343
 # eq x3 0x01234567

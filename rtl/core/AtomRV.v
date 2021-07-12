@@ -24,25 +24,62 @@
 
 module AtomRV
 (
-    input   wire            clk_i,    // clock
-    input   wire            rst_i,    // reset
-    input   wire            hlt_i,    // hault cpu
+    // ========== General ==========
+    input   wire            clk_i,          // clock
+    input   wire            rst_i,          // reset
 
-    input   wire    [31:0]  imem_data_i,   // IMEM data
-    output  wire    [31:0]  imem_addr_o,   // IMEM Address
 
-    output  wire    [31:0]  dmem_addr_o,            // DMEM address
-    input   wire    [31:0]  dmem_data_i,            // DMEM data in
-    output  wire    [31:0]  dmem_data_o,            // DMEM data out
-    output  wire    [2:0]   dmem_access_width_o,    // DMEM Access width
-    output  wire            dmem_we_o               // DMEM WriteEnable
+    // ========== IMEM Port ==========
+    output  wire    [31:0]  imem_addr_o,    // IMEM Address
+    input   wire    [31:0]  imem_data_i,    // IMEM data
+
+    // Imem handshaking signals
+    output  wire            imem_valid_o,   // IMEM Valid signal
+    input   wire            imem_ack_i,     // IMEM Acknowledge signal
+
+
+    // ========== DMEM Port ==========
+    output  wire    [31:0]  dmem_addr_o,    // DMEM address
+    input   wire    [31:0]  dmem_data_i,    // DMEM data in
+    output  wire    [31:0]  dmem_data_o,    // DMEM data out
+    output  reg      [3:0]  dmem_sel_o,     // DMEM Select
+    output  wire            dmem_we_o,      // DMEM Strobe
+
+    // Dmem handshaking signals
+    output  wire            dmem_valid_o,   // DMEM Valid signal
+    input   wire            dmem_ack_i      // DMEM Ack signal
 );
+/*
+    ///////////// Protocol specification //////////////
+    CPU has a generic handshaking protocol interface (GHPI). Handshaking is done via means 
+    of two signals 'valid' & 'ack'. Valid signal is set by master wenever a tansaction 
+    begins and slave responds by setting the 'ack' signal. When both signals are set, 
+    tansaction takes place. GHPI protocol also supports delayed transactions.
+
+    CPU has two GHPI ports namely imem & dmem ports. imem port is used only for reading 
+    the memory while dmem pot is used for both eads and writes. The CPU ca ne configured in 
+    both harward and von-neumann fashion. In case of harwad configuration, separate instruction 
+    and data memory ae needed to be connected. In case of von-neumann mode, a bus arbiter is
+    needed to multiplex between both ports.
+
+    Reads:
+    - Master sets the address, the valid signal and clears the strobe signal.
+    - Slave responds by poviding the data coresponding to that address & setting the ack signal.
+
+    Writes:
+    - Master sets the address, the data, the valid signal and the strobe signal (depending on 
+        the write width).
+    - Slave responds by setting the ack signal.
+*/
 
 wire jump_decision = d_jump_en & comparison_result; // final jump decision signal
 
 ////////////////////////////////////////////////////////////////////
 //  STAGE 1 - FETCH
 ////////////////////////////////////////////////////////////////////
+assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
+wire   imem_handshake = imem_valid_o & imem_ack_i;
+wire   stall_stage1 = !imem_handshake | stall_stage2;
 /*
     Program Counter
 */
@@ -53,12 +90,11 @@ always @(posedge clk_i) begin
     if(rst_i)
         ProgramCounter <= `RESET_PC_ADDRESS;
 
-    if(!hlt_i) begin
-        if(jump_decision)
-            ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addrressesm, also JALR enforces this
+    else if(jump_decision)
+        ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addrresses, also JALR enforces this
 
-        else
-            ProgramCounter <= pc_plus_four;
+    else if (!stall_stage1) begin
+        ProgramCounter <= pc_plus_four;
     end
 end
 
@@ -66,9 +102,10 @@ end
 assign imem_addr_o = ProgramCounter;
 
 
-//-------------------------------
+//----------------------------------------------------------
 // PIPELINE REGISTERS
-//-------------------------------
+//----------------------------------------------------------
+wire   flush_pipeline = jump_decision;
 /*
     This register is used to store old value of program counter
 */
@@ -76,7 +113,7 @@ reg [31:0]  ProgramCounter_Old /* verilator public */;
 always @(posedge clk_i) begin 
     if(rst_i)
         ProgramCounter_Old <= 32'd0;
-    else
+    else if(!stall_stage1)
         ProgramCounter_Old <= ProgramCounter;
 end
 
@@ -87,7 +124,7 @@ reg [31:0]  link_address;
 always @(posedge clk_i) begin 
     if(rst_i)
         link_address <= 32'd0;
-    else
+    else if(!stall_stage1)
         link_address <= pc_plus_four;
 end
 
@@ -99,8 +136,16 @@ reg [31:0] InstructionRegister  /*verilator public*/;
 always @(posedge clk_i) begin
     if(rst_i)
         InstructionRegister <= `__NOP_INSTRUCTION__;
-    else
-        InstructionRegister <= (jump_decision) ? `__NOP_INSTRUCTION__ : imem_data_i;   // Stall
+    else begin
+        if(flush_pipeline)
+            InstructionRegister <= `__NOP_INSTRUCTION__;
+
+        else if(stall_stage1) // Stall
+            InstructionRegister <= InstructionRegister; // retain pevious value
+            
+        else
+            InstructionRegister <= imem_data_i;
+    end
 end
 
 
@@ -109,7 +154,10 @@ end
 //  STAGE 2 - DECODE & EXECUTE
 ////////////////////////////////////////////////////////////////////
 /*
-    Instruction Decode
+    ////// Instruction Decode //////
+    Instruction decode unit decodes instruction and sets various control 
+    signals throughout the pipeline. Is also extacts immediate values 
+    from instuictions and sign extends them properly.
 */
 wire    [4:0]   d_rd_sel;
 wire    [4:0]   d_rs1_sel;
@@ -125,6 +173,7 @@ wire            d_b_op_sel;
 wire            d_cmp_b_op_sel;
 wire    [2:0]   d_alu_op_sel;
 wire    [2:0]   d_mem_access_width;
+wire            d_mem_load_store;
 wire            d_mem_we;
 
 
@@ -147,12 +196,15 @@ Decode decode
     .cmp_b_op_sel_o     (d_cmp_b_op_sel),
     .alu_op_sel_o       (d_alu_op_sel),
     .mem_access_width_o (d_mem_access_width),
+    .d_mem_load_store   (d_mem_load_store),
     .mem_we_o           (d_mem_we)
 );
 
 
 /*
-    MEM_LOAD
+    ////// MEM_LOAD //////
+    Memload is used to chop down the input 32 bit data into signed/unsigned 
+    bytes and words fo loading into the registe file.
 */
 reg [31:0] memload;
 
@@ -171,7 +223,8 @@ end
 
 
 /*
-    Regster File
+    ////// Regster File //////
+    Contains cpu registers (r0-31)
 */
 
 // RF_Din Multiplexer
@@ -199,7 +252,7 @@ RegisterFile  #(.REG_WIDTH(32), .REG_ADDR_WIDTH(5)) rf
     .Rb_Sel_i   (d_rs2_sel),
     .Rb_o       (rf_rs2),
 
-    .Data_We_i  (d_rf_we),
+    .Data_We_i  (d_rf_we & !stall_stage2),
     .Rd_Sel_i   (d_rd_sel),
     .Data_i     (rf_rd_data),
 
@@ -209,7 +262,8 @@ RegisterFile  #(.REG_WIDTH(32), .REG_ADDR_WIDTH(5)) rf
 
 
 /*
-    Alu
+    ////// ALU //////
+    Used for arithmetic and logical computations including shifts.
 */
 wire    [31:0]  alu_a_in = (d_a_op_sel) ? ProgramCounter_Old : rf_rs1;
 wire    [31:0]  alu_b_in = (d_b_op_sel) ? d_imm : rf_rs2;
@@ -226,7 +280,8 @@ Alu alu
 
 
 /*
-    COMPARATOR
+    ////// Comparator //////
+    Used for all comparitive opeations
 */
 reg comparison_result;
 
@@ -256,7 +311,22 @@ end
 */
 assign dmem_addr_o = alu_out;
 assign dmem_data_o = rf_rs2;
-assign dmem_access_width_o = d_mem_access_width;
 assign dmem_we_o = d_mem_we;
+
+wire dmem_handshake = dmem_ack_i & dmem_valid_o;
+wire stall_stage2 = !dmem_handshake & dmem_valid_o;
+
+// Setting the strobe_o signal
+always @(*) begin
+    case({d_mem_access_width[1:0], d_mem_we})
+        3'b00_1: dmem_sel_o = 4'b0001;   // Store byte
+        3'b01_1: dmem_sel_o = 4'b0011;   // Store Half Word
+        3'b10_1: dmem_sel_o = 4'b1111;   // Store Word
+
+        default: dmem_sel_o = 4'b1111;   // Load (Byte/HWord/Word)
+    endcase
+end
+
+assign dmem_valid_o = d_mem_load_store;
 
 endmodule

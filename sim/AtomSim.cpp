@@ -12,14 +12,6 @@
 const char default_trace_dir[] 		= "build/trace";
 const char default_dump_dir[] 		= "build/dump";
 
-const unsigned long int default_mem_size 	= 0x100000;	// 1MB
-const unsigned int default_entry_point 		= 0x00000000;
-const unsigned long int default_maxitr 		= 100000;
-
-const unsigned int default_UART_RX_ADDRESS   	=	0x00014000;
-const unsigned int default_UART_TX_ADDRESS      =	0x00014001;
-const unsigned int default_UART_SREG_ADDRESS    =	0x00014002;
-
 // Global flags
 bool verbose_flag 			= false;
 bool debug_mode 			= false;
@@ -28,6 +20,10 @@ bool dump_regs_on_ebreak 	= false;
 bool dump_signature 		= false;
 
 // Global vars
+const unsigned long int default_mem_size 	= 134217731;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
+const unsigned int default_entry_point 		= 0x00000000;
+const unsigned long int default_maxitr 		= 10000000;
+
 unsigned long int mem_size 	= default_mem_size;
 unsigned long int maxitr 	= default_maxitr;
 std::string trace_dir 		= default_trace_dir;
@@ -40,8 +36,13 @@ std::string end_simulation_reason; // This is used to display reason for simulat
 
 
 #include "defs.hpp"
-#include "backend.hpp"
 
+// Backend selection
+// These macros are defined in command line during compiling.
+#ifdef TARGET_ATOMBONES
+#include "Backend_AtomBones.hpp"
+const std::string AtomSimBackend = "AtomBones";
+#endif
 
 /**
  * @brief parses command line arguments given to the assembler and 
@@ -70,7 +71,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		
 		options.add_options("Config")
 		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr))
-		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size));
+		("memsize", "Specify size of memory to simulate (Supported in AtomBones)", cxxopts::value<unsigned long int>(mem_size));
 
 		options.add_options("Debug")
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
@@ -118,7 +119,7 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 			exit(0);
 		}
 
-		std::cout << "Input File:" << ifile << "\n";
+		std::cout << "Input File: " << ifile << "\n";
 
 	}
 	catch(const cxxopts::OptionException& e)
@@ -136,7 +137,6 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
  */
 void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 {	
-	static bool prev_tx_we = false;
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
 		if(b->done())
@@ -154,17 +154,9 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			if(dump_regs_on_ebreak) 
 				b->refreshData();
 			b->tick();
-			
-			// Rx Listener
-			bool cur_tx_we = (b->mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
-			if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
-			{
-				std::cout << (char)b->mem->fetchByte(default_UART_TX_ADDRESS);
-			}
-			prev_tx_we = cur_tx_we;
 		}
 
-		if (b->tb->m_core->AtomRVSoC->atom->InstructionRegister == 0x100073)
+		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)
 		{
 			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
 
@@ -179,9 +171,9 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 
 					switch(i-2)
 					{
-						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08X", tmpval); break;
-						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08X", tmpval); break;break;
-						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08X",i-2, tmpval); break;
+						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08x", tmpval); break;
+						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;break;
+						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08x",i-2, tmpval); break;
 					}
 					fcontents.push_back(std::string(temp));
 				}
@@ -191,7 +183,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 		}
 		if(b->tb->m_tickcount > maxitr)
 		{
-			throwError("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
+			throwWarning("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
 			exit(EXIT_SUCCESS);
 		}
 	}
@@ -207,13 +199,17 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
+    std::cout << "AtomSim [" << AtomSimBackend << "]\n";
+
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 	
+
 	std::string ifile;
 
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile);
+
 
 
 	// Create a new backend instance
@@ -284,7 +280,7 @@ int main(int argc, char **argv)
 				if(token.size()<2)
 					throwError("DBG~", "\"mem\" command expects address as argument\n");
 				unsigned int addr = std::stoi(token[1]);
-				printf("%08X : %02X %02X %02X %02X\n", addr, bkend.mem->fetchByte(addr),
+				printf("%08x : %02x %02x %02x %02x\n", addr, bkend.mem->fetchByte(addr),
 				 bkend.mem->fetchByte(addr+1),bkend.mem->fetchByte(addr+2), bkend.mem->fetchByte(addr+3));
 			}
 			else if(token[0] == "dumpmem")
@@ -297,7 +293,7 @@ int main(int argc, char **argv)
 				for(unsigned int i=0; i<bkend.mem->size-4; i+=4)
 				{	
 					char hex [30];
-					sprintf(hex, "0x%08X\t:\t0x%08X", i, bkend.mem->fetchWord(i));
+					sprintf(hex, "0x%08x\t:\t0x%08x", i, bkend.mem->fetchWord(i));
 					fcontents.push_back(hex);
 				}
 				fWrite(fcontents, token[1]);

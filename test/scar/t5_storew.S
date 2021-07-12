@@ -24,7 +24,7 @@ nop
 ebreak
 
 # $-ASSERTIONS-$
-# eq a1 0x9B7A7971
-# eq a2 0x4523521D
+# eq a1 0x9b7a7971
+# eq a2 0x4523521d
 # eq a3 0x73451464
-# eq a4 0xF4323513
+# eq a4 0xf4323513

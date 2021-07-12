@@ -1,8 +1,8 @@
 .global main
 .text
 
-.equ TX_ADDRESS, 0x00012001               
-.equ TX_ACK_ADDRESS, 0x00012002         
+.equ TX_ADDRESS, 0x00014001               
+.equ TX_ACK_ADDRESS, 0x00014002         
 
 main:
     la a0, msg
@@ -56,4 +56,4 @@ putchar:
 
 .data
     msg:
-    .asciz "Hello World!\n      -- AtomRV core\n\n"
+    .asciz "Hello World!\n      -- AtomBones\n\n"

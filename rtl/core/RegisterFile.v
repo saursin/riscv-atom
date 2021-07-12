@@ -63,7 +63,7 @@ module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
 	*/
 	`ifdef __R0_IS_ZERO__
 		assign Ra_o = (Ra_Sel_i == 0) ? {REG_WIDTH{1'b0}} : regs[Ra_Sel_i];
- 		assign Rb_o = (Ra_Sel_i == 0) ? {REG_WIDTH{1'b0}} : regs[Rb_Sel_i];
+ 		assign Rb_o = (Rb_Sel_i == 0) ? {REG_WIDTH{1'b0}} : regs[Rb_Sel_i];
 	`else
  		assign Ra_o = regs[Ra_Sel_i];
  		assign Rb_o = regs[Rb_Sel_i];

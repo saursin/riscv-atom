@@ -55,15 +55,6 @@ dump_dir		= $(build_dir)/dump
 doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = $(doc_dir)/Doxyfile
 
-# Cpp
-cpp_driver = $(sim_dir)/AtomSim.cpp
-cpp_files = $(sim_dir)
-sim_executable = atomsim
-
-# Verilog
-verilog_topmodule = AtomRVSoC
-verilog_topmodule_file = $(rtl_dir)/AtomRVSoC.v
-verilog_files = rtl/AtomRVSoC.v rtl/Timescale.vh rtl/Config.vh rtl/core/Alu.v rtl/core/AtomRV.v rtl/core/Decode.v rtl/core/RegisterFile.v
 
 # CPP Configs
 CC = g++
@@ -71,9 +62,23 @@ CFLAGS = -c -Wall
 LFLAGS =
 INCLUDES = -I $(vobject_dir) -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
 
+cpp_driver = $(sim_dir)/AtomSim.cpp
+sim_executable = atomsim
+sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
+Target = atombones
+
 # Verilog Configs
 VC = verilator
 VFLAGS = -cc -Wall --relative-includes --trace
+
+ifeq ($(Target), atombones)
+	verilog_topmodule = AtomBones
+	verilog_topmodule_file = $(rtl_dir)/AtomBones.v
+	verilog_files = rtl/AtomBones.v rtl/Timescale.vh rtl/Config.vh rtl/core/AtomRV.v rtl/core/Alu.v rtl/core/Decode.v rtl/core/RegisterFile.v
+
+	CFLAGS += -DTARGET_ATOMBONES
+	
+endif
 
 #======================================================================
 # Recepies
@@ -93,7 +98,7 @@ help : Makefile
 	@echo "RISCV-Atom root Makefile"
 	@echo "Usage: make [Target]"
 	@echo ""
-	@echo "Tagets:"
+	@echo "Targets:"
 	@sed -n 's/^#~//p' $<
 
 
@@ -101,7 +106,11 @@ help : Makefile
 # ======== Sim ========
 #~	sim		:	Build atomsim simulator
 .PHONY : sim
-sim: directories $(bin_dir)/$(sim_executable)
+sim: buildFor directories $(bin_dir)/$(sim_executable)
+
+buildFor:
+	@echo ">> Building AtomSim for Target: $(Target)"
+
 
 # Check directories
 directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(doc_dir) $(doxygen_doc_dir)
@@ -139,8 +148,7 @@ $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodu
 	cd $(vobject_dir) && make -f V$(verilog_topmodule).mk
 
 # Compile C++ files
-$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/backend.hpp $(sim_dir)/defs.hpp
-	@echo ">> Compiling driver cpp file..."
+$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/defs.hpp $(sim_dir)/Testbench.hpp $(sim_cpp_backend)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
 $(cobject_dir)/verilated.o: /usr/share/verilator/include/verilated.cpp 
@@ -184,7 +192,7 @@ $(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
 docs: $(doc_dir) $(doxygen_doc_dir)
 	doxygen $(doxygen_config_file)
 
-#~	pdf-docs	:	Generate doxygen documentation for atomsim source code
+#~	pdf-docs	:	Generate doxygen documentation for atomsim source code (in pdf fomat)
 .PHONY: pdf-docs
 pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
 	cd doc/doxygen/latex && make

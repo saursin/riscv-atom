@@ -17,5 +17,5 @@ function:
 
 
 # $-ASSERTIONS-$
-# eq a0 0x000152F5
-# eq a1 0x0000FCCD
+# eq a0 0x000152f5
+# eq a1 0x0000fccd

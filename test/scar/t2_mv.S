@@ -14,6 +14,6 @@ nop
 ebreak
 
 # $-ASSERTIONS-$
-# eq t0 0x00FF4A1A
-# eq t1 0x00FF4A1A
-# eq t2 0x00FF4A1A
+# eq t0 0x00ff4a1a
+# eq t1 0x00ff4a1a
+# eq t2 0x00ff4a1a

@@ -2,10 +2,18 @@
 
 #include "verilated.h"
 #include <verilated_vcd_c.h>
-#include "../build/vobj_dir/VAtomRVSoC.h"
-#include "../build/vobj_dir/VAtomRVSoC_AtomRVSoC.h"
-#include "../build/vobj_dir/VAtomRVSoC_AtomRV.h"
-#include "../build/vobj_dir/VAtomRVSoC_RegisterFile__R20_RB5.h"
+#include "../build/vobj_dir/VAtomBones.h"
+#include "../build/vobj_dir/VAtomBones_AtomBones.h"
+#include "../build/vobj_dir/VAtomBones_AtomRV.h"
+#include "../build/vobj_dir/VAtomBones_RegisterFile__R20_RB5.h"
+
+#include "Testbench.hpp"
+
+const unsigned int default_UART_RX_ADDRESS   	=	0x08000000;
+const unsigned int default_UART_TX_ADDRESS      =	0x08000001;
+const unsigned int default_UART_SREG_ADDRESS    =	0x08000002;
+
+
 
 /**
  * @brief Register ABI names used in debug display 
@@ -46,152 +54,6 @@ const std::vector<std::string> reg_names =
 	"x30 (t5)   ",
 	"x31 (t6)   "
 };
-
-
-/**
- * @brief TESTBENCH Class
- * 
- * @tparam VTop module to be instantiated
- */
-template <class VTop>
-class TESTBENCH 
-{
-	public:
-
-	VTop 			* m_core = NULL;
-	VerilatedVcdC	* m_trace = NULL;
-	unsigned long 	m_tickcount;     			// TickCounter to count clock cycles fom last reset
-	unsigned long 	m_tickcount_total;   		// TickCounter to count clock cycles
-
-	/**
-	 * @brief Construct a new TESTBENCH object
-	 * 
-	 */
-	TESTBENCH(void)                // Constructor: Instantiates a new VTop
-    {
-		m_core = new VTop;
-		Verilated::traceEverOn(true);
-		m_tickcount = 0l;
-	}
-
-
-	/**
-	 * @brief Destroy the TESTBENCH object
-	 * 
-	 */
-	virtual ~TESTBENCH(void)       // Destructor 
-    {
-		delete m_core;
-		m_core = NULL;
-	}
-
-
-	/**
-	 * @brief Open/create a trace file
-	 * 
-	 * @param vcdname name of vcd file
-	 */
-	virtual	void openTrace(const char *vcdname) 
-	{
-		if (!m_trace) 
-		{
-			m_trace = new VerilatedVcdC;
-			m_core->trace(m_trace, 99);
-			m_trace->open(vcdname);
-		}
-	}
-
-
-	/**
-	 * @brief Close a trace file
-	 * 
-	 */
-	virtual void closeTrace(void) 
-	{
-		if (m_trace) 
-		{
-			m_trace->close();
-			m_trace = NULL;
-		}
-	}
-
-
-	/**
-	 * @brief Reset topmodule
-	 * 
-	 */
-	virtual void reset(void) 
-    {
-		m_core-> rst_i = 1;
-		this -> tick();	// Make sure any inheritance gets applied
-		m_tickcount = 0;
-		m_core-> rst_i = 0;
-	}
-
-
-	/**
-	 * @brief Run for one cycle
-	 * 
-	 */
-	virtual void tick(void) 
-    {
-		// Increment our own internal time reference
-		m_tickcount++;
-		m_tickcount_total++;
-
-        // Make sure any combinatorial logic depending upon
-		// inputs that may have changed before we called tick()
-		// has settled before the rising edge of the clock.
-		m_core -> clk_i = 0;
-		m_core -> eval();
-
-		//	Dump values to our trace file before clock edge
-		if(m_trace) 
-		{
-			m_trace->dump(10*m_tickcount-2);
-		}
-
-		// ---------- Toggle the clock ------------
-
-		// Rising edge
-		m_core -> clk_i = 1;
-		m_core -> eval();
-
-		//	Dump values to our trace file after clock edge
-		if(m_trace) m_trace->dump(10*m_tickcount);
-
-
-		// Falling edge
-		m_core -> clk_i = 0;
-		m_core -> eval();
-
-
-		if (m_trace) {
-			// This portion, though, is a touch different.
-			// After dumping our values as they exist on the
-			// negative clock edge ...
-			m_trace->dump(10*m_tickcount+5);
-			//
-			// We'll also need to make sure we flush any I/O to
-			// the trace file, so that we can use the assert()
-			// function between now and the next tick if we want to.
-			m_trace->flush();
-		}
-	}
-
-
-	/**
-	 * @brief Check if simulation ended
-	 * 
-	 * @return true if verilator has encountered $finish
-	 * @return false if verilator hasn't encountered $finish yet
-	 */
-	virtual bool  done(void)
-	{
-		return (Verilated::gotFinish()); 
-	}
-};
-
 
 /**
  * @brief Memory class
@@ -298,7 +160,7 @@ class Memory
 		if(!isValidAddress(addr))
 		{
 			char errmsg[40];
-			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			sprintf(errmsg, "Address out of bounds : 0x%08x", addr);
 			throwError("MEM1", errmsg, true);
 			return 0;
 		}
@@ -345,7 +207,7 @@ class Memory
 		if(!isValidAddress(addr))
 		{
 			char errmsg[40];
-			sprintf(errmsg, "Address out of bounds : 0x%08X", addr);
+			sprintf(errmsg, "Address out of bounds : 0x%08x", addr);
 			throwError("MEM1", errmsg, true);
 			return;
 		}
@@ -406,7 +268,7 @@ class Memory
 					ELFIO::Elf64_Addr seg_strt_addr = reader.segments[i]->get_physical_address();
 
 					if(verbose_flag)
-						printf("Loading Segment %d @ 0x%08X --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+						printf("Loading Segment %d @ 0x%08x --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
 					
 					long unsigned int offset = 0;
 					while(offset<seg_size)
@@ -438,7 +300,7 @@ class Backend
 	/**
 	 * @brief Pointer to testbench object
 	 */
-	TESTBENCH<VAtomRVSoC> *tb;
+	Testbench<VAtomBones> *tb;
 
 	// memory
 	/**
@@ -480,14 +342,16 @@ class Backend
 	 */
 	Backend(std::string mem_init_file, unsigned int mem_size)
 	{
-		tb = new TESTBENCH<VAtomRVSoC>();
+		tb = new Testbench<VAtomBones>();
 		mem = new Memory(mem_size);
 
+		//tb->reset();
+
 		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
-		printf("Entry point : 0x%08X\n", entry_point);
+		printf("Entry point : 0x%08x\n", entry_point);
 
 		// Set entry point
-		tb->m_core->AtomRVSoC->atom->ProgramCounter = entry_point;
+		tb->m_core->AtomBones->atom_core->ProgramCounter = entry_point;
 
 		tb->m_core->eval();
 
@@ -519,26 +383,36 @@ class Backend
 
 	void serviceMemoryRequest()
 	{
-		// Imem Port Read
-		tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+		// Clear all ack signals
+		tb->m_core->imem_ack_i = 0;
+		tb->m_core->dmem_ack_i = 0;
 
-		// Dmem Port Read
-		uint opcode = (tb->m_core->AtomRVSoC->atom->InstructionRegister) & 0x0000007f;
-		if(opcode == 0b0000011)	// Load instruction
-		{
-			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
+		// Imem Port Reads
+		if(tb->m_core->imem_valid_o == 1)
+		{	
+			tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+			tb->m_core->imem_ack_i = 1;
 		}
 
-		// Dmem Port Write
-		if(tb->m_core->dmem_we_o)
+		// Dmem Port Reads/Writes
+		if(tb->m_core->dmem_valid_o && !tb->m_core->dmem_we_o)	// Load instruction
 		{
-			switch(tb->m_core->dmem_access_width_o)
+			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
+			tb->m_core->dmem_ack_i = 1;
+		}
+		else if(tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o)	// Store instruction
+		{
+			switch(tb->m_core->dmem_sel_o)
 			{
-				case 0:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
-				case 1:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
-				case 2:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
-				default: mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o);	break;
+				case 0x1:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
+				case 0x3:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
+				case 0xf:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
+				default: 
+					std::cout << std::hex << (int)tb->m_core->dmem_sel_o << std::endl;
+					throwError("RTL", "signal 'dmem_sel_o' has unexpected value");
+
 			}
+			tb->m_core->dmem_ack_i = 1;
 		}
 	}
 
@@ -549,16 +423,16 @@ class Backend
 	 */
 	void refreshData()
 	{
-		pc_f = tb->m_core->AtomRVSoC->atom->ProgramCounter;
-		pc_e = tb->m_core->AtomRVSoC->atom->ProgramCounter_Old;
+		pc_f = tb->m_core->AtomBones->atom_core->ProgramCounter;
+		pc_e = tb->m_core->AtomBones->atom_core->ProgramCounter_Old;
 
-		ins_e = tb->m_core->AtomRVSoC->atom->InstructionRegister;
+		ins_e = tb->m_core->AtomBones->atom_core->InstructionRegister;
 		for(int i=0; i<32; i++)
 		{
 			if(i==0)
 				rf[i] = 0;
 			else
-				rf[i] = tb->m_core->AtomRVSoC->atom->rf->regs[i-1];
+				rf[i] = tb->m_core->AtomBones->atom_core->rf->regs[i-1];
 		}
 	}
 
@@ -570,14 +444,14 @@ class Backend
 	{
 		unsigned int change = pc_f-pc_e;
 		std::string jump = "    ";
-		if(tb->m_core->AtomRVSoC->atom->__PVT__jump_decision)
+		if(tb->m_core->AtomBones->atom_core->__PVT__jump_decision)
 			jump = "jump";
 		else
 			jump = "    ";
 
 		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
-		printf("F-STAGE  |  pc : 0x%08X  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
-		printf("E-STAGE  V  pc : 0x%08X   ir : 0x%08X   []\n", pc_e , ins_e); 
+		printf("F-STAGE  |  pc : 0x%08x  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
+		printf("E-STAGE  V  pc : 0x%08x   ir : 0x%08x   []\n", pc_e , ins_e); 
 		std::cout << "---------------------------------------------------\n";
 						
 		if(verbose_flag)
@@ -586,7 +460,7 @@ class Backend
 			#ifndef DEBUG_PRINT_T2B
 			for(int i=0; i<32; i++)	// print in left-right fashion
 			{
-				printf("r%-2d: 0x%08X   ", i, rf[i]);
+				printf("r%-2d: 0x%08x   ", i, rf[i]);
 				if(i%cols == cols-1)
 					printf("\n");
 			}
@@ -595,7 +469,7 @@ class Backend
 			{
 				for(int j=0; j<cols; j++)
 				{
-					printf(" %s: 0x%08X  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
+					printf(" %s: 0x%08x  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
 				}
 				printf("\n");
 			}
@@ -613,6 +487,15 @@ class Backend
 		serviceMemoryRequest();
 		tb->tick();
 		ins_f = tb->m_core->imem_data_i;
+
+		// Serial port Emulator: Rx Listener
+		static bool prev_tx_we = false;
+		bool cur_tx_we = (mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
+		if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
+		{
+			std::cout << (char)mem->fetchByte(default_UART_TX_ADDRESS);
+		}
+		prev_tx_we = cur_tx_we;
 	}
 
 
