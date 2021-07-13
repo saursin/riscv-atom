@@ -2,7 +2,7 @@
 
 # riscv-atom
 
-Atom is a 32-bit embedded-class processor based on the [RISC-V](https://riscv.org/) instruction set architecture (ISA). It is designed to be light on hardware resources and still powerful enough to be deployed in most embedded class applications.
+Atom is a 32-bit embedded-class processor based on the [RISC-V](https://riscv.org/) Instruction Set Architecture (ISA). It is designed to be light on hardware resources and still powerful enough to be deployed in most embedded class applications.
 
 Key highlights of Atom are listed below:
 
@@ -16,7 +16,7 @@ Key highlights of Atom are listed below:
 
 - Wide range of example programs.
 
-- Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License)
+- Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).
 
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
@@ -47,7 +47,7 @@ Atom has 2 ports, Instruction port & Data port. Both of these ports use a simple
 
 ### AtomBones
 
-Bare-bone system that consists of only the atom core. It uses C++ simulated instruction memory, data memory, Tick Counter and a serial communication module. This is the most basic system of all, and is mostly used for testing and debugging software.
+Bare-bone system that consists of only the atom core. It uses C++ simulated instruction memory, data memory, counter and a serial communication module. This is the most basic system of all, and is mostly used for testing and debugging software.
 
 **Memory Map**
 
@@ -77,7 +77,7 @@ It is a basic SoC which contains atom core interfaced to instruction memory, dat
 | 0x00014001               | UART_TX     |
 | 0x00014002               | UART_SREG   |
 
-### ## Prerequisites
+### Prerequisites
 
 Run apt update
 
