@@ -293,13 +293,11 @@ std::map<uint32_t, std::string> getDisassembly(std::string filename)
 
 	// Parse command output
 	std::map<uint32_t, std::string> dis;
-
-	unsigned long int linebreak = 0;
 	
 	std::string line;
 	while(std::getline(s, line))
 	{
-		for(int i=0; i<line.length(); i++)
+		for(unsigned int i=0; i<line.length(); i++)
 		{
 			if(line[0]==' ' && line[i]==':')
 			{
