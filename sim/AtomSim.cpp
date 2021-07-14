@@ -17,9 +17,12 @@ bool verbose_flag 			= false;
 bool debug_mode 			= false;
 bool trace_enabled 			= false;
 bool dump_regs_on_ebreak 	= false;
-bool dump_signature 		= false;
 
 // Global vars
+std::string ifile;
+#ifdef TARGET_ATOMBONES
+std::string signature_file 		= "";
+#endif
 const unsigned long int default_mem_size 	= 134217731;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
 const unsigned int default_entry_point 		= 0x00000000;
 const unsigned long int default_maxitr 		= 10000000;
@@ -54,7 +57,7 @@ const std::string AtomSimBackend = "AtomBones";
  * @param ifile input file name (pointer)
  * @param tdir trace_dir (pointer)
  */
-void parse_commandline_args(int argc, char**argv, std::string &ifile)
+void parse_commandline_args(int argc, char**argv, std::string &infile)
 {
 	try
 	{
@@ -67,11 +70,14 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
-		("i,input", "Specify an input file", cxxopts::value<std::string>(ifile));
+		("i,input", "Specify an input file", cxxopts::value<std::string>(infile));
 		
 		options.add_options("Config")
 		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr))
-		("memsize", "Specify size of memory to simulate (Supported in AtomBones)", cxxopts::value<unsigned long int>(mem_size));
+		#ifdef TARGET_ATOMBONES
+		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size))
+		#endif
+		;
 
 		options.add_options("Debug")
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
@@ -80,7 +86,10 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
 		("dump-dir", "Specify a dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
 		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
-		("signature", "Dump signature after hault (Used for riscv compliance tests)", cxxopts::value<bool>(dump_signature)->default_value("false"));
+		#ifdef TARGET_ATOMBONES
+		("signature", "Dump signature after hault (Used for riscv compliance tests)", cxxopts::value<std::string>(signature_file)->default_value(""))
+		#endif
+		;
 
 
 	    options.parse_positional({"input"});
@@ -119,7 +128,8 @@ void parse_commandline_args(int argc, char**argv, std::string &ifile)
 			exit(0);
 		}
 
-		std::cout << "Input File: " << ifile << "\n";
+		if (verbose_flag)
+			std::cout << "Input File: " << infile << "\n";
 
 	}
 	catch(const cxxopts::OptionException& e)
@@ -158,7 +168,8 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 
 		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)
 		{
-			std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
+			if (verbose_flag)
+				std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
 
 			if(dump_regs_on_ebreak)
 			{
@@ -179,6 +190,71 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 				}
 				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
 			}
+			
+			#ifdef TARGET_ATOMBONES
+			if(signature_file.length()!=0)
+			{
+				// ============= Get start and end address of signature. =============
+				long int begin_signature_at = -1;
+				long int end_signature_at = -1;
+
+				ELFIO::elfio reader;
+
+				if (!reader.load(ifile)) 
+				{
+					throwError("SIG", "Can't find or process ELF file : " + ifile + "\n", true);
+				}
+
+				ELFIO::Elf_Half n = reader.sections.size();
+				for ( ELFIO::Elf_Half i = 0; i < n; ++i )  // For all sections
+				{
+					ELFIO::section* sec = reader.sections[i];
+					if ( SHT_SYMTAB == sec->get_type() || SHT_DYNSYM == sec->get_type() ) 
+					{
+						ELFIO::symbol_section_accessor symbols( reader, sec );
+						ELFIO::Elf_Xword sym_no = symbols.get_symbols_num();
+						if ( sym_no > 0 ) 
+						{	
+							for ( ELFIO::Elf_Xword i = 0; i < sym_no; ++i ) {
+								std::string   name;
+								ELFIO::Elf64_Addr value = 0;
+								ELFIO::Elf_Xword size	= 0;
+								unsigned char bind    	= 0;
+								unsigned char type    	= 0;
+								ELFIO::Elf_Half section = 0;
+								unsigned char other   	= 0;
+								symbols.get_symbol( i, name, value, size, bind, type,
+													section, other );
+
+								if (name == "begin_signature")
+									begin_signature_at = value;
+								if (name == "end_signature")
+									end_signature_at = value;
+							}
+						}
+					}
+				}
+
+				if(begin_signature_at == -1 || end_signature_at == -1)
+				{
+					throwError("SIG", "One or both of 'begin_signature' & 'end_signature' symbols missing from ELF symbol table: " + ifile + "\n", true);
+				}
+
+				// ========= dump data to signature file ==============
+				std::vector<std::string> fcontents;
+				printf("Dumping signature region [0x%08lx-0x%08lx]\n", begin_signature_at, end_signature_at);
+
+				for(long int i=begin_signature_at; i<end_signature_at; i=i+4)
+				{
+					char temp [50];
+					sprintf(temp, "%08x", b->mem->fetchWord(i));
+					fcontents.push_back(temp);
+				}
+				fWrite(fcontents, signature_file);
+			}
+			#endif
+
+
 			exit(EXIT_SUCCESS);
 		}
 		if(b->tb->m_tickcount > maxitr)
@@ -199,13 +275,12 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
  */
 int main(int argc, char **argv)
 {
-    std::cout << "AtomSim [" << AtomSimBackend << "]\n";
+    if (verbose_flag)
+		std::cout << "AtomSim [" << AtomSimBackend << "]\n";
 
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 	
-
-	std::string ifile;
 
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile);
@@ -345,13 +420,14 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		std::cout << "_________________________________________________________________\n";
 		tick(-1, &bkend, false);
 	}
 
 	if(trace_enabled) // if trace file is open, close it before exiting
 		bkend.tb->closeTrace();
 	
-	std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
+	
+	if (verbose_flag)
+		std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
 	exit(EXIT_SUCCESS);    
 }

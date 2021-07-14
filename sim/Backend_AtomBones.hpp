@@ -350,7 +350,8 @@ class Backend
 		mem = new Memory(mem_size);
 
 		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
-		printf("Entry point : 0x%08x\n", entry_point);
+		if (verbose_flag)
+			printf("Entry point : 0x%08x\n", entry_point);
 
 		// Set entry point
 		tb->m_core->AtomBones->atom_core->ProgramCounter = entry_point;
@@ -363,7 +364,8 @@ class Backend
 		// get input file disassembly
 		disassembly = getDisassembly(mem_init_file);
 		
-		std::cout << "Initialization complete!\n";
+		if (verbose_flag)
+			std::cout << "Initialization complete!\n";
 	}
 
 
