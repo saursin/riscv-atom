@@ -9,7 +9,7 @@ const char Info_version[] = "AtomSim v1.0";
 const char Info_copyright[] = 
 "MIT License\n\n"
 
-"Copyright (c) 2020 EUREG\n\n"
+"Copyright (c) 2020 Saurabh Singh\n\n"
 
 "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
 "of this software and associated documentation files (the \"Software\"), to deal\n"
@@ -161,7 +161,7 @@ size_t tokenize(const std::string &txt, std::vector<std::string> &strs, char ch)
     return strs.size();
 }
 
-
+// =============================== FILE READER =====================================
 /**
  * @brief reads a binary file
  * 

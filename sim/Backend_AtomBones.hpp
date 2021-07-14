@@ -13,8 +13,6 @@ const unsigned int default_UART_RX_ADDRESS   	=	0x08000000;
 const unsigned int default_UART_TX_ADDRESS      =	0x08000001;
 const unsigned int default_UART_SREG_ADDRESS    =	0x08000002;
 
-
-
 /**
  * @brief Register ABI names used in debug display 
  * 
@@ -283,7 +281,6 @@ class Memory
 			}
 			i++;
 		}
-
 		return (unsigned int) reader.get_entry();
 	}
 };
