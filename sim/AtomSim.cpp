@@ -8,44 +8,47 @@
 
 #include "include/cxxopts/cxxopts.hpp"
 
-// Definitions
+// ===== Definitions =====
 const char default_trace_dir[] 		= "build/trace";
 const char default_dump_dir[] 		= "build/dump";
 
-// Global flags
+// ===== Global flags =====
 bool verbose_flag 			= false;
 bool debug_mode 			= false;
 bool trace_enabled 			= false;
 bool dump_regs_on_ebreak 	= false;
 
-// Global vars
+// ===== Global vars =====
 std::string ifile;
 #ifdef TARGET_ATOMBONES
 std::string signature_file 		= "";
-#endif
 const unsigned long int default_mem_size 	= 134217731;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
-const unsigned int default_entry_point 		= 0x00000000;
-const unsigned long int default_maxitr 		= 10000000;
-
 unsigned long int mem_size 	= default_mem_size;
-unsigned long int maxitr 	= default_maxitr;
-std::string trace_dir 		= default_trace_dir;
-std::string dump_dir 		= default_dump_dir;
+#endif
+
+const unsigned int default_entry_point = 0x00000000;
+const unsigned long int default_maxitr = 10000000;
+unsigned long int maxitr = default_maxitr;
+
+std::string trace_dir = default_trace_dir;
+std::string dump_dir = default_dump_dir;
 
 std::string end_simulation_reason; // This is used to display reason for simulation termination
 
-// Configurations
+// ===== Configurations =====
 #define DEBUG_PRINT_T2B	// print registers in top to bottom fashion 
-
+//#define DEBUG_PRINT_L2R	// print registers in left to right fashion 
 
 #include "defs.hpp"
 
-// Backend selection
+// ===== Backend selection =====
 // These macros are defined in command line during compiling.
 #ifdef TARGET_ATOMBONES
 #include "Backend_AtomBones.hpp"
 const std::string AtomSimBackend = "AtomBones";
 #endif
+
+
 
 /**
  * @brief parses command line arguments given to the assembler and 
@@ -54,15 +57,14 @@ const std::string AtomSimBackend = "AtomBones";
  * 
  * @param argc argument count
  * @param argv argument vector
- * @param ifile input file name (pointer)
- * @param tdir trace_dir (pointer)
+ * @param infile input file name (pointer)
  */
 void parse_commandline_args(int argc, char**argv, std::string &infile)
 {
 	try
 	{
 		// Usage Message Header
-		cxxopts::Options options(argv[0], std::string(Info_version)+"\nSimulator for AtomRVSoC");
+		cxxopts::Options options(argv[0], std::string(Info_version)+"\nRTL simulator for Atom based systems");
 		
 		options.positional_help("input").show_positional_help();
 
@@ -83,11 +85,11 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(verbose_flag)->default_value("false"))
 		("d,debug", "Start in debug mode", cxxopts::value<bool>(debug_mode)->default_value("false"))
 		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(trace_enabled)->default_value("false"))
-		("trace-dir", "Specify a trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
-		("dump-dir", "Specify a dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
-		("ebreak-dump", "Enable state dump on ebreak", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
+		("trace-dir", "Specify trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
+		("dump-dir", "Specify dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
+		("ebreak-dump", "Enable processor state dump at hault", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
 		#ifdef TARGET_ATOMBONES
-		("signature", "Dump signature after hault (Used for riscv compliance tests)", cxxopts::value<std::string>(signature_file)->default_value(""))
+		("signature", "Enable signature sump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(signature_file)->default_value(""))
 		#endif
 		;
 
@@ -104,7 +106,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 			std::string unknown_args;
 			for(unsigned int i=0; i<result.unmatched().size(); i++)
 				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
-			throwError("ARGPARSE~", "Unrecognized aguments [" + unknown_args + "]", true);
+			throwError("CLI0", "Unrecognized aguments [" + unknown_args + "]", true);
 		}
 
 		if (result.count("help"))
@@ -119,12 +121,12 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		}
 		if (result.count("input")>1)
 		{
-			throwError("CLIPARSE~", "Multiple input files specified", true);
+			throwError("CLI1", "Multiple input files specified", true);
 			exit(0);
 		}
 		if (result.count("input")==0)
 		{
-			throwError("CLIPARSE~", "No input files specified", true);
+			throwError("CLI2", "No input files specified", true);
 			exit(0);
 		}
 
@@ -134,7 +136,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 	}
 	catch(const cxxopts::OptionException& e)
 	{
-		throwError("CLIPARSE~", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
+		throwError("CLI3", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
 	}	
 }
 
@@ -144,12 +146,14 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
  * 
  * @param cycles no to cycles to run for
  * @param b pointer to backend object
+ * @param show_data if true, show execution data.
  */
 void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 {	
+	// Run for specified cycles
 	for(long unsigned int i=0; i<cycles && !b->done(); i++)
 	{
-		if(b->done())
+		if(b->done())	// Encountered $finish() in RTL
 		{
 			break;
 		}
@@ -166,12 +170,12 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			b->tick();
 		}
 
-		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)
+		if (b->tb->m_core->AtomBones->atom_core->InstructionRegister == 0x100073)	// Hault condition
 		{
 			if (verbose_flag)
-				std::cout << "Exiting @ tick " << b->tb->m_tickcount << " due to ebreak\n";
+				std::cout << "Haulting @ tick " << b->tb->m_tickcount << "\n";
 
-			if(dump_regs_on_ebreak)
+			if(dump_regs_on_ebreak)	// dump contents of registers into a text file, to be used by scar framework
 			{
 				std::vector<std::string> fcontents;
 				
@@ -183,7 +187,7 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 					switch(i-2)
 					{
 						case -2: tmpval = b->pc_e; sprintf(temp, "pc 0x%08x", tmpval); break;
-						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;break;
+						case -1: tmpval = b->ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;
 						default: tmpval = b->rf[i-2]; sprintf(temp, "x%d 0x%08x",i-2, tmpval); break;
 					}
 					fcontents.push_back(std::string(temp));
@@ -192,7 +196,8 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			}
 			
 			#ifdef TARGET_ATOMBONES
-			if(signature_file.length()!=0)
+			// Dunmp signature on hault condition, to be used by riscv-arch-test (official riscv compliance testing framework)
+			if(signature_file.length()!=0)	
 			{
 				// ============= Get start and end address of signature. =============
 				long int begin_signature_at = -1;
@@ -254,12 +259,11 @@ void tick(long unsigned int cycles, Backend * b, const bool show_data = true)
 			}
 			#endif
 
-
 			exit(EXIT_SUCCESS);
 		}
 		if(b->tb->m_tickcount > maxitr)
 		{
-			throwWarning("SIM~", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
+			throwWarning("SIM0", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
 			exit(EXIT_SUCCESS);
 		}
 	}
@@ -281,11 +285,8 @@ int main(int argc, char **argv)
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
 	
-
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, ifile);
-
-
 
 	// Create a new backend instance
 	Backend bkend(ifile, default_mem_size);
@@ -306,7 +307,7 @@ int main(int argc, char **argv)
 		{
 			if(bkend.done())	// if $finish encountered by verilator
 			{
-				end_simulation_reason = "Backend encountered a $finish";
+				end_simulation_reason = "$finish encountered";
 				break;
 			}
 
@@ -350,10 +351,11 @@ int main(int argc, char **argv)
 				// turn on verbose
 				verbose_flag = false;
 			}
+			#ifdef TARGET_ATOMBONES		// Atombones specific commands
 			else if(token[0] == "mem")
 			{
 				if(token.size()<2)
-					throwError("DBG~", "\"mem\" command expects address as argument\n");
+					throwError("CMD0", "\"mem\" command expects address as argument\n");
 				unsigned int addr = std::stoi(token[1]);
 				printf("%08x : %02x %02x %02x %02x\n", addr, bkend.mem->fetchByte(addr),
 				 bkend.mem->fetchByte(addr+1),bkend.mem->fetchByte(addr+2), bkend.mem->fetchByte(addr+3));
@@ -361,7 +363,7 @@ int main(int argc, char **argv)
 			else if(token[0] == "dumpmem")
 			{
 				if(token.size()<2)
-					throwError("DBG~", "\"dumpmem\" command expects filename as argument\n");
+					throwError("CMD1", "\"dumpmem\" command expects filename as argument\n");
 				
 				// turn on verbose
 				std::vector<std::string> fcontents;
@@ -373,19 +375,20 @@ int main(int argc, char **argv)
 				}
 				fWrite(fcontents, token[1]);
 			}
+			#endif
 			else if(token[0] == "for")
 			{
 				// run for specified cycles
 				if(token.size()<2)
-					throwError("DBG0", "\"for\" command expects one argument\n");
+					throwError("CMD2", "\"for\" command expects one argument\n");
 				else
 					tick(std::stoi(token[1]), &bkend);
 			}
-			else if(token[0] == "trace")
+			else if(token[0] == "trace-on")
 			{
 				// Enable trace
 				if(token.size()<2)
-					throwError("DBG1", "Trace command expects a filename\n");
+					throwError("CMD3", "Trace command expects a filename\n");
 				else
 				{
 					if(trace_enabled == false)
@@ -399,7 +402,7 @@ int main(int argc, char **argv)
 						std::cout << "Trace was already enabled\n";
 				}
 			}
-			else if(token[0] == "notrace")
+			else if(token[0] == "trace-off")
 			{
 				// Disable trace
 				if(trace_enabled == true)
@@ -413,7 +416,7 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				throwError("DBG2", "Unknown command \"" + token[0] + "\"\n");
+				throwError("CMD4", "Unknown command \"" + token[0] + "\"\n");
 			}
 			input.clear();
 		}
@@ -425,7 +428,6 @@ int main(int argc, char **argv)
 
 	if(trace_enabled) // if trace file is open, close it before exiting
 		bkend.tb->closeTrace();
-	
 	
 	if (verbose_flag)
 		std::cout << "Simulation ended @ tick " << bkend.tb->m_tickcount_total << " due to : " << end_simulation_reason << std::endl;
