@@ -69,7 +69,6 @@ def search():
 
 def compile(tests):
     for t in tests:
-        print(40*"-")
         print(Fore.GREEN+'compile: '+Style.RESET_ALL+t)
         dump = subprocess.run(
             [RVPREFIX+CC]+CFLAGS+LDFLAGS+[t, '-o', work_dir+'/'+t[0:-2]+'.elf'] , capture_output=True, text=True
@@ -106,8 +105,12 @@ def execute(test, mute=True):
         print('stderr: '+ dump.stderr)
 
     if (dump.returncode != 0):
-        print(Fore.RED+"EXITING due to execution error!"+Style.RESET_ALL)
-        exit()
+        print(Fore.RED+"Execution error!"+Style.RESET_ALL)
+        return False
+    elif len(dump.stderr)!=0:
+        return False
+    else:
+        return True
 
 
 
@@ -136,7 +139,7 @@ def verify(test):
     # if no assertions found
     if assert_block_start == -1:
         print(Fore.YELLOW+"Skipping: no assertions!"+Style.RESET_ALL)
-        return True
+        return None
 
     
     # copy dump file
@@ -151,7 +154,7 @@ def verify(test):
         f.close()
     except:
         print("Unable to open file :" + test)
-        exit()
+        return None
     
     dump_data = {}
     # create a dictionary of this data
@@ -228,10 +231,25 @@ if __name__ == "__main__":
     print(Fore.CYAN+"> Stage-3:"+Style.RESET_ALL+" Executing & verifying dumps...")
     
     failed_tests = []
+    ignored_tests = []
+    passed_tests = []
+
     for t in tests:
-        execute(t, mute=True)
-        if verify(t) == False:
-            failed_tests = failed_tests+[t]
+        execute_status = execute(t, mute=True)
+        verify_status = verify(t)
+
+        if execute_status == True:
+            if verify_status == True:
+                passed_tests = passed_tests + [t]
+            elif verify_status == False:
+                failed_tests = failed_tests + [t]
+            elif verify_status == None:
+                ignored_tests = ignored_tests + [t]
+            else:
+                print("Unknown return Value from execute function")
+        else:
+            ignored_tests = ignored_tests + [t]
+
 
     print(80*"=")
 
@@ -242,12 +260,23 @@ if __name__ == "__main__":
     print("|----------------------------|")
 
     print("Total tests  : " + str(len(tests)))
-    
-    print(Fore.GREEN+"\nPassed tests : " + str(len(tests) - len(failed_tests)) + '/' + str(len(tests))+ Style.RESET_ALL)
-    for t in tests:
-        if t not in failed_tests:
-            print("\t"+t)
 
-    print(Fore.RED+"\nFailed tests : " + str(len(failed_tests)) + '/' +str(len(tests))+ Style.RESET_ALL)
-    for t in failed_tests:
-        print("\t"+t)
+    count = 1
+    for t in tests:
+        print(str(count)+").\t"+t, end="")
+
+        print(" "*(30-len(t)), end="- ")
+
+        if t in passed_tests:
+            print(Fore.GREEN+"Passed"+Style.RESET_ALL)
+        elif t in ignored_tests:
+            print(Fore.YELLOW+"Ignored"+Style.RESET_ALL)
+        else:
+            print(Fore.RED+"Failed"+Style.RESET_ALL)
+        
+        count=count+1
+
+    
+    print(Fore.GREEN+"\nPassed tests  : " + str(len(passed_tests)) + '/' + str(len(tests))+ Style.RESET_ALL)
+    print(Fore.YELLOW+"Ignored tests : " + str(len(ignored_tests)) + '/' + str(len(tests))+ Style.RESET_ALL)
+    print(Fore.RED+"Failed tests  : " + str(len(failed_tests)) + '/' +str(len(tests))+ Style.RESET_ALL)

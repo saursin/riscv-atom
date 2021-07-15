@@ -1,7 +1,7 @@
 /**
  * @brief Version information
  */
-const char Info_version[] = "AtomSim v1.0";
+const char Info_version[] = "AtomSim v1.1";
 
 /**
  * @brief Copyright message
@@ -38,27 +38,18 @@ const std::string  COLOR_YELLOW =  "\033[33m";
 
 // ================================ THROWING ERRORS =======================================
 /**
- * @brief Exits the program
- */
-void Exit()
-{
-    std::exit(EXIT_FAILURE);
-}
-
-
-/**
  * @brief Throws error generated in the std::cerr stream
  * 
  * @param er_code error code 
  * @param message error message
  * @param exit flag that tells weather to exit immidiately
  */
-void throwError(std::string er_code, std::string message, bool exit = false)
+void throwError(std::string er_code, std::string message, bool Exit = false)
 {
     std::cerr << COLOR_RED <<"! ERROR  (E"<< er_code <<"): " << COLOR_RESET << message << std::endl;
-    if(exit)
+    if(Exit)
     {
-        Exit();
+        ExitAtomSim("", true);
     }
 }
 
@@ -80,9 +71,13 @@ void throwWarning(std::string wr_code, std::string message)
  * 
  * @param message Success message
  */
-void throwSuccessMessage(std::string message)
+void throwSuccessMessage(std::string message, bool Exit = false)
 {
     std::cout << COLOR_GREEN <<"SUCCESS : " << COLOR_RESET  << message <<std::endl;
+    if(Exit)
+    {
+        ExitAtomSim("");
+    }
 }
 
 
