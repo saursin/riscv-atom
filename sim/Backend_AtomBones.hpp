@@ -1,57 +1,21 @@
+#include "Backend.hpp"
+
 #include "include/elfio/elfio.hpp"
 
 #include "verilated.h"
 #include <verilated_vcd_c.h>
+
 #include "../build/vobj_dir/VAtomBones.h"
 #include "../build/vobj_dir/VAtomBones_AtomBones.h"
 #include "../build/vobj_dir/VAtomBones_AtomRV.h"
 #include "../build/vobj_dir/VAtomBones_RegisterFile__R20_RB5.h"
 
-#include "Testbench.hpp"
-
+// Configuration
 const unsigned int default_UART_RX_ADDRESS   	=	0x08000000;
 const unsigned int default_UART_TX_ADDRESS      =	0x08000001;
 const unsigned int default_UART_SREG_ADDRESS    =	0x08000002;
 
-/**
- * @brief Register ABI names used in debug display 
- * 
- */
-const std::vector<std::string> reg_names = 
-{
-	"x0  (zero) ",
-	"x1  (ra)   ",
-	"x2  (sp)   ",
-	"x3  (gp)   ",
-	"x4  (tp)   ",
-	"x5  (t0)   ",
-	"x6  (t1)   ",
-	"x7  (t2)   ",
-	"x8  (s0/fp)",
-	"x9  (s1)   ",
-	"x10 (a0)   ",
-	"x11 (a1)   ",
-	"x12 (a2)   ",
-	"x13 (a3)   ",
-	"x14 (a4)   ",
-	"x15 (a5)   ",
-	"x16 (a6)   ",
-	"x17 (a7)   ",
-	"x18 (s2)   ",
-	"x19 (s3)   ",
-	"x20 (s4)   ",
-	"x21 (s5)   ",
-	"x22 (s6)   ",
-	"x23 (s7)   ",
-	"x24 (s8)   ",
-	"x25 (s9)   ",
-	"x26 (s10)  ",
-	"x27 (s11)  ",
-	"x28 (t3)   ",
-	"x29 (t4)   ",
-	"x30 (t5)   ",
-	"x31 (t6)   "
-};
+const unsigned int hault_opcode = 0x100073; // ebreak
 
 /**
  * @brief Memory class
@@ -291,76 +255,40 @@ class Memory
  * Backend class encapsulates the data 
  * probing and printing operations
  */
-class Backend
+class Backend_AtomBones: public Backend<VAtomBones>
 {
 	public:
-	/**
-	 * @brief Pointer to testbench object
-	 */
-	Testbench<VAtomBones> *tb;
-
-	// memory
 	/**
 	 * @brief Pointer to memoy object
 	 */
 	Memory * mem;
 
-	// ==== STATE ====
-	/**
-	 * @brief Program counter value in fetch stage
-	 */
-	unsigned int pc_f;
-
-	/**
-	 * @brief Instruction in fetch stage
-	 */
-	unsigned int ins_f;
-
-	/**
-	 * @brief Program counter value in execute stage
-	 */
-	unsigned int pc_e;
-
-	/**
-	 * @brief Instuction value in execute stage
-	 */
-	unsigned int ins_e;
-	
-	/**
-	 * @brief Registe file values
-	 */
-	unsigned int rf[32];
-
-	/**
-	 * @brief Disassembly of input file
-	 */
-	std::map<uint32_t, std::string> disassembly;
 
 	/**
 	 * @brief Construct a new Backend object
-	 * 
-	 * @param mem_init_file init_file
 	 */
-	Backend(std::string mem_init_file, unsigned int mem_size)
+	Backend_AtomBones(std::string ifile, unsigned long mem_size)
 	{
-		tb = new Testbench<VAtomBones>();
+        // Construct Testbench object
+        tb = new Testbench<VAtomBones>();
+
+		// Constuct Memory object
 		mem = new Memory(mem_size);
 
-		unsigned int entry_point = mem->initFromElf(mem_init_file, std::vector<int>{5, 6}); // load text & data sections
-		if (verbose_flag)
-			printf("Entry point : 0x%08x\n", entry_point);
+		// get input file disassembly
+		disassembly = getDisassembly(ifile);
 
-		// Set entry point
-		tb->m_core->AtomBones->atom_core->ProgramCounter = entry_point;
+		// ====== Initialize ========
+		// Initialize memory
+		mem->initFromElf(ifile, std::vector<int>{5, 6}); // load text & data sections
 
+		// Initialize CPU state by resetting
+		reset();
 		tb->m_core->eval();
 
-		// get initial signal values
-		refreshData();
+        // get initial signal values
+        refreshData();
 
-		// get input file disassembly
-		disassembly = getDisassembly(mem_init_file);
-		
 		if (verbose_flag)
 			std::cout << "Initialization complete!\n";
 	}
@@ -369,21 +297,11 @@ class Backend
 	/**
 	 * @brief Destroy the Backend object
 	 */
-	~Backend()
+	~Backend_AtomBones()
 	{
 		delete tb;
 		delete mem;
 	}
-
-
-	/**
-	 * @brief reset the backend
-	 */
-	void reset()
-	{
-		tb->reset();
-	}
-
 
 	void serviceMemoryRequest()
 	{
@@ -414,7 +332,6 @@ class Backend
 				default: 
 					std::cout << std::hex << (int)tb->m_core->dmem_sel_o << std::endl;
 					throwError("RTL", "signal 'dmem_sel_o' has unexpected value");
-
 			}
 			tb->m_core->dmem_ack_i = 1;
 		}
@@ -427,71 +344,20 @@ class Backend
 	 */
 	void refreshData()
 	{
-		pc_f = tb->m_core->AtomBones->atom_core->ProgramCounter;
-		pc_e = tb->m_core->AtomBones->atom_core->ProgramCounter_Old;
+		state.pc_f = tb->m_core->AtomBones->atom_core->ProgramCounter;
+		state.pc_e = tb->m_core->AtomBones->atom_core->ProgramCounter_Old;
 
-		ins_e = tb->m_core->AtomBones->atom_core->InstructionRegister;
+		state.ins_e = tb->m_core->AtomBones->atom_core->InstructionRegister;
 		for(int i=0; i<32; i++)
 		{
 			if(i==0)
-				rf[i] = 0;
+				state.rf[i] = 0;
 			else
-				rf[i] = tb->m_core->AtomBones->atom_core->rf->regs[i-1];
+				state.rf[i] = tb->m_core->AtomBones->atom_core->rf->regs[i-1];
 		}
+
+		signals.jump_decision = tb->m_core->AtomBones->atom_core->__PVT__jump_decision;
 	}
-
-
-	/**
-	 * @brief Display state data on console
-	 */
-	void displayData()
-	{
-		unsigned int change = pc_f-pc_e;
-		std::string jump = "    ";
-		bool isJump = tb->m_core->AtomBones->atom_core->__PVT__jump_decision;
-		if(isJump)
-			jump = "jump";
-		else
-			jump = "    ";
-		static bool wasJump = false;
-		std::cout << "-< " << tb->m_tickcount <<" >--------------------------------------------\n";
-		printf("F-STAGE  |  pc : 0x%08x  (%+d) (%s) \n", pc_f , change, jump.c_str()); 
-		printf("E-STAGE  V  pc : 0x%08x   ir : 0x%08x \n", pc_e , ins_e); 
-		
-		std::cout << "[ " <<  disassembly[pc_e] << " ] ";
-		
-		if(wasJump)
-			std::cout << " => nop (pipeline flush)";
-
-		std::cout << "\n";
-
-		wasJump = isJump;
-
-		std::cout << "---------------------------------------------------\n";
-						
-		if(verbose_flag)
-		{
-			int cols = 2; // no of coloumns per rows
-			#ifndef DEBUG_PRINT_T2B
-			for(int i=0; i<32; i++)	// print in left-right fashion
-			{
-				printf("r%-2d: 0x%08x   ", i, rf[i]);
-				if(i%cols == cols-1)
-					printf("\n");
-			}
-			#else
-			for(int i=0; i<32/cols; i++)	// print in topdown fashion
-			{
-				for(int j=0; j<cols; j++)
-				{
-					printf(" %s: 0x%08x  ", reg_names[i+(32/cols)*j].c_str(), rf[i+(32/cols)*j]);
-				}
-				printf("\n");
-			}
-			#endif
-		}
-	}
-
 
 	/**
 	 * @brief Tick for one cycle
@@ -499,9 +365,123 @@ class Backend
 	 */
 	void tick()
 	{
+		//
+		if(done())
+		{
+			ExitAtomSim("Encountered $finish()");
+		}
+
+		// Service Memory Request
 		serviceMemoryRequest();
+
+		// Tick clock once
 		tb->tick();
-		ins_f = tb->m_core->imem_data_i;
+
+		// Refresh Data
+		if(debug_mode || dump_regs_on_ebreak)
+		{
+			refreshData();
+		}
+
+		if(debug_mode)
+			displayData();
+
+
+		// ===== Check Hault Condition =====
+		if (tb->m_core->AtomBones->atom_core->InstructionRegister == hault_opcode)
+		{
+			// ============ REGISTER FILE DUMP (For SCAR) ==============
+			if(dump_regs_on_ebreak)
+			{
+				std::vector<std::string> fcontents;
+				
+				for(int i=0; i<34; i++)
+				{
+					char temp [50];
+					unsigned int tmpval;
+
+					switch(i-2)
+					{
+						case -2: tmpval = state.pc_e; sprintf(temp, "pc 0x%08x", tmpval); break;
+						case -1: tmpval = state.ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;
+						default: tmpval = state.rf[i-2]; sprintf(temp, "x%d 0x%08x",i-2, tmpval); break;
+					}
+					fcontents.push_back(std::string(temp));
+				}
+				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
+			}
+			
+			// ==========  MEM SIGNATURE DUMP (For RISCV-Arch Tests) =============
+			if(signature_file.length()!=0)	
+			{
+				// Get start and end address of signature
+				long int begin_signature_at = -1;
+				long int end_signature_at = -1;
+
+				ELFIO::elfio reader;
+
+				if (!reader.load(ifile)) 
+				{
+					throwError("SIG", "Can't find or process ELF file : " + ifile + "\n", true);
+				}
+
+				ELFIO::Elf_Half n = reader.sections.size();
+				for ( ELFIO::Elf_Half i = 0; i < n; ++i )  // For all sections
+				{
+					ELFIO::section* sec = reader.sections[i];
+					if ( SHT_SYMTAB == sec->get_type() || SHT_DYNSYM == sec->get_type() ) 
+					{
+						ELFIO::symbol_section_accessor symbols( reader, sec );
+						ELFIO::Elf_Xword sym_no = symbols.get_symbols_num();
+						if ( sym_no > 0 ) 
+						{	
+							for ( ELFIO::Elf_Xword i = 0; i < sym_no; ++i ) {
+								std::string   name;
+								ELFIO::Elf64_Addr value = 0;
+								ELFIO::Elf_Xword size	= 0;
+								unsigned char bind    	= 0;
+								unsigned char type    	= 0;
+								ELFIO::Elf_Half section = 0;
+								unsigned char other   	= 0;
+								symbols.get_symbol( i, name, value, size, bind, type,
+													section, other );
+
+								if (name == "begin_signature")
+									begin_signature_at = value;
+								if (name == "end_signature")
+									end_signature_at = value;
+							}
+						}
+					}
+				}
+
+				if(begin_signature_at == -1 || end_signature_at == -1)
+				{
+					throwError("SIG", "One or both of 'begin_signature' & 'end_signature' symbols missing from ELF symbol table: " + ifile + "\n", true);
+				}
+
+				//  dump data to signature file
+				std::vector<std::string> fcontents;
+				printf("Dumping signature region [0x%08lx-0x%08lx]\n", begin_signature_at, end_signature_at);
+
+				for(long int i=begin_signature_at; i<end_signature_at; i=i+4)
+				{
+					char temp [50];
+					sprintf(temp, "%08x", mem->fetchWord(i));
+					fcontents.push_back(temp);
+				}
+				fWrite(fcontents, signature_file);
+			}
+
+			if (verbose_flag)
+				std::cout << "Haulting @ tick " << tb->m_tickcount_total;
+			ExitAtomSim("\n");
+		}
+		if(tb->m_tickcount_total > maxitr)
+		{
+			throwWarning("SIM0", "Simulation iterations exceeded maxitr("+std::to_string(maxitr)+")\n");
+			ExitAtomSim("");
+		}		
 
 		// Serial port Emulator: Rx Listener
 		static bool prev_tx_we = false;
@@ -511,17 +491,5 @@ class Backend
 			std::cout << (char)mem->fetchByte(default_UART_TX_ADDRESS);
 		}
 		prev_tx_we = cur_tx_we;
-	}
-
-
-	/**
-	 * @brief check if simulation is done
-	 * 
-	 * @return true 
-	 * @return false 
-	 */
-	bool done()
-	{
-		return tb->done();
 	}
 };

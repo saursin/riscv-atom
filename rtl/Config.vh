@@ -1,5 +1,5 @@
 // Config file
-`define RESET_PC_ADDRESS 32'h0000100
+`define RESET_PC_ADDRESS 32'h0000000
 
 `define __NOP_INSTRUCTION__ 32'h00000013    // NOP = addi x0, x0, 0
 

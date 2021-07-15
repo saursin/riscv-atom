@@ -14,8 +14,8 @@ class Testbench
 
 	VTop 			* m_core = NULL;
 	VerilatedVcdC	* m_trace = NULL;
-	unsigned long 	m_tickcount;     			// TickCounter to count clock cycles fom last reset
-	unsigned long 	m_tickcount_total;   		// TickCounter to count clock cycles
+	unsigned long 	m_tickcount = 0;     			// TickCounter to count clock cycles fom last reset
+	unsigned long 	m_tickcount_total = 0;   		// TickCounter to count clock cycles
 
 	/**
 	 * @brief Construct a new TESTBENCH object

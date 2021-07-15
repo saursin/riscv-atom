@@ -148,7 +148,7 @@ $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodu
 	cd $(vobject_dir) && make -f V$(verilog_topmodule).mk
 
 # Compile C++ files
-$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/defs.hpp $(sim_dir)/Testbench.hpp $(sim_cpp_backend)
+$(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/defs.hpp $(sim_dir)/Backend.hpp $(sim_dir)/Testbench.hpp $(sim_cpp_backend)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
 $(cobject_dir)/verilated.o: /usr/share/verilator/include/verilated.cpp 
