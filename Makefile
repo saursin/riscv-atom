@@ -64,20 +64,24 @@ INCLUDES = -I $(vobject_dir) -I /usr/share/verilator/include -I /usr/share/veril
 
 cpp_driver = $(sim_dir)/AtomSim.cpp
 sim_executable = atomsim
-sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
 Target = atombones
 
 # Verilog Configs
 VC = verilator
 VFLAGS = -cc -Wall --relative-includes --trace
 
+# Target Specific definitions
 ifeq ($(Target), atombones)
-	verilog_topmodule = AtomBones
-	verilog_topmodule_file = $(rtl_dir)/AtomBones.v
-	verilog_files = rtl/AtomBones.v rtl/Timescale.vh rtl/Config.vh rtl/core/AtomRV.v rtl/core/Alu.v rtl/core/Decode.v rtl/core/RegisterFile.v
+verilog_topmodule = AtomBones
+verilog_topmodule_file = $(rtl_dir)/AtomBones.v
+verilog_files = rtl/AtomBones.v rtl/Timescale.vh rtl/Config.vh rtl/core/AtomRV.v rtl/core/Alu.v rtl/core/Decode.v rtl/core/RegisterFile.v
 
-	CFLAGS += -DTARGET_ATOMBONES
-	
+sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
+CFLAGS += -DTARGET_ATOMBONES
+else
+
+$(error Unknown Target : $(Target))
+
 endif
 
 #======================================================================

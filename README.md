@@ -25,10 +25,9 @@ Key highlights of Atom are listed below:
 1. [Atom Architecture](Atom-Architecture)
 2. [Targets](Targets)
 3. [Prerequisites](Prerequisites)
-4. [Getting Started](Getting-Started)
-5. [Simulation](Simulation)
-6. [FPGA Implementation](FPGA-Implementation)
-7. [License](License)
+4. [Build Instructions](Build-Instructions)
+5. [AtomSim](AtomSim)
+6. [License](License)
 
 ## Atom Architecture
 
@@ -77,7 +76,7 @@ It is a basic SoC which contains atom core interfaced to instruction memory, dat
 | 0x00014001               | UART_TX     |
 | 0x00014002               | UART_SREG   |
 
-### Prerequisites
+## Prerequisites
 
 Run apt update
 
@@ -175,7 +174,7 @@ Now run the generated elf file using atomsim
 $ atomsim banner.elf
 ```
 
-## Generating atomsim code documentation using doxygen
+### Generating atomsim code documentation using doxygen
 
 Run make from the parent directory
 
