@@ -1,7 +1,7 @@
 /**
  * @brief Version information
  */
-const char Info_version[] = "AtomSim v1.1";
+const char Info_version[] = "AtomSim v1.2";
 
 /**
  * @brief Copyright message
