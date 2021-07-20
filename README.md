@@ -154,7 +154,7 @@ just replace `your_path` with the path to the `riscv-atom/build/bin` directory o
 
 ### Running example programs
 
-Example programs reside in the `sw/examples` directory. Each folderr inside this directory contains an example  C/Assembly program and a shell script to compile it.
+Example programs reside in the `sw/examples` directory. Each folder inside this directory contains an example  C/Assembly program and a shell script to compile it.
 
 Let's try the banner program, Go to the banner directory
 

@@ -1,5 +1,5 @@
 /*
-    LINKER SCRIPT
+    SCAR LINKER SCRIPT
 
     @See : https://sourceware.org/binutils/docs/ld/Basic-Script-Concepts.html
     @See : https://interrupt.memfault.com/blog/how-to-write-linker-scripts-for-firmware
@@ -11,21 +11,15 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x00000000, LENGTH = 64M    /* 64 MB @ 0x0*/
-    RAM (rwx): ORIGIN = 0x04000000, LENGTH = 64M    /* 64 MB @ 0x10000 (0x04000000)*/
+    ROM (rx) : ORIGIN = 0x00000000, LENGTH = 64M    /* 64 kb @ 0x0*/
+    RAM (rwx): ORIGIN = 0x04000000, LENGTH = 64M    /* 16 kb @ 0x10000 (65536)*/
 }
 
 SECTIONS
 {
     /* ==== ROM ==== */
     .text : 
-    { 
-        *(.boot*)
-        . = ORIGIN(ROM) + 0x100;
-        
-        _svector = .;
-        KEEP(*(.vector*))   /* Keep all interrupt vector tables at very start of text section */
-
+    {
         *(.text)            /* Load all text sections (from all files) */
         *(.rodata)
 

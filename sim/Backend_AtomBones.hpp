@@ -255,11 +255,11 @@ class Memory
  * Backend class encapsulates the data 
  * probing and printing operations
  */
-class Backend_AtomBones: public Backend<VAtomBones>
+class Backend_AtomSim: public Backend<VAtomBones>
 {
 	public:
 	/**
-	 * @brief Pointer to memoy object
+	 * @brief Pointer to memory object
 	 */
 	Memory * mem;
 
@@ -267,7 +267,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 	/**
 	 * @brief Construct a new Backend object
 	 */
-	Backend_AtomBones(std::string ifile, unsigned long mem_size)
+	Backend_AtomSim(std::string ifile, unsigned long mem_size)
 	{
         // Construct Testbench object
         tb = new Testbench<VAtomBones>();
@@ -297,10 +297,15 @@ class Backend_AtomBones: public Backend<VAtomBones>
 	/**
 	 * @brief Destroy the Backend object
 	 */
-	~Backend_AtomBones()
+	~Backend_AtomSim()
 	{
 		delete tb;
 		delete mem;
+	}
+
+	std::string getTargetName()
+	{
+		return "AtomBones";
 	}
 
 	void serviceMemoryRequest()
@@ -309,29 +314,34 @@ class Backend_AtomBones: public Backend<VAtomBones>
 		tb->m_core->imem_ack_i = 0;
 		tb->m_core->dmem_ack_i = 0;
 
-		// Imem Port Reads
+		// ===== Imem Port Reads =====
+		uint32_t iaddr = tb->m_core->imem_addr_o & 0xfffffffc;
 		if(tb->m_core->imem_valid_o == 1)
-		{	
-			tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+		{
+			tb->m_core->imem_data_i = mem->fetchWord(iaddr);
 			tb->m_core->imem_ack_i = 1;
 		}
 
-		// Dmem Port Reads/Writes
-		if(tb->m_core->dmem_valid_o && !tb->m_core->dmem_we_o)	// Load instruction
+		// ===== Dmem Port Reads/Writes =====
+		uint32_t daddr = tb->m_core->dmem_addr_o & 0xfffffffc;
+		if(tb->m_core->dmem_valid_o)
 		{
-			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
-			tb->m_core->dmem_ack_i = 1;
-		}
-		else if(tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o)	// Store instruction
-		{
-			switch(tb->m_core->dmem_sel_o)
+			if(tb->m_core->dmem_we_o)	// Writes
 			{
-				case 0x1:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
-				case 0x3:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
-				case 0xf:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
-				default: 
-					std::cout << std::hex << (int)tb->m_core->dmem_sel_o << std::endl;
-					throwError("RTL", "signal 'dmem_sel_o' has unexpected value");
+				// Writes are selective
+				if(tb->m_core->dmem_sel_o & 0b0001)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xffffff00) | (tb->m_core->dmem_data_o & 0x000000ff));
+				if(tb->m_core->dmem_sel_o & 0b0010)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xffff00ff) | (tb->m_core->dmem_data_o & 0x0000ff00));
+				if(tb->m_core->dmem_sel_o & 0b0100)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xff00ffff) | (tb->m_core->dmem_data_o & 0x00ff0000));
+				if(tb->m_core->dmem_sel_o & 0b1000)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0x00ffffff) | (tb->m_core->dmem_data_o & 0xff000000));		
+			}
+			else	// Reads
+			{
+				// Read will always result in a fetch word at word boundry just before the address.
+				tb->m_core->dmem_data_i = mem->fetchWord(daddr);
 			}
 			tb->m_core->dmem_ack_i = 1;
 		}
@@ -339,7 +349,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 
 
 	/**
-	 * @brief probe all internal signals and regsters and 
+	 * @brief probe all internal signals and registers and 
 	 * update backend state
 	 */
 	void refreshData()
@@ -411,7 +421,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
 			}
 			
-			// ==========  MEM SIGNATURE DUMP (For RISCV-Arch Tests) =============
+			// ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============
 			if(signature_file.length()!=0)	
 			{
 				// Get start and end address of signature
@@ -492,4 +502,33 @@ class Backend_AtomBones: public Backend<VAtomBones>
 		}
 		prev_tx_we = cur_tx_we;
 	}
+
+	/**
+	 * @brief Dump contents of memoy into a file
+	 * @param file 
+	 */
+	void dumpmem(std::string file)
+	{
+		if(mem->size < 1*1024*1024)	// 1MB
+		{
+			std::vector<std::string> fcontents;
+			for(unsigned int i=0; i<mem->size-4; i+=4)
+			{	
+				char hex [30];
+				sprintf(hex, "0x%08x\t:\t0x%08x", i, mem->fetchWord(i));
+				fcontents.push_back(hex);
+			}
+			fWrite(fcontents, std::string(default_dump_dir)+"/"+file);
+		}
+		else
+			throwError("","Option not available due to excessive memory size (>1MB)\n", false);
+	}
+
+	 /**
+     * @brief Get contents of a memory location
+     */
+    uint32_t getMemContents(uint32_t addr)
+    {
+        return mem->fetchWord(addr);
+    }
 };

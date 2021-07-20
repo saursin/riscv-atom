@@ -63,6 +63,13 @@ class Backend
     };
 
     public:
+
+    /**
+     * @brief Get the Target Name
+     * @return std::string 
+     */
+    virtual std::string getTargetName() = 0;
+
 	/**
 	 * @brief reset the backend
 	 */
@@ -74,7 +81,7 @@ class Backend
     }
 
 	/**
-	 * @brief probe all internal signals and regsters and 
+	 * @brief probe all internal signals and registers and 
 	 * update backend state
 	 */
 	virtual void refreshData() = 0;
@@ -117,7 +124,7 @@ class Backend
         // Print Register File
         if(verbose_flag)
         {
-            int cols = 2; // no of coloumns per rows
+            int cols = 2; // no of columns per rows
             #ifndef DEBUG_PRINT_T2B
             for(int i=0; i<32; i++)	// print in left-right fashion
             {
@@ -136,6 +143,26 @@ class Backend
             }
             #endif
         }
+    }
+
+    /**
+     * @brief Dump contents of memory into a file
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     * @param file 
+     */
+    void dumpmem(std::string file)
+    {
+        throwError("", "Memory dumps not supported in current target");
+    }
+
+    /**
+     * @brief Get contents of a memory location
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     */
+    uint32_t getMemContents(uint32_t addr)
+    {
+        throwError("", "Viewing memory content not suppoted in current target");
+        return 0;
     }
 
 	/**

@@ -41,7 +41,7 @@ module AtomRV
     // ========== DMEM Port ==========
     output  wire    [31:0]  dmem_addr_o,    // DMEM address
     input   wire    [31:0]  dmem_data_i,    // DMEM data in
-    output  wire    [31:0]  dmem_data_o,    // DMEM data out
+    output  reg     [31:0]  dmem_data_o,    // DMEM data out
     output  reg      [3:0]  dmem_sel_o,     // DMEM Select
     output  wire            dmem_we_o,      // DMEM Strobe
 
@@ -52,19 +52,19 @@ module AtomRV
 /*
     ///////////// Protocol specification //////////////
     CPU has a generic handshaking protocol interface (GHPI). Handshaking is done via means 
-    of two signals 'valid' & 'ack'. Valid signal is set by master wenever a tansaction 
+    of two signals 'valid' & 'ack'. Valid signal is set by master whenever a transaction 
     begins and slave responds by setting the 'ack' signal. When both signals are set, 
-    tansaction takes place. GHPI protocol also supports delayed transactions.
+    transaction takes place. GHPI protocol also supports delayed transactions.
 
     CPU has two GHPI ports namely imem & dmem ports. imem port is used only for reading 
     the memory while dmem pot is used for both eads and writes. The CPU ca ne configured in 
-    both harward and von-neumann fashion. In case of harwad configuration, separate instruction 
-    and data memory ae needed to be connected. In case of von-neumann mode, a bus arbiter is
+    both Harvard and Von-Neumann fashion. In case of Harvard configuration, separate instruction 
+    and data memory ae needed to be connected. In case of Von-Neumann mode, a bus arbiter is
     needed to multiplex between both ports.
 
     Reads:
     - Master sets the address, the valid signal and clears the strobe signal.
-    - Slave responds by poviding the data coresponding to that address & setting the ack signal.
+    - Slave responds by providing the data corresponding to that address & setting the ack signal.
 
     Writes:
     - Master sets the address, the data, the valid signal and the strobe signal (depending on 
@@ -91,7 +91,7 @@ always @(posedge clk_i) begin
         ProgramCounter <= `RESET_PC_ADDRESS;
 
     else if(jump_decision)
-        ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addrresses, also JALR enforces this
+        ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
 
     else if (!stall_stage1) begin
         ProgramCounter <= pc_plus_four;
@@ -141,7 +141,7 @@ always @(posedge clk_i) begin
             InstructionRegister <= `__NOP_INSTRUCTION__;
 
         else if(stall_stage1) // Stall
-            InstructionRegister <= InstructionRegister; // retain pevious value
+            InstructionRegister <= InstructionRegister; // retain previous value
             
         else
             InstructionRegister <= imem_data_i;
@@ -156,8 +156,8 @@ end
 /*
     ////// Instruction Decode //////
     Instruction decode unit decodes instruction and sets various control 
-    signals throughout the pipeline. Is also extacts immediate values 
-    from instuictions and sign extends them properly.
+    signals throughout the pipeline. Is also extracts immediate values 
+    from instructions and sign extends them properly.
 */
 wire    [4:0]   d_rd_sel;
 wire    [4:0]   d_rs1_sel;
@@ -201,29 +201,9 @@ Decode decode
 );
 
 
-/*
-    ////// MEM_LOAD //////
-    Memload is used to chop down the input 32 bit data into signed/unsigned 
-    bytes and words fo loading into the registe file.
-*/
-reg [31:0] memload;
-
-always @(*) /* COMBINATORIAL */
-begin
-    case(d_mem_access_width)
-        3'b000:   memload = {{24{dmem_data_i[7]}}, dmem_data_i[7:0]};     // LB
-        3'b001:   memload = {{16{dmem_data_i[15]}}, dmem_data_i[15:0]};   // LH
-        3'b010:   memload = dmem_data_i;                            // LW
-        3'b100:   memload = {{24{1'b0}}, dmem_data_i[7:0]};         // LBU
-        3'b101:   memload = {{16{1'b0}}, dmem_data_i[15:0]};        // LHU
-
-        default: memload = 32'd0;
-    endcase 
-end
-
 
 /*
-    ////// Regster File //////
+    ////// Register File //////
     Contains cpu registers (r0-31)
 */
 
@@ -281,7 +261,7 @@ Alu alu
 
 /*
     ////// Comparator //////
-    Used for all comparitive opeations
+    Used for all comparative operations
 */
 reg comparison_result;
 
@@ -309,24 +289,111 @@ end
 /*
     DATA MEMORY ACCESS
 */
-assign dmem_addr_o = alu_out;
-assign dmem_data_o = rf_rs2;
+wire [31:0] dmem_address = alu_out;
+wire [31:0] dmem_data_out = rf_rs2;
+
+assign dmem_addr_o = dmem_address & 32'hfffffffc; // word aligned accesses
+assign dmem_valid_o = d_mem_load_store;
 assign dmem_we_o = d_mem_we;
 
 wire dmem_handshake = dmem_ack_i & dmem_valid_o;
 wire stall_stage2 = !dmem_handshake & dmem_valid_o;
 
-// Setting the strobe_o signal
-always @(*) begin
-    case({d_mem_access_width[1:0], d_mem_we})
-        3'b00_1: dmem_sel_o = 4'b0001;   // Store byte
-        3'b01_1: dmem_sel_o = 4'b0011;   // Store Half Word
-        3'b10_1: dmem_sel_o = 4'b1111;   // Store Word
+/////////////////////////////////
+// READ
 
-        default: dmem_sel_o = 4'b1111;   // Load (Byte/HWord/Word)
-    endcase
+/*
+    ////// MEM_LOAD //////
+*/
+reg [31:0] memload;
+
+always @(*) /* COMBINATORIAL */
+begin
+    case(d_mem_access_width[1:0])
+        2'b00:  begin   // Load Byte
+                    case(dmem_address[1:0])
+                        2'b00:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[7]}},  dmem_data_i[7:0]};
+                        2'b01:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[15]}}, dmem_data_i[15:8]};
+                        2'b10:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[23]}}, dmem_data_i[23:16]};
+                        2'b11:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[31]}}, dmem_data_i[31:24]};
+                    endcase
+                end
+
+        2'b01:  begin   // Load Half Word
+                    case(dmem_address[1])
+                        1'b0:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dmem_data_i[15]}}, dmem_data_i[15:0]};
+                        1'b1:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dmem_data_i[31]}}, dmem_data_i[31:16]};
+                    endcase
+                end
+        
+        2'b10:  begin   // Load Word
+                    memload = dmem_data_i;
+                end
+
+        default: memload = 32'h00000000;
+    endcase 
 end
 
-assign dmem_valid_o = d_mem_load_store;
+////////////////////////////////
+// WRITE
+
+// Setting the sel_o signal
+always @(*) begin /* COMBINATORIAL */
+    if (d_mem_we) begin
+        case(d_mem_access_width[1:0])
+            2'b00:  begin // Store byte
+                        case(dmem_address[1:0])
+                            2'b00:  dmem_sel_o = 4'b0001;
+                            2'b01:  dmem_sel_o = 4'b0010;
+                            2'b10:  dmem_sel_o = 4'b0100;
+                            2'b11:  dmem_sel_o = 4'b1000;
+                        endcase
+                    end
+            
+            2'b01:  begin // Store Half Word
+                        case(dmem_address[1])
+                            1'b0:  dmem_sel_o = 4'b0011;
+                            1'b1:  dmem_sel_o = 4'b1100;
+                        endcase
+                    end
+
+            2'b10: dmem_sel_o = 4'b1111;   // Store Word
+
+            default: dmem_sel_o = 4'b1111;
+        endcase
+    end
+    else
+        dmem_sel_o = 4'b1111;   // Load (Byte/HWord/Word)
+end
+
+
+// Setting the data_o signal
+always @(*) begin /* COMBINATORIAL */
+    if (d_mem_we) begin
+        case(d_mem_access_width[1:0])
+            2'b00:  begin // Store byte
+                        case(dmem_address[1:0])
+                            2'b00:  dmem_data_o = { {24{1'b0}}, dmem_data_out[7:0] };
+                            2'b01:  dmem_data_o = { {16{1'b0}}, dmem_data_out[7:0], {8{1'b0}} };
+                            2'b10:  dmem_data_o = { {8{1'b0}} , dmem_data_out[7:0], {16{1'b0}} };
+                            2'b11:  dmem_data_o = { dmem_data_out[7:0], {24{1'b0}} };
+                        endcase
+                    end
+            
+            2'b01:  begin // Store Half Word
+                        case(dmem_address[1])
+                            1'b0:  dmem_data_o = { {16{1'b0}}, dmem_data_out[15:0] };
+                            1'b1:  dmem_data_o = { dmem_data_out[15:0], {16{1'b0}} };
+                        endcase
+                    end
+
+            2'b10: dmem_data_o = dmem_data_out;   // Store Word
+
+            default: dmem_data_o = dmem_data_out;
+        endcase
+    end
+    else
+        dmem_data_o = 32'h00000000;   // Load (Byte/HWord/Word)
+end
 
 endmodule

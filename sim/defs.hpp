@@ -1,7 +1,7 @@
 /**
  * @brief Version information
  */
-const char Info_version[] = "AtomSim v1.1";
+const char Info_version[] = "AtomSim v1.2";
 
 /**
  * @brief Copyright message
@@ -42,7 +42,7 @@ const std::string  COLOR_YELLOW =  "\033[33m";
  * 
  * @param er_code error code 
  * @param message error message
- * @param exit flag that tells weather to exit immidiately
+ * @param exit flag that tells weather to exit immediately
  */
 void throwError(std::string er_code, std::string message, bool Exit = false)
 {
@@ -67,7 +67,7 @@ void throwWarning(std::string wr_code, std::string message)
 
 
 /**
- * @brief Displays a success messaage
+ * @brief Displays a success message
  * 
  * @param message Success message
  */
@@ -103,7 +103,7 @@ std::string lStrip(const std::string& s)
 
 
 /**
- * @brief removes succeding whitespaces in a string
+ * @brief removes succeeding whitespaces in a string
  * 
  * @param s string
  * @return std::string 
@@ -116,7 +116,7 @@ std::string rStrip(const std::string& s)
 
 
 /**
- * @brief removes preceding & succeding whitespaces in a string
+ * @brief removes preceding & succeeding whitespaces in a string
  * 
  * @param s string
  * @return std::string 

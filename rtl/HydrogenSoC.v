@@ -7,7 +7,7 @@
 `include "core/AtomRV_wb.v"
 
 /**
- *  Hydogen SoC
+ *  Hydrogen SoC
  *  Barebone SoC housing a single atom core, imem, & dmem.
  */
 

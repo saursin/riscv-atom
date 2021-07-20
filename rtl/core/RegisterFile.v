@@ -3,7 +3,7 @@
 //
 //  File        : RegisterFile.v
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Desciption  : Paramatrized register file for RISCV atom core
+//  Description  : Parametrized register file for RISCV atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
