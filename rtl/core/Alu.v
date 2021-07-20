@@ -18,6 +18,8 @@ module Alu
     output reg [31:0] Out
 );
 
+wire signed [31:0] A_s = A;
+
 always @(*) begin
     case(Sel)
 
@@ -26,9 +28,9 @@ always @(*) begin
     `__ALU_XOR__:   Out = A ^ B;
     `__ALU_OR__ :   Out = A | B;
     `__ALU_AND__:   Out = A & B;
-    `__ALU_SLL__:   Out = A << B;
-    `__ALU_SRL__:   Out = A >> B;
-    `__ALU_SRA__:   Out = A >>> B;
+    `__ALU_SLL__:   Out = A << B[4:0];
+    `__ALU_SRL__:   Out = A >> B[4:0];
+    `__ALU_SRA__:   Out = A_s >>> B[4:0];
 
     default:    Out = 32'd0;
     endcase
