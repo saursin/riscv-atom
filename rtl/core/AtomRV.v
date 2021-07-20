@@ -329,16 +329,7 @@ begin
         2'b10:  begin   // Load Word
                     memload = dmem_data_i;
                 end
-        
 
-
-        
-        /*memload = {{24{dmem_data_i[7]}}, dmem_data_i[7:0]};     // LB
-        3'b001:   memload = {{16{dmem_data_i[15]}}, dmem_data_i[15:0]};   // LH
-        3'b010:   memload = dmem_data_i;                            // LW
-        3'b100:   memload = {{24{1'b0}}, dmem_data_i[7:0]};         // LBU
-        3'b101:   memload = {{16{1'b0}}, dmem_data_i[15:0]};        // LHU
-*/
         default: memload = 32'h00000000;
     endcase 
 end
