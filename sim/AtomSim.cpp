@@ -81,16 +81,16 @@ std::string signature_file 	= "";
 // Include Backend
 #include "Backend_AtomBones.hpp"
 
-// Backend name
-const std::string AtomSimBackend = "AtomBones";
-
-// Backend Object
-Backend_AtomBones *bkend;		
 
 // Default mem size for atomBones
-const unsigned long int default_mem_size = 134217728 + 3 + 1;	// 128MB (Code & Data) + 3 Bytes (Serial IO) + 1 (To make word access possible)
+// 128MB (Code & Data) + 3 Bytes (Serial IO) + 1 (To make word access possible on address 0x08000000)
+const unsigned long int default_mem_size = (128*1024*1024) + 3 + 1;	
 unsigned long int mem_size = default_mem_size;
 #endif
+
+
+// Backend Object
+Backend_AtomSim *bkend;
 
 /**
  * @brief Exit AtomSim
@@ -110,7 +110,7 @@ void ExitAtomSim(std::string message, bool exit_with_error)
 		std::cout << message << "\n";
 
 	// Destroy backend
-	bkend->~Backend_AtomBones();
+	bkend->~Backend_AtomSim();
 
 	// ===== Exit =====
 	if(exit_with_error)
@@ -238,7 +238,7 @@ void run(long unsigned int cycles)
 int main(int argc, char **argv)
 {
     if (verbose_flag)
-		std::cout << "AtomSim [" << AtomSimBackend << "]\n";
+		std::cout << "AtomSim [" << bkend->getTargetName() << "]\n";
 
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
 
 	// Create a new backend instance
 	#ifdef TARGET_ATOMBONES
-	bkend = new Backend_AtomBones(ifile, default_mem_size);
+	bkend = new Backend_AtomSim(ifile, default_mem_size);
 	#endif
 
 	if(trace_enabled == true)
@@ -342,8 +342,6 @@ int main(int argc, char **argv)
 				else
 					std::cout << "Trace was not enabled \n";
 			}
-			// ============== BACKEND SPECIFIC COMMANDS ==================
-			#ifdef TARGET_ATOMBONES
 			else if(token[0] == "mem")
 			{
 				if(token.size()<2)
@@ -358,25 +356,17 @@ int main(int argc, char **argv)
 					else										// Decimal Number
 						addr = std::stoi(token[1], nullptr, 10);
 					
-					printf("%08x : %02x %02x %02x %02x\n", addr, bkend->mem->fetchByte(addr),
-						bkend->mem->fetchByte(addr+1),bkend->mem->fetchByte(addr+2), bkend->mem->fetchByte(addr+3));
+					uint32_t data = bkend->getMemContents(addr);
+					printf("%08x : %02x %02x %02x %02x\n", addr, (data & 0x000000ff), (data & 0x0000ff00)>>8, (data & 0x00ff0000)>>16, (data & 0xff000000)>>24);
 				}
 			}
 			else if(token[0] == "dumpmem")
 			{
 				if(token.size()<2)
 					throwError("CMD1", "\"dumpmem\" command expects filename as argument\n");
-				
-				std::vector<std::string> fcontents;
-				for(unsigned int i=0; i<bkend->mem->size-4; i+=4)
-				{	
-					char hex [30];
-					sprintf(hex, "0x%08x\t:\t0x%08x", i, bkend->mem->fetchWord(i));
-					fcontents.push_back(hex);
-				}
-				fWrite(fcontents, token[1]);
+				else
+					bkend->dumpmem(token[1]);
 			}
-			#endif
 
 			else
 			{

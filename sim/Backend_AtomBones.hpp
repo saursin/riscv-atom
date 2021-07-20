@@ -255,7 +255,7 @@ class Memory
  * Backend class encapsulates the data 
  * probing and printing operations
  */
-class Backend_AtomBones: public Backend<VAtomBones>
+class Backend_AtomSim: public Backend<VAtomBones>
 {
 	public:
 	/**
@@ -267,7 +267,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 	/**
 	 * @brief Construct a new Backend object
 	 */
-	Backend_AtomBones(std::string ifile, unsigned long mem_size)
+	Backend_AtomSim(std::string ifile, unsigned long mem_size)
 	{
         // Construct Testbench object
         tb = new Testbench<VAtomBones>();
@@ -297,10 +297,15 @@ class Backend_AtomBones: public Backend<VAtomBones>
 	/**
 	 * @brief Destroy the Backend object
 	 */
-	~Backend_AtomBones()
+	~Backend_AtomSim()
 	{
 		delete tb;
 		delete mem;
+	}
+
+	std::string getTargetName()
+	{
+		return "AtomBones";
 	}
 
 	void serviceMemoryRequest()
@@ -497,4 +502,33 @@ class Backend_AtomBones: public Backend<VAtomBones>
 		}
 		prev_tx_we = cur_tx_we;
 	}
+
+	/**
+	 * @brief Dump contents of memoy into a file
+	 * @param file 
+	 */
+	void dumpmem(std::string file)
+	{
+		if(mem->size < 1*1024*1024)	// 1MB
+		{
+			std::vector<std::string> fcontents;
+			for(unsigned int i=0; i<mem->size-4; i+=4)
+			{	
+				char hex [30];
+				sprintf(hex, "0x%08x\t:\t0x%08x", i, mem->fetchWord(i));
+				fcontents.push_back(hex);
+			}
+			fWrite(fcontents, std::string(default_dump_dir)+"/"+file);
+		}
+		else
+			throwError("","Option not available due to excessive memory size (>1MB)\n", false);
+	}
+
+	 /**
+     * @brief Get contents of a memory location
+     */
+    uint32_t getMemContents(uint32_t addr)
+    {
+        return mem->fetchWord(addr);
+    }
 };

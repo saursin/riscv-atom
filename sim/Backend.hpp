@@ -63,6 +63,13 @@ class Backend
     };
 
     public:
+
+    /**
+     * @brief Get the Target Name
+     * @return std::string 
+     */
+    virtual std::string getTargetName() = 0;
+
 	/**
 	 * @brief reset the backend
 	 */
@@ -136,6 +143,26 @@ class Backend
             }
             #endif
         }
+    }
+
+    /**
+     * @brief Dump contents of memory into a file
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     * @param file 
+     */
+    void dumpmem(std::string file)
+    {
+        throwError("", "Memory dumps not supported in current target");
+    }
+
+    /**
+     * @brief Get contents of a memory location
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     */
+    uint32_t getMemContents(uint32_t addr)
+    {
+        throwError("", "Viewing memory content not suppoted in current target");
+        return 0;
     }
 
 	/**

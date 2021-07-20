@@ -1,8 +1,8 @@
 .global main
 .text
 
-.equ TX_ADDRESS, 0x00014001               
-.equ TX_ACK_ADDRESS, 0x00014002         
+.equ TX_ADDRESS, 0x08000001
+.equ TX_ACK_ADDRESS, 0x08000002
 
 main:
     la a0, msg
