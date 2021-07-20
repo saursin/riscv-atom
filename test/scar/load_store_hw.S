@@ -16,14 +16,17 @@ _start:
     lh a1, 2(t0)
     lhu a2, 2(t0)
 
-    li t3, 0x9999   # misaligned store overwriting previous value in memory partially
-    sh t3, 1(t0)
+    lw s0, 0(t0)
+
+    li t3, 0xcc     # load a 1 byte value
+    sb t3, 1(t0)
+    li t3, 0xdd     # load a 1 byte value
+    sb t3, 2(t0)
 
     lh a3, 0(t0)
-    lh a4, 1(t0)
-    lh a5, 2(t0)
+    lh a4, 2(t0)
+    lw a5, 0(t0)
     lhu a6, 2(t0)
-
 
     nop
     ebreak
@@ -36,8 +39,11 @@ _start:
 # eq a1 0xffff8955
 # eq a2 0x00008955
 
-# eq t3 0x00009999
-# eq a3 0xffff9955
-# eq a4 0xffff9999
-# eq a5 0xffff8999
-# eq a6 0x00008999
+# eq s0 0x89557155
+
+# eq t3 0x000000dd
+
+# eq a3 0xffffcc55
+# eq a4 0xffff89dd
+# eq a5 0x89ddcc55
+# eq a6 0x000089dd

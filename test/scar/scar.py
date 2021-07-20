@@ -7,7 +7,7 @@ import glob
 from colorama import Fore, Back, Style
 
 
-linker_script_path = '../../sw/lib/link.ld' #relative
+linker_script_path = 'link.ld' #relative
 cwd = os.getcwd()
 work_dir = cwd + '/work'
 

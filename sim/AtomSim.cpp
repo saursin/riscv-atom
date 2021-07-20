@@ -88,7 +88,7 @@ const std::string AtomSimBackend = "AtomBones";
 Backend_AtomBones *bkend;		
 
 // Default mem size for atomBones
-const unsigned long int default_mem_size = 134217728 + 3;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
+const unsigned long int default_mem_size = 134217728 + 3 + 1;	// 128MB (Code & Data) + 3 Bytes (Serial IO) + 1 (To make word access possible)
 unsigned long int mem_size = default_mem_size;
 #endif
 
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 
 	if(trace_enabled == true)
 	{
-		std::string tracefile = trace_dir;
+		std::string tracefile = trace_dir+"/trace.vcd";
 		bkend->tb->openTrace(tracefile.c_str());
 		std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
 		trace_enabled = true;

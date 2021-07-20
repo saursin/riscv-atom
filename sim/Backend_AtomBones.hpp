@@ -309,29 +309,34 @@ class Backend_AtomBones: public Backend<VAtomBones>
 		tb->m_core->imem_ack_i = 0;
 		tb->m_core->dmem_ack_i = 0;
 
-		// Imem Port Reads
+		// ===== Imem Port Reads =====
+		uint32_t iaddr = tb->m_core->imem_addr_o & 0xfffffffc;
 		if(tb->m_core->imem_valid_o == 1)
-		{	
-			tb->m_core->imem_data_i = mem->fetchWord(tb->m_core->imem_addr_o);
+		{
+			tb->m_core->imem_data_i = mem->fetchWord(iaddr);
 			tb->m_core->imem_ack_i = 1;
 		}
 
-		// Dmem Port Reads/Writes
-		if(tb->m_core->dmem_valid_o && !tb->m_core->dmem_we_o)	// Load instruction
+		// ===== Dmem Port Reads/Writes =====
+		uint32_t daddr = tb->m_core->dmem_addr_o & 0xfffffffc;
+		if(tb->m_core->dmem_valid_o)
 		{
-			tb->m_core->dmem_data_i = mem->fetchWord(tb->m_core->dmem_addr_o);
-			tb->m_core->dmem_ack_i = 1;
-		}
-		else if(tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o)	// Store instruction
-		{
-			switch(tb->m_core->dmem_sel_o)
+			if(tb->m_core->dmem_we_o)	// Writes
 			{
-				case 0x1:	mem->storeByte(tb->m_core->dmem_addr_o, (uint8_t)tb->m_core->dmem_data_o);	break;
-				case 0x3:	mem->storeHalfWord(tb->m_core->dmem_addr_o, (uint16_t)tb->m_core->dmem_data_o);	break;
-				case 0xf:	mem->storeWord(tb->m_core->dmem_addr_o, (uint32_t)tb->m_core->dmem_data_o); break;
-				default: 
-					std::cout << std::hex << (int)tb->m_core->dmem_sel_o << std::endl;
-					throwError("RTL", "signal 'dmem_sel_o' has unexpected value");
+				// Writes are selective
+				if(tb->m_core->dmem_sel_o & 0b0001)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xffffff00) | (tb->m_core->dmem_data_o & 0x000000ff));
+				if(tb->m_core->dmem_sel_o & 0b0010)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xffff00ff) | (tb->m_core->dmem_data_o & 0x0000ff00));
+				if(tb->m_core->dmem_sel_o & 0b0100)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0xff00ffff) | (tb->m_core->dmem_data_o & 0x00ff0000));
+				if(tb->m_core->dmem_sel_o & 0b1000)
+					mem->storeWord(daddr, (mem->fetchWord(daddr) & 0x00ffffff) | (tb->m_core->dmem_data_o & 0xff000000));		
+			}
+			else	// Reads
+			{
+				// Read will always result in a fetch word at word boundry just before the address.
+				tb->m_core->dmem_data_i = mem->fetchWord(daddr);
 			}
 			tb->m_core->dmem_ack_i = 1;
 		}

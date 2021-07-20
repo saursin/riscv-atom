@@ -175,6 +175,7 @@ $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(v
 #~	scar		:	verify using scar
 .PHONY: scar
 scar: $(bin_dir)/$(sim_executable)
+	@echo ">> Running SCAR"
 	cd test/scar/ && make
 
 
