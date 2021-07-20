@@ -74,7 +74,7 @@ class Backend
     }
 
 	/**
-	 * @brief probe all internal signals and regsters and 
+	 * @brief probe all internal signals and registers and 
 	 * update backend state
 	 */
 	virtual void refreshData() = 0;
@@ -117,7 +117,7 @@ class Backend
         // Print Register File
         if(verbose_flag)
         {
-            int cols = 2; // no of coloumns per rows
+            int cols = 2; // no of columns per rows
             #ifndef DEBUG_PRINT_T2B
             for(int i=0; i<32; i++)	// print in left-right fashion
             {

@@ -53,7 +53,7 @@ bool dump_regs_on_ebreak 	= false;	// Used by SCAR framework
 // Input File
 std::string ifile;
 
-// Max Iteation
+// Max Iteration
 const unsigned long int default_maxitr = 10000000;
 unsigned long int maxitr = default_maxitr;
 
@@ -100,7 +100,7 @@ unsigned long int mem_size = default_mem_size;
  */
 void ExitAtomSim(std::string message, bool exit_with_error)
 {
-	// ===== Pre-Exit Pocedure =====
+	// ===== Pre-Exit Procedure =====
 	// if trace file is open, close it before exiting
 	if(trace_enabled)
 		bkend->tb->closeTrace();
@@ -177,7 +177,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 			std::string unknown_args;
 			for(unsigned int i=0; i<result.unmatched().size(); i++)
 				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
-			throwError("CLI0", "Unrecognized aguments [" + unknown_args + "]", true);
+			throwError("CLI0", "Unrecognized arguments [" + unknown_args + "]", true);
 		}
 
 		if (result.count("help"))

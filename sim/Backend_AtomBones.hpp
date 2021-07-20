@@ -259,7 +259,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 {
 	public:
 	/**
-	 * @brief Pointer to memoy object
+	 * @brief Pointer to memory object
 	 */
 	Memory * mem;
 
@@ -344,7 +344,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 
 
 	/**
-	 * @brief probe all internal signals and regsters and 
+	 * @brief probe all internal signals and registers and 
 	 * update backend state
 	 */
 	void refreshData()
@@ -416,7 +416,7 @@ class Backend_AtomBones: public Backend<VAtomBones>
 				fWrite(fcontents, std::string(trace_dir)+"/dump.txt");
 			}
 			
-			// ==========  MEM SIGNATURE DUMP (For RISCV-Arch Tests) =============
+			// ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============
 			if(signature_file.length()!=0)	
 			{
 				// Get start and end address of signature

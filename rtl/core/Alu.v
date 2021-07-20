@@ -3,7 +3,7 @@
 //
 //  File : Alu.v
 //
-//  Desciption : Arithmetic and logic unit for Atom core
+//  Description : Arithmetic and logic unit for Atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
