@@ -65,6 +65,8 @@ std::string trace_dir = default_trace_dir;
 const char default_dump_dir[] 		= "build/dump";
 std::string dump_dir = default_dump_dir;
 
+// Signature file
+std::string signature_file 	= "";
 
 #include "defs.hpp"
 
@@ -75,8 +77,6 @@ std::string dump_dir = default_dump_dir;
 
 // ====== Backend specific definitions =====
 #ifdef TARGET_ATOMBONES
-// Signature file
-std::string signature_file 	= "";
 
 // Include Backend
 #include "Backend_AtomBones.hpp"
@@ -86,11 +86,18 @@ std::string signature_file 	= "";
 // 128MB (Code & Data) + 3 Bytes (Serial IO) + 1 (To make word access possible on address 0x08000000)
 const unsigned long int default_mem_size = (128*1024*1024) + 3 + 1;	
 unsigned long int mem_size = default_mem_size;
+#else
+#ifdef TARGET_HYDROGENSOC
+
+// Include Backend
+#include "Backend_HydrogenSoC.hpp"
+
+#endif
 #endif
 
 
 // Backend Object
-Backend_AtomSim *bkend;
+Backend_AtomSim *bkend = nullptr;
 
 /**
  * @brief Exit AtomSim
@@ -101,8 +108,9 @@ Backend_AtomSim *bkend;
 void ExitAtomSim(std::string message, bool exit_with_error)
 {
 	// ===== Pre-Exit Procedure =====
-	// if trace file is open, close it before exiting
-	if(trace_enabled)
+	// if backend object exists and trace file is open, close it before exiting
+
+	if(bkend!=nullptr && bkend->tb->isTraceOpen())
 		bkend->tb->closeTrace();
 
 	// ===== Exit Message =====
@@ -110,7 +118,8 @@ void ExitAtomSim(std::string message, bool exit_with_error)
 		std::cout << message << "\n";
 
 	// Destroy backend
-	bkend->~Backend_AtomSim();
+	if(bkend != nullptr)
+		bkend->~Backend_AtomSim();
 
 	// ===== Exit =====
 	if(exit_with_error)
@@ -159,9 +168,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		("trace-dir", "Specify trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
 		("dump-dir", "Specify dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
 		("ebreak-dump", "Enable processor state dump at hault", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
-		#ifdef TARGET_ATOMBONES
 		("signature", "Enable signature sump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(signature_file)->default_value(""))
-		#endif
 		;
 
 
@@ -193,12 +200,10 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		if (result.count("input")>1)
 		{
 			throwError("CLI1", "Multiple input files specified", true);
-			exit(EXIT_SUCCESS);
 		}
 		if (result.count("input")==0)
 		{
 			throwError("CLI2", "No input files specified", true);
-			exit(EXIT_SUCCESS);
 		}
 
 		if (verbose_flag)
@@ -207,7 +212,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 	}
 	catch(const cxxopts::OptionException& e)
 	{
-		throwError("CLI3", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
+		throwError("CLI3", "Error while parsing command line arguments: " + (std::string)e.what(), true);
 	}	
 }
 
@@ -249,6 +254,12 @@ int main(int argc, char **argv)
 	// Create a new backend instance
 	#ifdef TARGET_ATOMBONES
 	bkend = new Backend_AtomSim(ifile, default_mem_size);
+	
+	#else
+	#ifdef TARGET_HYDROGENSOC
+	bkend = new Backend_AtomSim(ifile);	
+	
+	#endif
 	#endif
 
 	if(trace_enabled == true)

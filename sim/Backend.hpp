@@ -48,7 +48,7 @@ class Backend
     /**
      * @brief Disassembly of input file
      */
-	std::map<uint32_t, std::string> disassembly;
+	std::map<uint32_t, DisassembledLine> disassembly;
 
     private:
     /**
@@ -113,7 +113,7 @@ class Backend
         printf("pc : 0x%08x   ir : 0x%08x\n", state.pc_e , state.ins_e); 
         printf(STYLE_NO_BOLD);
         
-        std::cout << "[ " <<  disassembly[state.pc_e] << " ]";
+        std::cout << "[ " <<  ((disassembly[state.pc_e].instr==state.ins_e) ? disassembly[state.pc_e].disassembly : "-" )<< " ]";
 
         if(wasJump)
             std::cout << " => nop (pipeline flush)";
@@ -161,7 +161,7 @@ class Backend
      */
     uint32_t getMemContents(uint32_t addr)
     {
-        throwError("", "Viewing memory content not suppoted in current target");
+        throwError("", "Viewing memory content not supported in current target", true);
         return 0;
     }
 
