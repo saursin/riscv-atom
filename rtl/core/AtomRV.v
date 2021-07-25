@@ -75,11 +75,73 @@ module AtomRV
 wire jump_decision = d_jump_en & comparison_result; // final jump decision signal
 
 ////////////////////////////////////////////////////////////////////
+// PIPELINE CONTROL
+/*
+    Raw handshaking signal: These signals make the handshaking of ibus
+    Fetch stage relies on the imem handshake signal to increment PC.
+
+    We dont ever need to ignore the dmem handshake because ignoring dmem handshake only happens if 
+    currently executing instruction happens to be a load-store instruction, but since currrent 
+    instruction is a jump, there is no memory request made anyways.
+*/
+wire raw_imem_handshake = (imem_valid_o && imem_ack_i);
+
+wire imem_handshake = raw_imem_handshake && !ignore_imem_handshake;
+wire dmem_handshake = (dmem_valid_o && dmem_ack_i);
+
+/*
+    Definition of stall:
+    Stall is a state of a pipeline stage in which the current instuction cannot popogate forward.
+
+    Definition of flush:
+    Flush is defined as insertion of nop in the pipeline in order to prevent an unwanted instuction 
+    to execute.
+*/
+
+/*
+    Stall Stage2 in case it has made a memory request and the result has't arrived yet.
+*/
+wire waiting_for_dbus_response = (!dmem_handshake && dmem_valid_o);
+wire stall_stage2 = waiting_for_dbus_response;
+
+/*
+    Stall Stage1 in case:
+        - Stage1 is waiting for response of a memory request that is has made.
+        - Stage2 is stalled, since the instruction in stage1 cant popogate to stage2. Therefore until
+          the stage2 is stalled, instruction in stage1 is kept held.
+*/
+wire waiting_for_ibus_response = (!imem_handshake && imem_valid_o);
+wire stall_stage1 = waiting_for_ibus_response || stall_stage2;
+
+/*
+    Flush pipeline (insert nop in s2) in case:
+        - there is a jump
+        - Stage1 is stalled and stage is not, in this case stage can't recieve an new instruction to 
+          execute therefore a bubble is introduced. 
+        - 
+*/
+wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1);
+
+
+reg ignore_imem_handshake = 0;
+always @(posedge clk_i) begin
+    if(rst_i)
+        ignore_imem_handshake <= 0;
+    else begin
+        case(ignore_imem_handshake)
+            0:  if(jump_decision)
+                    ignore_imem_handshake <= 1;
+
+            1:  if(raw_imem_handshake)
+                    ignore_imem_handshake <= 0;
+        endcase
+    end
+end
+
+////////////////////////////////////////////////////////////////////
 //  STAGE 1 - FETCH
 ////////////////////////////////////////////////////////////////////
 assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
-wire   imem_handshake = imem_valid_o & imem_ack_i;
-wire   stall_stage1 = !imem_handshake | stall_stage2;
 /*
     Program Counter
 */
@@ -105,7 +167,6 @@ assign imem_addr_o = ProgramCounter;
 //----------------------------------------------------------
 // PIPELINE REGISTERS
 //----------------------------------------------------------
-wire   flush_pipeline = jump_decision;
 /*
     This register is used to store old value of program counter
 */
@@ -139,11 +200,8 @@ always @(posedge clk_i) begin
     else begin
         if(flush_pipeline)
             InstructionRegister <= `__NOP_INSTRUCTION__;
-
-        else if(stall_stage1) // Stall
-            InstructionRegister <= InstructionRegister; // retain previous value
             
-        else
+        else if(!stall_stage1)
             InstructionRegister <= imem_data_i;
     end
 end
@@ -292,12 +350,9 @@ end
 wire [31:0] dmem_address = alu_out;
 wire [31:0] dmem_data_out = rf_rs2;
 
-assign dmem_addr_o = dmem_address & 32'hfffffffc; // word aligned accesses
+assign dmem_addr_o = {dmem_address[31:2], {2{1'b0}}}; // word aligned accesses
 assign dmem_valid_o = d_mem_load_store;
-assign dmem_we_o = d_mem_we;
-
-wire dmem_handshake = dmem_ack_i & dmem_valid_o;
-wire stall_stage2 = !dmem_handshake & dmem_valid_o;
+assign dmem_we_o = d_mem_we;// & !stall_stage2; IMPORTANT
 
 /////////////////////////////////
 // READ

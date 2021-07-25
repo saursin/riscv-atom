@@ -430,6 +430,9 @@ always @(*) begin
             alu_op_sel_o = 0;
             mem_we_o = 1'b0;
             imm_format = 0;
+
+            if(opcode != 7'b1110011) // EBREAK
+                $display("!Unimplemented Opcode: %b", opcode);
         end            
 
     endcase
