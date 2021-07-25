@@ -52,6 +52,7 @@ vobject_dir 	= $(build_dir)/vobj_dir
 cobject_dir 	= $(build_dir)/cobj_dir
 trace_dir 		= $(build_dir)/trace
 dump_dir		= $(build_dir)/dump
+init_dir		= $(build_dir)/init
 doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = $(doc_dir)/Doxyfile
 
@@ -73,22 +74,30 @@ VFLAGS = -cc -Wall --relative-includes --trace
 # Target Specific definitions
 ifeq ($(Target), atombones)
 verilog_topmodule = AtomBones
-verilog_topmodule_file = $(rtl_dir)/AtomBones.v
-verilog_files = rtl/AtomBones.v rtl/Timescale.vh rtl/Config.vh rtl/core/AtomRV.v rtl/core/Alu.v rtl/core/Decode.v rtl/core/RegisterFile.v
+verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
+verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
 
 sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
 CFLAGS += -DTARGET_ATOMBONES
 else
+ifeq ($(Target), hydrogensoc)
+verilog_topmodule = HydrogenSoC
+verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
+verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/uncore/SinglePortROM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
 
+sim_cpp_backend = $(sim_dir)/Backend_HydrogenSoC.hpp
+CFLAGS += -DTARGET_HYDROGENSOC
+
+else
 $(error Unknown Target : $(Target))
-
+endif
 endif
 
 #======================================================================
 # Recepies
 #======================================================================
-default: sim elfdump
-all : sim elfdump pdf-docs
+default: sim elfdump scripts
+all : sim elfdump scripts pdf-docs
 
 
 
@@ -117,7 +126,7 @@ buildFor:
 
 
 # Check directories
-directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(doc_dir) $(doxygen_doc_dir)
+directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(init_dir) $(doc_dir) $(doxygen_doc_dir)
 
 $(build_dir):
 	mkdir $@
@@ -135,6 +144,9 @@ $(trace_dir):
 	mkdir $@
 
 $(dump_dir):
+	mkdir $@
+
+$(init_dir):
 	mkdir $@
 
 $(doc_dir):
@@ -189,6 +201,11 @@ $(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
 	@echo ">> Building elfdump..."
 	$(CC) -Wall $^ -o $@
 
+# ======== Scripts ========
+#~	scripts		:	copy scripts/* to build/bin/
+.PHONY: scripts
+scripts: $(build_dir) $(bin_dir)
+	cp scripts/* $(bin_dir)/
 
 
 # ======== Documentation ========
@@ -224,6 +241,12 @@ clean-trace:
 clean-dump:
 	rm -rf $(dump_dir)/*
 
+#~	clean-init 	:	Clean init directory
+.PHONY: clean-init
+clean-init:
+	rm -rf $(init_dir)/*
+
+
 #~	clean-doc	: 	Clean doc dirctory
 .PHONY: clean-doc
 clean-doc:
@@ -231,4 +254,4 @@ clean-doc:
 
 #~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
-clean-all: clean clean-trace clean-dump clean-doc
+clean-all: clean clean-trace clean-dump clean-init clean-doc
