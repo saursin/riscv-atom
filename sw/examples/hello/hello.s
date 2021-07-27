@@ -46,12 +46,6 @@ putchar:
 
     # store character
     sb  a0, 0(t1)
-    
-    # toggle ack
-    li  t2, 1
-    sb  t2, 0(t0)
-    sb  x0, 0(t0)
-
     ret
 
 .data

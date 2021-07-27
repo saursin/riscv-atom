@@ -19,16 +19,12 @@
 int uart_send(char c)
 {
     *((volatile char*) IO_UART_TX_ADDRESS) = c;
-    *((volatile char*) IO_UART_SREG_ADDRESS) = 0;
-    *((volatile char*) IO_UART_SREG_ADDRESS) = 1;
     return 1;
 }
 
 char uart_recieve()
 {
-    return *((volatile char*) IO_UART_TX_ADDRESS);
-    *((volatile char*) IO_UART_SREG_ADDRESS) = 0;
-    *((volatile char*) IO_UART_SREG_ADDRESS) = 2;
+    return *((volatile char*) IO_UART_RX_ADDRESS);
 }
 
 char uart_status()

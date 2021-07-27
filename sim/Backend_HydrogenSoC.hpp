@@ -31,29 +31,13 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	Backend_AtomSim(std::string ifile)
 	{
 		// Convert ELF file to memory images
-		std::string cmd_output = GetStdoutFromCommand("riscv64-unknown-elf-objcopy -O verilog -j .text -j .tohost -j .data  --reverse-bytes=4 --verilog-data-width 4 "+ifile+" temphex");
+		std::string cmd_output = GetStdoutFromCommand("python3 scripts/convelf.py "+ ifile);
 		if(cmd_output.length() > 0)
 		{
-			throwWarning("ELF", "Error while converting ELF...");
+			throwWarning("ELF", "Failed to generate hexfiles");
 			std::cerr << cmd_output << "";
 			ExitAtomSim("", true);
 		}
-
-		cmd_output = GetStdoutFromCommand("gen_usable_hex.py temphex");
-		if(cmd_output.length() > 0)
-		{
-			throwWarning("ELF", "Error while converting ELF...");
-			std::cerr << cmd_output << "";
-			ExitAtomSim("", true);
-		}
-		
-		/*std::string cmd_output = GetStdoutFromCommand("convex.sh hydrogensoc "+ifile+" build/init/IMEM_INIT_FILE.txt build/init/DMEM_INIT_FILE.txt");
-		if(cmd_output.length() > 0)
-		{
-			throwWarning("ELF", "Error while converting ELF...");
-			std::cerr << cmd_output << "";
-			ExitAtomSim("", true);
-		}*/
 
         // Construct Testbench object
         tb = new Testbench<VHydrogenSoC>();
