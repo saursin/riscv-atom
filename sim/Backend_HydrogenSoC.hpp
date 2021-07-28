@@ -254,11 +254,12 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 
 				for(long int i=begin_signature_at; i<end_signature_at; i=i+4)
 				{
+					int64_t addr = i-0x04000000;
+					if (!((addr>0) && (addr <= 8*1024-4)))
+						throwError("", "Signature Out of Bounds" + std::to_string(0x04000000+i), true);
+					
 					char temp [50];
-					if (!(i>=0x04000000 && i<0x04000000+8*1024))
-						throwError("", "Signature Out of Bounds" + std::to_string(i), true);
-					uint32_t value = tb->m_core->HydrogenSoC->dmem->mem[i-0x04000000];
-
+					uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->dmem->mem[addr/4];
 					sprintf(temp, "%08x", value);
 					fcontents.push_back(temp);
 				}
