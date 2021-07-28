@@ -13,6 +13,7 @@
 
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortROM_wb__pi1.h"
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
+#include "../build/vobj_dir/VHydrogenSoC_DummyUART.h"
 
 const unsigned int hault_opcode = 0x100073; // ebreak
 
@@ -91,6 +92,61 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		}
 
 		signals.jump_decision = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->__PVT__jump_decision;
+	}
+
+	/**
+	 * @brief Performs DummyUART Transactions. 
+	 * -	Maintains internal state of dummy uart
+	 * -	writes any output to stdout.
+	 * -	Read any input from stdin.
+	 */
+	void dummyUART()
+	{
+		static uint8_t TX=0, RX=0, SREG=0;
+
+		/*
+			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
+			the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
+			of dummyUART, it sees the we pin high for multiple cycles and it may mistakenly infer it
+			as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
+			Wait_cycles variable tracks the number of cycles after the transaction was started by 
+			master, and at wait_cycles == 1, we perform the read/write operation. Hence read/write 
+			operation is perfomed only once per transaction.
+		*/
+
+		static int wait_count = 0; // track number of cycles passed
+		if(tb->m_core->HydrogenSoC->__PVT__wb_uart_stb_i && !tb->m_core->HydrogenSoC->uart->__PVT__wb_ack_o)
+		{
+			wait_count++;	// transaction not finished yet
+		}
+		else
+		{
+			wait_count = 0;	// transaction is finished
+		}
+
+
+		// Check Uart Module is selected by dbus && wait cycles == 1
+		if(tb->m_core->HydrogenSoC->__PVT__wb_uart_stb_i && wait_count==1)	
+		{
+			if(tb->m_core->HydrogenSoC->uart->writeEn == 0)	// Perfom Reads
+			{
+				tb->m_core->HydrogenSoC->uart->outWord = (((uint32_t)SREG) << 16) | (((uint32_t)TX) << 8) | ((uint32_t)RX);
+			}
+			else	// Perform Writes
+			{
+				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0001)
+					RX = ((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x000000ff;
+				
+				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0010)
+				{
+					TX = (((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x0000ff00) >> 8;
+					std::cout << (char) TX;
+				}
+				
+				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0100)
+					SREG = (((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x00ff0000) >> 16;
+			}
+		}
 	}
 
 	/**
@@ -220,39 +276,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		}
 
 		// Serial port Emulator: Rx Listener
-		
-		// new Tx
-		static int ack = 0;		
-		if((ack == 0) && (tb->m_core->HydrogenSoC->wb_uart_stb_i && tb->m_core->HydrogenSoC->wb_dbus_sel_o==0b0010 && tb->m_core->HydrogenSoC->wb_dbus_we_o))
-		{
-			uint32_t data = tb->m_core->HydrogenSoC->wb_dbus_dat_o;
-			uint32_t sel = tb->m_core->HydrogenSoC->wb_dbus_sel_o;
-
-			switch(sel)
-			{
-				case 0b0001: data = data & 0x000000ff; break;
-				case 0b0010: data = (data & 0x0000ff00) >> 8; break;
-				case 0b0100: data = (data & 0x00ff0000) >> 16; break;
-				case 0b1000: data = (data & 0xff000000) >> 24; break;
-			}
-			std::cout << (char) data;
-			
-			ack = 1;
-		}
-
-		else if(ack == 2)
-		{	
-			tb->m_core->HydrogenSoC->wb_uart_ack_o = 1;
-		}
-
-		else if (ack == 4)
-		{
-			tb->m_core->HydrogenSoC->wb_uart_ack_o = 0;
-			ack = 0;
-		}
-
-		if(ack>0)
-			ack++;
+		dummyUART();
 	}
 
 	void dumpmem(std::string file)
