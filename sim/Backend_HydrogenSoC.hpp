@@ -31,7 +31,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	Backend_AtomSim(std::string ifile)
 	{
 		// Convert ELF file to memory images
-		std::string cmd_output = GetStdoutFromCommand("python3 scripts/convelf.py "+ ifile);
+		std::string cmd_output = GetStdoutFromCommand("python3 $RVATOM/scripts/convelf.py "+ ifile);
 		if(cmd_output.length() > 0)
 		{
 			throwWarning("ELF", "Failed to generate hexfiles");

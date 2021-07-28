@@ -89,7 +89,7 @@ module HydrogenSoC
 
     SinglePortROM_wb #(
         .ADDR_WIDTH(IMEM_ADR_SIZE),
-        .MEM_INIT_FILE("build/init/code.hex")
+        .MEM_INIT_FILE(`__IMEM_INIT_FILE__)
     ) imem
     (
         .clk_i      (wb_clk_i),
@@ -112,7 +112,7 @@ module HydrogenSoC
 
     SinglePortRAM_wb #(
         .ADDR_WIDTH(DMEM_ADR_SIZE),
-        .MEM_FILE("build/init/data.hex")
+        .MEM_FILE(`__DMEM_INIT_FILE__)
     ) dmem 
     (
         .wb_clk_i   (wb_clk_i),

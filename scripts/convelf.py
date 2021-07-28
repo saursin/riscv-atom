@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import os
 import sys
 import textwrap
 import subprocess
@@ -156,8 +156,8 @@ if __name__ == "__main__":
     # === Memory Map Format ===
     #   Device  | ORIGIN    |   SIZE    |   HEXFILE NAME
     HydrogenSoC_MemMap = {
-        'IMEM' : [0x00000000, 0x00008000, 'build/init/code.hex'],
-        'DMEM' : [0x04000000, 0x00002000, 'build/init/data.hex']
+        'IMEM' : [0x00000000, 0x00008000, os.getenv('RVATOM')+'/build/init/code.hex'],
+        'DMEM' : [0x04000000, 0x00002000, os.getenv('RVATOM')+'/build/init/data.hex']
     }
 
     # Create a convelf object.
