@@ -431,8 +431,10 @@ always @(*) begin
             mem_we_o = 1'b0;
             imm_format = 0;
 
+            `ifdef ENABLE_RUNTIME_WARNINGS
             if(opcode != 7'b1110011) // EBREAK
-                $display("!Unimplemented Opcode: %b", opcode);
+               $display("!Unimplemented Opcode: %b", opcode);
+            `endif
         end            
 
     endcase

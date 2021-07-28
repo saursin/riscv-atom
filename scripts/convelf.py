@@ -22,11 +22,13 @@ class ConvELF:
         self.INCLUDE_SECTIONS = ['.text', '.rodata', '.sdata', '.data']
 
         # Name of temporary hex file
-        self.TEMP_FILE = 'temp.hex'
+        self.TEMP_FILE = os.getenv("RVATOM")+'/build/init/temp.hex'
 
         # Echo shell commands during execution
         self.ECHO_CMD = False
 
+        # Delete temp file after conversion
+        self.DELETE_TEMPFILE = True
 
     def __runcommand(self, command, echo=True):
         if echo:
@@ -143,7 +145,8 @@ class ConvELF:
 
         # ===== Step-3 ===== 
         # Remove temp file
-        memImg = self.__rmTempFile()
+        if(self.DELETE_TEMPFILE):
+            memImg = self.__rmTempFile()
 
 
 

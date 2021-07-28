@@ -30,8 +30,13 @@ cd pascal
 atomsim pascal.elf
 
 cd ..
-echo "============| Banner |============"
+echo "============| random |============"
 cd random
 ./compile.sh
 atomsim random.elf
 
+cd ..
+echo "============| Factorial |============"
+cd factorial
+./compile.sh
+atomsim factorial.elf

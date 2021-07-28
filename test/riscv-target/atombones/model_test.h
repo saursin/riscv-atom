@@ -129,7 +129,7 @@ print_hex_digit:                    \
     .section .text.init; \
     .globl _start;      \
     _start:             \
-    li sp, 0x00014000;\
+    li sp, _stack_pointer;\
     //RVTEST_IO_INIT
 
 //RVTEST_IO_INIT
