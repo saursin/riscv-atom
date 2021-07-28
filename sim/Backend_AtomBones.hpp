@@ -494,13 +494,14 @@ class Backend_AtomSim: public Backend<VAtomBones>
 		}		
 
 		// Serial port Emulator: Rx Listener
-		static bool prev_tx_we = false;
-		bool cur_tx_we = (mem->fetchByte(default_UART_SREG_ADDRESS) & 1);
-		if(prev_tx_we == false && cur_tx_we == true) // posedge on tx_we
+		if((tb->m_core->dmem_valid_o) && (tb->m_core->dmem_addr_o==0x08000000) 
+			&& (tb->m_core->dmem_sel_o == 0b010))	// Write to TX reg
 		{
-			std::cout << (char)mem->fetchByte(default_UART_TX_ADDRESS);
+			uint32_t data = tb->m_core->dmem_data_o;
+			data = (data & 0x0000ff00) >> 8;
+			std::cout << (char)data;
 		}
-		prev_tx_we = cur_tx_we;
+
 	}
 
 	/**
