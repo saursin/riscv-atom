@@ -40,3 +40,9 @@ echo "============| Factorial |============"
 cd factorial
 ./compile.sh
 atomsim factorial.elf
+
+cd ..
+echo "============| Tower of Hanoi |============"
+cd hanoi
+./compile.sh
+atomsim hanoi.elf
