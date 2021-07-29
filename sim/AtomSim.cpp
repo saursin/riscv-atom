@@ -53,7 +53,7 @@ bool dump_regs_on_ebreak 	= false;	// Used by SCAR framework
 // Input File
 std::string ifile;
 
-// Max Iteation
+// Max Iteration
 const unsigned long int default_maxitr = 10000000;
 unsigned long int maxitr = default_maxitr;
 
@@ -65,6 +65,8 @@ std::string trace_dir = default_trace_dir;
 const char default_dump_dir[] 		= "build/dump";
 std::string dump_dir = default_dump_dir;
 
+// Signature file
+std::string signature_file 	= "";
 
 #include "defs.hpp"
 
@@ -75,22 +77,27 @@ std::string dump_dir = default_dump_dir;
 
 // ====== Backend specific definitions =====
 #ifdef TARGET_ATOMBONES
-// Signature file
-std::string signature_file 	= "";
 
 // Include Backend
 #include "Backend_AtomBones.hpp"
 
-// Backend name
-const std::string AtomSimBackend = "AtomBones";
-
-// Backend Object
-Backend_AtomBones *bkend;		
 
 // Default mem size for atomBones
-const unsigned long int default_mem_size = 134217728 + 3;	// 128MB (Code & Data) + 3 Bytes (Serial IO)
+// 128MB (Code & Data) + 3 Bytes (Serial IO) + 1 (To make word access possible on address 0x08000000)
+const unsigned long int default_mem_size = (128*1024*1024) + 3 + 1;	
 unsigned long int mem_size = default_mem_size;
+#else
+#ifdef TARGET_HYDROGENSOC
+
+// Include Backend
+#include "Backend_HydrogenSoC.hpp"
+
 #endif
+#endif
+
+
+// Backend Object
+Backend_AtomSim *bkend = nullptr;
 
 /**
  * @brief Exit AtomSim
@@ -100,9 +107,10 @@ unsigned long int mem_size = default_mem_size;
  */
 void ExitAtomSim(std::string message, bool exit_with_error)
 {
-	// ===== Pre-Exit Pocedure =====
-	// if trace file is open, close it before exiting
-	if(trace_enabled)
+	// ===== Pre-Exit Procedure =====
+	// if backend object exists and trace file is open, close it before exiting
+
+	if(bkend!=nullptr && bkend->tb->isTraceOpen())
 		bkend->tb->closeTrace();
 
 	// ===== Exit Message =====
@@ -110,7 +118,8 @@ void ExitAtomSim(std::string message, bool exit_with_error)
 		std::cout << message << "\n";
 
 	// Destroy backend
-	bkend->~Backend_AtomBones();
+	if(bkend != nullptr)
+		bkend->~Backend_AtomSim();
 
 	// ===== Exit =====
 	if(exit_with_error)
@@ -159,9 +168,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		("trace-dir", "Specify trace directory", cxxopts::value<std::string>(trace_dir)->default_value(default_trace_dir))
 		("dump-dir", "Specify dump directory", cxxopts::value<std::string>(dump_dir)->default_value(default_trace_dir))
 		("ebreak-dump", "Enable processor state dump at hault", cxxopts::value<bool>(dump_regs_on_ebreak)->default_value("false"))
-		#ifdef TARGET_ATOMBONES
 		("signature", "Enable signature sump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(signature_file)->default_value(""))
-		#endif
 		;
 
 
@@ -177,7 +184,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 			std::string unknown_args;
 			for(unsigned int i=0; i<result.unmatched().size(); i++)
 				unknown_args = unknown_args + result.unmatched()[i] + (i==result.unmatched().size()-1 ? "" :", ");
-			throwError("CLI0", "Unrecognized aguments [" + unknown_args + "]", true);
+			throwError("CLI0", "Unrecognized arguments [" + unknown_args + "]", true);
 		}
 
 		if (result.count("help"))
@@ -193,12 +200,10 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		if (result.count("input")>1)
 		{
 			throwError("CLI1", "Multiple input files specified", true);
-			exit(EXIT_SUCCESS);
 		}
 		if (result.count("input")==0)
 		{
 			throwError("CLI2", "No input files specified", true);
-			exit(EXIT_SUCCESS);
 		}
 
 		if (verbose_flag)
@@ -207,7 +212,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 	}
 	catch(const cxxopts::OptionException& e)
 	{
-		throwError("CLI3", "Error while parsing command line arguments...\n" + (std::string)e.what(), true);
+		throwError("CLI3", "Error while parsing command line arguments: " + (std::string)e.what(), true);
 	}	
 }
 
@@ -238,7 +243,7 @@ void run(long unsigned int cycles)
 int main(int argc, char **argv)
 {
     if (verbose_flag)
-		std::cout << "AtomSim [" << AtomSimBackend << "]\n";
+		std::cout << "AtomSim [" << bkend->getTargetName() << "]\n";
 
 	// Initialize verilator
 	Verilated::commandArgs(argc, argv);
@@ -248,12 +253,18 @@ int main(int argc, char **argv)
 
 	// Create a new backend instance
 	#ifdef TARGET_ATOMBONES
-	bkend = new Backend_AtomBones(ifile, default_mem_size);
+	bkend = new Backend_AtomSim(ifile, default_mem_size);
+	
+	#else
+	#ifdef TARGET_HYDROGENSOC
+	bkend = new Backend_AtomSim(ifile);	
+	
+	#endif
 	#endif
 
 	if(trace_enabled == true)
 	{
-		std::string tracefile = trace_dir;
+		std::string tracefile = trace_dir+"/trace.vcd";
 		bkend->tb->openTrace(tracefile.c_str());
 		std::cout << "Trace enabled : \"" << tracefile << "\" opened for output.\n";
 		trace_enabled = true;
@@ -342,8 +353,6 @@ int main(int argc, char **argv)
 				else
 					std::cout << "Trace was not enabled \n";
 			}
-			// ============== BACKEND SPECIFIC COMMANDS ==================
-			#ifdef TARGET_ATOMBONES
 			else if(token[0] == "mem")
 			{
 				if(token.size()<2)
@@ -358,25 +367,17 @@ int main(int argc, char **argv)
 					else										// Decimal Number
 						addr = std::stoi(token[1], nullptr, 10);
 					
-					printf("%08x : %02x %02x %02x %02x\n", addr, bkend->mem->fetchByte(addr),
-						bkend->mem->fetchByte(addr+1),bkend->mem->fetchByte(addr+2), bkend->mem->fetchByte(addr+3));
+					uint32_t data = bkend->getMemContents(addr);
+					printf("%08x : %02x %02x %02x %02x\n", addr, (data & 0x000000ff), (data & 0x0000ff00)>>8, (data & 0x00ff0000)>>16, (data & 0xff000000)>>24);
 				}
 			}
 			else if(token[0] == "dumpmem")
 			{
 				if(token.size()<2)
 					throwError("CMD1", "\"dumpmem\" command expects filename as argument\n");
-				
-				std::vector<std::string> fcontents;
-				for(unsigned int i=0; i<bkend->mem->size-4; i+=4)
-				{	
-					char hex [30];
-					sprintf(hex, "0x%08x\t:\t0x%08x", i, bkend->mem->fetchWord(i));
-					fcontents.push_back(hex);
-				}
-				fWrite(fcontents, token[1]);
+				else
+					bkend->dumpmem(token[1]);
 			}
-			#endif
 
 			else
 			{

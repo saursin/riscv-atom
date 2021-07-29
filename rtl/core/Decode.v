@@ -3,7 +3,7 @@
 //
 //  File        : Decode.v
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Desciption  : Instruction Decoder for RISCV atom core
+//  Description  : Instruction Decoder for RISCV atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
@@ -46,11 +46,11 @@ assign  rs2_sel_o   = instr_i[24:20];
 reg    [2:0] imm_format;
 
 /*
-    Decode Immidiate
+    Decode Immediate
 */
 reg [31:0] getExtImm;
 
-always @(*) /*COMBINATIONAL*/ 
+always @(*) /*COMBINATORIAL*/ 
 begin
     case(imm_format)
             `__I_IMMIDIATE__    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[24:21], instr_i[20]};
@@ -430,6 +430,11 @@ always @(*) begin
             alu_op_sel_o = 0;
             mem_we_o = 1'b0;
             imm_format = 0;
+
+            `ifdef ENABLE_RUNTIME_WARNINGS
+            if(opcode != 7'b1110011) // EBREAK
+               $display("!Unimplemented Opcode: %b", opcode);
+            `endif
         end            
 
     endcase

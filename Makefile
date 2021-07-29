@@ -37,6 +37,13 @@
 #	└── test
 #	    └── scar
 #	        └── work
+#
+# Bash color codes
+COLOR_RED 		= \033[0;31m
+COLOR_GREEN 	= \033[0;32m
+COLOR_YELLOW 	= \033[0;33m
+COLOR_NC 		= \033[0m
+
 #=================================================================
 # Build Configurations
 
@@ -52,6 +59,7 @@ vobject_dir 	= $(build_dir)/vobj_dir
 cobject_dir 	= $(build_dir)/cobj_dir
 trace_dir 		= $(build_dir)/trace
 dump_dir		= $(build_dir)/dump
+init_dir		= $(build_dir)/init
 doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = $(doc_dir)/Doxyfile
 
@@ -73,23 +81,44 @@ VFLAGS = -cc -Wall --relative-includes --trace
 # Target Specific definitions
 ifeq ($(Target), atombones)
 verilog_topmodule = AtomBones
-verilog_topmodule_file = $(rtl_dir)/AtomBones.v
-verilog_files = rtl/AtomBones.v rtl/Timescale.vh rtl/Config.vh rtl/core/AtomRV.v rtl/core/Alu.v rtl/core/Decode.v rtl/core/RegisterFile.v
+verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
+verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
 
 sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
 CFLAGS += -DTARGET_ATOMBONES
 else
+ifeq ($(Target), hydrogensoc)
+verilog_topmodule = HydrogenSoC
+verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
+verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/uncore/SinglePortROM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/uncore/DummyUART.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
+VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/code.hex"'
+VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/data.hex"'
 
+sim_cpp_backend = $(sim_dir)/Backend_HydrogenSoC.hpp
+CFLAGS += -DTARGET_HYDROGENSOC
+
+else
 $(error Unknown Target : $(Target))
-
+endif
 endif
 
 #======================================================================
 # Recepies
 #======================================================================
-default: sim elfdump
-all : sim elfdump pdf-docs
+default: sim elfdump scripts
+	@echo "\n$(COLOR_GREEN)----------------------------------------------"
+	@echo "Build Succesful!"
+	@echo "----------------------------------------------$(COLOR_NC)"
+	@echo " 1). atomsim [$(Target)]"
+	@echo " 2). elfdump"
 
+all : sim elfdump scripts pdf-docs
+	@echo "\n$(COLOR_GREEN)----------------------------------------------"
+	@echo "Build Succesful!"
+	@echo "----------------------------------------------$(COLOR_NC)"
+	@echo " 1). atomsim [$(Target)]"
+	@echo " 2). elfdump"
+	@echo " 3). doxygen-docs in latex, html & pdf "
 
 
 #======== Help ========
@@ -108,16 +137,16 @@ help : Makefile
 
 
 # ======== Sim ========
-#~	sim		:	Build atomsim simulator
+#~	sim		:	Build atomsim for specified target [default: atombones]
 .PHONY : sim
 sim: buildFor directories $(bin_dir)/$(sim_executable)
 
 buildFor:
-	@echo ">> Building AtomSim for Target: $(Target)"
+	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target) $(COLOR_NC)"
 
 
 # Check directories
-directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(doc_dir) $(doxygen_doc_dir)
+directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(init_dir) $(doc_dir) $(doxygen_doc_dir)
 
 $(build_dir):
 	mkdir $@
@@ -137,6 +166,9 @@ $(trace_dir):
 $(dump_dir):
 	mkdir $@
 
+$(init_dir):
+	mkdir $@
+
 $(doc_dir):
 	mkdir $@
 
@@ -145,10 +177,10 @@ $(doxygen_doc_dir):
 
 # Verilate verilog
 $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o: $(verilog_files)
-	@echo ">> Compiling verilog into c++ classes..."
+	@echo "$(COLOR_GREEN)Verilating RTL$(COLOR_NC)"
 	$(VC) $(VFLAGS) $(verilog_topmodule_file) --Mdir $(vobject_dir)
 
-	@echo ">> Generating shared object..."
+	@echo "$(COLOR_GREEN)Generating shared object...$(COLOR_NC)"
 	cd $(vobject_dir) && make -f V$(verilog_topmodule).mk
 
 # Compile C++ files
@@ -156,49 +188,58 @@ $(cobject_dir)/atomsim.o: $(sim_dir)/AtomSim.cpp $(sim_dir)/defs.hpp $(sim_dir)/
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
 $(cobject_dir)/verilated.o: /usr/share/verilator/include/verilated.cpp 
-	@echo ">> Compiling cpp include <$<>..."
+	@echo "$(COLOR_GREEN)Compiling cpp include [$<]...$(COLOR_NC)"
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(cobject_dir)/verilated_vcd.o: /usr/share/verilator/include/verilated_vcd_c.cpp
-	@echo ">> Compiling cpp include <$<>..."
+	@echo "$(COLOR_GREEN)Compiling cpp include [$<]...$(COLOR_NC)"
 	$(CC) $(CFLAGS) $^ -o $@
 
 # Link & Create executable
 $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(cobject_dir)/atomsim.o $(cobject_dir)/verilated.o $(cobject_dir)/verilated_vcd.o
-	@echo ">> Linking shared object and driver to create executable..."
+	@echo "$(COLOR_GREEN)Linking shared object and driver to create executable...$(COLOR_NC)"
 	$(CC) $(LFLAGS) $^ -o $@
 
 
 
 
 # ======== SCAR ========
-#~	scar		:	verify using scar
+#~	scar		:	Verify target using scar
 .PHONY: scar
 scar: $(bin_dir)/$(sim_executable)
+	@echo "\n$(COLOR_GREEN)>> Running SCAR $(COLOR_NC)"
 	cd test/scar/ && make
 
 
 
 # ======== ElfDump ========
-#~	elfdump		:	build Elfdump
+#~	elfdump		:	Build elfdump utility
 .PHONY: elfdump
 elfdump: $(bin_dir)/elfdump
 
 $(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
-	@echo ">> Building elfdump..."
+	@echo "$(COLOR_GREEN)>> Building elfdump ...$(COLOR_NC)"
 	$(CC) -Wall $^ -o $@
 
+# ======== Scripts ========
+#~	scripts		:	copy scripts/* to build/bin/
+.PHONY: scripts
+scripts: $(build_dir) $(bin_dir)
+	@echo "$(COLOR_GREEN)>> copying scripts/* to build/bin/ ...$(COLOR_NC)"
+	cp scripts/* $(bin_dir)/
 
 
 # ======== Documentation ========
-#~	docs		:	Generate doxygen documentation for atomsim source code
+#~	docs		:	Generate atomsim C++ source documentation
 .PHONY: docs
 docs: $(doc_dir) $(doxygen_doc_dir)
+	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [latex & html]...$(COLOR_NC)"
 	doxygen $(doxygen_config_file)
 
-#~	pdf-docs	:	Generate doxygen documentation for atomsim source code (in pdf fomat)
+#~	pdf-docs	:	Generate atomsim C++ source documentation (pdf)
 .PHONY: pdf-docs
 pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
+	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [pdf]...$(COLOR_NC)"
 	cd doc/doxygen/latex && make
 	mv doc/doxygen/latex/refman.pdf doc/Atomsim_source_documentation.pdf
 
@@ -206,9 +247,10 @@ pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
 
 
 # ======== clean ========
-#~	clean		:	Clean all autogenerated build files
+#~	clean		:	Clean atomsim build files
 .PHONY: clean
 clean:
+	@echo "$(COLOR_GREEN)>> Cleaning build files ...$(COLOR_NC)"
 	rm -rf $(bin_dir)/*
 	rm -rf $(vobject_dir)/*
 	rm -rf $(cobject_dir)/*
@@ -216,18 +258,33 @@ clean:
 #~	clean-trace 	:	Clean trace directory
 .PHONY: clean-trace
 clean-trace:
+	@echo "$(COLOR_GREEN)>> Cleaning trace files [$(trace_dir)/*] ...$(COLOR_NC)"
 	rm -rf $(trace_dir)/*
 
 #~	clean-dump 	:	Clean dump directory
 .PHONY: clean-dump
 clean-dump:
+	@echo "$(COLOR_GREEN)>> Cleaning dump files [$(dump_dir)/*] ...$(COLOR_NC)"
 	rm -rf $(dump_dir)/*
+
+#~	clean-init 	:	Clean init directory
+.PHONY: clean-init
+clean-init:
+	@echo "$(COLOR_GREEN)>> Cleaning init files [$(init_dir)/*] ...$(COLOR_NC)"
+	rm -rf $(init_dir)/*
+
 
 #~	clean-doc	: 	Clean doc dirctory
 .PHONY: clean-doc
 clean-doc:
+	@echo "$(COLOR_GREEN)>> Cleaning docs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
 	rm -rf $(doxygen_doc_dir)/*
 
 #~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
-clean-all: clean clean-trace clean-dump clean-doc
+clean-all: clean clean-trace clean-dump clean-init clean-doc
+
+#~	super-clean	:	Revert repo to untouched state (Delete build directory)
+.PHONY: super-clean
+super-clean:
+	rm -rf $(build_dir)/

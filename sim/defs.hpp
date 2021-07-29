@@ -1,7 +1,7 @@
 /**
  * @brief Version information
  */
-const char Info_version[] = "AtomSim v1.1";
+const char Info_version[] = "AtomSim v1.2";
 
 /**
  * @brief Copyright message
@@ -42,7 +42,7 @@ const std::string  COLOR_YELLOW =  "\033[33m";
  * 
  * @param er_code error code 
  * @param message error message
- * @param exit flag that tells weather to exit immidiately
+ * @param exit flag that tells weather to exit immediately
  */
 void throwError(std::string er_code, std::string message, bool Exit = false)
 {
@@ -67,7 +67,7 @@ void throwWarning(std::string wr_code, std::string message)
 
 
 /**
- * @brief Displays a success messaage
+ * @brief Displays a success message
  * 
  * @param message Success message
  */
@@ -103,7 +103,7 @@ std::string lStrip(const std::string& s)
 
 
 /**
- * @brief removes succeding whitespaces in a string
+ * @brief removes succeeding whitespaces in a string
  * 
  * @param s string
  * @return std::string 
@@ -116,7 +116,7 @@ std::string rStrip(const std::string& s)
 
 
 /**
- * @brief removes preceding & succeding whitespaces in a string
+ * @brief removes preceding & succeeding whitespaces in a string
  * 
  * @param s string
  * @return std::string 
@@ -265,13 +265,19 @@ std::string GetStdoutFromCommand(std::string cmd) {
   return data;
 }
 
+struct DisassembledLine
+{
+    uint32_t instr;
+    std::string disassembly;
+};
+
 /**
  * @brief Get the Disassembly of input file using riscv objdump
  * 
  * @param filename input filename
  * @return std::map<uint32_t, std::string> map of disassembly
  */
-std::map<uint32_t, std::string> getDisassembly(std::string filename)
+std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 {
 	std::string command = "";
 	#ifdef RV32_COMPILER
@@ -287,21 +293,27 @@ std::map<uint32_t, std::string> getDisassembly(std::string filename)
 	std::stringstream s(output);
 
 	// Parse command output
-	std::map<uint32_t, std::string> dis;
+	std::map<uint32_t, DisassembledLine> dis;
 	
 	std::string line;
 	while(std::getline(s, line))
-	{
-		for(unsigned int i=0; i<line.length(); i++)
-		{
-			if(line[0]==' ' && line[i]==':')
-			{
-				uint32_t adr = std::stoi(strip(line.substr(0, i)).c_str(), 0, 16);
-				std::string op = strip(line.substr(i+21, line.length()));
-				dis.insert({adr, op});
-				break;
-			}
-		}
+	{        
+        if(strip(line).length() == 0)
+            continue;
+
+        if(!(line.back() == ':' || line[0] != ' '))
+        {
+    
+            line = strip(line);
+            unsigned int colonAt = line.find(':');
+
+            uint32_t addr = std::stoi(strip(line.substr(0, colonAt)), 0, 16);
+            DisassembledLine d;
+            d.instr = (uint32_t)std::stol(strip(line.substr(colonAt+1, colonAt+15)), 0, 16);
+            d.disassembly = strip(line.substr(colonAt+16));
+
+            dis.insert({addr, d});
+        }
 	}
 	return dis;
 }

@@ -1,0 +1,84 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Jul 19 21:10:43 2021
+[*]
+[dumpfile] "/home/frozenalpha/git/riscv/riscv-atom/build/trace/trace.vcd"
+[dumpfile_mtime] "Mon Jul 19 20:03:50 2021"
+[dumpfile_size] 22256
+[savefile] "/home/frozenalpha/git/riscv/riscv-atom/Trace_HydrogenSoC.gtkw"
+[timestart] 569
+[size] 1600 871
+[pos] -1 -1
+*-3.848547 624 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.HydrogenSoC.
+[treeopen] TOP.HydrogenSoC.atom_wb_core.
+[treeopen] TOP.HydrogenSoC.atom_wb_core.atom_core.
+[sst_width] 212
+[signals_width] 230
+[sst_expanded] 1
+[sst_vpaned_height] 238
+@28
+[color] 1
+TOP.rst_i
+[color] 1
+TOP.clk_i
+@200
+-IBUS
+@22
+[color] 2
+TOP.HydrogenSoC.wb_ibus_adr_o[31:0]
+@28
+[color] 2
+TOP.HydrogenSoC.wb_ibus_stb_o
+@22
+[color] 2
+TOP.HydrogenSoC.wb_ibus_dat_i[31:0]
+@28
+[color] 2
+TOP.HydrogenSoC.wb_ibus_ack_i
+TOP.HydrogenSoC.atom_wb_core.atom_core.imem_handshake
+@200
+-DBUS
+@22
+[color] 3
+TOP.HydrogenSoC.wb_dbus_adr_o[31:0]
+@28
+[color] 3
+TOP.HydrogenSoC.wb_dbus_stb_o
+@22
+[color] 3
+TOP.HydrogenSoC.wb_dbus_sel_o[3:0]
+@28
+[color] 3
+TOP.HydrogenSoC.wb_dbus_we_o
+@22
+[color] 3
+TOP.HydrogenSoC.wb_dbus_dat_o[31:0]
+[color] 3
+TOP.HydrogenSoC.wb_dbus_dat_i[31:0]
+@28
+[color] 3
+TOP.HydrogenSoC.wb_dbus_ack_i
+TOP.HydrogenSoC.atom_wb_core.atom_core.dmem_handshake
+@200
+-CORE
+@22
+TOP.HydrogenSoC.atom_wb_core.atom_core.ProgramCounter[31:0]
+TOP.HydrogenSoC.atom_wb_core.atom_core.ProgramCounter_Old[31:0]
+TOP.HydrogenSoC.atom_wb_core.atom_core.InstructionRegister[31:0]
+@28
+TOP.HydrogenSoC.atom_wb_core.atom_core.ignore_imem_handshake
+TOP.HydrogenSoC.atom_wb_core.atom_core.jump_decision
+TOP.HydrogenSoC.atom_wb_core.atom_core.stall_stage1
+TOP.HydrogenSoC.atom_wb_core.atom_core.stall_stage2
+TOP.HydrogenSoC.atom_wb_core.atom_core.insert_bubble
+TOP.HydrogenSoC.atom_wb_core.atom_core.d_rf_we
+TOP.HydrogenSoC.atom_wb_core.atom_core.rf.Data_We_i
+TOP.HydrogenSoC.atom_wb_core.atom_core.d_rf_din_sel[2:0]
+@22
+TOP.HydrogenSoC.atom_wb_core.atom_core.rf.Data_i[31:0]
+TOP.HydrogenSoC.atom_wb_core.atom_core.rf.regs(3)[31:0]
+TOP.HydrogenSoC.atom_wb_core.atom_core.rf.regs(5)[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

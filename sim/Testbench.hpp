@@ -47,7 +47,7 @@ class Testbench
 	 */
 	virtual	void openTrace(const char *vcdname) 
 	{
-		if (!m_trace) 
+		if (m_trace==NULL)
 		{
 			m_trace = new VerilatedVcdC;
 			m_core->trace(m_trace, 99);
@@ -62,11 +62,20 @@ class Testbench
 	 */
 	virtual void closeTrace(void) 
 	{
-		if (m_trace) 
+		if (m_trace!=NULL)
 		{
 			m_trace->close();
 			m_trace = NULL;
 		}
+	}
+
+	/**
+	 * @brief Check if trace is open or not
+	 */
+
+	virtual bool isTraceOpen()
+	{
+		return (m_trace!=NULL);
 	}
 
 

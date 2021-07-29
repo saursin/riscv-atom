@@ -1,6 +1,6 @@
 `default_nettype none
 
-module SinglePortRAM #(
+module SinglePortRAM_wb #(
   // Parameters
   parameter ADDR_WIDTH = 16,
   parameter MEM_FILE = ""
@@ -17,8 +17,7 @@ module SinglePortRAM #(
   input   wire  [3:0] 	          wb_sel_i,
   
   input   wire                    wb_stb_i,
-  output  reg 		                wb_ack_o,
-  input   wire 		                wb_cyc_i
+  output  reg 		                wb_ack_o
 );
 
 // Calculate depth from address width
@@ -33,7 +32,7 @@ initial begin
   end
 end
 
-wire [3:0] 		        we    = {4{wb_we_i & wb_cyc_i}} & wb_sel_i;
+wire [3:0] 		        we    = {4{wb_we_i & wb_stb_i}} & wb_sel_i;
 wire [ADDR_WIDTH-3:0] addr  = wb_adr_i[ADDR_WIDTH-1:2];
 
 // Set Ack_o
@@ -41,7 +40,7 @@ always @(posedge wb_clk_i) begin
   if (wb_rst_i)
     wb_ack_o <= 1'b0;
   else
-    wb_ack_o <= wb_cyc_i & !wb_ack_o;
+    wb_ack_o <= wb_stb_i & !wb_ack_o;
 end
 
 // Handle Reads & Writes

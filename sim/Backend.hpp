@@ -48,7 +48,7 @@ class Backend
     /**
      * @brief Disassembly of input file
      */
-	std::map<uint32_t, std::string> disassembly;
+	std::map<uint32_t, DisassembledLine> disassembly;
 
     private:
     /**
@@ -63,6 +63,13 @@ class Backend
     };
 
     public:
+
+    /**
+     * @brief Get the Target Name
+     * @return std::string 
+     */
+    virtual std::string getTargetName() = 0;
+
 	/**
 	 * @brief reset the backend
 	 */
@@ -74,7 +81,7 @@ class Backend
     }
 
 	/**
-	 * @brief probe all internal signals and regsters and 
+	 * @brief probe all internal signals and registers and 
 	 * update backend state
 	 */
 	virtual void refreshData() = 0;
@@ -106,7 +113,7 @@ class Backend
         printf("pc : 0x%08x   ir : 0x%08x\n", state.pc_e , state.ins_e); 
         printf(STYLE_NO_BOLD);
         
-        std::cout << "[ " <<  disassembly[state.pc_e] << " ]";
+        std::cout << "[ " <<  ((disassembly[state.pc_e].instr==state.ins_e) ? disassembly[state.pc_e].disassembly : "-" )<< " ]";
 
         if(wasJump)
             std::cout << " => nop (pipeline flush)";
@@ -117,7 +124,7 @@ class Backend
         // Print Register File
         if(verbose_flag)
         {
-            int cols = 2; // no of coloumns per rows
+            int cols = 2; // no of columns per rows
             #ifndef DEBUG_PRINT_T2B
             for(int i=0; i<32; i++)	// print in left-right fashion
             {
@@ -136,6 +143,26 @@ class Backend
             }
             #endif
         }
+    }
+
+    /**
+     * @brief Dump contents of memory into a file
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     * @param file 
+     */
+    void dumpmem(std::string file)
+    {
+        throwError("", "Memory dumps not supported in current target");
+    }
+
+    /**
+     * @brief Get contents of a memory location
+     * OVERRIDE THIS IN ANY DERIVED CLASSES
+     */
+    uint32_t getMemContents(uint32_t addr)
+    {
+        throwError("", "Viewing memory content not supported in current target", true);
+        return 0;
     }
 
 	/**

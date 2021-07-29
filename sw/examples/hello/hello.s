@@ -1,8 +1,8 @@
 .global main
 .text
 
-.equ TX_ADDRESS, 0x00014001               
-.equ TX_ACK_ADDRESS, 0x00014002         
+.equ TX_ADDRESS, 0x08000001
+.equ TX_ACK_ADDRESS, 0x08000002
 
 main:
     la a0, msg
@@ -46,12 +46,6 @@ putchar:
 
     # store character
     sb  a0, 0(t1)
-    
-    # toggle ack
-    li  t2, 1
-    sb  t2, 0(t0)
-    sb  x0, 0(t0)
-
     ret
 
 .data
