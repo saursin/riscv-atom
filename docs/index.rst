@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-RISCV-Atom Documentation & User Manual
-======================================
+RISC-V Atom Documentation & User Manual
+========================================
 
 
 .. toctree::
@@ -16,15 +16,26 @@ RISCV-Atom Documentation & User Manual
    pages/getting-started/install.rst
    pages/getting-started/examples.rst
 
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Documentation:
+   
+   pages/documentation/atom.rst
+   pages/documentation/atombones.rst
+   pages/documentation/hydrogensoc.rst
+   pages/documentation/atomsim.rst
+   pages/documentation/scar.rst
+
+
 .. toctree::
    :maxdepth: 2
    :caption: User Manual:
    
-   pages/user-manual/atom.rst
-   pages/user-manual/atombones.rst
-   pages/user-manual/hydrogensoc.rst
    pages/user-manual/atomsim.rst
-   
+   pages/user-manual/convelf.rst
+   pages/user-manual/scar.rst
+
 
 Indices and tables
 ==================

@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'RISCV-Atom'
+project = 'RISC-V Atom'
 copyright = '2021, Saurabh Singh'
 author = 'Saurabh Singh'
 

@@ -18,6 +18,8 @@ Key highlights of Atom are listed below:
 
 - Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).
 
+**Web documentation can be [here](https://riscv-atom.readthedocs.io/en/latest/index.html)**
+
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
 ## Table of Contents
