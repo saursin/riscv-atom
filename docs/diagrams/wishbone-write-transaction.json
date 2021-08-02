@@ -1,0 +1,17 @@
+{
+    "signal":
+    [
+        {"name": "CLK_I", "wave": "PPPP"},
+        {"name": "ADR_O", "wave": "x3.x", "data":["address"]},
+      	{"name": "DAT_O", "wave": "x4.x", "data":["data"]},
+        {"name": "SEL_O", "wave": "05.0", "data": ["select"]},
+      	{"name": "WE_O", "wave": "01.0"},
+        {"name": "STB_O", "wave": "01.0"},
+      	{"name": "CYC_O", "wave": "01.0"},
+        {},
+        {"name": "DAT_I", "wave": "x.x.", "data": "data"},
+        {"name": "ACK_I", "wave": "0.10"}
+    ],
+    "head": {"text": "Wishbone Classical Standard SINGLE WRITE Cycle", "tick": 0 },
+    "config": { "hscale": 2 }
+}
