@@ -67,8 +67,8 @@ output:
   UART rx at : 0x08000000
 
 
-Runall Script
--------------
+The Runall Script
+------------------
 Instead of testing all examples one-by-one, we can use the provided `atomsim-runall.sh` script to 
 autometically compile and simulate all examples.
 

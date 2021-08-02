@@ -37,7 +37,7 @@ Atom is an embedded class processor written in verilog. It implements open-sourc
 
 Atom has 2 ports, Instruction port & Data port. Both of these ports use a simple handshaking protocol for data exchange. This handshaking protocol can be easily converted to wishbone standard protocol, hence "*Wishbone Ready*".
 
-![AtomRV Architecture](doc/diagrams/atomRV_architecture_diagram.png)
+![AtomRV Architecture](docs/diagrams/atomRV_architecture_diagram.png)
 
 ### Pipeline Stages
 
@@ -66,7 +66,7 @@ Bare-bone system that consists of only the atom core. It uses C++ simulated inst
 
 It is a basic SoC which contains atom core interfaced to instruction memory, data memory and a UART module via wishbone interconnects.
 
-![HydrogenSoC](doc/diagrams/HydrogenSoC.png)
+![HydrogenSoC](docs/diagrams/HydrogenSoC.png)
 
 **Memory Map**
 

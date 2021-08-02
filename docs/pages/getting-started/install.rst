@@ -20,7 +20,7 @@ For this purpose, append the following line in your `.bashrc` file.
 
   export RVATOM="your_path/riscv-atom" # export RVATOM variable
 
-replace `your_path` in above command to your machine specific absolute path to the iscv-atom directory.
+replace "`your_path`" in above command to your machine specific absolute path to the riscv-atom directory.
 
 Build/bin Directory
 --------------------

@@ -8,7 +8,7 @@ RISC-V Atom Documentation & User Manual
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting Started:
    
    pages/getting-started/riscv-atom.rst
@@ -21,9 +21,8 @@ RISC-V Atom Documentation & User Manual
    :maxdepth: 2
    :caption: Documentation:
    
-   pages/documentation/atom.rst
-   pages/documentation/atombones.rst
-   pages/documentation/hydrogensoc.rst
+   pages/documentation/atomrv.rst
+   pages/documentation/targets.rst  
    pages/documentation/atomsim.rst
    pages/documentation/scar.rst
 

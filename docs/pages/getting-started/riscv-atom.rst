@@ -21,4 +21,4 @@ Key highlights of Atom are listed below:
 - Open source under MIT License.
 
 
-.. image:: ../../../doc/diagrams/atomRV_architecture_diagram.png
+.. image:: ../../diagrams/atomRV_architecture_diagram.png

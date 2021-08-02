@@ -153,7 +153,7 @@ class ConvELF:
 if __name__ == "__main__":
     # arg check
     if len(sys.argv) != 2:
-        print(Fore.RED+"ERROR!: "+Style.RESET_ALL+"Wrong number of args\n Usage: $ python3 gen_usable_hex.py [inputFile]")
+        print(Fore.RED+"ERROR!: "+Style.RESET_ALL+"Wrong number of args\n Usage: $ python3 convelf.py [inputFile]")
         sys.exit()
 
     # === Memory Map Format ===
