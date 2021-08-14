@@ -8,8 +8,8 @@ Lets jump to the classical "hello World!" example first!
 
 Hello World
 ------------
-First we need to compile the hello world example with our RISCV gcc compiler. For this purpose, use the 
-provided compile_atombones shell script as following.
+First we need to compile the hello world example with our RISC-V gcc compiler. For this purpose, use the 
+provided `compile_atombones.sh` shell script as following.
 
 ::
 
@@ -70,7 +70,7 @@ output:
 The Runall Script
 ------------------
 Instead of testing all examples one-by-one, we can use the provided `atomsim-runall.sh` script to 
-autometically compile and simulate all examples.
+automatically compile and simulate all examples.
 
 ::
 

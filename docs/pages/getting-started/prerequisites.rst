@@ -33,12 +33,12 @@ Install GTK Wave
 
 Install RISC-V GNU Toolchain
 =============================
-We can install
+You can either install 
+1). a RV32I toolchain explicitly or 
+2). a RV64-Multilib toolchain.
 
-1. an RV32I toolchain explictly or 
-2. a RV64-Multilib toolchain.
-
-If we go with the second option we will have to supply `-march=rv32i`, `-mabi=ilp32` arguments explictly
+In this tutorial we'll be going with the second option.
+If we go with the second option we will have to supply `-march=rv32i`, `-mabi=ilp32` arguments explicitly
 whenever we want to use the tools.
 
 Further install instructions can be found `here <https://github.com/riscv/riscv-gnu-toolchain>`_

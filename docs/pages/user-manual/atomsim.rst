@@ -82,7 +82,7 @@ Use ':' to display a range of registers. ex:
   : m <address> <sizetag>
 
 Address can be specified in hex or decimal.
-Uuse sizetag to specify the size of data to be fetched, b for byte, h for half-word and w for word 
+Use sizetag to specify the size of data to be fetched, b for byte, h for half-word and w for word 
 (default is word).
 
 ::

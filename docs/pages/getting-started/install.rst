@@ -22,6 +22,9 @@ For this purpose, append the following line in your `.bashrc` file.
 
 replace "`your_path`" in above command to your machine specific absolute path to the riscv-atom directory.
 
+.. note:: All the commands are executed from the root directory unless explicitly mentioned. We'll refer 
+  to this root directory as `RVATOM`.
+
 Build/bin Directory
 --------------------
 For convenience, build/bin directory should also be added to path. This will allow you to invoke atomsim from anywhere.

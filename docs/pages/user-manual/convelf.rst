@@ -1,7 +1,7 @@
 *********
 ConvELF 
 *********
-ConvELF is a flexible tool written in python to convert ELF executable files to verilog friendly 
+ConvELF is a flexible tool written in python to convert ELF executable files to Verilog friendly 
 $readmemh/$readmemb compatible files. ConvELF is basically a target-configurable tool which can be 
 configured by specifying a memory map. `convelf.py` can be either imported into user programs as a 
 module or user may directly use it as a script.
@@ -33,14 +33,14 @@ Now, Generate $readmemh compatible files, using:
   ce.convert('hex')
 
 
-alternatevely to generate $readmemb compatible files, using:
+alternatively to generate $readmemb compatible files, using:
 ::
 
    # generate output bin files for $readmemh.
    ce.convert('hex')
 
 
-ConvELF povides the following object fields to futher configure the tool
+ConvELF provides the following object fields to further configure the tool
 ::
   
   # RISCV Toolchain Prefix
@@ -61,19 +61,19 @@ ConvELF povides the following object fields to futher configure the tool
 
 Memory Map Format
 ==================
-Memoy map of the target should be specified in python dictionary fomat.
+Memory map of the target should be specified in python dictionary format.
 one key-value pair (element) in the dictionary must represent one memory block for which a 
 initialization file should be generated. 
 
-- The **key** should be a string which should repesent the name of the memory block.
+- The **key** should be a string which should represent the name of the memory block.
 - The **value** should be a python list containing atleast 3 elements. 
   
   1. **base address** of the memory block.
   2. **size** of the memory block.
-  3. **name of the initilization file** to be generated.
+  3. **name of the initialization file** to be generated.
 
 
-Examples
+Example
 =========
 Let's assume a target that has 3 different memories.
 
@@ -101,7 +101,7 @@ Let's assume a target that has 3 different memories.
      - 0x00010000
      - data.hex
 
-This memoy map can be specified in python as:
+This memory map can be specified in python as:
 
 ::
 
