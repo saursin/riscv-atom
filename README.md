@@ -14,10 +14,10 @@ Key highlights of Atom are listed below:
 
 - Wishbone ready CPU interface.
 
-- Interactive RTL simulator [AtomSim](AtomSim).
+- Interactive RTL simulator AtomSim.
 
 - Wide range of example programs.
 
 - Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).
 
-**For futher info, kindly checkout the [project documentation](https://riscv-atom.readthedocs.io/en/latest/index.html)**
+**For further info, kindly checkout the [project documentation](https://riscv-atom.readthedocs.io/en/latest/index.html)**
