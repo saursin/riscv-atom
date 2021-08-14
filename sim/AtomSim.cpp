@@ -93,7 +93,7 @@ unsigned long int mem_size = default_mem_size;
 #include "Backend_HydrogenSoC.hpp"
 
 #endif
-#error "No backend selected"
+//#error "No backend selected"
 #endif
 
 
