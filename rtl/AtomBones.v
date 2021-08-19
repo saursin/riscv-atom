@@ -7,8 +7,8 @@
 
  module AtomBones
 (
-    input           clk_i,
-    input           rst_i,
+    input   wire    clk_i,
+    input   wire    rst_i,
 
     output  wire    [31:0]  imem_addr_o,    // IMEM Address
     input   wire    [31:0]  imem_data_i,    // IMEM data

@@ -2,12 +2,12 @@
 
 module GPIO
 (
-    input wire wb_clk_i,
-    input wire wb_dat_i,
-    input wire wb_we_i,
-    input wire wb_cyc_i,
-    output reg wb_rdt_o,
-    output reg gpio_o
+    input   wire    wb_clk_i,
+    input   wire    wb_dat_i,
+    input   wire    wb_we_i,
+    input   wire    wb_cyc_i,
+    output  reg     wb_rdt_o,
+    output  reg     gpio_o
 );
 
 always @(posedge wb_clk_i) begin

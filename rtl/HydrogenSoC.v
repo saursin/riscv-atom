@@ -14,8 +14,8 @@
 
 module HydrogenSoC
 (
-    input clk_i,
-    input rst_i
+    input wire clk_i,
+    input wire rst_i
 );
     //////////////////////////////////////////
     // SoC Parameters
@@ -109,7 +109,7 @@ module HydrogenSoC
 
     wire    [31:0] wb_ram_data_o; 
     reg            wb_ram_stb_i;
-    reg            wb_ram_ack_o;
+    wire           wb_ram_ack_o;
 
     SinglePortRAM_wb #(
         .ADDR_WIDTH(DMEM_ADR_SIZE),
