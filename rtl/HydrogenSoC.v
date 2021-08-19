@@ -2,10 +2,13 @@
 
 `include "Timescale.vh"
 `include "Config.vh"
+`include "core/AtomRV_wb.v"
 `include "uncore/SinglePortROM_wb.v"
 `include "uncore/SinglePortRAM_wb.v"
 `include "uncore/DummyUART.v"
-`include "core/AtomRV_wb.v"
+`include "uncore/GPIO.v"
+
+
 
 /**
  *  === Hydrogen SoC ===
@@ -15,7 +18,9 @@
 module HydrogenSoC
 (
     input wire clk_i,
-    input wire rst_i
+    input wire rst_i,
+
+    output wire [3:0] gpio_o
 );
     //////////////////////////////////////////
     // SoC Parameters
@@ -151,6 +156,28 @@ module HydrogenSoC
         .wb_ack_o   (wb_uart_ack_o)
     );
 
+    ////////////////////////////////////////////////////
+    // GPIO
+    wire    [31:0] wb_gpio_data_o;
+    reg     wb_gpio_stb_i;
+    wire    wb_gpio_ack_o;
+    
+    GPIO gpio
+    (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
+
+        .wb_dat_o   (wb_gpio_data_o),
+        .wb_dat_i   (wb_dbus_dat_o),
+        .wb_we_i    (wb_dbus_we_o),
+        .wb_sel_i   (wb_dbus_sel_o),
+    
+        .wb_stb_i   (wb_gpio_stb_i),
+        .wb_ack_o   (wb_gpio_ack_o),
+
+        .gpio_o     (gpio_o)
+    );
+
 
     ////////////////////////////////////////////////////
     // Wishbone Interconnect Logic
@@ -159,6 +186,7 @@ module HydrogenSoC
     localparam Device_None = 3'b000;
     localparam Device_RAM  = 3'b001;
     localparam Device_UART = 3'b010;
+    localparam Device_GPIO = 3'b011;
 
     /*
         === Device selection ===
@@ -174,6 +202,8 @@ module HydrogenSoC
                 selected_device = Device_RAM;
             else if (wb_dbus_adr_o == 32'h08000000) // byte addresses 8000000 to 08000003
                 selected_device = Device_UART;
+            else if (wb_dbus_adr_o == 32'h08000100) // byte addresses 8000010 to 0800001f
+                selected_device = Device_GPIO;
             else begin
                 $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
                 $finish();
@@ -193,6 +223,7 @@ module HydrogenSoC
         case(selected_device)
             Device_RAM:     wb_dbus_dat_i = wb_ram_data_o;
             Device_UART:    wb_dbus_dat_i = wb_uart_data_o;
+            Device_GPIO:    wb_dbus_dat_i = wb_gpio_data_o;
 
             default: begin
                 wb_dbus_dat_i = 32'h00000000;
@@ -211,10 +242,12 @@ module HydrogenSoC
         case(selected_device)
             Device_RAM:     wb_ram_stb_i = wb_dbus_stb_o;
             Device_UART:    wb_uart_stb_i = wb_dbus_stb_o;
+            Device_GPIO:    wb_gpio_stb_i = wb_dbus_stb_o;
 
             default: begin
                 wb_ram_stb_i = 1'b0;
                 wb_uart_stb_i = 1'b0;
+                wb_gpio_stb_i = 1'b0;
             end
         endcase
     end
@@ -228,6 +261,7 @@ module HydrogenSoC
         case(selected_device)
             Device_RAM:     wb_dbus_ack_i = wb_ram_ack_o;
             Device_UART:    wb_dbus_ack_i = wb_uart_ack_o;
+            Device_GPIO:    wb_dbus_ack_i = wb_gpio_ack_o;
             default:
                 wb_dbus_ack_i = 1'b0;
         endcase
