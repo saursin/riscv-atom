@@ -15,29 +15,7 @@
 # 	symbol. Anything after # followed by ~ will be displayed 
 #	whenever "make help: is called.
 #================================================================#
-# 
-# Directory tree:
-#	.
-#	├── build
-#	│   ├── bin
-#	│   ├── dump
-#	│   ├── cobj_dir
-#	│   ├── vobj_dir
-#	│   └── trace
-#	├── doc
-#	│   └── diagrams
-#	├── rtl
-#	│   ├── core
-#	│   └── uncore
-#	├── sim
-#	│   └── include
-#	├── sw
-#	│   ├── examples
-#	│   └── lib
-#	└── test
-#	    └── scar
-#	        └── work
-#
+
 # Bash color codes
 COLOR_RED 		= \033[0;31m
 COLOR_GREEN 	= \033[0;32m
@@ -105,20 +83,16 @@ endif
 #======================================================================
 # Recepies
 #======================================================================
-default: sim elfdump scripts
+default: sim elfdump scripts libs
 	@echo "\n$(COLOR_GREEN)----------------------------------------------"
 	@echo "Build Succesful!"
 	@echo "----------------------------------------------$(COLOR_NC)"
 	@echo " 1). atomsim [$(Target)]"
-	@echo " 2). elfdump"
+	@echo " 2). elfdump tool"
+	@echo " 3). software libraries"
 
-all : sim elfdump scripts pdf-docs
-	@echo "\n$(COLOR_GREEN)----------------------------------------------"
-	@echo "Build Succesful!"
-	@echo "----------------------------------------------$(COLOR_NC)"
-	@echo " 1). atomsim [$(Target)]"
-	@echo " 2). elfdump"
-	@echo " 3). doxygen-docs in latex, html & pdf "
+all : default pdf-docs
+	@echo " 4). doxygen-docs in latex, html & pdf "
 
 
 #======== Help ========
@@ -228,6 +202,13 @@ scripts: $(build_dir) $(bin_dir)
 	@echo "$(COLOR_GREEN)>> copying scripts/* to build/bin/ ...$(COLOR_NC)"
 	cp scripts/* $(bin_dir)/
 
+
+# ======== SW libs ========
+#~	libs		:	compile software libraries
+.PHONY: libs
+libs: $(build_dir) $(bin_dir)
+	@echo "$(COLOR_GREEN)>> Compiling software libraries ...$(COLOR_NC)"
+	cd sw/lib && make
 
 # ======== Documentation ========
 #~	docs		:	Generate atomsim C++ source documentation
