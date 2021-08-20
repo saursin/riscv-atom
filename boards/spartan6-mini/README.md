@@ -6,11 +6,11 @@ by FPGATECHSOLUTIONS
 
 The board includes:
 
-- FPGA: Xilinx Spartan-6 ()XC6SLX9-TQ144)
+- FPGA: Xilinx Spartan-6 (XC6SLX9-TQ144)
 
 - OSCILLATOR - 12MHz
 
-- FLASH - 8M SPI Flash ()M25P80)
+- FLASH - 8M SPI Flash (M25P80)
 
 - On board USB JTAG/Serial
 
@@ -23,8 +23,6 @@ The board includes:
 - 71 USER I/O
 
 - 1 RGB LED
-
-
 
 HydrogenSoC Mapping:
 
