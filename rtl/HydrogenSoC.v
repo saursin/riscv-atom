@@ -8,7 +8,9 @@
 `include "uncore/DummyUART.v"
 `include "uncore/GPIO.v"
 
-
+// Defaults for Xilinx ISE
+`define __IMEM_INIT_FILE__ "blinky_code.hex"
+`define __DMEM_INIT_FILE__ "blinky_data.hex"
 
 /**
  *  === Hydrogen SoC ===
