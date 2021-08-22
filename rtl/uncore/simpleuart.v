@@ -17,22 +17,28 @@
  *
  */
 
+// NOTE: This is a slightly modified version of the original simpleuart.v used in the picorv32 
+// project
+
+`default_nettype none
+
 module simpleuart #(parameter integer DEFAULT_DIV = 1) (
-	input clk,
-	input reset,
+	input	wire	clk,
+	input 	wire	reset,
 
-	output ser_tx,
-	input  ser_rx,
+	output 	wire	ser_tx,
+	input  	wire	ser_rx,
 
-	input   [3:0] reg_div_we,
-	input  [31:0] reg_div_di,
-	output [31:0] reg_div_do,
+	input	wire 	[3:0] 	reg_div_we,
+	input	wire 	[31:0] 	reg_div_di,
+	output	wire 	[31:0] 	reg_div_do,
 
-	input         reg_dat_we,
-	input         reg_dat_re,
-	input  [7:0]  reg_dat_di,
-	output [31:0] reg_dat_do,
-	output        reg_dat_wait
+	input   wire     		reg_dat_we,
+	input   wire      		reg_dat_re,
+	input	wire 	[7:0]	reg_dat_di,
+	output	wire 	[7:0]	reg_dat_do,
+
+	output  wire 	[7:0]	reg_status
 );
 	reg [31:0] cfg_divider;
 
@@ -49,10 +55,10 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 
 	assign reg_div_do = cfg_divider;
 	
-	wire [23:0]	uart_status = {24'd0};
+	wire   send_busy = (send_bitcnt != 0);
+    assign reg_status = {6'd0, send_busy, recv_buf_valid};
 
-	assign reg_dat_wait = reg_dat_we && ((send_bitcnt!=0) || send_dummy);
-	assign reg_dat_do = recv_buf_valid ? {uart_status,recv_buf_data} : ~32'd0;
+	assign reg_dat_do = recv_buf_valid ? recv_buf_data : ~8'd0;
 
 	always @(posedge clk) begin
 		if (reset) begin

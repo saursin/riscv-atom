@@ -1,8 +1,9 @@
-#include "sw/lib/atombones.h"
-#include "sw/lib/gpio.h"
+#include "../../lib/atombones.h"
+#include "../../lib/gpio.h"
 
-#define UART_DIV_ADDR 0x08000000
-#define UART_DAT_ADDR 0x08000004
+#define UART_D_REG_ADDR 0x08000000
+#define UART_S_REG_ADDR 0x08000001
+#define UART_CD_REG_ADDR 0x08000004
 
 #define DELAY_SCALING_FACTOR 10000
 void delay(long count)
@@ -14,13 +15,23 @@ void delay(long count)
 
 void sendChar(char c)
 {
-    *((volatile int*) UART_DAT_ADDR) = (int)c;
+    while(1)
+    {
+        // check if Tx is busy
+        if((*((volatile char*) UART_S_REG_ADDR) & 0x02) >> 1)
+            continue;
+
+        *((volatile char*) UART_D_REG_ADDR) = c;
+        break;
+    }
 }
+
 
 void initUART()
 {
-    *((volatile int*) UART_DIV_ADDR) = 1248;
+    *((volatile int*) UART_CD_REG_ADDR) = 1248;//= 1
 }
+
 void print(const char *p)
 {
 	while (*p)
@@ -33,10 +44,11 @@ void print(const char *p)
 void main()
 {
     initUART();
+    gpio_init();
     while(1)
     {   
-        gpio_init();
-
+        gpio_reset();
+        delay(10);
         gpio_set(0, GPIO_HIGH);
         delay(10);
         gpio_set(1, GPIO_HIGH);
@@ -56,7 +68,6 @@ void main()
         
         const char hello[] = "Hello RISC-V!\n";
         print(hello);
-
         delay(5);
     }
     return;
