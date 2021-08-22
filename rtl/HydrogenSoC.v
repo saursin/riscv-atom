@@ -160,7 +160,7 @@ module HydrogenSoC
 
 	simpleuart simpleuart (
 		.clk         (wb_clk_i),
-		.resetn      (~wb_rst_i),
+		.resetn      (wb_rst_i),
 
 		.ser_tx      (uart_tx_o),
 		.ser_rx      (uart_rx_i),

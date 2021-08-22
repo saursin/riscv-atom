@@ -19,7 +19,7 @@
 
 module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 	input clk,
-	input resetn,
+	input reset,
 
 	output ser_tx,
 	input  ser_rx,
@@ -55,7 +55,7 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 	assign reg_dat_do = recv_buf_valid ? {uart_status,recv_buf_data} : ~32'd0;
 
 	always @(posedge clk) begin
-		if (!resetn) begin
+		if (reset) begin
 			cfg_divider <= DEFAULT_DIV;
 		end else begin
 			if (reg_div_we[0]) cfg_divider[ 7: 0] <= reg_div_di[ 7: 0];
@@ -66,7 +66,7 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 	end
 
 	always @(posedge clk) begin
-		if (!resetn) begin
+		if (reset) begin
 			recv_state <= 0;
 			recv_divcnt <= 0;
 			recv_pattern <= 0;
@@ -112,7 +112,7 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 		if (reg_div_we!=0)
 			send_dummy <= 1;
 		send_divcnt <= send_divcnt + 1;
-		if (!resetn) begin
+		if (reset) begin
 			send_pattern <= ~0;
 			send_bitcnt <= 0;
 			send_divcnt <= 0;
