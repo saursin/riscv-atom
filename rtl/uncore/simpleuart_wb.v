@@ -64,7 +64,9 @@ wire    [3:0]   reg_div_we  = select_cd_reg ? {4{wb_we_i & wb_stb_i}} & wb_sel_i
 wire            reg_data_we = select_sd_reg ? wb_we_i & wb_stb_i & wb_sel_i[0] : 1'b0;
 
 // Read enables
-wire    reg_data_re = select_sd_reg ? !wb_we_i & wb_stb_i  & wb_sel_i[0] : 1'b0;
+reg reg_data_re = 0;
+always @(posedge wb_clk_i)
+    reg_data_re <= select_sd_reg ? !wb_we_i & wb_stb_i  & wb_sel_i[0] : 1'b0;
 
 simpleuart#(
     .DEFAULT_DIV(1)

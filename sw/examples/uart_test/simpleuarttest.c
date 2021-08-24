@@ -19,17 +19,18 @@ void sendChar(char c)
     {
         // check if Tx is busy
         if((*((volatile char*) UART_S_REG_ADDR) & 0x02) >> 1)
+        {
             continue;
+        }
 
         *((volatile char*) UART_D_REG_ADDR) = c;
         break;
     }
 }
 
-
 void initUART()
 {
-    *((volatile int*) UART_CD_REG_ADDR) = 1248;//= 1
+    *((volatile int*) UART_CD_REG_ADDR) = 1248;
 }
 
 void print(const char *p)
@@ -41,34 +42,52 @@ void print(const char *p)
     }
 }
 
+char * banner = 
+"\n"
+"                  .';,.           ....;;;.  \n"
+"                 .ll,:o,                ':c,. \n"
+"                 .dd;co'                  .cl,  \n"
+"                .:o:;,.                     'o:  \n"
+"                co.                          .oc  \n"
+"               ,o'          .coddoc.          'd,  \n"
+"               lc         .lXMMMMMMXl.         ll  \n"
+"              .o:         ;KMMMMMMMMK,         :o. \n"
+"              .o:         'OMMMMMMMMO.         :o. \n"
+"               co.         .o0XNNX0o.         .oc  \n"
+"               .o:           ..''..           :o.  \n"
+"                'o:                          :o'  \n"
+"                 .lc.                      .ll.  \n"
+"                   ,lc'                  'cl,   \n"
+"                     'cc:,..        ..,:c:'   \n"
+"                        .;::::;;;;::::;.    \n"
+"                              ....        \n"
+"     ____  _________ _______    __         __                 \n"
+"    / __ \\/  _/ ___// ____/ |  / /  ____ _/ /_____  ____ ___  \n"
+"   / /_/ // / \\__ \\/ /    | | / /  / __ `/ __/ __ \\/ __ `__ \\ \n"
+"  / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / /      \n"
+" /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
+"/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
+
+
+
 void main()
 {
     initUART();
     gpio_init();
+    const char hello[] = "Hello RISC-V!\n";
+
     while(1)
     {   
         gpio_reset();
-        delay(10);
+        delay(20);
         gpio_set(0, GPIO_HIGH);
-        delay(10);
+        print(banner);
         gpio_set(1, GPIO_HIGH);
         delay(10);
         gpio_set(2, GPIO_HIGH);
-        delay(10);
+        print(hello);
         gpio_set(3, GPIO_HIGH);
         delay(10);
-        gpio_set(4, GPIO_HIGH);
-        delay(10);
-        gpio_set(5, GPIO_HIGH);
-        delay(10);
-        gpio_set(6, GPIO_HIGH);
-        delay(10);
-        gpio_set(7, GPIO_HIGH);
-        delay(10);
-        
-        const char hello[] = "Hello RISC-V!\n";
-        print(hello);
-        delay(5);
     }
     return;
 }

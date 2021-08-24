@@ -25,13 +25,13 @@ module HydrogenSoC
     input wire clk_i,
     input wire rst_i,
 
-    output wire [7:0] gpio_o,
+    output wire [7:0]   gpio_o,
 
     input   wire        uart_rx_i,
     output  wire        uart_tx_o,
 	 
-	 output 	wire 			uart_tx_test_point_o,
-	 output  wire			uart_rx_test_point_o
+    output 	wire 		uart_tx_test_point_o,
+    output  wire		uart_rx_test_point_o
 );
 
 	assign uart_rx_test_point_o = uart_rx_i;

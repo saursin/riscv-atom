@@ -68,7 +68,7 @@ else
 ifeq ($(Target), hydrogensoc)
 verilog_topmodule = HydrogenSoC
 verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
-verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/uncore/GPIO.v $(rtl_dir)/uncore/SinglePortROM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/uncore/DummyUART.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
+verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/uncore/GPIO.v $(rtl_dir)/uncore/SinglePortROM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/uncore/simpleuart_wb.v $(rtl_dir)/uncore/simpleuart.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v
 VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/code.hex"'
 VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/data.hex"'
 
