@@ -22,20 +22,39 @@
 
 module HydrogenSoC
 (
+	 // GLOBAL SIGNALS
     input wire clk_i,
     input wire rst_i,
-
+	
+	 // GPIO
     output wire [7:0]   gpio_o,
 
-    input   wire        uart_rx_i,
-    output  wire        uart_tx_o,
-	 
-    output 	wire 		uart_tx_test_point_o,
-    output  wire		uart_rx_test_point_o
-);
+    // UART
+    input   wire        uart_usb_rx_i,
+    output  wire        uart_usb_tx_o,
 
-	assign uart_rx_test_point_o = uart_rx_i;
-	assign uart_tx_test_point_o = uart_tx_o;
+	 input   wire        uart_io_rx_i,
+    output  wire        uart_io_tx_o,
+	 
+	 // UART MUX
+	 input 	wire 			uart_mux_sel,
+	 
+	 // TEST POINTS
+    output 	wire 			uart_rx_test_point_o,
+    output  wire			uart_tx_test_point_o
+);
+	////////////////////////////////////////
+	// UART MUX
+	wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
+	
+	wire uart_tx;
+	assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
+	assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
+	
+	// TEST POINTS
+	assign uart_rx_test_point_o = uart_rx;
+	assign uart_tx_test_point_o = uart_tx;
+	
 	
     //////////////////////////////////////////
     // SoC Parameters
@@ -170,8 +189,8 @@ module HydrogenSoC
         .wb_stb_i   (wb_uart_stb_i),
         .wb_ack_o   (wb_uart_ack_o),
 
-        .rx_i       (uart_rx_i),
-        .tx_o       (uart_tx_o)
+        .rx_i       (uart_rx),
+        .tx_o       (uart_tx)
 	);
 
     /*DummyUART uart
