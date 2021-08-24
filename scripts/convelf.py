@@ -149,6 +149,17 @@ class ConvELF:
             memImg = self.__rmTempFile()
 
 
+    def printFreeSpace(self, map):
+        for k in map.keys():
+            size = map[k][1]
+            f = open(map[k][2], 'r')
+            consumed=0
+            for line in enumerate(f):
+                consumed+=4
+            f.close()
+
+            percentage = "{:.2f}".format(consumed*100/size)
+            print(k+":  " +str(consumed)+ " out of " +str(size)+ " bytes consumed   \t( "+str(percentage)+" % )")
 
 if __name__ == "__main__":
     # arg check
@@ -168,3 +179,6 @@ if __name__ == "__main__":
 
     # generate output hex files.
     ce.convert('hex')
+
+    # Print consumption report
+    #ce.printFreeSpace(HydrogenSoC_MemMap)

@@ -5,13 +5,14 @@
 `include "core/AtomRV_wb.v"
 `include "uncore/SinglePortROM_wb.v"
 `include "uncore/SinglePortRAM_wb.v"
-`include "uncore/DummyUART.v"
+//`include "uncore/DummyUART.v"
+`include "uncore/simpleuart_wb.v"
 `include "uncore/GPIO.v"
 
 `ifndef verilator
 // Defaults for Xilinx ISE
-`define __IMEM_INIT_FILE__ "blinky_code.hex"
-`define __DMEM_INIT_FILE__ "blinky_data.hex"
+`define __IMEM_INIT_FILE__ "code.hex"
+`define __DMEM_INIT_FILE__ "data.hex"
 `endif
 
 /**
@@ -21,11 +22,40 @@
 
 module HydrogenSoC
 (
+	 // GLOBAL SIGNALS
     input wire clk_i,
     input wire rst_i,
+	
+	 // GPIO
+    output wire [7:0]   gpio_o,
 
-    output wire [3:0] gpio_o
+    // UART
+    input   wire        uart_usb_rx_i,
+    output  wire        uart_usb_tx_o,
+
+	 input   wire        uart_io_rx_i,
+    output  wire        uart_io_tx_o,
+	 
+	 // UART MUX
+	 input 	wire 			uart_mux_sel,
+	 
+	 // TEST POINTS
+    output 	wire 			uart_rx_test_point_o,
+    output  wire			uart_tx_test_point_o
 );
+	////////////////////////////////////////
+	// UART MUX
+	wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
+	
+	wire uart_tx;
+	assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
+	assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
+	
+	// TEST POINTS
+	assign uart_rx_test_point_o = uart_rx;
+	assign uart_tx_test_point_o = uart_tx;
+	
+	
     //////////////////////////////////////////
     // SoC Parameters
 
@@ -145,8 +175,25 @@ module HydrogenSoC
     wire    [31:0]  wb_uart_data_o;
     reg             wb_uart_stb_i;
     wire            wb_uart_ack_o;
+    
+	simpleuart_wb uart (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
 
-    DummyUART uart
+        .wb_adr_i   (wb_dbus_adr_o[2]),
+        .wb_dat_o   (wb_uart_data_o),
+        .wb_dat_i   (wb_dbus_dat_o),
+        .wb_we_i    (wb_dbus_we_o),
+        .wb_sel_i   (wb_dbus_sel_o),
+
+        .wb_stb_i   (wb_uart_stb_i),
+        .wb_ack_o   (wb_uart_ack_o),
+
+        .rx_i       (uart_rx),
+        .tx_o       (uart_tx)
+	);
+
+    /*DummyUART uart
     (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
@@ -158,39 +205,59 @@ module HydrogenSoC
 
         .wb_stb_i   (wb_uart_stb_i),
         .wb_ack_o   (wb_uart_ack_o)
-    );
+    );*/
 
     ////////////////////////////////////////////////////
     // GPIO
-    wire    [31:0] wb_gpio_data_o;
-    reg     wb_gpio_stb_i;
-    wire    wb_gpio_ack_o;
+    wire    [31:0] wb_gpio0_data_o;
+    reg     wb_gpio0_stb_i;
+    wire    wb_gpio0_ack_o;
     
-    GPIO gpio
+    GPIO gpio0
     (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_dat_o   (wb_gpio_data_o),
+        .wb_dat_o   (wb_gpio0_data_o),
         .wb_dat_i   (wb_dbus_dat_o),
         .wb_we_i    (wb_dbus_we_o),
         .wb_sel_i   (wb_dbus_sel_o),
     
-        .wb_stb_i   (wb_gpio_stb_i),
-        .wb_ack_o   (wb_gpio_ack_o),
+        .wb_stb_i   (wb_gpio0_stb_i),
+        .wb_ack_o   (wb_gpio0_ack_o),
 
-        .gpio_o     (gpio_o)
+        .gpio_o     (gpio_o[3:0])
     );
 
+    wire    [31:0] wb_gpio1_data_o;
+    reg     wb_gpio1_stb_i;
+    wire    wb_gpio1_ack_o;
+    
+    GPIO gpio1
+    (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
+
+        .wb_dat_o   (wb_gpio1_data_o),
+        .wb_dat_i   (wb_dbus_dat_o),
+        .wb_we_i    (wb_dbus_we_o),
+        .wb_sel_i   (wb_dbus_sel_o),
+    
+        .wb_stb_i   (wb_gpio1_stb_i),
+        .wb_ack_o   (wb_gpio1_ack_o),
+
+        .gpio_o     (gpio_o[7:4])
+    );
 
     ////////////////////////////////////////////////////
     // Wishbone Interconnect Logic
 
     // Devices
-    localparam Device_None = 3'b000;
-    localparam Device_RAM  = 3'b001;
-    localparam Device_UART = 3'b010;
-    localparam Device_GPIO = 3'b011;
+    localparam Device_None      = 4'd0;
+    localparam Device_RAM       = 4'd1;
+    localparam Device_UART      = 4'd2;
+    localparam Device_GPIO0     = 4'd3;
+    localparam Device_GPIO1     = 4'd4;
 
     /*
         === Device selection ===
@@ -199,16 +266,25 @@ module HydrogenSoC
         access a region of memory which is not mapped to any device) an errror is thrown &
         simulation is haulted.
     */
-    reg [2:0] selected_device /* verilator public */;
+    reg [3:0] selected_device /* verilator public */;
     always @(*) begin /* COMBINATORIAL */
+		  // default 
+		  //selected_device = Device_None;
+		
         if(wb_dbus_cyc_o) begin
             if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h08000000)
                 selected_device = Device_RAM;
-            else if (wb_dbus_adr_o == 32'h08000000) // byte addresses 8000000 to 08000003
+            
+            else if (wb_dbus_adr_o == 32'h08000000 || wb_dbus_adr_o == 32'h08000004)
                 selected_device = Device_UART;
+            
             else if (wb_dbus_adr_o == 32'h08000100) // byte addresses 8000010 to 0800001f
-                selected_device = Device_GPIO;
+                selected_device = Device_GPIO0;
+            else if (wb_dbus_adr_o == 32'h08000104) // byte addresses 8000010 to 0800001f
+                selected_device = Device_GPIO1;
+
             else begin
+					 selected_device = Device_None;
                 $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
                 $finish();
             end
@@ -225,9 +301,10 @@ module HydrogenSoC
     */
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
-            Device_RAM:     wb_dbus_dat_i = wb_ram_data_o;
-            Device_UART:    wb_dbus_dat_i = wb_uart_data_o;
-            Device_GPIO:    wb_dbus_dat_i = wb_gpio_data_o;
+            Device_RAM:         wb_dbus_dat_i = wb_ram_data_o;
+            Device_UART:        wb_dbus_dat_i = wb_uart_data_o;
+            Device_GPIO0:       wb_dbus_dat_i = wb_gpio0_data_o;
+            Device_GPIO1:       wb_dbus_dat_i = wb_gpio1_data_o;
 
             default: begin
                 wb_dbus_dat_i = 32'h00000000;
@@ -243,15 +320,23 @@ module HydrogenSoC
         logic.
     */
     always @(*) begin /* COMBINATORIAL */
+		  // Defaults
+		  wb_ram_stb_i        = 1'b0;
+		  wb_uart_stb_i       = 1'b0;
+		  wb_gpio0_stb_i      = 1'b0;
+		  wb_gpio1_stb_i      = 1'b0;
+					 
         case(selected_device)
-            Device_RAM:     wb_ram_stb_i = wb_dbus_stb_o;
-            Device_UART:    wb_uart_stb_i = wb_dbus_stb_o;
-            Device_GPIO:    wb_gpio_stb_i = wb_dbus_stb_o;
+            Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
+            Device_UART:        wb_uart_stb_i       = wb_dbus_stb_o;
+            Device_GPIO0:       wb_gpio0_stb_i      = wb_dbus_stb_o;
+            Device_GPIO1:       wb_gpio1_stb_i      = wb_dbus_stb_o;
 
             default: begin
-                wb_ram_stb_i = 1'b0;
-                wb_uart_stb_i = 1'b0;
-                wb_gpio_stb_i = 1'b0;
+                wb_ram_stb_i        = 1'b0;
+                wb_uart_stb_i       = 1'b0;
+                wb_gpio0_stb_i      = 1'b0;
+                wb_gpio1_stb_i      = 1'b0;
             end
         endcase
     end
@@ -263,9 +348,10 @@ module HydrogenSoC
     */
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
-            Device_RAM:     wb_dbus_ack_i = wb_ram_ack_o;
-            Device_UART:    wb_dbus_ack_i = wb_uart_ack_o;
-            Device_GPIO:    wb_dbus_ack_i = wb_gpio_ack_o;
+            Device_RAM:         wb_dbus_ack_i = wb_ram_ack_o;
+            Device_UART:        wb_dbus_ack_i = wb_uart_ack_o;
+            Device_GPIO0:       wb_dbus_ack_i = wb_gpio0_ack_o;
+            Device_GPIO1:       wb_dbus_ack_i = wb_gpio1_ack_o;
             default:
                 wb_dbus_ack_i = 1'b0;
         endcase

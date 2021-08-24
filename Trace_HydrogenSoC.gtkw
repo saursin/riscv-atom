@@ -1,92 +1,63 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Aug 19 18:48:55 2021
+[*] Tue Aug 24 12:25:44 2021
 [*]
 [dumpfile] "/home/frozenalpha/git/riscv/riscv-atom/build/trace/trace.vcd"
-[dumpfile_mtime] "Thu Aug 19 18:48:03 2021"
-[dumpfile_size] 20227731
+[dumpfile_mtime] "Tue Aug 24 12:24:46 2021"
+[dumpfile_size] 67163254
 [savefile] "/home/frozenalpha/git/riscv/riscv-atom/Trace_HydrogenSoC.gtkw"
-[timestart] 8
+[timestart] 149690
 [size] 1366 717
 [pos] -1 -1
-*-16.848547 104420 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-7.848547 150125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.HydrogenSoC.
 [treeopen] TOP.HydrogenSoC.atom_wb_core.
 [treeopen] TOP.HydrogenSoC.atom_wb_core.atom_core.
 [sst_width] 212
-[signals_width] 230
+[signals_width] 291
 [sst_expanded] 1
 [sst_vpaned_height] 184
 @28
-[color] 1
+[color] 4
 TOP.rst_i
-[color] 1
+[color] 4
 TOP.clk_i
-@c00023
-TOP.gpio_o[3:0]
-@28
-(0)TOP.gpio_o[3:0]
-(1)TOP.gpio_o[3:0]
-(2)TOP.gpio_o[3:0]
-(3)TOP.gpio_o[3:0]
-@1401201
--group_end
+[color] 7
+TOP.uart_tx_o
+[color] 7
+TOP.uart_rx_i
 @200
 -IBUS
 @22
-[color] 2
+[color] 1
 TOP.HydrogenSoC.wb_ibus_adr_o[31:0]
-@28
-[color] 2
-TOP.HydrogenSoC.wb_ibus_stb_o
-@22
-[color] 2
+[color] 1
 TOP.HydrogenSoC.wb_ibus_dat_i[31:0]
 @28
-[color] 2
+[color] 1
 TOP.HydrogenSoC.wb_ibus_ack_i
-TOP.HydrogenSoC.atom_wb_core.atom_core.imem_handshake
 @200
 -DBUS
 @22
-[color] 3
+[color] 2
 TOP.HydrogenSoC.wb_dbus_adr_o[31:0]
-@28
-[color] 3
-TOP.HydrogenSoC.wb_dbus_stb_o
-@22
-[color] 3
+[color] 2
+TOP.HydrogenSoC.wb_dbus_dat_i[31:0]
+[color] 2
+TOP.HydrogenSoC.wb_dbus_dat_o[31:0]
+[color] 2
 TOP.HydrogenSoC.wb_dbus_sel_o[3:0]
 @28
-[color] 3
+[color] 2
+TOP.HydrogenSoC.wb_dbus_stb_o
+[color] 2
 TOP.HydrogenSoC.wb_dbus_we_o
-@22
-[color] 3
-TOP.HydrogenSoC.wb_dbus_dat_o[31:0]
-[color] 3
-TOP.HydrogenSoC.wb_dbus_dat_i[31:0]
-@28
-[color] 3
+[color] 2
 TOP.HydrogenSoC.wb_dbus_ack_i
-TOP.HydrogenSoC.atom_wb_core.atom_core.dmem_handshake
+[color] 2
+TOP.HydrogenSoC.wb_gpio0_ack_o
 @200
--CORE
-@22
-TOP.HydrogenSoC.atom_wb_core.atom_core.ProgramCounter[31:0]
-TOP.HydrogenSoC.atom_wb_core.atom_core.ProgramCounter_Old[31:0]
-TOP.HydrogenSoC.atom_wb_core.atom_core.InstructionRegister[31:0]
-@28
-TOP.HydrogenSoC.atom_wb_core.atom_core.ignore_imem_handshake
-TOP.HydrogenSoC.atom_wb_core.atom_core.jump_decision
-TOP.HydrogenSoC.atom_wb_core.atom_core.stall_stage1
-TOP.HydrogenSoC.atom_wb_core.atom_core.stall_stage2
-TOP.HydrogenSoC.atom_wb_core.atom_core.d_rf_we
-TOP.HydrogenSoC.atom_wb_core.atom_core.rf.Data_We_i
-TOP.HydrogenSoC.atom_wb_core.atom_core.d_rf_din_sel[2:0]
-@22
-TOP.HydrogenSoC.atom_wb_core.atom_core.rf.Data_i[31:0]
-TOP.HydrogenSoC.atom_wb_core.atom_core.rf.regs(3)[31:0]
-TOP.HydrogenSoC.atom_wb_core.atom_core.rf.regs(5)[31:0]
+-UART
 [pattern_trace] 1
 [pattern_trace] 0

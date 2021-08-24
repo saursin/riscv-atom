@@ -1,7 +1,7 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
-#define GPIO_MAX_PINS 4
+#define GPIO_MAX_PINS 8
 #define GPIO_ADDR 0x08000100
 #define GPIO_HIGH 1
 #define GPIO_LOW 0

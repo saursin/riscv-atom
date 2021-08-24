@@ -19,7 +19,7 @@
 #
 ####################################################################
 # ========================== DIP Switches ==========================
-#NET DIP_SW_1 LOC = P80 | IOSTANDARD = LVCMOS33;
+NET "uart_mux_sel" LOC = P80 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_2 LOC = P81 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_3 LOC = P82 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_4 LOC = P83 | IOSTANDARD = LVCMOS33;
@@ -35,14 +35,14 @@ NET "gpio_o[0]" loc=p16 |IOSTANDARD = LVCMOS33;
 NET "gpio_o[1]" loc=p15 |IOSTANDARD = LVCMOS33;
 NET "gpio_o[2]" loc=p12 |IOSTANDARD = LVCMOS33;
 NET "gpio_o[3]" loc=p11 |IOSTANDARD = LVCMOS33;
-#NET "Value[4]" loc=p9 | IOSTANDARD = LVCMOS33;
-#NET "Value[5]" loc=p8 | IOSTANDARD = LVCMOS33;
-#NET "Value[6]" loc=p6 | IOSTANDARD = LVCMOS33;
-#NET "Value[7]" loc=p5 | IOSTANDARD = LVCMOS33;
+NET "gpio_o[4]" loc=p9 | IOSTANDARD = LVCMOS33;
+NET "gpio_o[5]" loc=p8 | IOSTANDARD = LVCMOS33;
+NET "gpio_o[6]" loc=p6 | IOSTANDARD = LVCMOS33;
+NET "gpio_o[7]" loc=p5 | IOSTANDARD = LVCMOS33;
 
 # ========================== USB-UART Bridge ==========================
-#NET USB_UART_RX LOC = P88 | IOSTANDARD = LVCMOS33;
-#NET USB_UART_TX LOC = P85 | IOSTANDARD = LVCMOS33;
+NET "uart_usb_rx_i" LOC = P88 | IOSTANDARD = LVCMOS33;
+NET "uart_usb_tx_o" LOC = P85 | IOSTANDARD = LVCMOS33;
  
 # ========================== Clock Sources ==========================
 NET "clk_i" LOC = P87 |IOSTANDARD = LVCMOS33;
@@ -61,10 +61,10 @@ NET "clk_i" LOC = P87 |IOSTANDARD = LVCMOS33;
 #NET FLASH_CLK LOC = P70 | IOSTANDARD = LVCMOS33;
 
 # ========================== User I/O - J1 ==========================
-#NET IO_J1_3 LOC = P22 | IOSTANDARD = LVCMOS33;
-#NET IO_J1_4 LOC = P21 | IOSTANDARD = LVCMOS33;
-#NET IO_J1_5 LOC = P24 | IOSTANDARD = LVCMOS33;
-#NET IO_J1_6 LOC = P23 | IOSTANDARD = LVCMOS33;
+NET "uart_io_tx_o" LOC = P22 | IOSTANDARD = LVCMOS33;
+NET "uart_io_rx_i" LOC = P21 | IOSTANDARD = LVCMOS33;
+NET "uart_tx_test_point_o" LOC = P24 | IOSTANDARD = LVCMOS33;
+NET "uart_rx_test_point_o" LOC = P23 | IOSTANDARD = LVCMOS33;
 #NET IO_J1_7 LOC = P27 | IOSTANDARD = LVCMOS33;
 #NET IO_J1_8 LOC = P26 | IOSTANDARD = LVCMOS33;
 #NET IO_J1_9 LOC = P30 | IOSTANDARD = LVCMOS33;
