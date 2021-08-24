@@ -137,7 +137,7 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 			end else
 			if (send_divcnt > cfg_divider && (send_bitcnt!=0)) begin
 				send_pattern <= {1'b1, send_pattern[9:1]};
-				send_bitcnt <= send_bitcnt - 1;
+				send_bitcnt <= send_bitcnt - 1'b1;
 				send_divcnt <= 0;
 			end
 		end

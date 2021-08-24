@@ -21,6 +21,7 @@ module GPIO
     output  wire    [3:0]   gpio_o
 );
 
+
 // Set Ack_o
 always @(posedge wb_clk_i) begin
   if (wb_rst_i)
@@ -47,7 +48,7 @@ always @(posedge wb_clk_i) begin
         if (we[3]) gpio_state[3]   <= wb_dat_i[24];
     end
 
-    wb_dat_o <= {{7{1'b0}}, gpio_state[3], {7{1'b0}}, gpio_state[2], {7{1'b0}}, gpio_state[1], {7{1'b0}}, gpio_state[0]};
+    wb_dat_o <= {7'b0000000, gpio_state[3], 7'b0000000, gpio_state[2], 7'b0000000, gpio_state[1], 7'b0000000, gpio_state[0]};
 end
 
 endmodule

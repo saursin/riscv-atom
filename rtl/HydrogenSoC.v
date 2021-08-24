@@ -28,8 +28,15 @@ module HydrogenSoC
     output wire [7:0] gpio_o,
 
     input   wire        uart_rx_i,
-    output  wire        uart_tx_o
+    output  wire        uart_tx_o,
+	 
+	 output 	wire 			uart_tx_test_point_o,
+	 output  wire			uart_rx_test_point_o
 );
+
+	assign uart_rx_test_point_o = uart_rx_i;
+	assign uart_tx_test_point_o = uart_tx_o;
+	
     //////////////////////////////////////////
     // SoC Parameters
 
@@ -242,6 +249,9 @@ module HydrogenSoC
     */
     reg [3:0] selected_device /* verilator public */;
     always @(*) begin /* COMBINATORIAL */
+		  // default 
+		  //selected_device = Device_None;
+		
         if(wb_dbus_cyc_o) begin
             if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h08000000)
                 selected_device = Device_RAM;
@@ -255,6 +265,7 @@ module HydrogenSoC
                 selected_device = Device_GPIO1;
 
             else begin
+					 selected_device = Device_None;
                 $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
                 $finish();
             end
@@ -290,6 +301,12 @@ module HydrogenSoC
         logic.
     */
     always @(*) begin /* COMBINATORIAL */
+		  // Defaults
+		  wb_ram_stb_i        = 1'b0;
+		  wb_uart_stb_i       = 1'b0;
+		  wb_gpio0_stb_i      = 1'b0;
+		  wb_gpio1_stb_i      = 1'b0;
+					 
         case(selected_device)
             Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
             Device_UART:        wb_uart_stb_i       = wb_dbus_stb_o;
