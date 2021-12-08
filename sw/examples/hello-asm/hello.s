@@ -50,4 +50,4 @@ putchar:
 
 .data
     msg:
-    .asciz "Hello World!\n      -- AtomBones\n\n"
+    .asciz "Hello World!\n      -- from Assembly\n\n"

@@ -1,0 +1,63 @@
+#!/bin/bash
+# set -x # display execution trace
+
+#------------------- BASH COLORS ------------------
+RED="\e[31m"
+GREEN="\e[32m"
+ORANGE="\e[33m"
+
+NOCOLOR="\e[0m"
+#--------------------------------------------------
+# Detect atomsim target
+detectedtarget=$(atomsim --simtarget)
+echo -e "${ORANGE}Detected atomsim target: $detectedtarget ${NOCOLOR}"
+
+# Detect current directory
+currdir=$(pwd)
+echo -e "${ORANGE}current directory: $currdir ${NOCOLOR}"
+
+#---------------------------------------------------
+for dir in $RVATOM/sw/examples/*/     # list directories in the form "/tmp/dirname/"
+do
+    dir=${dir%*/}      # remove the trailing "/"
+
+    # print everything after the final "/"
+    echo -e "------------------ Running Example: ${dir##*/} ------------------"
+   
+    # Switch directory
+    cd $dir
+
+    #-----------------------------------------------------------
+    # Compile & Run depending on detected target
+    if [[ $detectedtarget -eq atombones ]]
+    then
+        if [[ -f "compile.sh" ]]
+        then
+            echo -e "${GREEN}Compiling...${NOCOLOR}"
+            ./compile.sh
+
+            echo -e "${GREEN}Running...${NOCOLOR}"
+            atomsim *.elf
+        else
+            echo -e "${RED}!No compile script found ${NOCOLOR}"
+        fi
+    elif [[ $detectedtarget -eq hydrogensoc ]]
+    then
+        if [[ -f "compile_hydrogensoc.sh" ]]
+        then
+            echo -e "${GREEN}Compiling...${NOCOLOR}"
+            ./compile_hydrogensoc.sh
+
+            echo -e "${GREEN}Running...${NOCOLOR}"
+            atomsim *.elf
+        else
+            echo -e "${RED}!No compile script found ${NOCOLOR}"
+        fi
+    else
+        echo -e "${RED}!Unknown Target ${NOCOLOR}"
+    fi
+    
+    # return to current directory
+    cd $currdir
+   
+done

@@ -3,7 +3,7 @@
 
 void main()
 {
-    const char hello[] = "Hello RISC-V!\n";
+    const char hello[] = "Hello World!\n      -- from C\n\n";
     print_str(hello);
     return;
 }
