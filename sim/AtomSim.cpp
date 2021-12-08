@@ -79,7 +79,7 @@ std::string signature_file 	= "";
 #ifdef TARGET_ATOMBONES
 
 // Define target name
-const std::string atomsim_target_name = "Atombones";
+const std::string atomsim_target_name = "atombones";
 
 // Include Backend
 #include "Backend_AtomBones.hpp"
@@ -93,7 +93,7 @@ unsigned long int mem_size = default_mem_size;
 #ifdef TARGET_HYDROGENSOC
 
 // Define target name
-const std::string atomsim_target_name = "Hydrogensoc";
+const std::string atomsim_target_name = "hydrogensoc";
 
 // Include Backend
 #include "Backend_HydrogenSoC.hpp"
@@ -158,6 +158,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
+		("simtarget", "Show current AtomSim Target")
 		("i,input", "Specify an input file", cxxopts::value<std::string>(infile));
 		
 		options.add_options("Config")
@@ -202,6 +203,11 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		if (result.count("version"))
 		{
 			std::cout << Info_version << std::endl << Info_copyright << std::endl;
+			exit(EXIT_SUCCESS);
+		}
+		if (result.count("simtarget"))
+		{
+			std::cout << atomsim_target_name << std::endl;
 			exit(EXIT_SUCCESS);
 		}
 		if (result.count("input")>1)
