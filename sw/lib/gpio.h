@@ -30,7 +30,7 @@ void gpio_init()
 }
 
 /**
- * @brief read current gpio value
+ * @brief Read the current GPIO pin values
  * 
  * @param pin pin number
  * @return int pin value
