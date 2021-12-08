@@ -78,6 +78,9 @@ std::string signature_file 	= "";
 // ====== Backend specific definitions =====
 #ifdef TARGET_ATOMBONES
 
+// Define target name
+const std::string atomsim_target_name = "Atombones";
+
 // Include Backend
 #include "Backend_AtomBones.hpp"
 
@@ -88,6 +91,9 @@ const unsigned long int default_mem_size = (128*1024*1024) + 3 + 1;
 unsigned long int mem_size = default_mem_size;
 #else
 #ifdef TARGET_HYDROGENSOC
+
+// Define target name
+const std::string atomsim_target_name = "Hydrogensoc";
 
 // Include Backend
 #include "Backend_HydrogenSoC.hpp"
@@ -144,7 +150,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 	try
 	{
 		// Usage Message Header
-		cxxopts::Options options(argv[0], std::string(Info_version)+"\nRTL simulator for Atom based systems");
+		cxxopts::Options options(argv[0], std::string(Info_version)+"\nRTL simulator for Atom based systems [ "+atomsim_target_name+" ]");
 		
 		options.positional_help("input").show_positional_help();
 
