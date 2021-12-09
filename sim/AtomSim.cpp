@@ -202,7 +202,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		}
 		if (result.count("version"))
 		{
-			std::cout << Info_version << std::endl << Info_copyright << std::endl;
+			std::cout << Info_version << " [ " << atomsim_target_name <<" ] "<< std::endl << Info_copyright << std::endl;
 			exit(EXIT_SUCCESS);
 		}
 		if (result.count("simtarget"))
