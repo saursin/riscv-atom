@@ -27,13 +27,16 @@ do
     # Switch directory
     cd $dir
 
+    # clear any existing elfs
+    rm -f *.elf
+    
     #-----------------------------------------------------------
     # Compile & Run depending on detected target
-    if [[ $detectedtarget -eq atombones ]]
+    if [[ ${detectedtarget} = "atombones" ]]
     then
         if [[ -f "compile.sh" ]]
         then
-            echo -e "${GREEN}Compiling...${NOCOLOR}"
+            echo -e "${GREEN}Compiling for atombones...${NOCOLOR}"
             ./compile.sh
 
             echo -e "${GREEN}Running...${NOCOLOR}"
@@ -41,11 +44,11 @@ do
         else
             echo -e "${RED}!No compile script found ${NOCOLOR}"
         fi
-    elif [[ $detectedtarget -eq hydrogensoc ]]
+    elif [[ ${detectedtarget} = "hydrogensoc" ]]
     then
         if [[ -f "compile_hydrogensoc.sh" ]]
         then
-            echo -e "${GREEN}Compiling...${NOCOLOR}"
+            echo -e "${GREEN}Compiling for hydrogensoc...${NOCOLOR}"
             ./compile_hydrogensoc.sh
 
             echo -e "${GREEN}Running...${NOCOLOR}"
