@@ -116,7 +116,19 @@ help : Makefile
 sim: buildFor directories $(bin_dir)/$(sim_executable)
 
 buildFor:
-	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target) $(COLOR_NC)"
+	@echo -n "$(COLOR_GREEN)>> Checking for existing build target... $(COLOR_NC)"
+	
+	@if [ -f $(bin_dir)/$(sim_executable) ]; then \
+	echo "Found for target: $(shell atomsim --simtarget)"; \
+	if [ $(shell atomsim --simtarget) != $(Target) ]; then \
+	echo "$(COLOR_GREEN)>> Removing existing build... $(COLOR_NC)"; \
+	make clean; \
+	fi; \
+	else \
+	echo "Not found"; \
+	fi;
+
+	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target)... $(COLOR_NC)"
 
 
 # Check directories

@@ -45,9 +45,9 @@ module simpleuart_wb
 */
 
 // register values
-wire [7:0]  reg_status;
-wire [7:0]  reg_data;
-wire [31:0] reg_div;
+wire [7:0]  reg_status /* verilator public */;
+wire [7:0]  reg_data /* verilator public */;
+wire [31:0] reg_div /* verilator public */;
 
 // Register selection
 localparam SDReg = 1'b0;        // Status and Data register
@@ -60,8 +60,8 @@ wire select_cd_reg = !select_sd_reg;
 assign  wb_dat_o    = select_cd_reg ? reg_div : {16'd0, reg_status, reg_data};
 
 // Write enables
-wire    [3:0]   reg_div_we  = select_cd_reg ? {4{wb_we_i & wb_stb_i}} & wb_sel_i : 4'b0000;
-wire            reg_data_we = select_sd_reg ? wb_we_i & wb_stb_i & wb_sel_i[0] : 1'b0;
+wire    [3:0]   reg_div_we /* verilator public */ = select_cd_reg ? {4{wb_we_i & wb_stb_i}} & wb_sel_i : 4'b0000;
+wire            reg_data_we /* verilator public */ = select_sd_reg ? wb_we_i & wb_stb_i & wb_sel_i[0] : 1'b0;
 
 // Read enables
 reg reg_data_re = 0;

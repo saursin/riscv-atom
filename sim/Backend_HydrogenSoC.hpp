@@ -13,7 +13,7 @@
 
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortROM_wb__pi1.h"
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
-//#include "../build/vobj_dir/VHydrogenSoC_DummyUART.h"
+#include "../build/vobj_dir/VHydrogenSoC_simpleuart_wb.h"
 
 const unsigned int hault_opcode = 0x100073; // ebreak
 
@@ -100,9 +100,19 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 * -	writes any output to stdout.
 	 * -	Read any input from stdin.
 	 */
-	/*void dummyUART()
+	void dummyUART()
 	{
-		static uint8_t TX=0, RX=0, SREG=0;
+		static char outchar;
+		// Detect writes to baud register
+		// if (tb->m_core->HydrogenSoC->uart->reg_div_we)
+		// {
+		// 	baud = tb->m_core->HydrogenSoC->uart->reg_div;
+		// }
+
+		if(tb->m_core->HydrogenSoC->uart->reg_data_we == 1)
+		{
+			std::cout << "." << (char)tb->m_core->HydrogenSoC->uart->reg_data;
+		}
 
 		/*
 			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
@@ -114,7 +124,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			operation is perfomed only once per transaction.
 		*/
 
-	/*	static int wait_count = 0; // track number of cycles passed
+		/*static int wait_count = 0; // track number of cycles passed
 		if(tb->m_core->HydrogenSoC->__PVT__wb_uart_stb_i && !tb->m_core->HydrogenSoC->uart->__PVT__wb_ack_o)
 		{
 			wait_count++;	// transaction not finished yet
@@ -146,8 +156,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0100)
 					SREG = (((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x00ff0000) >> 16;
 			}
-		}
-	}*/
+		}*/
+	}
 
 	/**
 	 * @brief Tick for one cycle
@@ -277,7 +287,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		}
 
 		// Serial port Emulator: Rx Listener
-		//dummyUART();
+		dummyUART();
 	}
 
 	void dumpmem(std::string file)
