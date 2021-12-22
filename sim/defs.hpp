@@ -245,9 +245,10 @@ void fWrite (std::vector<std::string> data, std::string filepath)
  * @brief Get the Stdout From shell Command
  * 
  * @param cmd shell command to execute
+ * @param get_output if true, returns stdout, else moves on(even if command isn't still complete)
  * @return std::string command output
  */
-std::string GetStdoutFromCommand(std::string cmd) {
+std::string GetStdoutFromCommand(std::string cmd, bool get_output = true) {
 
   std::string data;
   FILE * stream;
@@ -257,7 +258,7 @@ std::string GetStdoutFromCommand(std::string cmd) {
 
   stream = popen(cmd.c_str(), "r");
 
-  if (stream) {
+  if (get_output && stream) {
     while (!feof(stream))
       if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
     pclose(stream);
@@ -317,3 +318,207 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 	}
 	return dis;
 }
+
+
+/**
+ * @brief Vuart Module
+ * Encapsulates the functionality of a virtual uart port with the help of the a modified version of 
+ * the CppLinuxSerial Library. The library has been modified to use only a 1 byte recieve buffer in 
+ * order to enable character by character send/recieve rather than string by string.
+ * @see https://github.com/gbmhunter/CppLinuxSerial
+ * 
+ */
+class Vuart
+{
+    private:
+    /**
+     * @brief pointer to the serial port object
+     */
+    mn::CppLinuxSerial::SerialPort * port;
+
+    /**
+     * @brief Serial port Baudrate
+     */
+    mn::CppLinuxSerial::BaudRate port_baudrate;
+
+    /**
+     * @brief current state of the port
+     */
+    bool isopen = false;
+
+    public:
+    /**
+     * @brief Construct a new Vuart object
+     * 
+     * @param portname name of the port
+     * @param baud baudrate
+     */
+    Vuart(std::string portname, int baud=9600)
+    {
+        // set baud rate
+        setbaud(baud);
+
+        // create a new port object
+        try
+        {
+            port = new mn::CppLinuxSerial::SerialPort(portname, port_baudrate);
+        }
+        catch(const mn::CppLinuxSerial::Exception& e)
+        {
+            throwError("VUART", e.what(), true);
+        }
+
+        /* Set timeout to 0: i.e. Non blocking Mode
+            This (paired with 1 byte recieve buffer of the library) enables the latest pressed key 
+            on the keyboard to be returned while calling recieve().
+        */
+        port->SetTimeout(0);
+
+        // Open port
+        openPort(true);
+    }
+
+
+    /**
+     * @brief Destroy the Vuart object
+     */
+    ~Vuart()
+    {
+        // close port
+        closePort(true);
+
+        // destroy port object
+        delete port;
+    }
+
+
+    /**
+     * @brief set baud rate
+     * 
+     * @param baud 
+     */
+    void setbaud(unsigned int baud=9600)
+    {
+        switch(baud)
+        {
+            case 9600:
+                port_baudrate=mn::CppLinuxSerial::BaudRate::B_9600; break;
+            case 19200:
+                port_baudrate=mn::CppLinuxSerial::BaudRate::B_19200; break;
+            case 115200:
+                port_baudrate=mn::CppLinuxSerial::BaudRate::B_115200; break;
+            
+            default:
+                throwError("VPORT_BAUD", "INVALID BAUD RATE: "+std::to_string(baud), true);
+                return;
+        }
+
+        // if already opened
+        if(isopen)
+        {
+            // Close port, change baudrate, and reopen
+            closePort(true);
+
+            port->SetBaudRate(port_baudrate);
+            
+            openPort(true);
+        }
+    }
+
+
+    /**
+     * @brief Get currently used baudrate
+     * 
+     * @return int baudrate
+     */
+    unsigned int getbaud()
+    {
+        switch(port_baudrate)
+        {
+            case mn::CppLinuxSerial::BaudRate::B_9600:
+                return 9600;
+            case mn::CppLinuxSerial::BaudRate::B_19200:
+                return 19200;
+            case mn::CppLinuxSerial::BaudRate::B_115200:
+                return 115200;
+            
+            default: 
+                return -1;  // unknown baud
+        }
+    }
+
+    /**
+     * @brief Returns current state of the port
+     * 
+     * @return true if open 
+     * @return false if closed
+     */
+    bool isOpen()
+    {
+        return isopen;
+    }
+
+
+    /**
+     * @brief Send a charactr to uvart
+     * 
+     * @param c character
+     */
+    void send(char c)
+    {
+        std::vector<uint8_t> vec;
+        vec.push_back((uint8_t) c);
+        port->WriteBinary(vec);
+    }
+
+
+    /**
+     * @brief Immediately returns the char present in the recieve buffer
+     *        if no chr present returns 255 i.e. -1
+     * 
+     * @return char character
+     */
+    char recieve()
+    {        
+        std::vector<uint8_t> vec;
+        port->ReadBinary(vec);
+
+        if(vec.size()==0)
+            return -1;
+        else
+            return (char) vec[0];
+    }
+
+
+    /**
+     * @brief Cleans the 1 bit recieve buffer for any garbage
+     */
+    void clean_recieve_buffer()
+    {
+        char c;
+        do
+        {
+            c = recieve();  // dump garbage
+        } while(c != -1);
+    }
+
+    // Helper functions
+    private:
+    inline void openPort(bool verbose=true)
+    {
+        port->Open();
+        isopen = true;
+
+        if(verbose)
+            port->Write("\r\nVuart::Atomsim connected! (baud:"+std::to_string(getbaud())+")\r\n");
+    }
+
+    inline void closePort(bool verbose=true)
+    {
+        if(verbose)
+            port->Write("\r\nVuart::Atomsim disconnected!\r\n");
+
+        port->Close();
+        isopen = false;
+    }
+};
