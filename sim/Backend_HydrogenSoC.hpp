@@ -25,6 +25,10 @@ const unsigned int hault_opcode = 0x100073; // ebreak
 class Backend_AtomSim: public Backend<VHydrogenSoC>
 {
 	public:
+	/**
+	 * @brief Pointer to Vuart object
+	 */
+	Vuart *vuart = nullptr;
 
 	/**
 	 * @brief Construct a new Backend object
@@ -40,24 +44,37 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			ExitAtomSim("", true);
 		}
 
-        // Construct Testbench object
-        tb = new Testbench<VHydrogenSoC>();
+		// Construct Testbench object
+		tb = new Testbench<VHydrogenSoC>();
 
 		// get input file disassembly
 		disassembly = getDisassembly(ifile);
 
 		// ====== Initialize ========
-		
+
 		// Initialize CPU state by resetting
 		reset();
 		tb->m_core->eval();
 
-        // get initial signal values
-        refreshData();
+		// get initial signal values
+		refreshData();
+
+		// ====== Initialize VUART ========
+
+		// create a new vuart object
+		if(vuart_portname != "Null")
+		{	
+			vuart = new Vuart(vuart_portname, vuart_baudrate);
+				
+			// Clean recieve buffer
+			vuart->clean_recieve_buffer();
+
+			if(verbose_flag)
+				std::cout << "Connected to VUART ("+vuart_portname+") at "+std::to_string(vuart_baudrate)+" bps" << std::endl;
+		}
 
 		if (verbose_flag)
 			std::cout << "Initialization complete!\n";
-		
 	}
 
 	/**
@@ -65,6 +82,10 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 */
 	~Backend_AtomSim()
 	{
+		// destroy vuart object
+		if(vuart != nullptr)
+			delete vuart;
+
 		delete tb;
 	}
 
@@ -95,68 +116,63 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	}
 
 	/**
-	 * @brief Performs DummyUART Transactions. 
-	 * -	Maintains internal state of dummy uart
-	 * -	writes any output to stdout.
-	 * -	Read any input from stdin.
+	 * @brief Performs UART Transactions. 
 	 */
-	void dummyUART()
+	void UART()
 	{
-		static char outchar;
-		// Detect writes to baud register
-		// if (tb->m_core->HydrogenSoC->uart->reg_div_we)
-		// {
-		// 	baud = tb->m_core->HydrogenSoC->uart->reg_div;
-		// }
-
-		if(tb->m_core->HydrogenSoC->uart->reg_data_we == 1)
-		{
-			std::cout << "." << (char)tb->m_core->HydrogenSoC->uart->reg_data;
-		}
-
+		// --------- Atom->port -----------
 		/*
 			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
 			the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
 			of dummyUART, it sees the we pin high for multiple cycles and it may mistakenly infer it
 			as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
-			Wait_cycles variable tracks the number of cycles after the transaction was started by 
-			master, and at wait_cycles == 1, we perform the read/write operation. Hence read/write 
-			operation is perfomed only once per transaction.
+			When we fine 'we' asserted, we read the value and wait for 2 cycles after it. This 
+			prevents multiple reads of data in same transaction.
+		*/		
+		static int wait = 0;
+
+		if(wait==0 && tb->m_core->HydrogenSoC->uart->reg_data_we)
+		{
+			char c = (char)tb->m_core->HydrogenSoC->uart->wb_dat_i;
+
+			if (vuart_portname != "Null")
+				vuart->send(c);
+			else
+				std::cout << c;
+
+			wait=2;	// Wait for 2 cycles
+		}
+		
+		if(wait>0)
+		{
+			wait--;
+		}
+
+		// --------- Port->atom -----------
+		/*
+			This section of code deals with port to sim uart communication. port->recieve() is 
+			called in every sim cycle (sim tick). value of recieve buffer is stored in 'recv' 
+			variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
+			dummy hardware register of simpluart_wb, and set bit[0] of status register.
 		*/
-
-		/*static int wait_count = 0; // track number of cycles passed
-		if(tb->m_core->HydrogenSoC->__PVT__wb_uart_stb_i && !tb->m_core->HydrogenSoC->uart->__PVT__wb_ack_o)
+		static char recv;
+		recv = vuart->recieve();
+				
+		if(recv != (char)-1)	// something recieved
 		{
-			wait_count++;	// transaction not finished yet
-		}
-		else
-		{
-			wait_count = 0;	// transaction is finished
+			tb->m_core->HydrogenSoC->uart->reg_status = 1;
+			tb->m_core->HydrogenSoC->uart->reg_data = recv;
 		}
 
-
-		// Check Uart Module is selected by dbus && wait cycles == 1
-		if(tb->m_core->HydrogenSoC->__PVT__wb_uart_stb_i && wait_count==1)	
+		/*
+			If atom core tries to read data register, clear the data register (put -1) and clear 
+			status bit[0].
+		*/
+		if(tb->m_core->HydrogenSoC->uart->reg_data_re)
 		{
-			if(tb->m_core->HydrogenSoC->uart->writeEn == 0)	// Perfom Reads
-			{
-				tb->m_core->HydrogenSoC->uart->outWord = (((uint32_t)SREG) << 16) | (((uint32_t)TX) << 8) | ((uint32_t)RX);
-			}
-			else	// Perform Writes
-			{
-				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0001)
-					RX = ((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x000000ff;
-				
-				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0010)
-				{
-					TX = (((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x0000ff00) >> 8;
-					std::cout << (char) TX;
-				}
-				
-				if(tb->m_core->HydrogenSoC->uart->writeEn & 0b0100)
-					SREG = (((uint32_t)tb->m_core->HydrogenSoC->uart->inWord) & 0x00ff0000) >> 16;
-			}
-		}*/
+			tb->m_core->HydrogenSoC->uart->reg_status = 0;
+			tb->m_core->HydrogenSoC->uart->reg_data = (char)-1;
+		}
 	}
 
 	/**
@@ -191,7 +207,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			if(dump_regs_on_ebreak)
 			{
 				std::vector<std::string> fcontents;
-				
+
 				for(int i=0; i<34; i++)
 				{
 					char temp [50];
@@ -217,7 +233,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 
 				ELFIO::elfio reader;
 
-				if (!reader.load(ifile)) 
+				if (!reader.load(ifile))	
 				{
 					throwError("SIG", "Can't find or process ELF file : " + ifile + "\n", true);
 				}
@@ -226,22 +242,23 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 				for ( ELFIO::Elf_Half i = 0; i < n; ++i )  // For all sections
 				{
 					ELFIO::section* sec = reader.sections[i];
-					if ( SHT_SYMTAB == sec->get_type() || SHT_DYNSYM == sec->get_type() ) 
+					if ( SHT_SYMTAB == sec->get_type() || SHT_DYNSYM == sec->get_type() )	
 					{
 						ELFIO::symbol_section_accessor symbols( reader, sec );
 						ELFIO::Elf_Xword sym_no = symbols.get_symbols_num();
-						if ( sym_no > 0 ) 
+						if ( sym_no > 0 )	
 						{	
-							for ( ELFIO::Elf_Xword i = 0; i < sym_no; ++i ) {
-								std::string   name;
+							for ( ELFIO::Elf_Xword i = 0; i < sym_no; ++i )
+							{
+								std::string name;
 								ELFIO::Elf64_Addr value = 0;
-								ELFIO::Elf_Xword size	= 0;
-								unsigned char bind    	= 0;
-								unsigned char type    	= 0;
+								ELFIO::Elf_Xword size = 0;
+								unsigned char bind = 0;
+								unsigned char type = 0;
 								ELFIO::Elf_Half section = 0;
-								unsigned char other   	= 0;
-								symbols.get_symbol( i, name, value, size, bind, type,
-													section, other );
+								unsigned char other = 0;
+								symbols.get_symbol(i, name, value, size, bind, type,
+												   section, other);
 
 								if (name == "begin_signature")
 									begin_signature_at = value;
@@ -286,8 +303,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			ExitAtomSim("");
 		}
 
-		// Serial port Emulator: Rx Listener
-		dummyUART();
+		// Serial port Emulator
+		UART();
 	}
 
 	void dumpmem(std::string file)
