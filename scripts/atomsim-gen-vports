@@ -1,0 +1,22 @@
+#!/bin/bash
+
+############################################################################
+## Used to create virtual uart ports in /dev/pty and link them to two files
+
+USERPORT=$RVATOM/vuart_user
+SIMPORT=$RVATOM/vuart_sim
+
+if [[ $1 == -v ]]
+then
+    echo "simport : $SIMPORT"
+    echo "userport: $USERPORT"
+
+    echo -n "Generating Virtual UART Ports... "
+fi
+
+socat pty,link=$USERPORT,echo=0 pty,link=$SIMPORT,echo=0 &
+
+if [[ $1 == -v ]]
+then
+    echo " Done!"
+fi
