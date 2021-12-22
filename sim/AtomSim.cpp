@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "include/cxxopts/cxxopts.hpp"
+#include "include/CppLinuxSerial/include/SerialPort.hpp"
 
 // ===== Prototypes =====
 void ExitAtomSim(std::string message, bool exit_with_error=false);
@@ -67,6 +68,13 @@ std::string dump_dir = default_dump_dir;
 
 // Signature file
 std::string signature_file 	= "";
+
+// VUART port
+const std::string default_vuart_portname = "Null";
+std::string vuart_portname 	= default_vuart_portname;
+
+const unsigned int default_vuart_baudrate = 9600;
+unsigned int vuart_baudrate	= default_vuart_baudrate;
 
 #include "defs.hpp"
 
@@ -163,9 +171,10 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		
 		options.add_options("Config")
 		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr)->default_value(std::to_string(default_maxitr)))
+		("vuart", "use provided virtual uart port", cxxopts::value<std::string>(vuart_portname)->default_value(default_vuart_portname))
+		("vuart-baud", "Specify virtual uart port baudrate", cxxopts::value<unsigned int>(vuart_baudrate)->default_value(std::to_string(default_vuart_baudrate)))
 		#ifdef TARGET_ATOMBONES
 		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size)->default_value(std::to_string(default_mem_size)))
-		("uart-broadcast", "enable uart broadcasting over", cxxopts::value<unsigned long int>(mem_size)->default_value(std::to_string(default_mem_size)))
 		#endif
 		;
 
