@@ -1,6 +1,6 @@
 /* 
     ========================================
-            Statup code for AtomRVSoC
+            Startup code for Atom
     ========================================
 */
 
@@ -17,17 +17,26 @@ _start:
 
     # copy data from rom to ram
     # (not needed)
+    # la	a0, __data_start
+	# la	a1, __data_source
+	# la	a2, __data_size
+	# call	memcpy
     
     # initialize bss section 
     # (not needed)
+    # la	a0, __bss_start
+	# li	a1, 0
+	# la	a2, __bss_size
+	# call	memset
 
     # ===== Call main =====
+    li  a0, 0
+    li  a1, 0
     jal main
 
-
 _exit:
-    ebreak
-
+    ebreak  # Exit simulation
+    j _exit
 
 
 /* 
