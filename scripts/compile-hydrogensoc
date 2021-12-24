@@ -1,0 +1,4 @@
+#!/bin/bash
+riscv64-unknown-elf-gcc -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding \
+-I $RVATOM_LIB/include -L $RVATOM_LIB -T $RVATOM_LIB/link/link_hydrogensoc.ld -DTARGET_HYDROGENSOC \
+$* -lcatom -Wl,--gc-sections
