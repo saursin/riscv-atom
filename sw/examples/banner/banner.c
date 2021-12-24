@@ -1,6 +1,5 @@
-#include "../../lib/atombones.h"
-#include "../../lib/stdio.h"
-
+#include "stdio.h"
+#include "stdlib.h"
 
 char * banner = 
 "\n"
@@ -31,9 +30,11 @@ char * banner =
 
 int main()
 {
-    print_str(banner);
+    puts(banner);
 
-    print_str("UART tx at : 0x"); print_hex(IO_UART_TX_ADDRESS, 8); print_chr('\n');
-    print_str("UART rx at : 0x"); print_hex(IO_UART_RX_ADDRESS, 8); print_chr('\n');
+    char c[50];
+    gets(c, 50, 1, NULL);
+    int n = atoi(c);
+    printf("8th multiple of %d is %d", n, n*3);
     return 0;
 }
