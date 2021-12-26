@@ -1,8 +1,7 @@
 .global main
 .text
 
-.equ TX_ADDRESS, 0x08000001
-.equ TX_ACK_ADDRESS, 0x08000002
+.equ TX_ADDRESS, 0x08000000
 
 main:
     la a0, msg
@@ -37,9 +36,6 @@ putstr:
 
 putchar:
     # a0 = character
-
-    # t0 = tx_ack_address
-    li t0, TX_ACK_ADDRESS
 
     # t1 = tx_address
     li t1, TX_ADDRESS

@@ -1,4 +1,5 @@
-#include "../../lib/stdio.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void myprint(int num, int digits)
 {
@@ -16,10 +17,10 @@ void myprint(int num, int digits)
     for(i=digits-1; i>=0; i--)
     {
         if(arr[i]==0 && flag == 0)
-            print_chr(' ');
+            putchar(' ');
         else
         {
-            print_int(arr[i], 10);
+            putint(arr[i], 10);
             flag = 1;
         }
     }
@@ -33,11 +34,16 @@ void myprint(int num, int digits)
 int main() {
    int rows = 8, coef = 1, space, i, j;
 
-   print_str("First "); print_int(rows, 10); print_str(" rows of pascal's triangle...\n");
+   printf("Enter number of rows to display: ");
+   char buf[10];
+   gets(buf, 10, 1, NULL);
+   rows = atoi(buf);
+
+   printf("First %d rows of pascal's triangle...\n", rows);
    
    for (i = 0; i < rows; i++) {
       for (space = 1; space <= rows - i; space++)
-         print_str("  ");
+         printf("  ");
       for (j = 0; j <= i; j++) {
          if (j == 0 || i == 0)
             coef = 1;
@@ -47,7 +53,7 @@ int main() {
          myprint(coef, 4);
          //print_int(coef, 10);
       }
-      print_chr('\n');
+      putchar('\n');
    }
    return 0;
 }
