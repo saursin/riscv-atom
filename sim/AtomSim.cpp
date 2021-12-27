@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "include/cxxopts/cxxopts.hpp"
+#include "include/CppLinuxSerial/include/SerialPort.hpp"
 
 // ===== Prototypes =====
 void ExitAtomSim(std::string message, bool exit_with_error=false);
@@ -68,6 +69,13 @@ std::string dump_dir = default_dump_dir;
 // Signature file
 std::string signature_file 	= "";
 
+// VUART port
+const std::string default_vuart_portname = "Null";
+std::string vuart_portname 	= default_vuart_portname;
+
+const unsigned int default_vuart_baudrate = 9600;
+unsigned int vuart_baudrate	= default_vuart_baudrate;
+
 #include "defs.hpp"
 
 // ===== Other Configurations =====
@@ -77,6 +85,9 @@ std::string signature_file 	= "";
 
 // ====== Backend specific definitions =====
 #ifdef TARGET_ATOMBONES
+
+// Define target name
+const std::string atomsim_target_name = "atombones";
 
 // Include Backend
 #include "Backend_AtomBones.hpp"
@@ -88,6 +99,9 @@ const unsigned long int default_mem_size = (128*1024*1024) + 3 + 1;
 unsigned long int mem_size = default_mem_size;
 #else
 #ifdef TARGET_HYDROGENSOC
+
+// Define target name
+const std::string atomsim_target_name = "hydrogensoc";
 
 // Include Backend
 #include "Backend_HydrogenSoC.hpp"
@@ -144,7 +158,7 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 	try
 	{
 		// Usage Message Header
-		cxxopts::Options options(argv[0], std::string(Info_version)+"\nRTL simulator for Atom based systems");
+		cxxopts::Options options(argv[0], std::string(Info_version)+"\nRTL simulator for Atom based systems [ "+atomsim_target_name+" ]");
 		
 		options.positional_help("input").show_positional_help();
 
@@ -152,13 +166,15 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
+		("simtarget", "Show current AtomSim Target")
 		("i,input", "Specify an input file", cxxopts::value<std::string>(infile));
 		
 		options.add_options("Config")
 		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(maxitr)->default_value(std::to_string(default_maxitr)))
+		("vuart", "use provided virtual uart port", cxxopts::value<std::string>(vuart_portname)->default_value(default_vuart_portname))
+		("vuart-baud", "Specify virtual uart port baudrate", cxxopts::value<unsigned int>(vuart_baudrate)->default_value(std::to_string(default_vuart_baudrate)))
 		#ifdef TARGET_ATOMBONES
 		("memsize", "Specify size of memory to simulate", cxxopts::value<unsigned long int>(mem_size)->default_value(std::to_string(default_mem_size)))
-		("uart-broadcast", "enable uart broadcasting over", cxxopts::value<unsigned long int>(mem_size)->default_value(std::to_string(default_mem_size)))
 		#endif
 		;
 
@@ -195,7 +211,12 @@ void parse_commandline_args(int argc, char**argv, std::string &infile)
 		}
 		if (result.count("version"))
 		{
-			std::cout << Info_version << std::endl << Info_copyright << std::endl;
+			std::cout << Info_version << " [ " << atomsim_target_name <<" ] "<< std::endl << Info_copyright << std::endl;
+			exit(EXIT_SUCCESS);
+		}
+		if (result.count("simtarget"))
+		{
+			std::cout << atomsim_target_name << std::endl;
 			exit(EXIT_SUCCESS);
 		}
 		if (result.count("input")>1)

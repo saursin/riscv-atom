@@ -1,16 +1,7 @@
-#include "../../lib/atombones.h"
-#include "../../lib/stdio.h"
-#include "../../lib/gpio.h"
-
-#define DELAY_SCALING_FACTOR 10000
-
-void delay(long count)
-{
-    long i=0;
-    while(i++<count*DELAY_SCALING_FACTOR);
-    return;
-}
-
+#include <defs.h>
+#include <stdio.h>
+#include <gpio.h>
+#include <time.h>
 
 void main()
 {
@@ -27,7 +18,7 @@ void main()
         {
             gpio_set((pin), !gpio_get(pin));
             
-            if(pin>=GPIO_MAX_PINS-1)
+            if(pin>=GPIO_PINCOUNT-1)
                 pin = 0;
             else
                 pin++;
@@ -42,7 +33,7 @@ void main()
         // Effect-2: Blinking effect
         for(i=0; i<4; i++)
         {
-            for(pin=0; pin<GPIO_MAX_PINS; pin++)
+            for(pin=0; pin<GPIO_PINCOUNT; pin++)
             {
                 gpio_set((pin), !gpio_get(pin));
                 delay(10);

@@ -44,8 +44,8 @@ doxygen_config_file = $(doc_dir)/Doxyfile
 
 # CPP Configs
 CC = g++
-CFLAGS = -c -Wall
-LFLAGS =
+CFLAGS = -c -Wall 
+LFLAGS = -L ${sim_dir}/include/CppLinuxSerial/ -lCppLinuxSerial
 INCLUDES = -I $(vobject_dir) -I /usr/share/verilator/include -I /usr/share/verilator/include/vltstd
 
 cpp_driver = $(sim_dir)/AtomSim.cpp
@@ -54,7 +54,7 @@ Target = atombones
 
 # Verilog Configs
 VC = verilator
-VFLAGS = -cc -Wall --relative-includes --trace
+VFLAGS = -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__ --top-module HydrogenSoC
 
 # Target Specific definitions
 ifeq ($(Target), atombones)
@@ -116,7 +116,19 @@ help : Makefile
 sim: buildFor directories $(bin_dir)/$(sim_executable)
 
 buildFor:
-	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target) $(COLOR_NC)"
+	@echo -n "$(COLOR_GREEN)>> Checking for existing build target... $(COLOR_NC)"
+	
+	@if [ -f $(bin_dir)/$(sim_executable) ]; then \
+	echo "Found for target: $(shell atomsim --simtarget)"; \
+	if [ $(shell atomsim --simtarget) != $(Target) ]; then \
+	echo "$(COLOR_GREEN)>> Removing existing build... $(COLOR_NC)"; \
+	make clean; \
+	fi; \
+	else \
+	echo "Not found"; \
+	fi;
+
+	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target)... $(COLOR_NC)"
 
 
 # Check directories
@@ -172,7 +184,7 @@ $(cobject_dir)/verilated_vcd.o: /usr/share/verilator/include/verilated_vcd_c.cpp
 # Link & Create executable
 $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(cobject_dir)/atomsim.o $(cobject_dir)/verilated.o $(cobject_dir)/verilated_vcd.o
 	@echo "$(COLOR_GREEN)Linking shared object and driver to create executable...$(COLOR_NC)"
-	$(CC) $(LFLAGS) $^ -o $@
+	$(CC) $^ -o $@ $(LFLAGS)
 
 
 

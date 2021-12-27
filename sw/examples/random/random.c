@@ -1,22 +1,22 @@
-#include "../../lib/stdio.h"
-#include "../../lib/stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void main()
 {
     int i=0;
     for(i=0; i<10; i++)
     {   
-        print_int(rand(), 10);
-        print_chr('\n');
+        putint(rand(), 10);
+        putchar('\n');
     }
 
     srand(0x50505);
-    print_chr('\n');
+    putchar('\n');
 
     for(i=0; i<10; i++)
     {   
-        print_int(rand(), 10);
-        print_chr('\n');
+        putint(rand(), 10);
+        putchar('\n');
     }
 
     return;

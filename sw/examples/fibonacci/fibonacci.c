@@ -1,5 +1,4 @@
-#include "../../lib/atombones.h"
-#include "../../lib/stdio.h"
+#include <stdio.h>
 
 void printFibonacci(int n){    
     static int pprev=0, prev=1, curr;    
@@ -7,8 +6,8 @@ void printFibonacci(int n){
         curr = prev + pprev;
         pprev = prev;
         prev = curr;
-        print_int(curr, 10);
-        print_chr('\n');
+        putint(curr, 10);
+        putchar('\n');
         printFibonacci(n-1);    
     }    
 }    
@@ -20,23 +19,17 @@ int main()
     int prev = 1;
     int curr = 0;
 
-    print_str("First ");
-    print_int(no_of_terms, 10);
-    print_str(" terms of Fibonacci Series (Using Loops):\n");  
+    printf("First %d terms of Fibonacci Series (Using Loops):\n", no_of_terms);
 
     for (i=0; i<no_of_terms; i++)
     {
-
         curr = pprev + prev;
         pprev = prev;
         prev = curr;
-        print_int(curr, 10);
-
-        print_chr('\n');
+        putint(curr, 10);
+        putchar('\n');
     }
 
-    print_str("\n\nFirst ");
-    print_int(no_of_terms, 10);
-    print_str(" terms of Fibonacci Series (Using Recursion):\n");
+    printf("\n\nFirst %d terms of Fibonacci Series (Using Recursion):\n", no_of_terms);
     printFibonacci(no_of_terms);
 }

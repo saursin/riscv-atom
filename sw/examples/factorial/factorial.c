@@ -1,5 +1,4 @@
-#include "../../lib/atombones.h"
-#include "../../lib/stdio.h"
+#include <stdio.h>
 
 int recursiveFactorial(int n)
 {
@@ -9,7 +8,7 @@ int recursiveFactorial(int n)
         return 1;
 }
 
-int linearFactorial(int n)
+int iterativeFactorial(int n)
 {
     int i, fact=1;
     for(i=1; i<= n; ++i)
@@ -21,19 +20,19 @@ int linearFactorial(int n)
 
 int main()
 { 
-    print_str("Calculating Factorials (iterative):\n");
+    printf("Calculating Factorials (iterative):\n");
     
     int i;
     for (i=0; i<10; i++)
     {
-        print_int(i, 10); print_str("! = "); print_int(linearFactorial(i), 10); print_chr('\n');
+        printf("%d! = %d\n", i, iterativeFactorial(i));
     }
 
-    print_str("\nCalculating Factorials (Recursive):\n");
+    printf("\nCalculating Factorials (Recursive):\n");
     
     for (i=0; i<10; i++)
     {
-        print_int(i, 10); print_str("! = "); print_int(recursiveFactorial(i), 10); print_chr('\n');
+        printf("%d! = %d\n", i, recursiveFactorial(i));
     }
 
 }
