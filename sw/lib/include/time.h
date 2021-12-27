@@ -6,12 +6,12 @@
 
 typedef unsigned long int clock_t;
 
-#define DELAY_SCALE_FACTOR 1000
+#define DELAY_SCALE_FACTOR 1200
 
 /**
  * @brief sleep for some specified duration
  * 
- * @param count timr
+ * @param count time (in ms)
  */
 void sleep(long unsigned int count);
 
