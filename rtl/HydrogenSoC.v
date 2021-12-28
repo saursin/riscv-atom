@@ -27,7 +27,7 @@ module HydrogenSoC
     input wire rst_i,
 	
 	 // GPIO
-    output wire [7:0]   gpio_o,
+    inout wire [31:0]   gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
@@ -226,7 +226,7 @@ module HydrogenSoC
         .wb_stb_i   (wb_gpio0_stb_i),
         .wb_ack_o   (wb_gpio0_ack_o),
 
-        .gpio_o     (gpio_o[3:0])
+        .gpio_io     (gpio_io[15:0])
     );
 
     wire    [31:0] wb_gpio1_data_o;
@@ -246,7 +246,7 @@ module HydrogenSoC
         .wb_stb_i   (wb_gpio1_stb_i),
         .wb_ack_o   (wb_gpio1_ack_o),
 
-        .gpio_o     (gpio_o[7:4])
+        .gpio_io     (gpio_io[31:16])
     );
 
     ////////////////////////////////////////////////////
