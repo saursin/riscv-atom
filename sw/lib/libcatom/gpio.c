@@ -15,13 +15,12 @@ void gpio_init()
  */
 void gpio_reset()
 {
-    // set all gpio pins to zero
-    int addr;
-    for(addr = GPIO_ADDR; addr<GPIO_ADDR+GPIO_PINCOUNT; addr++)
+    // Reset all GPIO sets
+    for (unsigned int set=0; set<(GPIO_PINCOUNT/GPIO_SETWIDTH); set++)
     {
-        *((volatile char*) addr) = GPIO_LOW;
+        *((volatile short*) (GPIO_ADDR+(4*set+2))) = 0x0000;  // Set as output
+        *((volatile short*) (GPIO_ADDR+(4*set))) = 0x0000;  // Pull Low
     }
-    return;
 }
 
 
@@ -31,10 +30,15 @@ void gpio_reset()
  * @param pin pin number
  * @return gpio_state pin value
  */
-int gpio_read(int pin)
+gpio_state gpio_read(int pin)
 {
-    int pin_address = GPIO_ADDR + pin;
-    return *((volatile char*) pin_address);
+    int gpio_set = pin / GPIO_SETWIDTH;
+    int pin_index = pin % GPIO_SETWIDTH;
+
+    int addr_offset = 4*gpio_set;
+
+    unsigned short gpio_set_val = *((volatile short*) (GPIO_ADDR+addr_offset));
+    return (gpio_set_val & (1 << pin_index)) ? HIGH : LOW;
 }
 
 
@@ -44,11 +48,16 @@ int gpio_read(int pin)
  * @param pin pin number
  * @param state state
  */
-void gpio_write(int pin, int state)
+void gpio_write(int pin, gpio_state state)
 {
-    int pin_address = GPIO_ADDR + pin;
-    *((volatile char*) pin_address) = state;
-    return;
+    int gpio_set = pin / GPIO_SETWIDTH;
+    int pin_index = pin % GPIO_SETWIDTH;
+
+    int addr_offset = 4*gpio_set;
+
+    unsigned short gpio_set_val = *((volatile short*) (GPIO_ADDR+addr_offset));
+    gpio_set_val = gpio_set_val & ~(1 << pin_index);
+    *((volatile short*) (GPIO_ADDR+addr_offset)) = gpio_set_val | ((state==HIGH) ? (0x1 << pin_index) : 0x0);
 }
 
 
@@ -58,7 +67,32 @@ void gpio_write(int pin, int state)
  * @param pin pin number
  * @param mode mode (INPUT/OUTPUT)
  */
-// void gpio_pinmode(int pin, int mode)
-// {
-//          UNIMPLEMENTED
-// }
+void gpio_setmode(int pin, gpio_direction mode)
+{
+    int gpio_set = pin / GPIO_SETWIDTH;
+    int pin_index = pin % GPIO_SETWIDTH;
+
+    int addr_offset = (4*gpio_set)+2;   // additionl offset of 2 bytes to access pinmode register
+
+    unsigned short gpio_set_val = *((volatile short*) (GPIO_ADDR+addr_offset));
+    gpio_set_val = gpio_set_val & ~(1 << pin_index);
+    *((volatile short*) (GPIO_ADDR+addr_offset)) = gpio_set_val | ((mode==INPUT) ? (0x1 << pin_index) : 0x0);
+}
+
+
+/**
+ * @brief Get mode of a GPIO pin
+ * 
+ * @param pin gpio pin
+ * @return gpio_direction 
+ */
+gpio_direction gpio_getmode(int pin)
+{
+    int gpio_set = pin / GPIO_SETWIDTH;
+    int pin_index = pin % GPIO_SETWIDTH;
+
+    int addr_offset = (4*gpio_set)+2;   // additionl offset of 2 bytes to access pinmode register
+
+    unsigned short gpio_set_val = *((volatile short*) (GPIO_ADDR+addr_offset));
+    return (gpio_set_val & (1 << pin_index)) ? INPUT : OUTPUT;
+}

@@ -52,8 +52,8 @@ void _lcdbus_write(char nibble)
  */
 void _pulse_en()
 {
-    gpio_write(lcd_pin_en, GPIO_HIGH); sleep(1);
-    gpio_write(lcd_pin_en, GPIO_LOW); sleep(1);
+    gpio_write(lcd_pin_en, HIGH); sleep(1);
+    gpio_write(lcd_pin_en, LOW); sleep(1);
 }
 
 
@@ -65,17 +65,25 @@ void _pulse_en()
  */
 void lcd_init()
 {
-    // Make all pins as output (Not reqd)
+    // Make all pins as output
+    gpio_setmode(lcd_pin_rs, OUTPUT);
+    gpio_setmode(lcd_pin_rw, OUTPUT);
+    gpio_setmode(lcd_pin_en, OUTPUT);
+
+    gpio_setmode(lcd_pin_d4, OUTPUT);
+    gpio_setmode(lcd_pin_d5, OUTPUT);
+    gpio_setmode(lcd_pin_d6, OUTPUT);
+    gpio_setmode(lcd_pin_d7, OUTPUT);
 
     // Pull all pins LOW
-    gpio_write(lcd_pin_rs, GPIO_LOW);
-    gpio_write(lcd_pin_rw, GPIO_LOW);
-    gpio_write(lcd_pin_en, GPIO_LOW);
+    gpio_write(lcd_pin_rs, LOW);
+    gpio_write(lcd_pin_rw, LOW);
+    gpio_write(lcd_pin_en, LOW);
 
-    gpio_write(lcd_pin_d4, GPIO_LOW);
-    gpio_write(lcd_pin_d5, GPIO_LOW);
-    gpio_write(lcd_pin_d6, GPIO_LOW);
-    gpio_write(lcd_pin_d7, GPIO_LOW);
+    gpio_write(lcd_pin_d4, LOW);
+    gpio_write(lcd_pin_d5, LOW);
+    gpio_write(lcd_pin_d6, LOW);
+    gpio_write(lcd_pin_d7, LOW);
 
     // --------- Init sequence ------------
     sleep(50);  // 50ms
@@ -134,8 +142,8 @@ void lcd_init_custom(int rs, int en, int d4, int d5, int d6, int d7)
 void lcd_write(int isData, char byte)
 {
     gpio_write(lcd_pin_rs, isData);
-    gpio_write(lcd_pin_rw, GPIO_LOW);
-    gpio_write(lcd_pin_en, GPIO_LOW);
+    gpio_write(lcd_pin_rw, LOW);
+    gpio_write(lcd_pin_en, LOW);
     
     // Write Upper
     _lcdbus_write(byte); _pulse_en();

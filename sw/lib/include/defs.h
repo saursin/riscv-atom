@@ -26,7 +26,8 @@ typedef unsigned long size_t;
     #define UART_CD_REG_ADDR 0x08000004
 
     // ---------- GPIO ------------
-    #define GPIO_PINCOUNT 8
+    #define GPIO_PINCOUNT 32
+    #define GPIO_SETWIDTH 16
     #define GPIO_ADDR 0x08000100
 
     // ------ CLOCK FREQUENCY --------
