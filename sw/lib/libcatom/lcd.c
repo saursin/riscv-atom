@@ -152,6 +152,16 @@ void lcd_write(int isData, char byte)
     // Write Lower
     _lcdbus_write(byte << 4); _pulse_en();
     sleep(1);
+
+    // Pull all pins LOW
+    gpio_write(lcd_pin_rs, GPIO_LOW);
+    gpio_write(lcd_pin_rw, GPIO_LOW);
+    gpio_write(lcd_pin_en, GPIO_LOW);
+
+    gpio_write(lcd_pin_d4, GPIO_LOW);
+    gpio_write(lcd_pin_d5, GPIO_LOW);
+    gpio_write(lcd_pin_d6, GPIO_LOW);
+    gpio_write(lcd_pin_d7, GPIO_LOW);
 }
 
 
