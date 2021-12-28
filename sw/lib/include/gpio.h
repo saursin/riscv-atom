@@ -41,7 +41,15 @@ void gpio_write(int pin, gpio_state state);
  * @param pin pin number
  * @param mode mode (INPUT/OUTPUT)
  */
-void gpio_pinmode(int pin, gpio_direction mode);
+void gpio_setmode(int pin, gpio_direction mode);
 
+
+/**
+ * @brief Get mode of a GPIO pin
+ * 
+ * @param pin gpio pin
+ * @return gpio_direction 
+ */
+gpio_direction gpio_getmode(int pin);
 
 #endif // __GPIO_H__

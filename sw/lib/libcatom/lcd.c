@@ -66,14 +66,14 @@ void _pulse_en()
 void lcd_init()
 {
     // Make all pins as output
-    gpio_pinmode(lcd_pin_rs, OUTPUT);
-    gpio_pinmode(lcd_pin_rw, OUTPUT);
-    gpio_pinmode(lcd_pin_en, OUTPUT);
+    gpio_setmode(lcd_pin_rs, OUTPUT);
+    gpio_setmode(lcd_pin_rw, OUTPUT);
+    gpio_setmode(lcd_pin_en, OUTPUT);
 
-    gpio_pinmode(lcd_pin_d4, OUTPUT);
-    gpio_pinmode(lcd_pin_d5, OUTPUT);
-    gpio_pinmode(lcd_pin_d6, OUTPUT);
-    gpio_pinmode(lcd_pin_d7, OUTPUT);
+    gpio_setmode(lcd_pin_d4, OUTPUT);
+    gpio_setmode(lcd_pin_d5, OUTPUT);
+    gpio_setmode(lcd_pin_d6, OUTPUT);
+    gpio_setmode(lcd_pin_d7, OUTPUT);
 
     // Pull all pins LOW
     gpio_write(lcd_pin_rs, LOW);
