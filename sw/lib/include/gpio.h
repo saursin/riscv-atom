@@ -1,11 +1,8 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
-#define GPIO_LOW 0
-#define GPIO_HIGH 1
-
-#define GPIO_INPUT 0
-#define GPIO_OUTPUT 1
+typedef enum {LOW=0, HIGH=1} gpio_state;
+typedef enum {OUTPUT=0, INPUT=1} gpio_direction;
 
 
 /**
@@ -26,7 +23,7 @@ void gpio_reset();
  * @param pin pin number
  * @return gpio_state pin value
  */
-int gpio_read(int pin);
+gpio_state gpio_read(int pin);
 
 
 /**
@@ -35,7 +32,7 @@ int gpio_read(int pin);
  * @param pin pin number
  * @param state state
  */
-void gpio_write(int pin, int state);
+void gpio_write(int pin, gpio_state state);
 
 
 /**
@@ -44,7 +41,7 @@ void gpio_write(int pin, int state);
  * @param pin pin number
  * @param mode mode (INPUT/OUTPUT)
  */
-void gpio_pinmode(int pin, int mode);
+void gpio_pinmode(int pin, gpio_direction mode);
 
 
 #endif // __GPIO_H__
