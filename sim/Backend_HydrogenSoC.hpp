@@ -11,7 +11,7 @@
 #include "../build/vobj_dir/VHydrogenSoC_AtomRV.h"
 #include "../build/vobj_dir/VHydrogenSoC_RegisterFile__R20_RB5.h"
 
-#include "../build/vobj_dir/VHydrogenSoC_SinglePortROM_wb__pi1.h"
+#include "../build/vobj_dir/VHydrogenSoC_DualPortRAM_wb__pi1.h"
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "../build/vobj_dir/VHydrogenSoC_simpleuart_wb.h"
 
