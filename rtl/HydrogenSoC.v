@@ -6,7 +6,6 @@
 `include "uncore/DualPortRAM_wb.v"
 //`include "uncore/SinglePortROM_wb.v"
 `include "uncore/SinglePortRAM_wb.v"
-//`include "uncore/DummyUART.v"
 `include "uncore/simpleuart_wb.v"
 `include "uncore/GPIO.v"
 
@@ -222,20 +221,7 @@ module HydrogenSoC
         .rx_i       (uart_rx),
         .tx_o       (uart_tx)
 	);
-
-    /*DummyUART uart
-    (
-        .wb_clk_i   (wb_clk_i),
-        .wb_rst_i   (wb_rst_i),
-        
-        .wb_dat_o   (wb_uart_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
-
-        .wb_stb_i   (wb_uart_stb_i),
-        .wb_ack_o   (wb_uart_ack_o)
-    );*/
+    
 
     ////////////////////////////////////////////////////
     // GPIO

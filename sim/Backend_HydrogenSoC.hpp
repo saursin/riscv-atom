@@ -124,7 +124,7 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		/*
 			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
 			the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
-			of dummyUART, it sees the we pin high for multiple cycles and it may mistakenly infer it
+			of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
 			as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
 			When we fine 'we' asserted, we read the value and wait for 2 cycles after it. This 
 			prevents multiple reads of data in same transaction.
