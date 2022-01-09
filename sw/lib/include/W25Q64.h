@@ -36,9 +36,93 @@
 
 
 /**
- * @brief Initialize communication with w25qxxx flash chip
+ * @brief Initialize communication with the flash chip
  */
 void W25Q64_init();
+
+
+/**
+ * @brief Write Enable
+ */
+void W25Q64_writeEnable();
+
+
+/**
+ * @brief Write Disable
+ */
+void W25Q64_writeDisable();
+
+
+/**
+ * @brief Read status register 1
+ * 
+ * @return uint8_t 
+ */
+uint8_t W25Q64_readStatusReg1();
+
+
+/**
+ * @brief Read status register 2
+ * 
+ * @return uint8_t 
+ */
+uint8_t W25Q64_readStatusReg2();
+
+
+/**
+ * @brief Check if flash is busy
+ * 
+ * @return true if busy
+ * @return false otherwise
+ */
+bool W25Q64_isBusy();
+
+
+/**
+ * @brief Program a memory page from 1 byte to 256 bytes(a page) of data.
+ * 
+ * @param sect_no sector number
+ * @param inaddr offset
+ * @param buf byte buffer
+ * @param n size of buffer
+ * @param flagwait set this true if need to wait for completion of operation on chip.
+ * @return uint16_t 
+ */
+uint16_t W25Q64_pageProgram(uint16_t sect_no, uint16_t inaddr, uint8_t * buf, uint16_t n, bool flagwait);
+
+
+/**
+ * @brief Sets all memory withing a sector(4k Bytes) to erased state (0xFF).
+ * 
+ * @param sect_no sector number
+ * @param flagwait set this to true if needed to wait for the completion of operation on the chip.
+ */
+void W25Q64_eraseSector(uint16_t sect_no, bool flagwait);
+
+
+/**
+ * @brief Erase a 32kB block of data
+ * 
+ * @param blk_no bock number
+ * @param flagwait set this to true if needed to wait for the completion of operation on the chip.
+ */
+bool W25Q64_erase32Block(uint16_t blk_no, bool flgwait);
+
+
+/**
+ * @brief Erase a 64kB block of data
+ * 
+ * @param blk_no bock number
+ * @param flagwait set this to true if needed to wait for the completion of operation on the chip.
+ */
+bool W25Q64_erase64Block(uint16_t blk_no, bool flagwait);
+
+
+/**
+ * @brief Erase all data
+ *
+ */
+bool  W25Q64_eraseAll(bool flagwait);
 
 
 /**
@@ -49,8 +133,7 @@ void W25Q64_init();
  * @param addr address to start reading from
  * @return char* buffer to store bytes
  */
-char *W25Q64_readData(char *buf, unsigned int len, unsigned int addr);
-
+uint8_t *W25Q64_read(uint8_t *buf, uint32_t len, uint32_t addr);
 
 
 #endif //__W25Q64_H__

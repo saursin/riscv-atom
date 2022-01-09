@@ -6,11 +6,10 @@
 
 #include "W25Q64.h"
 
-
-int CS_PIN = 0;
+int W25Q64_CS_PIN = 0; // Default
 
 /////////////////////////////////////////////////////////////////
-// utility Functions
+// Utility Functions (Non API)
 
 /**
  * @brief Begin SPI transaction
@@ -18,9 +17,10 @@ int CS_PIN = 0;
  */
 void _W25Q64_begin_transaction()
 {
-	gpio_write(CS_PIN, LOW);
+	gpio_write(W25Q64_CS_PIN, LOW);
 	sleep(T_WAIT_AFTER_CS_LOW);
 }
+
 
 /**
  * @brief End SPI transaction
@@ -29,18 +29,18 @@ void _W25Q64_begin_transaction()
 void _W25Q64_end_transaction()
 {
 	sleep(T_WAIT_BEFORE_CS_HIGH);
-	gpio_write(CS_PIN, HIGH);
+	gpio_write(W25Q64_CS_PIN, HIGH);
 }
 
 /////////////////////////////////////////////////////////////////
 // API Functions
 
 /**
- * @brief Initialize communication with w25qxxx flash chip
+ * @brief Initialize communication with the flash chip
  */
 void W25Q64_init()
 {
-	gpio_setmode(CS_PIN, OUTPUT);
+	gpio_setmode(W25Q64_CS_PIN, OUTPUT);
 	spi_init();
 }
 
@@ -59,7 +59,7 @@ void W25Q64_WriteEnable()
 /**
  * @brief Write Disable
  */
-void W25Q64_WriteDisable(void) 
+void W25Q64_WriteDisable() 
 {
 	_W25Q64_begin_transaction();
 	spi_transfer(CMD_WRITE_DISABLE);
@@ -70,7 +70,7 @@ void W25Q64_WriteDisable(void)
 /**
  * @brief Read status register 1
  * 
- * @return uint8_t 
+ * @return uint8_t status register 1
  */
 uint8_t W25Q64_readStatusReg1()
 {
@@ -85,7 +85,7 @@ uint8_t W25Q64_readStatusReg1()
 /**
  * @brief Read status register 2
  * 
- * @return uint8_t 
+ * @return uint8_t status register 2
  */
 uint8_t W25Q64_readStatusReg2()
 {
@@ -95,6 +95,19 @@ uint8_t W25Q64_readStatusReg2()
 	_W25Q64_end_transaction();
 	return c;
 }
+
+
+/**
+ * @brief Check if flash is busy
+ * 
+ * @return true if busy
+ * @return false otherwise
+ */
+bool W25Q64_isBusy()
+{
+	return (W25Q64_readStatusReg1() & SR1_BUSY_MASK) ? true : false;
+}
+
 
 /**
  * @brief Program a memory page from 1 byte to 256 bytes(a page) of data.
@@ -134,11 +147,10 @@ uint16_t W25Q64_pageProgram(uint16_t sect_no, uint16_t inaddr, uint8_t * buf, ui
 	}
 	_W25Q64_end_transaction();
 
-	// Wait till last operation completes
-	if(flagwait)
-	{
-		while(W25Q64_IsBusy()) ;
-	}
+	// Wait till operation completes
+	while(flagwait && W25Q64_isBusy())
+		sleep(10);
+	return true;
 }
 
 
@@ -155,7 +167,6 @@ void W25Q64_eraseSector(uint16_t sect_no, bool flagwait)
 	
 	W25Q64_WriteEnable();
 
-
 	_W25Q64_begin_transaction();
 
 	// Shift out Command
@@ -167,7 +178,45 @@ void W25Q64_eraseSector(uint16_t sect_no, bool flagwait)
 	spi_transfer(addr);
 
 	_W25Q64_end_transaction();
+
+	// Wait till operation completes
+	while(flagwait && W25Q64_isBusy())
+		sleep(10);
 }
+
+
+/**
+ * @brief erase a 32kB block of data
+ * 
+ * @param blk_no bock number
+ * @param flagwait set this to true if needed to wait for the completion of operation on the chip.
+ */
+bool W25Q64_erase32Block(uint16_t blk_no, bool flagwait)
+{
+	uint32_t addr = blk_no;
+	addr <<= 16;
+	
+	W25Q64_WriteEnable();
+
+
+	_W25Q64_begin_transaction();
+
+	// Shift out Command
+	spi_transfer(CMD_BLOCK_ERASE32KB);
+
+	// Shift out Address
+	spi_transfer(addr >> 16);
+	spi_transfer(addr >> 8);
+	spi_transfer(addr);
+
+	_W25Q64_end_transaction();
+
+	// Wait till operation completes
+	while(flagwait && W25Q64_isBusy())
+		sleep(10);
+	return true;
+}
+
 
 /**
  * @brief erase a 64kB block of data
@@ -175,7 +224,7 @@ void W25Q64_eraseSector(uint16_t sect_no, bool flagwait)
  * @param blk_no bock number
  * @param flagwait set this to true if needed to wait for the completion of operation on the chip.
  */
-void W25Q64_erase64Block(uint16_t blk_no, bool flagwait)
+bool W25Q64_erase64Block(uint16_t blk_no, bool flagwait)
 {
 	uint32_t addr = blk_no;
 	addr <<= 16;
@@ -194,53 +243,31 @@ void W25Q64_erase64Block(uint16_t blk_no, bool flagwait)
 	spi_transfer(addr);
 
 	_W25Q64_end_transaction();
+
+	// Wait till operation completes
+	while(flagwait && W25Q64_isBusy())
+		sleep(10);
+	return true;
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-void W25Q64_readManufacturer(uint8_t* d)
+/**
+ * @brief Erase all data
+ *
+ */
+bool  W25Q64_eraseAll(bool flagwait)
 {
-  uint8_t data[4];
-  _W25Q64_begin_transaction();
-	spi_transfer(CMD_JEDEC_ID);
+	W25Q64_WriteEnable();
 
-  _W25Q64_end_transaction();
+	_W25Q64_begin_transaction();
+	spi_transfer(CMD_CHIP_ERASE);
+	_W25Q64_end_transaction();
 
-  
-  
-  data[0] = CMD_JEDEC_ID;
-  rc = wiringPiSPIDataRW (_spich,data,sizeof(data));
-  
-  
+	// Wait till operation completes
+	while(flagwait && W25Q64_isBusy())
+		sleep(10);
+	return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -253,7 +280,7 @@ void W25Q64_readManufacturer(uint8_t* d)
  */
 uint8_t *W25Q64_read(uint8_t *buf, uint32_t len, uint32_t addr)
 {
-	char *ptr = buf;
+	uint8_t *ptr = buf;
 	_W25Q64_begin_transaction();
 	spi_transfer(CMD_READ_DATA);
 	spi_transfer(addr >> 16);
@@ -267,24 +294,4 @@ uint8_t *W25Q64_read(uint8_t *buf, uint32_t len, uint32_t addr)
 	}
 	_W25Q64_end_transaction();
 	return buf;
-}
-
-
-
-
-
-
-
-void W25Q64_eraseAll()
-{
-	W25Q64_WriteEnable();
-
-	_W25Q64_begin_transaction();
-	spi_transfer(CMD_CHIP_ERASE);
-	_W25Q64_end_transaction();
-}
-
-uint16_t W25Q64_pageWrite(uint16_t sect_no, uint16_t inaddr, uint8_t* buf, uint16_t n) {
-{
-	
 }
