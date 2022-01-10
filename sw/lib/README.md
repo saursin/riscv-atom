@@ -1,22 +1,21 @@
-# RISCV-Atom Libraries & Routines
+# RISCV-Atom Libc
 
-This directory contains libraries which are used to build software on the atom platform.
+This directory contains libc implementation for RISC-V Atom based systems, which is called `libcatom`.
 
-## Files
+## Directory Structure
 
 ```
-startup.s		: contains startup code & IVT
-link.ld			: linker script
-atomrvsoc.h		: memory map related definitions
-stdio.h			: standard input-output library
-math.h			: math library
+lib
+ |--- include  : contains all the libcatom & other headers
+ |--- libcatom : contains source files for libcatom
+ |--- link     : contains linker scripts for various atom based targets
 ```
-
-
 
 ## Memory Map
 
-![memory_map](../../doc/diagrams/memory_map.png)
+[To be updated]
+
+![memory_map](../../docs/diagrams/memory_map.png)
 
 
 
