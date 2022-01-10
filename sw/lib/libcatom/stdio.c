@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "serial.h"
 #include <stdarg.h>
+#include <stdbool.h>
 
 ///////////////////////////////////////////////////////////////////
 // getchar & Putchar use Low-level Serial ports
@@ -42,7 +43,7 @@ void putchar(char chr)
  * @param echo if enabed, sends the recieved char to stdout
  * @param prompt print prompt before actual string
  */
-char *gets(char * str, int bufsize, int echo, char * prompt)
+char *gets(char * str, int bufsize, bool echo, char * prompt)
 {
     char *ptr = str;
     char c;
@@ -128,8 +129,9 @@ void puts(char *ptr)
  * 
  * @param n number
  * @param base base
+ * @param uppercase upprtcase flag
  */
-void putint(long int n, int base)
+void putint(long long n, int base, bool uppercase)
 {
     // If number is smaller than 0, put a - sign
         // and change number to positive
@@ -142,19 +144,19 @@ void putint(long int n, int base)
         switch(base)
         {
             case 2:     if (n/2)
-                            putint(n/2, base);
+                            putint(n/2, base, uppercase);
                         break;
 
             case 8:     if (n/8)
-                            putint(n/8, base);
+                            putint(n/8, base, uppercase);
                         break;
 
             case 10:    if (n/10)
-                            putint(n/10, base);
+                            putint(n/10, base, uppercase);
                         break;
 
             case 16:    if (n/16)
-                            putint(n/16, base);
+                            putint(n/16, base, uppercase);
                         break;
         }
         
@@ -171,7 +173,7 @@ void putint(long int n, int base)
                         break;
 
             case 16:    if(n%16 > 9)
-                            putchar((n%16)-10 + 'a');
+                            putchar((n%16)-10 + (uppercase ? 'A' : 'a'));
                         else
                             putchar(n%16 + '0');
                         break;
@@ -184,12 +186,16 @@ void putint(long int n, int base)
  * 
  * @param val integer value
  * @param digits no of digits to print
+ * @param uppercase uppercase flag
  */
-void puthex(unsigned int val, int digits)
+void puthex(unsigned int val, int digits, bool uppercase)
 {
 	for (int i = (4*digits)-4; i >= 0; i -= 4)
     {
-        putchar("0123456789ABCDEF"[(val >> i) % 16]);
+        if(uppercase)
+            putchar("0123456789ABCDEF"[(val >> i) % 16]);
+        else
+            putchar("0123456789abcdef"[(val >> i) % 16]);
     }
 }
 
@@ -210,12 +216,77 @@ int printf(char *fmt,...)
         if(*fmt=='%')
         {
             fmt++;
-                 if(*fmt=='s') puts(va_arg(ap,char *));
-            else if(*fmt=='x') putint(va_arg(ap,int),16);
-            else if(*fmt=='d') putint(va_arg(ap,int),10);
-            else if(*fmt=='c') putchar(va_arg(ap,int));
+            switch(*fmt)
+            {
+                case 'b':
+                    // binary
+                    putint(va_arg(ap, long int), 2, false);
+                    break;
+                
+                case 'o':
+                    // Octal
+                    putint(va_arg(ap, long int), 8, false);
+                    break;
 
-            else putchar(*fmt);
+                case 'd':
+                case 'i':
+                    // Signed decimal number
+                    putint(va_arg(ap, long int), 10, false);
+                    break;
+                
+                case 'l':
+                    if(*(++fmt) == 'l')
+                    {
+                        // Signed decimal number (long long)
+                        if(*(++fmt) == 'd')
+                        {
+                            // Signed decimal number (long long)
+                            putint(va_arg(ap, long long), 10, false);
+                            break;
+                        }
+                        else
+                        {
+                            putchar('l');
+                            putchar(*fmt);
+                            break;
+                        }                        
+                        break;
+                    }
+                    else
+                    {
+                        putchar('l');
+                        putchar(*fmt);
+                        break;
+                    }
+               
+                case 'x':
+                    // unsigned hexadecimal (lowercase)
+                    putint(va_arg(ap, long int), 16, false);
+                    break;
+
+                case 'X':
+                    // unsigned hexadecimal (uppercase)
+                    putint(va_arg(ap, long int), 16, true);
+                    break;
+                
+                case 'p':
+                    // Pointer address
+                    puts("0x"); puthex(va_arg(ap, unsigned int), 8, false);
+                    break;
+
+                case 'c':
+                    // character
+                    putchar(va_arg(ap,int));
+                    break;
+                
+                case 's':
+                    // string
+                    puts(va_arg(ap, char *));
+                    break;
+
+                default:
+                    putchar(*fmt);
+            }           
         }
         else putchar(*fmt);
     }
