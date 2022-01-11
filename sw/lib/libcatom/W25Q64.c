@@ -141,16 +141,17 @@ uint16_t W25Q64_pageProgram(uint16_t sect_no, uint16_t inaddr, uint8_t * buf, ui
 	spi_transfer(addr);
 
 	// Shift out data bytes
+	uint8_t rc;
 	for(int i=0; i<n; i++)
 	{
-		spi_transfer(buf[i]);
+		rc = spi_transfer(buf[i]);
 	}
 	_W25Q64_end_transaction();
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
 		sleep(10);
-	return true;
+	return rc;
 }
 
 
