@@ -29,7 +29,9 @@ module Decode
     output  reg     [2:0]   alu_op_sel_o,
     output  wire    [2:0]   mem_access_width_o,
     output  reg             d_mem_load_store,
-    output  reg             mem_we_o
+    output  reg             mem_we_o,
+    output  wire    [2:0]   csru_op_sel_o,
+    output  reg             csru_we_o
 );
 
 // Decode fields
@@ -38,6 +40,7 @@ wire    [2:0]   func3   = instr_i[14:12];
 wire    [6:0]   func7   = instr_i[31:25];
 
 assign mem_access_width_o = func3;
+assign csru_op_sel_o = func3;
 
 assign  rd_sel_o    = instr_i[11:7];
 assign  rs1_sel_o   = instr_i[19:15];
@@ -80,6 +83,7 @@ always @(*) begin
     mem_we_o = 1'b0;
     d_mem_load_store = 1'b0;
     imm_format = `__U_IMMIDIATE__;
+    csru_we_o = 0;
 
 
     casez({func7, func3, opcode})
@@ -419,6 +423,16 @@ always @(*) begin
             alu_op_sel_o = `__ALU_AND__;
         end
 
+        /////////////////////////////////////////////////////////////////////////
+
+        /* CSR Instructions */
+        17'b???????_???_1110011:begin
+            rf_we_o = (rd_sel_o!=0);   // CSR Reads should not take place if rs1 == x0
+            rf_din_sel_o = 3'd5;
+            csru_we_o = 1;
+            imm_format = `__I_IMMIDIATE__;
+        end
+
         default: begin
             jump_en_o = 0;
             comparison_type_o = `__CMP_UN__;
@@ -430,6 +444,7 @@ always @(*) begin
             alu_op_sel_o = 0;
             mem_we_o = 1'b0;
             imm_format = 0;
+            csru_we_o = 0;
 
             `ifdef ENABLE_RUNTIME_WARNINGS
             if(opcode != 7'b1110011) // EBREAK
