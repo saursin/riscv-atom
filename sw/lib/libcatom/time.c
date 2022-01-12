@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <csr.h>
+
 #include "time.h"
 
 /**
@@ -13,24 +16,34 @@ void sleep(long unsigned int count)
     #endif
 }
 
+
 /**
  * @brief Get current CPU ticks
  * 
  * @return clock_t 
  */
-clock_t clock()
+clock_t cycle()
 {
-    clock_t timel, timeh1, timeh2;
-    do
+    union 
     {
-        __asm__ volatile ("rdcycleh %0" :"=r"(timeh1):);
-        __asm__ volatile ("rdcycle  %0" :"=r"(timel):);
-        __asm__ volatile ("rdcycleh %0" :"=r"(timeh2):);
-    } while(timeh1!=timeh2);
+        uint64_t uint64;
+        uint32_t uint32[sizeof(uint64_t)/2];
+    } cycles;
 
-    clock_t time;
-    __asm__ volatile ("rdcycle %0" :"=r"(time));
-    // __asm__ volatile ("csrrs %0, cycle, zero" :"=r"(time));
+    register uint32_t tmp1, tmp2, tmp3;
+    while(1)
+    {
+        tmp1 = CSR_read(CSR_CYCLEH);
+        tmp2 = CSR_read(CSR_CYCLE);
+        tmp3 = CSR_read(CSR_CYCLEH);
+        if (tmp1 == tmp3) 
+        {
+            break;
+        }
+    }
 
-    return (timeh1 << 32) | timel;
+    cycles.uint32[0] = tmp2;
+    cycles.uint32[1] = tmp3;
+
+    return cycles.uint64;
 }

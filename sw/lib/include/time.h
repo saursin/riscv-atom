@@ -19,10 +19,10 @@ typedef unsigned long long int clock_t;
 void sleep(long unsigned int count);
 
 /**
- * @brief 
+ * @brief Get current CPU ticks
  * 
  * @return clock_t 
  */
-clock_t clock();
+ clock_t cycle();
 
 #endif //__TIME_H__
