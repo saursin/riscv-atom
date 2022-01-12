@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <time.h>
 
-// #define SV \
-// __asm__ volatile ("rdcycle t5");    \
-// __asm__ volatile ("rdcycleh t6");   
+#define SV \
+__asm__ volatile ("rdcycle t5");    \
+__asm__ volatile ("rdcycleh t6");   
 
-// #define BRK \
-// __asm__ volatile ("ebreak");
-
+#define BRK \
+__asm__ volatile ("ebreak");
 
 
 void print_wall_pattern(int height, int width)
@@ -40,19 +39,15 @@ int main()
 {
     clock_t start, end;
 
-    start = clock();
-
+    start = cycle();
     print_wall_pattern(20, 80);
-
-    end = clock();
-
+    end = cycle();
 
     puts("\n\n");
-    printf("start: %d\n", start);
-    printf("end  : %d\n", end);
+    printf("start: %lld\n", start);
+    printf("end  : %lld\n", end);
     printf("-----------------------\n");
-    printf("diff : %d\n", end-start);
+    printf("diff : %lld\n", end-start);
     printf("-----------------------\n");
-    printf("CPS  : %d\n", CLOCKS_PER_SEC);
-    printf("Time  : %d\n", ((end - start)) / CLOCKS_PER_SEC);
+    printf("CPS  : %lld\n", (long long) CLOCKS_PER_SEC);
 }
