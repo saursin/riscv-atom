@@ -14,7 +14,7 @@ module CSR_Unit
     input   wire            we_i,
     /* verilator lint_on UNUSED */
 
-    output  reg  [31:0]     data_o
+    output  wire [31:0]     data_o
 
     // input signals from pipeline
 
@@ -61,7 +61,7 @@ end
 
 always @(*) /* COMBINATIONAL */ begin
     // Defaults
-    data_o = 0;
+    read_value = 0;
     
     case(addr_i)
         12'hc00: begin
