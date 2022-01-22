@@ -292,7 +292,7 @@ module HydrogenSoC
             if(wb_dbus_adr_o < 32'h00008000)
                 selected_device = Device_IRAM;
 
-            else if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h08000000)
+            else if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h04002000)
                 selected_device = Device_RAM;
             
             else if (wb_dbus_adr_o == 32'h08000000 || wb_dbus_adr_o == 32'h08000004)
