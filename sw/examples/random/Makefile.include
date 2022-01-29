@@ -1,0 +1,2 @@
+src_files = random.c
+executable = random.elf

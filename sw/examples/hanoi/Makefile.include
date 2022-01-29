@@ -1,0 +1,2 @@
+src_files = hanoi.c
+executable = hanoi.elf
