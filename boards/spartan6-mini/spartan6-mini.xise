@@ -365,6 +365,7 @@
     <file xil_pn:name="../../rtl/core/Decode.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/RegisterFile.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/Alu.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/core/CSR_Unit.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/uncore/DualPortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/uncore/SinglePortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/uncore/simpleuart_wb.v" xil_pn:type="FILE_VERILOG"/>
