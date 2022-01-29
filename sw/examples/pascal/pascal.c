@@ -20,7 +20,7 @@ void myprint(int num, int digits)
             putchar(' ');
         else
         {
-            putint(arr[i], 10);
+            putint(arr[i], 10, false);
             flag = 1;
         }
     }
@@ -33,11 +33,6 @@ void myprint(int num, int digits)
  */
 int main() {
    int rows = 8, coef = 1, space, i, j;
-
-   printf("Enter number of rows to display: ");
-   char buf[10];
-   gets(buf, 10, 1, NULL);
-   rows = atoi(buf);
 
    printf("First %d rows of pascal's triangle...\n", rows);
    

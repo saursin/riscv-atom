@@ -31,10 +31,4 @@ char * banner =
 int main()
 {
     puts(banner);
-
-    char c[50];
-    gets(c, 50, 1, NULL);
-    int n = atoi(c);
-    printf("8th multiple of %d is %d", n, n*3);
-    return 0;
 }

@@ -6,7 +6,7 @@ void main()
     int i=0;
     for(i=0; i<10; i++)
     {   
-        putint(rand(), 10);
+        putint(rand(), 10, false);
         putchar('\n');
     }
 
@@ -15,7 +15,7 @@ void main()
 
     for(i=0; i<10; i++)
     {   
-        putint(rand(), 10);
+        putint(rand(), 10, false);
         putchar('\n');
     }
 

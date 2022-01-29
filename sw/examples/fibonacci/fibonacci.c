@@ -6,8 +6,7 @@ void printFibonacci(int n){
         curr = prev + pprev;
         pprev = prev;
         prev = curr;
-        putint(curr, 10);
-        putchar('\n');
+        printf("%d\n", curr);
         printFibonacci(n-1);    
     }    
 }    
@@ -26,8 +25,7 @@ int main()
         curr = pprev + prev;
         pprev = prev;
         prev = curr;
-        putint(curr, 10);
-        putchar('\n');
+        printf("%d\n", curr);
     }
 
     printf("\n\nFirst %d terms of Fibonacci Series (Using Recursion):\n", no_of_terms);
