@@ -1,0 +1,2 @@
+src_files = hello.c
+executable = hello.elf

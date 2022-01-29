@@ -3,9 +3,9 @@
 `include "Timescale.vh"
 `include "Config.vh"
 `include "core/AtomRV_wb.v"
-`include "uncore/SinglePortROM_wb.v"
+`include "uncore/DualPortRAM_wb.v"
+//`include "uncore/SinglePortROM_wb.v"
 `include "uncore/SinglePortRAM_wb.v"
-//`include "uncore/DummyUART.v"
 `include "uncore/simpleuart_wb.v"
 `include "uncore/GPIO.v"
 
@@ -27,7 +27,7 @@ module HydrogenSoC
     input wire rst_i,
 	
 	 // GPIO
-    output wire [7:0]   gpio_o,
+    inout wire [31:0]   gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
@@ -127,19 +127,48 @@ module HydrogenSoC
     ////////////////////////////////////////////////////
     // Instruction Memory
 
-    SinglePortROM_wb #(
+    // SinglePortROM_wb #(
+    //     .ADDR_WIDTH(IMEM_ADR_SIZE),
+    //     .MEM_INIT_FILE(`__IMEM_INIT_FILE__)
+    // ) imem
+    // (
+    //     .clk_i      (wb_clk_i),
+    //     .rst_i      (wb_rst_i),
+
+    //     .addr_i     (wb_ibus_adr_o[IMEM_ADR_SIZE-1:2]),
+    //     .data_o     (wb_ibus_dat_i),
+
+    //     .stb_i      (wb_ibus_stb_o),
+    //     .ack_o      (wb_ibus_ack_i)
+    // );
+
+    wire    [31:0] wb_iram_data_o;
+    reg            wb_iram_stb_i;
+    wire           wb_iram_ack_o;
+
+
+    DualPortRAM_wb #(
         .ADDR_WIDTH(IMEM_ADR_SIZE),
-        .MEM_INIT_FILE(`__IMEM_INIT_FILE__)
+        .MEM_FILE(`__IMEM_INIT_FILE__)
     ) imem
     (
-        .clk_i      (wb_clk_i),
-        .rst_i      (wb_rst_i),
+        // Global Signals^M
+        .wb_clk_i           (wb_clk_i),
+        .wb_rst_i           (wb_rst_i),
 
-        .addr_i     (wb_ibus_adr_o[IMEM_ADR_SIZE-1:2]),
-        .data_o     (wb_ibus_dat_i),
+        .wb_adr_i           (wb_dbus_adr_o[IMEM_ADR_SIZE-1:2]),
+        .wb_dat_o           (wb_iram_data_o),
+        .wb_dat_i           (wb_dbus_dat_o),
+        .wb_we_i            (wb_dbus_we_o),
+        .wb_sel_i           (wb_dbus_sel_o),
 
-        .stb_i      (wb_ibus_stb_o),
-        .ack_o      (wb_ibus_ack_i)
+        .wb_stb_i           (wb_iram_stb_i),
+        .wb_ack_o           (wb_iram_ack_o),
+
+        .wb_roport_adr_i    (wb_ibus_adr_o[IMEM_ADR_SIZE-1:2]),
+        .wb_roport_dat_o    (wb_ibus_dat_i),
+        .wb_roport_stb_i    (wb_ibus_stb_o),
+        .wb_roport_ack_o    (wb_ibus_ack_i)
     );
 
 
@@ -192,20 +221,7 @@ module HydrogenSoC
         .rx_i       (uart_rx),
         .tx_o       (uart_tx)
 	);
-
-    /*DummyUART uart
-    (
-        .wb_clk_i   (wb_clk_i),
-        .wb_rst_i   (wb_rst_i),
-        
-        .wb_dat_o   (wb_uart_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
-
-        .wb_stb_i   (wb_uart_stb_i),
-        .wb_ack_o   (wb_uart_ack_o)
-    );*/
+    
 
     ////////////////////////////////////////////////////
     // GPIO
@@ -226,7 +242,7 @@ module HydrogenSoC
         .wb_stb_i   (wb_gpio0_stb_i),
         .wb_ack_o   (wb_gpio0_ack_o),
 
-        .gpio_o     (gpio_o[3:0])
+        .gpio_io     (gpio_io[15:0])
     );
 
     wire    [31:0] wb_gpio1_data_o;
@@ -246,7 +262,7 @@ module HydrogenSoC
         .wb_stb_i   (wb_gpio1_stb_i),
         .wb_ack_o   (wb_gpio1_ack_o),
 
-        .gpio_o     (gpio_o[7:4])
+        .gpio_io     (gpio_io[31:16])
     );
 
     ////////////////////////////////////////////////////
@@ -255,9 +271,10 @@ module HydrogenSoC
     // Devices
     localparam Device_None      = 4'd0;
     localparam Device_RAM       = 4'd1;
-    localparam Device_UART      = 4'd2;
-    localparam Device_GPIO0     = 4'd3;
-    localparam Device_GPIO1     = 4'd4;
+    localparam Device_IRAM      = 4'd2;
+    localparam Device_UART      = 4'd3;
+    localparam Device_GPIO0     = 4'd4;
+    localparam Device_GPIO1     = 4'd5;
 
     /*
         === Device selection ===
@@ -272,7 +289,10 @@ module HydrogenSoC
 		  //selected_device = Device_None;
 		
         if(wb_dbus_cyc_o) begin
-            if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h08000000)
+            if(wb_dbus_adr_o < 32'h00008000)
+                selected_device = Device_IRAM;
+
+            else if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h04002000)
                 selected_device = Device_RAM;
             
             else if (wb_dbus_adr_o == 32'h08000000 || wb_dbus_adr_o == 32'h08000004)
@@ -302,6 +322,7 @@ module HydrogenSoC
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
             Device_RAM:         wb_dbus_dat_i = wb_ram_data_o;
+            Device_IRAM:        wb_dbus_dat_i = wb_iram_data_o;
             Device_UART:        wb_dbus_dat_i = wb_uart_data_o;
             Device_GPIO0:       wb_dbus_dat_i = wb_gpio0_data_o;
             Device_GPIO1:       wb_dbus_dat_i = wb_gpio1_data_o;
@@ -322,18 +343,21 @@ module HydrogenSoC
     always @(*) begin /* COMBINATORIAL */
 		  // Defaults
 		  wb_ram_stb_i        = 1'b0;
+          wb_iram_stb_i       = 1'b0;
 		  wb_uart_stb_i       = 1'b0;
 		  wb_gpio0_stb_i      = 1'b0;
 		  wb_gpio1_stb_i      = 1'b0;
 					 
         case(selected_device)
             Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
+            Device_IRAM:        wb_iram_stb_i       = wb_dbus_stb_o;
             Device_UART:        wb_uart_stb_i       = wb_dbus_stb_o;
             Device_GPIO0:       wb_gpio0_stb_i      = wb_dbus_stb_o;
             Device_GPIO1:       wb_gpio1_stb_i      = wb_dbus_stb_o;
 
             default: begin
                 wb_ram_stb_i        = 1'b0;
+                wb_iram_stb_i       = 1'b0;
                 wb_uart_stb_i       = 1'b0;
                 wb_gpio0_stb_i      = 1'b0;
                 wb_gpio1_stb_i      = 1'b0;
@@ -349,6 +373,7 @@ module HydrogenSoC
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
             Device_RAM:         wb_dbus_ack_i = wb_ram_ack_o;
+            Device_IRAM:        wb_dbus_ack_i = wb_iram_ack_o;
             Device_UART:        wb_dbus_ack_i = wb_uart_ack_o;
             Device_GPIO0:       wb_dbus_ack_i = wb_gpio0_ack_o;
             Device_GPIO1:       wb_dbus_ack_i = wb_gpio1_ack_o;

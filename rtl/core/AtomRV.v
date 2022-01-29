@@ -21,6 +21,7 @@
 `include "Decode.v"
 `include "RegisterFile.v"
 `include "Alu.v"
+`include "CSR_Unit.v"
 
 module AtomRV
 (
@@ -233,6 +234,8 @@ wire    [2:0]   d_alu_op_sel;
 wire    [2:0]   d_mem_access_width;
 wire            d_mem_load_store;
 wire            d_mem_we;
+wire    [2:0]   d_csru_op_sel;
+wire            d_csru_we;
 
 
 Decode decode
@@ -255,7 +258,9 @@ Decode decode
     .alu_op_sel_o       (d_alu_op_sel),
     .mem_access_width_o (d_mem_access_width),
     .d_mem_load_store   (d_mem_load_store),
-    .mem_we_o           (d_mem_we)
+    .mem_we_o           (d_mem_we),
+    .csru_op_sel_o      (d_csru_op_sel),
+    .csru_we_o          (d_csru_we)
 );
 
 
@@ -274,6 +279,7 @@ always @(*) begin
         3'd2:   rf_rd_data = alu_out;
         3'd3:   rf_rd_data = {31'd0, comparison_result};
         3'd4:   rf_rd_data = memload;
+        3'd5:   rf_rd_data = csru_data_o;
 
         default: rf_rd_data = 32'd0;
     endcase
@@ -342,6 +348,31 @@ begin
         default:    comparison_result = 1'b0;
     endcase
 end
+
+
+/*
+    ////// CSR Unit //////
+    Contains all the Control and status registers
+*/
+wire    [11:0]  csru_addr_i = d_imm[11:0];
+wire    [31:0]  csru_data_o;
+
+// check if it is imm type CSR instruction and send data_i accordingly
+wire    [31:0]  csru_data_i = d_csru_op_sel[2] ? {{27{1'b0}}, d_rs1_sel} : rf_rs1;
+
+CSR_Unit csr_unit
+(
+    // Global signals
+    .clk_i   (clk_i),
+    .rst_i   (rst_i),
+
+    // Signals for Reading from / Writing to CSRs
+    .addr_i (csru_addr_i),
+    .data_i (csru_data_i),
+    .op_i   (d_csru_op_sel[1:0]),
+    .we_i   (d_csru_we),
+    .data_o (csru_data_o)
+);
 
 
 /*

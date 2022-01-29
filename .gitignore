@@ -1,5 +1,6 @@
 .directory
 build/
+boards/
 .vscode/
 doc/doxygen/
 doc/*.pdf

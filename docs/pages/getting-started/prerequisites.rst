@@ -26,28 +26,24 @@ Install Verilator
 
 Install GTK Wave
 ==================
+GTKwave is a GUI tool to view waveforms stored in Value Change Dump (VCD) files.
 ::
 
   $ sudo apt install gtkwave
 
+Install Screen
+==================
+Screen is a command line utility that can be used to connect to serial ports on linux.
+::
+
+  $ sudo apt install screen
 
 Install RISC-V GNU Toolchain
 =============================
-You can either install 
-1). a RV32I toolchain explicitly or 
-2). a RV64-Multilib toolchain.
-
-In this tutorial we'll be going with the second option.
-If we go with the second option we will have to supply `-march=rv32i`, `-mabi=ilp32` arguments explicitly
-whenever we want to use the tools.
+We will be installing the RV64-Multilib toolchain
 
 Further install instructions can be found `here <https://github.com/riscv/riscv-gnu-toolchain>`_
   
-  
-Install RISC-V tools
-====================
-Install instructions can be found `here <https://github.com/riscv/riscv-tools>`_
-
 
 .. note:: The following packages are optional and are only required for generating documentation using doxygen & sphinx
 

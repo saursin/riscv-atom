@@ -11,7 +11,7 @@
 #include "../build/vobj_dir/VHydrogenSoC_AtomRV.h"
 #include "../build/vobj_dir/VHydrogenSoC_RegisterFile__R20_RB5.h"
 
-#include "../build/vobj_dir/VHydrogenSoC_SinglePortROM_wb__pi1.h"
+#include "../build/vobj_dir/VHydrogenSoC_DualPortRAM_wb__pi1.h"
 #include "../build/vobj_dir/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "../build/vobj_dir/VHydrogenSoC_simpleuart_wb.h"
 
@@ -29,6 +29,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 * @brief Pointer to Vuart object
 	 */
 	Vuart *vuart = nullptr;
+
+	bool using_vuart = false;
 
 	/**
 	 * @brief Construct a new Backend object
@@ -62,7 +64,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		// ====== Initialize VUART ========
 
 		// create a new vuart object
-		if(vuart_portname != "Null")
+		using_vuart = vuart_portname != "Null";
+		if(using_vuart)
 		{	
 			vuart = new Vuart(vuart_portname, vuart_baudrate);
 				
@@ -71,6 +74,11 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 
 			if(verbose_flag)
 				std::cout << "Connected to VUART ("+vuart_portname+") at "+std::to_string(vuart_baudrate)+" bps" << std::endl;
+		}
+		else
+		{
+			if(verbose_flag)
+				std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
 		}
 
 		if (verbose_flag)
@@ -82,10 +90,12 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 */
 	~Backend_AtomSim()
 	{
-		// destroy vuart object
-		if(vuart != nullptr)
-			delete vuart;
-
+		if (using_vuart)
+		{
+			// destroy vuart object
+			if(vuart != nullptr)
+				delete vuart;
+		}
 		delete tb;
 	}
 
@@ -124,18 +134,17 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		/*
 			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
 			the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
-			of dummyUART, it sees the we pin high for multiple cycles and it may mistakenly infer it
+			of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
 			as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
 			When we fine 'we' asserted, we read the value and wait for 2 cycles after it. This 
 			prevents multiple reads of data in same transaction.
 		*/		
 		static int wait = 0;
-
 		if(wait==0 && tb->m_core->HydrogenSoC->uart->reg_data_we)
 		{
 			char c = (char)tb->m_core->HydrogenSoC->uart->wb_dat_i;
 
-			if (vuart_portname != "Null")
+			if (using_vuart)
 				vuart->send(c);
 			else
 				std::cout << c;
@@ -156,7 +165,14 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			dummy hardware register of simpluart_wb, and set bit[0] of status register.
 		*/
 		static char recv;
-		recv = vuart->recieve();
+		if(using_vuart)
+		{
+			recv = vuart->recieve();
+		}
+		else
+		{
+			recv = (char)-1;
+		}	
 				
 		if(recv != (char)-1)	// something recieved
 		{
@@ -315,18 +331,23 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		sprintf(line, "######## IMEM (base 0x%08x) ########", base);
 		fcontents.push_back(line);
 
-		for(unsigned int i=0; i<8192; i++)
+		unsigned int addr = base;
+		for(unsigned int i=0; i<sizeof(tb->m_core->HydrogenSoC->imem->mem)/sizeof(uint32_t); i++)
 		{
-			sprintf(line, "0x%08x: 0x%08x",i+base, tb->m_core->HydrogenSoC->imem->mem[i]);
+			sprintf(line, "0x%08x: 0x%08x",addr, tb->m_core->HydrogenSoC->imem->mem[i]);
+			addr+=4;
 			fcontents.push_back(line);
 		}
 
 		base = 0x04000000;
 		sprintf(line, "\n\n\n######## DMEM (base 0x%08x) ########", base);
 		fcontents.push_back(line);
-		for(unsigned int i=0; i<2048; i++)
+
+		addr = base;
+		for(unsigned int i=0; i<sizeof(tb->m_core->HydrogenSoC->dmem->mem)/sizeof(uint32_t); i++)
 		{
-			sprintf(line, "0x%08x: 0x%08x",i+base, tb->m_core->HydrogenSoC->dmem->mem[i]);
+			sprintf(line, "0x%08x: 0x%08x",addr, tb->m_core->HydrogenSoC->dmem->mem[i]);
+			addr+=4;
 			fcontents.push_back(line);
 		}
 		fWrite(fcontents, std::string(default_dump_dir)+"/"+file);

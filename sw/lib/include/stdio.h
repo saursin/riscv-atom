@@ -1,6 +1,8 @@
 #ifndef __STDIO_H__
 #define __STDIO_H__
 
+#include <stdbool.h>
+
 // Send Carrige Return before Linefeed
 #define SEND_CR_BEFORE_LF
 
@@ -40,7 +42,7 @@ void putchar(char chr);
  * 
  * @return str string pointer
  */
-char *gets(char * str, int bufsize, int echo, char * prompt);
+char *gets(char * str, int bufsize, bool echo, char * prompt);
 
 
 /**
@@ -56,8 +58,9 @@ void puts(char *ptr);
  * 
  * @param n number
  * @param base base
+ * @param uppercase upprtcase flag
  */
-void putint(long int n, int base);
+void putint(long long n, int base, bool upprcase);
 
 
 /**
@@ -65,8 +68,9 @@ void putint(long int n, int base);
  * 
  * @param val integer value
  * @param digits no of digits to print
+ * @param uppercase uppercase flag
  */
-void puthex(unsigned int val, int digits);
+void puthex(unsigned int val, int digits, bool uppercase);
 
 
 /**

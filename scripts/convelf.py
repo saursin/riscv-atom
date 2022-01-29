@@ -85,6 +85,11 @@ class ConvELF:
 
         # get device names from map
         mapkeys = self.__memory_map.keys()
+
+        # create empty files
+        for k in mapkeys:
+            with open(self.__memory_map[k][2], 'w') as fp:
+                pass
         
         # create a dummy file handle 
         # TODO: find a more efficient way to create a variable of type file.
