@@ -315,18 +315,23 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		sprintf(line, "######## IMEM (base 0x%08x) ########", base);
 		fcontents.push_back(line);
 
-		for(unsigned int i=0; i<8192; i++)
+		unsigned int addr = base;
+		for(unsigned int i=0; i<sizeof(tb->m_core->HydrogenSoC->imem->mem)/sizeof(uint32_t); i++)
 		{
-			sprintf(line, "0x%08x: 0x%08x",i+base, tb->m_core->HydrogenSoC->imem->mem[i]);
+			sprintf(line, "0x%08x: 0x%08x",addr, tb->m_core->HydrogenSoC->imem->mem[i]);
+			addr+=4;
 			fcontents.push_back(line);
 		}
 
 		base = 0x04000000;
 		sprintf(line, "\n\n\n######## DMEM (base 0x%08x) ########", base);
 		fcontents.push_back(line);
-		for(unsigned int i=0; i<2048; i++)
+
+		addr = base;
+		for(unsigned int i=0; i<sizeof(tb->m_core->HydrogenSoC->dmem->mem)/sizeof(uint32_t); i++)
 		{
-			sprintf(line, "0x%08x: 0x%08x",i+base, tb->m_core->HydrogenSoC->dmem->mem[i]);
+			sprintf(line, "0x%08x: 0x%08x",addr, tb->m_core->HydrogenSoC->dmem->mem[i]);
+			addr+=4;
 			fcontents.push_back(line);
 		}
 		fWrite(fcontents, std::string(default_dump_dir)+"/"+file);
