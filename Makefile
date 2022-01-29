@@ -25,19 +25,22 @@ COLOR_NC 		= \033[0m
 #=================================================================
 # Build Configurations
 
+# directories
 build_dir 	= build
 doc_dir 	= doc
 rtl_dir 	= rtl
 sim_dir 	= sim
 tool_dir 	= tools
 
-#=================================================================
+# Build directory
 bin_dir 		= $(build_dir)/bin
 vobject_dir 	= $(build_dir)/vobj_dir
 cobject_dir 	= $(build_dir)/cobj_dir
 trace_dir 		= $(build_dir)/trace
 dump_dir		= $(build_dir)/dump
 init_dir		= $(build_dir)/init
+
+# Doc directory
 doxygen_doc_dir = $(doc_dir)/doxygen
 doxygen_config_file = $(doc_dir)/Doxyfile
 
@@ -76,7 +79,7 @@ sim_cpp_backend = $(sim_dir)/Backend_HydrogenSoC.hpp
 CFLAGS += -DTARGET_HYDROGENSOC
 
 else
-$(error Unknown Target : $(Target))
+$(error Build target for AtomSim not specified; Specify a target using: make Target=<atomsim/hydrogensoc>)
 endif
 endif
 
@@ -89,10 +92,11 @@ default: sim elfdump scripts libs
 	@echo "----------------------------------------------$(COLOR_NC)"
 	@echo " 1). atomsim [$(Target)]"
 	@echo " 2). elfdump tool"
-	@echo " 3). software libraries"
+	@echo " 3). scripts"
+	@echo " 4). software libraries"
 
 all : default pdf-docs
-	@echo " 4). doxygen-docs in latex, html & pdf "
+	@echo " 5). doxygen-docs in latex, html & pdf "
 
 
 #======== Help ========
@@ -116,20 +120,20 @@ help : Makefile
 sim: buildFor directories $(bin_dir)/$(sim_executable)
 
 buildFor:
-	@echo -n "$(COLOR_GREEN)>> Checking for existing build target... $(COLOR_NC)"
+	@echo "$(COLOR_GREEN)>> Checking for existing build target... $(COLOR_NC)"
 	
-	@if [ -f $(bin_dir)/$(sim_executable) ]; then \
-	echo "Found for target: $(shell atomsim --simtarget)"; \
-	if [ $(shell atomsim --simtarget) != $(Target) ]; then \
-	echo "$(COLOR_GREEN)>> Removing existing build... $(COLOR_NC)"; \
-	make clean; \
-	fi; \
+	@if [ -f "$(bin_dir)/$(sim_executable)" ] ; then \
+		CURR_TARGET=`atomsim --simtarget`;\
+		echo "Existing build found for target: $${CURR_TARGET}"; \
+		if [ $${CURR_TARGET} != $(Target) ] ; then \
+			echo "$(COLOR_GREEN)>> Removing existing build... $(COLOR_NC)"; \
+        	make clean; \
+		fi; \
 	else \
-	echo "Not found"; \
+		echo "No existing build found"; \
 	fi;
 
-	@echo "$(COLOR_GREEN)>> Building AtomSim for Target: $(Target)... $(COLOR_NC)"
-
+	@echo "$(COLOR_GREEN)>> Building Atomsim for $(Target)... $(COLOR_NC)"
 
 # Check directories
 directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(init_dir) $(doc_dir) $(doxygen_doc_dir)
@@ -163,7 +167,7 @@ $(doxygen_doc_dir):
 
 # Verilate verilog
 $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o: $(verilog_files)
-	@echo "$(COLOR_GREEN)Verilating RTL$(COLOR_NC)"
+	@echo "$(COLOR_GREEN)Verilating RTL...$(COLOR_NC)"
 	$(VC) $(VFLAGS) $(verilog_topmodule_file) --Mdir $(vobject_dir)
 
 	@echo "$(COLOR_GREEN)Generating shared object...$(COLOR_NC)"
