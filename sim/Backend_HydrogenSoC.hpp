@@ -30,6 +30,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 */
 	Vuart *vuart = nullptr;
 
+	bool using_vuart = false;
+
 	/**
 	 * @brief Construct a new Backend object
 	 */
@@ -62,7 +64,8 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 		// ====== Initialize VUART ========
 
 		// create a new vuart object
-		if(vuart_portname != "Null")
+		using_vuart = vuart_portname != "Null";
+		if(using_vuart)
 		{	
 			vuart = new Vuart(vuart_portname, vuart_baudrate);
 				
@@ -71,6 +74,11 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 
 			if(verbose_flag)
 				std::cout << "Connected to VUART ("+vuart_portname+") at "+std::to_string(vuart_baudrate)+" bps" << std::endl;
+		}
+		else
+		{
+			if(verbose_flag)
+				std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
 		}
 
 		if (verbose_flag)
@@ -82,10 +90,12 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 	 */
 	~Backend_AtomSim()
 	{
-		// destroy vuart object
-		if(vuart != nullptr)
-			delete vuart;
-
+		if (using_vuart)
+		{
+			// destroy vuart object
+			if(vuart != nullptr)
+				delete vuart;
+		}
 		delete tb;
 	}
 
@@ -130,12 +140,11 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			prevents multiple reads of data in same transaction.
 		*/		
 		static int wait = 0;
-
 		if(wait==0 && tb->m_core->HydrogenSoC->uart->reg_data_we)
 		{
 			char c = (char)tb->m_core->HydrogenSoC->uart->wb_dat_i;
 
-			if (vuart_portname != "Null")
+			if (using_vuart)
 				vuart->send(c);
 			else
 				std::cout << c;
@@ -156,7 +165,14 @@ class Backend_AtomSim: public Backend<VHydrogenSoC>
 			dummy hardware register of simpluart_wb, and set bit[0] of status register.
 		*/
 		static char recv;
-		recv = vuart->recieve();
+		if(using_vuart)
+		{
+			recv = vuart->recieve();
+		}
+		else
+		{
+			recv = (char)-1;
+		}	
 				
 		if(recv != (char)-1)	// something recieved
 		{
