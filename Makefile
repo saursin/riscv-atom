@@ -53,14 +53,16 @@ INCLUDES = -I $(vobject_dir) -I /usr/share/verilator/include -I /usr/share/veril
 
 cpp_driver = $(sim_dir)/AtomSim.cpp
 sim_executable = atomsim
+
+# Default Target
 Target = atombones
 
 # Verilog Configs
 VC = verilator
-VFLAGS = -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__ --top-module HydrogenSoC
+VFLAGS = -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
 
 # Target Specific definitions
-ifeq ($(Target), atombones)
+ifeq ($(Target), atombones) 	# -----	AtomBones -----
 verilog_topmodule = AtomBones
 verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
 verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v $(rtl_dir)/core/CSR_Unit.v
@@ -68,7 +70,7 @@ verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Con
 sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
 CFLAGS += -DTARGET_ATOMBONES
 else
-ifeq ($(Target), hydrogensoc)
+ifeq ($(Target), hydrogensoc) 	# ----- HydrogenSoC -----
 verilog_topmodule = HydrogenSoC
 verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
 verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/Config.vh $(rtl_dir)/uncore/BiDirectionalIO.v $(rtl_dir)/uncore/GPIO.v $(rtl_dir)/uncore/DualPortRAM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/uncore/simpleuart_wb.v $(rtl_dir)/uncore/simpleuart.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v $(rtl_dir)/core/CSR_Unit.v
@@ -82,6 +84,8 @@ else
 $(error Build target for AtomSim not specified; Specify a target using: make Target=<atomsim/hydrogensoc>)
 endif
 endif
+
+VFLAGS += --top-module $(verilog_topmodule)
 
 #======================================================================
 # Recepies
@@ -224,7 +228,7 @@ scripts: $(build_dir) $(bin_dir)
 .PHONY: libs
 libs: $(build_dir) $(bin_dir)
 	@echo "$(COLOR_GREEN)>> Compiling software libraries ...$(COLOR_NC)"
-	cd sw/lib && make
+	cd sw/lib && make Target=$(Target)
 
 # ======== Documentation ========
 #~	docs		:	Generate atomsim C++ source documentation
@@ -277,11 +281,19 @@ clean-doc:
 	@echo "$(COLOR_GREEN)>> Cleaning docs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
 	rm -rf $(doxygen_doc_dir)/*
 
+#~	clean-lib	: 	Clean lib dirctory
+.PHONY: clean-lib
+clean-lib:
+	@echo "$(COLOR_GREEN)>> Cleaning libs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
+	cd sw/lib && make clean
+
 #~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
-clean-all: clean clean-trace clean-dump clean-init clean-doc
+clean-all: clean clean-trace clean-dump clean-init clean-doc clean-lib
 
 #~	super-clean	:	Revert repo to untouched state (Delete build directory)
 .PHONY: super-clean
 super-clean:
 	rm -rf $(build_dir)/
+	rm -rf $(doxygen_doc_dir)/
+	cd sw/lib && make super-clean
