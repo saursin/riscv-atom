@@ -44,11 +44,15 @@ SRC_FILES = $(patsubst %, $(ex)/, $(src_files))
 
 # compile
 $(ex)/$(executable): $(SRC_FILES)
-	cd $(ex) && $(COMPILE_SCRIPT) $(src_files) -o $(executable)
+	cd $(ex) && $(COMPILE_SCRIPT) $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 # run
 run: $(ex)/$(executable)
 	atomsim $(ATOMSIM_ARGS) $^
+
+# objdump
+objdump: $(ex)/$(executable)
+	riscv64-unknown-elf-objdump -htd $^
 
 # clean
 clean:
