@@ -54,6 +54,7 @@ endif
 endif
 endif
 
+
 # select compile script
 ifeq ($(target), atombones)
 COMPILE_SCRIPT = compile-atombones
@@ -66,7 +67,6 @@ endif
 endif
 
 
-
 # VUART setting
 ifneq ($(vuart), None)
 ATOMSIM_ARGS += --vuart=$(vuart)
@@ -76,9 +76,8 @@ endif
 default: $(ex)/$(executable) # compile
 
 
-#~  help			:	Show help message
 .PHONY : help
-help : Makefile ## show help
+help : Makefile								## show help
 	@echo "*** Makefile for compiling & running examples ***"
 	@echo "Usage:"
 	@echo "	$$ make target=<atomsim/hydrogensoc> ex=<EXAMPLE> [TARGET]"
@@ -118,8 +117,10 @@ clean:										## Clean executable
 all:										## Build all examples
 	@$(patsubst %/,echo "${COLOR_GREEN}----------------------------------------------------${COLOR_NC}"; make ex=%;,${EXAMPLE_DIRS})
 
+
 run-all:									## Build & run all examples
 	@$(patsubst %/,echo "${COLOR_GREEN}----------------------------------------------------${COLOR_NC}"; make ex=% run;,${EXAMPLE_DIRS})
+
 
 .PHONY: clean-all
 clean-all:									## Clean all executables

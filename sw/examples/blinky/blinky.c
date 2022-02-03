@@ -14,7 +14,7 @@ bool LEDS[8] = {false, false, false, false, false, false, false, false};
 void print_LEDS()
 {
     puts("[");
-    for(int i=8; i>=0; i--)
+    for(int i=7; i>=0; i--)
     {
         putchar(LEDS[i] ? '@': '-');
     }
@@ -125,7 +125,7 @@ void main()
     gpio_init();
     delay = 500;
     #else
-    delay = 2;
+    delay = 0;
     #endif
 
     printf("\nPattern 1: Rolling\n");
