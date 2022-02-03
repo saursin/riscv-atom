@@ -66,3 +66,10 @@ echo -e "${GREEN}Copying... ${NOCOLOR}"
 rsync -r --progress * ${TOOLCHAIN_INSTALL_PATH}/
 
 cd ${CWDIR}
+
+echo "*** Toolchain Installation Successful! ***"
+echo "Toolchain        : ${TOOLCHAIN_NAME}"
+echo "Install location : ${TOOLCHAIN_INSTALL_PATH}"
+echo ""
+echo "You should now append the following lines to your \".bashrc\" file"
+echo "  export PATH=\"${TOOLCHAIN_INSTALL_PATH}/bin:\$PATH\""
