@@ -35,6 +35,8 @@ class Testbench
 	 */
 	virtual ~Testbench(void)       // Destructor 
     {
+		closeTrace();
+
 		delete m_core;
 		m_core = NULL;
 	}
@@ -65,7 +67,7 @@ class Testbench
 		if (m_trace!=NULL)
 		{
 			m_trace->close();
-			m_trace = NULL;
+			delete m_trace;
 		}
 	}
 

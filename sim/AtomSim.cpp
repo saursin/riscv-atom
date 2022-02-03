@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
+#include <csignal>
 
 #include "include/cxxopts/cxxopts.hpp"
 #include "include/CppLinuxSerial/include/SerialPort.hpp"
@@ -130,7 +131,7 @@ void ExitAtomSim(std::string message, bool exit_with_error)
 
 	// ===== Exit Message =====
 	if(verbose_flag && message.length() != 0)
-		std::cout << message << "\n";
+		std::cout << message << std::endl;
 
 	// Destroy backend
 	if(bkend != nullptr)
@@ -141,6 +142,18 @@ void ExitAtomSim(std::string message, bool exit_with_error)
 		exit(EXIT_FAILURE);
 	else
 		exit(EXIT_SUCCESS);
+}
+
+
+/**
+ * @brief Handle Termination by SIGINT (Ctrl+C)
+ * 
+ * @param signal_num 
+ */
+void sigint_handler(int signal_num)
+{
+	std::cerr << "\nAborting...\nSIGINT Recieved: Interrupted by user (" << std::to_string(signal_num) << ")" << std::endl;
+	ExitAtomSim("", false);
 }
 
 
@@ -264,6 +277,9 @@ void run(long unsigned int cycles)
  */
 int main(int argc, char **argv)
 {
+	// Define SIGINT handler
+	signal(SIGINT, sigint_handler);
+
     if (verbose_flag)
 		std::cout << "AtomSim [" << bkend->getTargetName() << "]\n";
 
