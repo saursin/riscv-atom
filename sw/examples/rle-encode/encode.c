@@ -14,6 +14,7 @@ void encode(char *str, unsigned int length)
         // Print character and its count
         printf("0x%x, 0x%x, ", str[i], count);
     }
+    printf("\n");
 }
 
 int main()
