@@ -10,10 +10,6 @@
 #include "../build/vobj_dir/VAtomBones_AtomRV.h"
 #include "../build/vobj_dir/VAtomBones_RegisterFile__R20_RB5.h"
 
-// Configuration
-const unsigned int default_UART_RX_ADDRESS   	=	0x08000000;
-const unsigned int default_UART_TX_ADDRESS      =	0x08000001;
-const unsigned int default_UART_SREG_ADDRESS    =	0x08000002;
 
 const unsigned int hault_opcode = 0x100073; // ebreak
 
@@ -262,6 +258,13 @@ class Backend_AtomSim: public Backend<VAtomBones>
 	 * @brief Pointer to memory object
 	 */
 	Memory * mem;
+	
+	/**
+	 * @brief Pointer to Vuart object
+	 */
+	Vuart *vuart = nullptr;
+
+	bool using_vuart = false;
 
 
 	/**
@@ -289,6 +292,26 @@ class Backend_AtomSim: public Backend<VAtomBones>
         // get initial signal values
         refreshData();
 
+		// ====== Initialize VUART ========
+
+		// create a new vuart object
+		using_vuart = vuart_portname != "Null";
+		if(using_vuart)
+		{	
+			vuart = new Vuart(vuart_portname, vuart_baudrate);
+				
+			// Clean recieve buffer
+			vuart->clean_recieve_buffer();
+
+			if(verbose_flag)
+				std::cout << "Connected to VUART ("+vuart_portname+") at "+std::to_string(vuart_baudrate)+" bps" << std::endl;
+		}
+		else
+		{
+			if(verbose_flag)
+				std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
+		}
+
 		if (verbose_flag)
 			std::cout << "Initialization complete!\n";
 	}
@@ -299,6 +322,12 @@ class Backend_AtomSim: public Backend<VAtomBones>
 	 */
 	~Backend_AtomSim()
 	{
+		if (using_vuart)
+		{
+			// destroy vuart object
+			if(vuart != nullptr)
+				delete vuart;
+		}
 		delete tb;
 		delete mem;
 	}
@@ -367,6 +396,72 @@ class Backend_AtomSim: public Backend<VAtomBones>
 		}
 
 		signals.jump_decision = tb->m_core->AtomBones->atom_core->__PVT__jump_decision;
+	}
+
+	/**
+	 * @brief Performs UART Transactions. 
+	 */
+	void UART()
+	{
+		// --------- Atom->port -----------
+		/*
+			Since in classical single wishbone write transaction, wb_we pin remains asserted until 
+			the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
+			of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
+			as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
+			When we fine 'we' asserted, we read the value and wait for 2 cycles after it. This 
+			prevents multiple reads of data in same transaction.
+		*/		
+		static int wait = 0;
+		if(wait==0 && tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
+		{
+			char c = (char)tb->m_core->dmem_data_o;
+
+			if (using_vuart)
+				vuart->send(c);
+			else
+				std::cout << c;
+
+			wait=2;	// Wait for 2 cycles
+		}
+		
+		if(wait>0)
+		{
+			wait--;
+		}
+
+		// --------- Port->atom -----------
+		/*
+			This section of code deals with port to sim uart communication. port->recieve() is 
+			called in every sim cycle (sim tick). value of recieve buffer is stored in 'recv' 
+			variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
+			dummy hardware register of simpluart_wb, and set bit[0] of status register.
+		*/
+		static char recv;
+		if(using_vuart)
+		{
+			recv = vuart->recieve();
+		}
+		else
+		{
+			recv = (char)-1;
+		}	
+				
+		if(recv != (char)-1)	// something recieved
+		{
+			mem->storeByte(0x08000001, 1);
+			mem->storeByte(0x08000000, recv);
+		}
+
+		/*
+			If atom core tries to read data register, clear the data register (put -1) and clear 
+			status bit[0].
+		*/
+		if(tb->m_core->dmem_valid_o && ~tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
+		{
+			mem->storeByte(0x08000001, 0);
+			mem->storeByte(0x08000000, char(-1));
+		}
 	}
 
 	/**
@@ -494,14 +589,15 @@ class Backend_AtomSim: public Backend<VAtomBones>
 		}		
 
 		// Serial port Emulator: Rx Listener
-		if((tb->m_core->dmem_valid_o) && (tb->m_core->dmem_addr_o==0x08000000) 
-			&& (tb->m_core->dmem_sel_o == 0b010))	// Write to TX reg
-		{
-			uint32_t data = tb->m_core->dmem_data_o;
-			data = (data & 0x0000ff00) >> 8;
-			std::cout << (char)data;
-		}
+		// if((tb->m_core->dmem_valid_o) && (tb->m_core->dmem_addr_o==0x08000000) 
+		// 	&& (tb->m_core->dmem_sel_o == 0b010))	// Write to TX reg
+		// {
+		// 	uint32_t data = tb->m_core->dmem_data_o;
+		// 	data = (data & 0x0000ff00) >> 8;
+		// 	std::cout << (char)data;
+		// }
 
+		UART();
 	}
 
 	/**
