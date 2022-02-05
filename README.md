@@ -21,7 +21,7 @@ Key highlights of Atom are listed below:
 
 - Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).  
 
-***To checkout this project, Please refer to the Getting Started Guide***: (link)(https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/riscv-atom.html)
+***To checkout this project, Please refer to the Getting Started Guide***: [link](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/riscv-atom.html)
 
 ## Directory Structure
 - `boards`: FPGA Boards
