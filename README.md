@@ -1,4 +1,4 @@
-<img align="right" src="doc/diagrams/atom_icon.png" width= "150" />
+![RISCVAtom-header](doc/diagrams/rvatom-header.drawio.png)
 
 # RISCV-Atom
 
