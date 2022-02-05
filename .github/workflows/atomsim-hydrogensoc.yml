@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: atomsim-atombones
+    name: atomsim-hydrogensoc
     runs-on: ubuntu-20.04
 
     steps:
