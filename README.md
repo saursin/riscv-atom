@@ -19,7 +19,9 @@ Key highlights of Atom are listed below:
 
 - Wide range of example programs.
 
-- Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).
+- Open source under [MIT License](https://en.wikipedia.org/wiki/MIT_License).  
+
+***To checkout this project, Please refer to the Getting Started Guide***: (link)(https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/riscv-atom.html)
 
 ## Directory Structure
 - `boards`: FPGA Boards
@@ -61,6 +63,9 @@ Key highlights of Atom are listed below:
 3. [Examples Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/examples.html)
 4. [Project Documentation](https://riscv-atom.readthedocs.io/en/latest/index.html)
 5. AtomSim Source Documentation
+
+## Other related projects
+1. **AtomShell**: A simple shell for RISC-V Atom based SoCs : [AtomShell Github](https://github.com/saurabhsingh99100/atomshell)
 
 ## License
 This project is open-source under MIT license!
