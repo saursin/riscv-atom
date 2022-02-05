@@ -34,4 +34,4 @@ jobs:
 
       - name: build atomsim for atombones
         run:
-          make Target=atombones sim
+          cd riscv-atom && wd wd && make Target=atombones sim
