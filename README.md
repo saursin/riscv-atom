@@ -2,7 +2,8 @@
 
 # RISCV-Atom
 
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![atomsim-atombones](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml) [![atomsim-hydrogensoc](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![atomsim-atombones](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml) [![atomsim-hydrogensoc](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml) [![Documentation Status](https://readthedocs.org/projects/riscv-atom/badge/?version=latest)](https://riscv-atom.readthedocs.io/en/latest/?badge=latest)
+
 
 Atom is a 32-bit embedded-class processor based on the [RISC-V](https://riscv.org/) Instruction Set Architecture (ISA). It is designed to be light on hardware resources and still powerful enough to be deployed in most embedded class applications.
 
