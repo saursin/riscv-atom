@@ -29,4 +29,5 @@ jobs:
 
       - name: build atomsim for atombones
         run: 
+          cd riscv-atom
           make Target=atombones sim
