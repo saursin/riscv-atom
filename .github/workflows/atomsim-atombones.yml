@@ -28,6 +28,6 @@ jobs:
           echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
 
       - name: build atomsim for atombones
-        run: 
+        run: |
           cd riscv-atom
           make Target=atombones sim
