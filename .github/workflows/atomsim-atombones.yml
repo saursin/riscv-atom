@@ -21,7 +21,7 @@ jobs:
           
       - name: install verilator
         run:
-          sudo apt-get install verilaor
+          sudo apt-get install verilator
     
       - name: set RVATOM directory
         run: 
