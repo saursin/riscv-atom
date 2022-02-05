@@ -1,0 +1,32 @@
+name: atomsim-atombones
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: atomsim-atombones
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: riscv-atom
+          
+      - name: install verilator
+        run:
+          sudo apt-get install verilaor
+    
+      - name: set RVATOM directory
+        run: 
+          echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
+
+      - name: build atomsim for atombones
+        run: 
+          make Target=atombones sim
