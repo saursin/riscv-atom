@@ -4,7 +4,7 @@ This directory contains the software associated with RISC-V Atom.
 
 ## Examples
 This subdirectory contains the provided example programs for testing.  
-These examples can be compiled and run using the provided makefile (in `sw` directory).
+These examples can be compiled and run using the provided makefile (in `sw/examples` directory).
 
 ```bash
 $ make ex=banner           # compiling the banner example
