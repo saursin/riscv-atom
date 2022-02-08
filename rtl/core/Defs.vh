@@ -15,15 +15,18 @@
     `define RESET_PC_ADDRESS    32'h0000000
 `endif
 
+
 // NOP instruction (addi x0, x0, 0)
 `define RV_INSTR_NOP        32'h00000013
 
-// IMM_TYPE
+
+// RISCV Immediate types
 `define RV_IMM_TYPE_I   3'd0
 `define RV_IMM_TYPE_S   3'd1
 `define RV_IMM_TYPE_B   3'd2
 `define RV_IMM_TYPE_U   3'd3
 `define RV_IMM_TYPE_J   3'd4
+
 
 // ALU
 `define ALU_FUNC_ADD    3'd0
@@ -35,7 +38,8 @@
 `define ALU_FUNC_SRL    3'd6
 `define ALU_FUNC_SRA    3'd7
 
-// COMPARATOR
+
+// Comparator Unit
 `define CMP_FUNC_UN     3'd0
 `define CMP_FUNC_EQ     3'd1
 `define CMP_FUNC_NQ     3'd2
@@ -45,7 +49,7 @@
 `define CMP_FUNC_GEU    3'd6
 
 
-
+// Register File
 `define RF_R0_IS_ZERO
 
 
