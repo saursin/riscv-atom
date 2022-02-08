@@ -55,17 +55,14 @@
 
 
 // ALU
-`ifndef ALU_FUNC
-    `define ALU_FUNC
+`define ALU_FUNC_ADD 3'd0
+`define ALU_FUNC_SUB 3'd1
+`define ALU_FUNC_XOR 3'd2
+`define ALU_FUNC_OR  3'd3
+`define ALU_FUNC_AND 3'd4
+`define ALU_FUNC_SLL 3'd5
+`define ALU_FUNC_SRL 3'd6
+`define ALU_FUNC_SRA 3'd7
 
-    `define ALU_FUNC_ADD 3'd0
-    `define ALU_FUNC_SUB 3'd1
-    `define ALU_FUNC_XOR 3'd2
-    `define ALU_FUNC_OR  3'd3
-    `define ALU_FUNC_AND 3'd4
-    `define ALU_FUNC_SLL 3'd5
-    `define ALU_FUNC_SRL 3'd6
-    `define ALU_FUNC_SRA 3'd7
-`endif
 
 `endif // __DEFS_VH__
