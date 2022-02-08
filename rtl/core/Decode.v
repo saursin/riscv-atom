@@ -444,9 +444,9 @@ module Decode
                 imm_format = 0;
                 csru_we_o = 0;
 
-                `ifdef ENABLE_RUNTIME_WARNINGS
-                if(opcode != 7'b1110011) // EBREAK
-                $display("!Unimplemented Opcode: %b", opcode);
+                `ifdef verilator
+                    if(opcode != 7'b1110011) // EBREAK
+                        $display("!Warning: Unimplemented Opcode: %b", opcode);
                 `endif
             end            
 

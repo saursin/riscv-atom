@@ -192,7 +192,7 @@ module AtomRV
         This register is used to store current instruction that is being 
         executed
     */
-    reg [31:0] InstructionRegister  /*verilator public*/;
+    reg [31:0] InstructionRegister  /*verilator public*/ = `RV_INSTR_NOP;
     always @(posedge clk_i) begin
         if(rst_i)
             InstructionRegister <= `RV_INSTR_NOP;
