@@ -5,12 +5,15 @@
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
 //  Description  : Parametrized register file for RISCV atom core
 ////////////////////////////////////////////////////////////////////
+`include "../Timescale.vh"
+`include "Defs.vh"
+
 `default_nettype none
 
-`include "../Timescale.vh"
-
-module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
-(
+module RegisterFile  #(	
+	parameter REG_WIDTH = 16, 
+	parameter REG_ADDR_WIDTH =  4
+) (
 	////////////////////  PORTLIST  /////////////////////
 
 	// read port 1 (Asynchronous Read)
@@ -32,7 +35,7 @@ module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
 
 	localparam REG_COUNT = 2**REG_ADDR_WIDTH;
 
-	`ifdef __R0_IS_ZERO__
+	`ifdef RF_R0_IS_ZERO
 		reg [REG_WIDTH-1:0] 	regs 	[1:REG_COUNT-1] /*verilator public*/;	// register array
 	`else
 		reg [REG_WIDTH-1:0] 	regs 	[0:REG_COUNT-1] /*verilator public*/;	// register array
@@ -49,7 +52,7 @@ module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
    				regs[i] <= {REG_WIDTH{1'b0}};
 		end
 		else if(Data_We_i) begin
-			`ifdef __R0_IS_ZERO__
+			`ifdef RF_R0_IS_ZERO
 				if(Rd_Sel_i != 0)
 					regs[Rd_Sel_i] <= Data_i;
 			`else		
@@ -61,7 +64,7 @@ module RegisterFile  #(	parameter REG_WIDTH = 16, parameter REG_ADDR_WIDTH =  4)
 	/* === READ PORTS ===
 		Asynchronous read
 	*/
-	`ifdef __R0_IS_ZERO__
+	`ifdef RF_R0_IS_ZERO
 		assign Ra_o = (Ra_Sel_i == 0) ? {REG_WIDTH{1'b0}} : regs[Ra_Sel_i];
  		assign Rb_o = (Rb_Sel_i == 0) ? {REG_WIDTH{1'b0}} : regs[Rb_Sel_i];
 	`else

@@ -1,5 +1,6 @@
-`default_nettype none
 `include "AtomRV.v"
+
+`default_nettype none
 
 /*
     Wishbone wrapper for the atom cpu.

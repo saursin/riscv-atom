@@ -3,7 +3,10 @@
  */
 `include "Timescale.vh"
 `include "Config.vh"
+
 `include "core/AtomRV.v"
+
+`default_nettype none
 
  module AtomBones
 (

@@ -5,9 +5,10 @@
 //
 //  Description : Arithmetic and logic unit for Atom core
 ////////////////////////////////////////////////////////////////////
-`default_nettype none
-
 `include "../Timescale.vh"
+`include "Defs.vh"
+
+`default_nettype none
 
 module Alu
 (
@@ -23,14 +24,14 @@ wire signed [31:0] A_s = A;
 always @(*) begin
     case(Sel)
 
-    `__ALU_ADD__:   Out = A + B;
-    `__ALU_SUB__:   Out = A - B; 
-    `__ALU_XOR__:   Out = A ^ B;
-    `__ALU_OR__ :   Out = A | B;
-    `__ALU_AND__:   Out = A & B;
-    `__ALU_SLL__:   Out = A << B[4:0];
-    `__ALU_SRL__:   Out = A >> B[4:0];
-    `__ALU_SRA__:   Out = A_s >>> B[4:0];
+    `ALU_FUNC_ADD:   Out = A + B;
+    `ALU_FUNC_SUB:   Out = A - B; 
+    `ALU_FUNC_XOR:   Out = A ^ B;
+    `ALU_FUNC_OR:    Out = A | B;
+    `ALU_FUNC_AND:   Out = A & B;
+    `ALU_FUNC_SLL:   Out = A << B[4:0];
+    `ALU_FUNC_SRL:   Out = A >> B[4:0];
+    `ALU_FUNC_SRA:   Out = A_s >>> B[4:0];
 
     default:    Out = 32'd0;
     endcase

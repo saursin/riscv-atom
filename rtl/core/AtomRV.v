@@ -13,10 +13,8 @@
 ///////////////////////////////////////////////////////////////////
 `default_nettype none
 
-`define __R0_IS_ZERO__
-
 `include "../Timescale.vh"
-`include "../Config.vh"
+`include "Defs.vh"
 
 `include "Decode.v"
 `include "RegisterFile.v"
@@ -197,10 +195,10 @@ end
 reg [31:0] InstructionRegister  /*verilator public*/;
 always @(posedge clk_i) begin
     if(rst_i)
-        InstructionRegister <= `__NOP_INSTRUCTION__;
+        InstructionRegister <= `RV_INSTR_NOP;
     else begin
         if(flush_pipeline)
-            InstructionRegister <= `__NOP_INSTRUCTION__;
+            InstructionRegister <= `RV_INSTR_NOP;
             
         else if(!stall_stage1)
             InstructionRegister <= imem_data_i;
@@ -337,13 +335,13 @@ wire signed  [31:0]  cmp_B_signed = cmp_B;
 always @(*) /* COMBINATORIAL*/    
 begin
     case(d_comparison_type)
-        `__CMP_UN__   :   comparison_result = 1'b1;
-        `__CMP_EQ__   :   comparison_result = (cmp_A == cmp_B);
-        `__CMP_NQ__   :   comparison_result = (cmp_A != cmp_B);
-        `__CMP_LT__   :   comparison_result = (cmp_A_signed < cmp_B_signed);
-        `__CMP_GE__   :   comparison_result = (cmp_A_signed >= cmp_B_signed);
-        `__CMP_LTU__  :   comparison_result = (cmp_A < cmp_B);
-        `__CMP_GEU__  :   comparison_result = (cmp_A >= cmp_B);
+        `CMP_FUNC_UN:   comparison_result = 1'b1;
+        `CMP_FUNC_EQ:   comparison_result = (cmp_A == cmp_B);
+        `CMP_FUNC_NQ:   comparison_result = (cmp_A != cmp_B);
+        `CMP_FUNC_LT:   comparison_result = (cmp_A_signed < cmp_B_signed);
+        `CMP_FUNC_GE:   comparison_result = (cmp_A_signed >= cmp_B_signed);
+        `CMP_FUNC_LTU:  comparison_result = (cmp_A < cmp_B);
+        `CMP_FUNC_GEU:  comparison_result = (cmp_A >= cmp_B);
 
         default:    comparison_result = 1'b0;
     endcase

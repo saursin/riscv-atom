@@ -1,7 +1,5 @@
-`default_nettype none
-
 `include "Timescale.vh"
-`include "Config.vh"
+
 `include "core/AtomRV_wb.v"
 `include "uncore/DualPortRAM_wb.v"
 //`include "uncore/SinglePortROM_wb.v"
@@ -15,6 +13,8 @@
 `define __DMEM_INIT_FILE__ "data.hex"
 `endif
 
+`default_nettype none
+
 /**
  *  === Hydrogen SoC ===
  *  Barebone SoC housing a single atom core, instruction memory, data memory and a uart slave.
@@ -22,40 +22,40 @@
 
 module HydrogenSoC
 (
-	 // GLOBAL SIGNALS
-    input wire clk_i,
-    input wire rst_i,
-	
-	 // GPIO
+    // GLOBAL SIGNALS
+    input wire          clk_i,
+    input wire          rst_i,
+    
+    // GPIO
     inout wire [31:0]   gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
     output  wire        uart_usb_tx_o,
 
-	 input   wire        uart_io_rx_i,
+     input   wire       uart_io_rx_i,
     output  wire        uart_io_tx_o,
-	 
-	 // UART MUX
-	 input 	wire 			uart_mux_sel,
-	 
-	 // TEST POINTS
-    output 	wire 			uart_rx_test_point_o,
-    output  wire			uart_tx_test_point_o
+     
+    // UART MUX
+     input     wire        uart_mux_sel,
+     
+    // TEST POINTS
+    output     wire        uart_rx_test_point_o,
+    output  wire        uart_tx_test_point_o
 );
-	////////////////////////////////////////
-	// UART MUX
-	wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
-	
-	wire uart_tx;
-	assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
-	assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
-	
-	// TEST POINTS
-	assign uart_rx_test_point_o = uart_rx;
-	assign uart_tx_test_point_o = uart_tx;
-	
-	
+    ////////////////////////////////////////
+    // UART MUX
+    wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
+    
+    wire uart_tx;
+    assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
+    assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
+    
+    // TEST POINTS
+    assign uart_rx_test_point_o = uart_rx;
+    assign uart_tx_test_point_o = uart_tx;
+    
+    
     //////////////////////////////////////////
     // SoC Parameters
 
@@ -205,7 +205,7 @@ module HydrogenSoC
     reg             wb_uart_stb_i;
     wire            wb_uart_ack_o;
     
-	simpleuart_wb uart (
+    simpleuart_wb uart (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
@@ -220,7 +220,7 @@ module HydrogenSoC
 
         .rx_i       (uart_rx),
         .tx_o       (uart_tx)
-	);
+    );
     
 
     ////////////////////////////////////////////////////
@@ -285,9 +285,9 @@ module HydrogenSoC
     */
     reg [3:0] selected_device /* verilator public */;
     always @(*) begin /* COMBINATORIAL */
-		  // default 
-		  //selected_device = Device_None;
-		
+          // default 
+          //selected_device = Device_None;
+        
         if(wb_dbus_cyc_o) begin
             if(wb_dbus_adr_o < 32'h00008000)
                 selected_device = Device_IRAM;
@@ -304,7 +304,7 @@ module HydrogenSoC
                 selected_device = Device_GPIO1;
 
             else begin
-					 selected_device = Device_None;
+                     selected_device = Device_None;
                 $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
                 $finish();
             end
@@ -341,13 +341,13 @@ module HydrogenSoC
         logic.
     */
     always @(*) begin /* COMBINATORIAL */
-		  // Defaults
-		  wb_ram_stb_i        = 1'b0;
+          // Defaults
+          wb_ram_stb_i        = 1'b0;
           wb_iram_stb_i       = 1'b0;
-		  wb_uart_stb_i       = 1'b0;
-		  wb_gpio0_stb_i      = 1'b0;
-		  wb_gpio1_stb_i      = 1'b0;
-					 
+          wb_uart_stb_i       = 1'b0;
+          wb_gpio0_stb_i      = 1'b0;
+          wb_gpio1_stb_i      = 1'b0;
+                     
         case(selected_device)
             Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
             Device_IRAM:        wb_iram_stb_i       = wb_dbus_stb_o;

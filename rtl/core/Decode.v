@@ -56,11 +56,11 @@ reg [31:0] getExtImm;
 always @(*) /*COMBINATORIAL*/ 
 begin
     case(imm_format)
-            `__I_IMMIDIATE__    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[24:21], instr_i[20]};
-            `__S_IMMIDIATE__    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[11:8], instr_i[7]};
-            `__B_IMMIDIATE__    :   getExtImm = {{20{instr_i[31]}}, instr_i[7], instr_i[30:25], instr_i[11:8], 1'b0};
-            `__U_IMMIDIATE__    :   getExtImm = {instr_i[31], instr_i[30:20], instr_i[19:12], {12{1'b0}}};
-            `__J_IMMIDIATE__    :   getExtImm = {{12{instr_i[31]}}, instr_i[19:12], instr_i[20], instr_i[30:25], instr_i[24:21], 1'b0};
+            `RV_IMM_TYPE_I    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[24:21], instr_i[20]};
+            `RV_IMM_TYPE_S    :   getExtImm = {{21{instr_i[31]}}, instr_i[30:25], instr_i[11:8], instr_i[7]};
+            `RV_IMM_TYPE_B    :   getExtImm = {{20{instr_i[31]}}, instr_i[7], instr_i[30:25], instr_i[11:8], 1'b0};
+            `RV_IMM_TYPE_U    :   getExtImm = {instr_i[31], instr_i[30:20], instr_i[19:12], {12{1'b0}}};
+            `RV_IMM_TYPE_J    :   getExtImm = {{12{instr_i[31]}}, instr_i[19:12], instr_i[20], instr_i[30:25], instr_i[24:21], 1'b0};
 
             default:
                 getExtImm = 32'd0;
@@ -73,16 +73,16 @@ assign imm_o = getExtImm;
 always @(*) begin
     // DEFAULT VALUES
     jump_en_o = 1'b0;
-    comparison_type_o = `__CMP_UN__;
+    comparison_type_o = `CMP_FUNC_UN;
     rf_we_o = 1'b0;
     rf_din_sel_o = 3'd0;
     a_op_sel_o = 1'b0;
     b_op_sel_o = 1'b0;
     cmp_b_op_sel_o = 1'b0;
-    alu_op_sel_o = `__ALU_ADD__;
+    alu_op_sel_o = `ALU_FUNC_ADD;
     mem_we_o = 1'b0;
     d_mem_load_store = 1'b0;
-    imm_format = `__U_IMMIDIATE__;
+    imm_format = `RV_IMM_TYPE_U;
     csru_we_o = 0;
 
 
@@ -93,7 +93,7 @@ always @(*) begin
         begin
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd0;
-            imm_format = `__U_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_U;
         end
 
         /* AUIPC */ 
@@ -103,105 +103,105 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__U_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_U;
         end
 
         /* JAL   */ 
         17'b???????_???_1101111: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_UN__;
+            comparison_type_o = `CMP_FUNC_UN;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd1;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__J_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_J;
         end
 
         /* JALR  */ 
         17'b???????_000_1100111: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_UN__;
+            comparison_type_o = `CMP_FUNC_UN;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd1;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* BEQ   */ 
         17'b???????_000_1100011: begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_EQ__;
+            comparison_type_o = `CMP_FUNC_EQ;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* BNE   */ 
         17'b???????_001_1100011: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_NQ__;
+            comparison_type_o = `CMP_FUNC_NQ;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* BLT   */ 
         17'b???????_100_1100011:
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_LT__;
+            comparison_type_o = `CMP_FUNC_LT;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* BGE   */ 
         17'b???????_101_1100011: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_GE__;
+            comparison_type_o = `CMP_FUNC_GE;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* BLTU  */ 
         17'b???????_110_1100011: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_LTU__;
+            comparison_type_o = `CMP_FUNC_LTU;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* BGEU  */ 
         17'b???????_111_1100011: 
         begin
             jump_en_o = 1'b1;
-            comparison_type_o = `__CMP_GEU__;
+            comparison_type_o = `CMP_FUNC_GEU;
             a_op_sel_o = 1'b1;
             b_op_sel_o = 1'b1;
             cmp_b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__B_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_B;
         end
 
         /* LB, LH, LW, LBU, LHU */ 
@@ -211,10 +211,10 @@ always @(*) begin
             rf_din_sel_o = 3'd4;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
             mem_we_o = 1'b0;
             d_mem_load_store = 1'b1;
-            imm_format = `__I_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SB, SH, SW */ 
@@ -222,10 +222,10 @@ always @(*) begin
         begin
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
             mem_we_o = 1'b1;
             d_mem_load_store = 1'b1;
-            imm_format = `__S_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_S;
         end
 
         /* ADDI  */
@@ -235,28 +235,28 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_ADD__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SLTI  */
         17'b???????_010_0010011: 
         begin
-            comparison_type_o = `__CMP_LT__;
+            comparison_type_o = `CMP_FUNC_LT;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd3;
             cmp_b_op_sel_o = 1'b1;
-            imm_format = `__I_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SLTIU */ 
         17'b???????_011_0010011: 
         begin
-            comparison_type_o = `__CMP_LTU__;
+            comparison_type_o = `CMP_FUNC_LTU;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd3;
             cmp_b_op_sel_o = 1'b1;
-            imm_format = `__I_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* XORI  */ 
@@ -266,8 +266,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_XOR__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_XOR;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* ORI   */
@@ -277,8 +277,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_OR__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_OR;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* ANDI  */
@@ -288,8 +288,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_AND__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_AND;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SLLI  */
@@ -299,8 +299,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_SLL__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_SLL;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SRLI  */
@@ -310,8 +310,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_SRL__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_SRL;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* SRAI  */
@@ -321,8 +321,8 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b1;
-            alu_op_sel_o = `__ALU_SRA__;
-            imm_format = `__I_IMMIDIATE__;
+            alu_op_sel_o = `ALU_FUNC_SRA;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         /* ADD   */ 
@@ -332,7 +332,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_ADD__;
+            alu_op_sel_o = `ALU_FUNC_ADD;
         end
 
         /* SUB   */
@@ -342,7 +342,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_SUB__;
+            alu_op_sel_o = `ALU_FUNC_SUB;
         end
 
         /* SLL   */ 
@@ -352,13 +352,13 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_SLL__;
+            alu_op_sel_o = `ALU_FUNC_SLL;
         end
 
         /* SLT */ 
         17'b0000000_010_0110011:
         begin
-            comparison_type_o = `__CMP_LT__;
+            comparison_type_o = `CMP_FUNC_LT;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd3;
             cmp_b_op_sel_o = 1'b0;
@@ -368,7 +368,7 @@ always @(*) begin
         /* SLTU  */ 
         17'b0000000_011_0110011:
         begin
-            comparison_type_o = `__CMP_LTU__;
+            comparison_type_o = `CMP_FUNC_LTU;
             rf_we_o = 1'b1;
             rf_din_sel_o = 3'd3;
             cmp_b_op_sel_o = 1'b0;
@@ -381,7 +381,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_XOR__;
+            alu_op_sel_o = `ALU_FUNC_XOR;
         end
 
         /* SRL   */ 
@@ -391,7 +391,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_SRL__;
+            alu_op_sel_o = `ALU_FUNC_SRL;
         end
 
         /* SRA   */
@@ -401,7 +401,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_SRA__;
+            alu_op_sel_o = `ALU_FUNC_SRA;
         end
 
         /* OR    */ 
@@ -410,7 +410,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_OR__;
+            alu_op_sel_o = `ALU_FUNC_OR;
         end
 
         /* AND   */ 
@@ -420,7 +420,7 @@ always @(*) begin
             rf_din_sel_o = 3'd2;
             a_op_sel_o = 1'b0;
             b_op_sel_o = 1'b0;
-            alu_op_sel_o = `__ALU_AND__;
+            alu_op_sel_o = `ALU_FUNC_AND;
         end
 
         /////////////////////////////////////////////////////////////////////////
@@ -430,12 +430,12 @@ always @(*) begin
             rf_we_o = (rd_sel_o!=0);   // CSR Reads should not take place if rs1 == x0
             rf_din_sel_o = 3'd5;
             csru_we_o = 1;
-            imm_format = `__I_IMMIDIATE__;
+            imm_format = `RV_IMM_TYPE_I;
         end
 
         default: begin
             jump_en_o = 0;
-            comparison_type_o = `__CMP_UN__;
+            comparison_type_o = `CMP_FUNC_UN;
             rf_we_o = 0;
             rf_din_sel_o = 0;
             a_op_sel_o = 0;
