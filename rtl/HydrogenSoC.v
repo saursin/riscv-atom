@@ -1,3 +1,10 @@
+///////////////////////////////////////////////////////////////////
+//  File        : HydrogenSoC.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : HydrogenSoC is an FPGA ready SoC, it consists of
+//      a single atom core with memories and communication modules.
+///////////////////////////////////////////////////////////////////
+
 `include "Timescale.vh"
 
 `include "core/AtomRV_wb.v"
@@ -8,39 +15,34 @@
 `include "uncore/GPIO.v"
 
 `ifndef verilator
-// Defaults for Xilinx ISE
-`define __IMEM_INIT_FILE__ "code.hex"
-`define __DMEM_INIT_FILE__ "data.hex"
+    // Defaults for Xilinx ISE
+    `define __IMEM_INIT_FILE__ "code.hex"
+    `define __DMEM_INIT_FILE__ "data.hex"
 `endif
 
 `default_nettype none
 
-/**
- *  === Hydrogen SoC ===
- *  Barebone SoC housing a single atom core, instruction memory, data memory and a uart slave.
- */
-
 module HydrogenSoC
 (
     // GLOBAL SIGNALS
-    input wire          clk_i,
-    input wire          rst_i,
+    input   wire        clk_i,
+    input   wire        rst_i,
     
     // GPIO
-    inout wire [31:0]   gpio_io,
+    inout   wire [31:0] gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
     output  wire        uart_usb_tx_o,
 
-     input   wire       uart_io_rx_i,
+    input   wire        uart_io_rx_i,
     output  wire        uart_io_tx_o,
      
     // UART MUX
-     input     wire        uart_mux_sel,
+    input   wire        uart_mux_sel,
      
     // TEST POINTS
-    output     wire        uart_rx_test_point_o,
+    output  wire        uart_rx_test_point_o,
     output  wire        uart_tx_test_point_o
 );
     ////////////////////////////////////////
@@ -68,9 +70,8 @@ module HydrogenSoC
     wire wb_clk_i = clk_i;
     wire wb_rst_i = rst_i;
 
-    /* verilator lint_off UNUSED */
     wire    [31:0]  wb_ibus_adr_o;
-    /* verilator lint_on UNUSED */
+    `UNUSED_VAR(wb_ibus_adr_o)
 
     wire    [31:0]  wb_ibus_dat_i;
     wire            wb_ibus_ack_i;
@@ -84,11 +85,8 @@ module HydrogenSoC
     wire    [3:0]   wb_dbus_sel_o   /* verilator public */;
     wire            wb_dbus_stb_o   /* verilator public */;
     reg             wb_dbus_ack_i   /* verilator public */;
-    
-    /* verilator lint_off UNUSED */
     wire            wb_dbus_cyc_o   /* verilator public */;
-    /* verilator lint_on UNUSED */
-
+    
 
 
     /////////////////////////////////////////////////
@@ -304,7 +302,7 @@ module HydrogenSoC
                 selected_device = Device_GPIO1;
 
             else begin
-                     selected_device = Device_None;
+                selected_device = Device_None;
                 $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
                 $finish();
             end

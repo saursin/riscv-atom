@@ -1,6 +1,11 @@
-/**
- * Barebones Atom
- */
+///////////////////////////////////////////////////////////////////
+//  File        : AtomBones.v                                                        
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : AtomBones is a wrapper for AtomRV_wb, it is a 
+//      stub SoC target for AtomSim, which uses software simulated 
+//      memories and communication modules.
+///////////////////////////////////////////////////////////////////
+
 `include "Timescale.vh"
 `include "Config.vh"
 

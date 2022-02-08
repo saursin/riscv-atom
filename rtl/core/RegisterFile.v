@@ -3,9 +3,11 @@
 //
 //  File        : RegisterFile.v
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Description  : Parametrized register file for RISCV atom core
+//  Description : Parametrized register file for RISCV atom core
 ////////////////////////////////////////////////////////////////////
+
 `include "../Timescale.vh"
+`include "Utils.vh"
 `include "Defs.vh"
 
 `default_nettype none

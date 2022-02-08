@@ -1,8 +1,9 @@
 //////////////////////////////////////////////////////////////////
-//  File: Defs.v
-//  Description:
-//
+//  File        : Defs.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Common Definitions for Atom core
 //////////////////////////////////////////////////////////////////
+
 `ifndef __DEFS_VH__
 `define __DEFS_VH__
 
@@ -66,7 +67,5 @@
     `define ALU_FUNC_SRL 3'd6
     `define ALU_FUNC_SRA 3'd7
 `endif
-
-
 
 `endif // __DEFS_VH__

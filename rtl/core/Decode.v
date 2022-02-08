@@ -1,9 +1,7 @@
 ////////////////////////////////////////////////////////////////////   
-//  RISC-V Atom 
-//
 //  File        : Decode.v
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Description  : Instruction Decoder for RISCV atom core
+//  Description : Instruction Decoder for RISCV atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 

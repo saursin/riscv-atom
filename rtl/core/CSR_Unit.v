@@ -1,3 +1,13 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : CSR_Unit.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Control & Status Register (CSR) unit contains logic 
+//      to read and write to the CSR registers
+////////////////////////////////////////////////////////////////////
+
+`include "Utils.vh"
+`include "Defs.vh"
+
 `default_nettype none
 
 module CSR_Unit
@@ -10,9 +20,7 @@ module CSR_Unit
     input   wire [11:0]     addr_i,
     input   wire [31:0]     data_i,
     input   wire [1:0]      op_i,
-    /* verilator lint_off UNUSED */
     input   wire            we_i,
-    /* verilator lint_on UNUSED */
 
     output  wire [31:0]     data_o
 
@@ -20,12 +28,12 @@ module CSR_Unit
 
     // ouput signals to pipeline
 );
+    `UNUSED_VAR(we_i)
 
-
-    /* Generate Data to be written */
-    /* verilator lint_off UNUSED */
+    // Generate Data to be written
     reg  [31:0] write_value;    // Value to be written onto a CSR register
-    /* verilator lint_on UNUSED */
+    `UNUSED_VAR(write_value)
+
     reg  [31:0] read_value;     // Value of selected CSR register
 
     always @(*) /* COMBINATIONAL */ begin

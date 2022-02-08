@@ -5,13 +5,11 @@
 //   / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / /  
 //  /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/   
 //                                                                
-//  File       : AtomRV.v                                                        
-//  Author     : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Description: Nano-RISCV core is a non pipelined embedded class 
-//               32 bit RISCV core. It is based on RV32I ISA
-//  
+//  File        : AtomRV.v                                                        
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Atom is a 2-stage pipelined embedded class 32-bit 
+//      RISCV core. It is based on RV32I ISA
 ///////////////////////////////////////////////////////////////////
-`default_nettype none
 
 `include "../Timescale.vh"
 `include "Defs.vh"
@@ -20,6 +18,8 @@
 `include "RegisterFile.v"
 `include "Alu.v"
 `include "CSR_Unit.v"
+
+`default_nettype none
 
 module AtomRV
 (

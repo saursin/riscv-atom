@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////   
-//  File : Alu.v
-//
-//  Description : Arithmetic and logic unit for Atom core
-//      Operations supported:
+//  File        : Alu.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Arithmetic and logic unit for Atom core, following 
+//      Operations are built into the alu:
 //          -   Addition
 //          -   Subtraction
 //          -   Bitwise XOR
@@ -24,7 +24,7 @@ module Alu
     input   wire    [31:0]  b_i,
     input   wire    [2:0]   sel_i,
 
-    output reg [31:0] result_o
+    output  reg     [31:0]  result_o
 );
 
     wire signed [31:0] A_s = a_i;
