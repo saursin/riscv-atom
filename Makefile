@@ -61,11 +61,20 @@ Target = atombones
 VC = verilator
 VFLAGS = -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
 
+verilog_files =  $(rtl_dir)/Timescale.vh
+verilog_files += $(rtl_dir)/core/Utils.vh 
+verilog_files += $(rtl_dir)/core/Defs.vh 
+verilog_files += $(rtl_dir)/core/AtomRV.v 
+verilog_files += $(rtl_dir)/core/Alu.v 
+verilog_files += $(rtl_dir)/core/Decode.v 
+verilog_files += $(rtl_dir)/core/RegisterFile.v 
+verilog_files += $(rtl_dir)/core/CSR_Unit.v
+
 # Target Specific definitions
 ifeq ($(Target), atombones) 	# -----	AtomBones -----
 verilog_topmodule = AtomBones
 verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
-verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/core/Utils.vh $(rtl_dir)/core/Defs.vh $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v $(rtl_dir)/core/CSR_Unit.v
+verilog_files += $(verilog_topmodule_file)
 
 sim_cpp_backend = $(sim_dir)/Backend_AtomBones.hpp
 CFLAGS += -DTARGET_ATOMBONES
@@ -73,7 +82,17 @@ else
 ifeq ($(Target), hydrogensoc) 	# ----- HydrogenSoC -----
 verilog_topmodule = HydrogenSoC
 verilog_topmodule_file = $(rtl_dir)/$(verilog_topmodule).v
-verilog_files = $(verilog_topmodule_file) $(rtl_dir)/Timescale.vh $(rtl_dir)/core/Utils.vh $(rtl_dir)/core/Defs.vh $(rtl_dir)/uncore/BiDirectionalIO.v $(rtl_dir)/uncore/GPIO.v $(rtl_dir)/uncore/DualPortRAM_wb.v $(rtl_dir)/uncore/SinglePortRAM_wb.v $(rtl_dir)/uncore/simpleuart_wb.v $(rtl_dir)/uncore/simpleuart.v $(rtl_dir)/core/AtomRV_wb.v $(rtl_dir)/core/AtomRV.v $(rtl_dir)/core/Alu.v $(rtl_dir)/core/Decode.v $(rtl_dir)/core/RegisterFile.v $(rtl_dir)/core/CSR_Unit.v
+
+verilog_files += $(rtl_dir)/core/AtomRV_wb.v 
+verilog_files += $(rtl_dir)/uncore/BiDirectionalIO.v
+verilog_files += $(rtl_dir)/uncore/GPIO.v
+verilog_files += $(rtl_dir)/uncore/DualPortRAM_wb.v
+verilog_files += $(rtl_dir)/uncore/SinglePortRAM_wb.v
+verilog_files += $(rtl_dir)/uncore/simpleuart_wb.v
+verilog_files += $(rtl_dir)/uncore/simpleuart.v
+verilog_files += $(rtl_dir)/HydrogenSoC_Config.vh
+verilog_files += $(verilog_topmodule_file)
+
 VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/code.hex"'
 VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/data.hex"'
 

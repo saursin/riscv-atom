@@ -10,7 +10,7 @@
 
 // Reset Address
 `ifdef SOC_RESET_ADDRESS
-    `define RESET_PC_ADDRESS    SOC_RESET_ADDRESS
+    `define RESET_PC_ADDRESS    `SOC_RESET_ADDRESS
 `else
     // Default
     `define RESET_PC_ADDRESS    32'h0000000

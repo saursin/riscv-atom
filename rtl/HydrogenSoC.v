@@ -6,6 +6,7 @@
 ///////////////////////////////////////////////////////////////////
 
 `include "Timescale.vh"
+`include "HydrogenSoC_Config.vh"
 
 `include "core/AtomRV_wb.v"
 `include "uncore/DualPortRAM_wb.v"
@@ -287,24 +288,30 @@ module HydrogenSoC
           //selected_device = Device_None;
         
         if(wb_dbus_cyc_o) begin
-            if(wb_dbus_adr_o < 32'h00008000)
+            /* verilator lint_off UNSIGNED */
+            if(wb_dbus_adr_o >= `IRAM_ADDR && wb_dbus_adr_o < `IRAM_ADDR+`IRAM_SIZE)
                 selected_device = Device_IRAM;
+            /* verilator lint_on UNSIGNED */
 
-            else if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h04002000)
+            else if(wb_dbus_adr_o >= `RAM_ADDR && wb_dbus_adr_o < `RAM_ADDR+`RAM_SIZE)
                 selected_device = Device_RAM;
             
-            else if (wb_dbus_adr_o == 32'h08000000 || wb_dbus_adr_o == 32'h08000004)
+            else if (wb_dbus_adr_o >= `UART_ADDR && wb_dbus_adr_o < `UART_ADDR+`UART_SIZE)
                 selected_device = Device_UART;
-            
-            else if (wb_dbus_adr_o == 32'h08000100) // byte addresses 8000010 to 0800001f
+
+            else if (wb_dbus_adr_o >= `GPIO0_ADDR && wb_dbus_adr_o < `GPIO0_ADDR+`GPIO0_SIZE)
                 selected_device = Device_GPIO0;
-            else if (wb_dbus_adr_o == 32'h08000104) // byte addresses 8000010 to 0800001f
+
+            else if (wb_dbus_adr_o >= `GPIO1_ADDR && wb_dbus_adr_o < `GPIO1_ADDR+`GPIO1_SIZE)
                 selected_device = Device_GPIO1;
 
             else begin
                 selected_device = Device_None;
-                $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
-                $finish();
+
+                `ifdef verilator
+                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
+                    $finish();
+                `endif
             end
         end
         else begin
