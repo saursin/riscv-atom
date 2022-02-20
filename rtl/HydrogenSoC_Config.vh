@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : HydrogeSoC_Config.vh
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Configuration file for HydrogenSoC. It defines the 
+//      HydrogensoC related parameters using verilog preprocessor macros.
+////////////////////////////////////////////////////////////////////
+
 `ifndef __HYDROGENSOC_CONFIG_VH__
 `define __HYDROGENSOC_CONFIG_VH__
 
