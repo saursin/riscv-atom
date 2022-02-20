@@ -29,9 +29,7 @@ module GPIO
 
     output  reg     [31:0]  wb_dat_o,
 
-    /* verilator lint_off UNUSED */
     input   wire    [31:0]  wb_dat_i,
-    /* verilator lint_on UNUSED */
 
     input   wire            wb_we_i,
     input   wire    [3:0]   wb_sel_i,

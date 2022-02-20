@@ -249,6 +249,7 @@ libs: $(build_dir) $(bin_dir)
 	@echo "$(COLOR_GREEN)>> Compiling software libraries ...$(COLOR_NC)"
 	cd sw/lib && make Target=$(Target)
 
+
 # ======== Documentation ========
 #~	docs		:	Generate atomsim C++ source documentation
 .PHONY: docs
@@ -262,8 +263,6 @@ pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
 	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [pdf]...$(COLOR_NC)"
 	cd doc/doxygen/latex && make
 	mv doc/doxygen/latex/refman.pdf doc/Atomsim_source_documentation.pdf
-
-
 
 
 # ======== clean ========
