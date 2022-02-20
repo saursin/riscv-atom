@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////////////////
 
 `include "Timescale.vh"
-`include "Config.vh"
+`include "AtomBones_Config.vh"
 
 `include "core/AtomRV.v"
 
