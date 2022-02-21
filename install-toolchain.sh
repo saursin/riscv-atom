@@ -7,7 +7,7 @@ TOOLCHAIN_CONFIG=--enable-multilib
 BUILD_JOBS=4
 
 # Toolchain install root directory (Note: Toolchain will be installed inside a folder named TOOLCHAIN_NAME in the TOOLCHAIN_ROOTPATH)
-TOOLCHAIN_ROOTPATH=/home/frozenalpha/opt/riscv
+TOOLCHAIN_ROOTPATH=/home/${user}/opt/riscv
 
 #########################################################
 # You sould not change anything below this
