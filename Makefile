@@ -208,8 +208,11 @@ $(cobject_dir)/verilated_vcd.o: /usr/share/verilator/include/verilated_vcd_c.cpp
 	@echo "$(COLOR_GREEN)Compiling cpp include [$<]...$(COLOR_NC)"
 	$(CC) $(CFLAGS) $^ -o $@
 
+$(cobject_dir)/util_dpi.o: $(rtl_dir)/dpi/util_dpi.cpp
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
+
 # Link & Create executable
-$(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(cobject_dir)/atomsim.o $(cobject_dir)/verilated.o $(cobject_dir)/verilated_vcd.o
+$(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(cobject_dir)/atomsim.o $(cobject_dir)/verilated.o $(cobject_dir)/verilated_vcd.o $(cobject_dir)/util_dpi.o
 	@echo "$(COLOR_GREEN)Linking shared object and driver to create executable...$(COLOR_NC)"
 	$(CC) $^ -o $@ $(LFLAGS)
 

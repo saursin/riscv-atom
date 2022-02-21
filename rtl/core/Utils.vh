@@ -1,6 +1,12 @@
 `ifndef __UTILS_H__
 `define __UTILS_H__
 
+`ifdef verilator
+`ifdef DPI_LOGGER
+`include "../dpi/util_dpi.vh"
+`endif
+`endif
+
 /////////////////////////////////////////////////////////////
 // Function-like utility macros
 
