@@ -11,7 +11,7 @@
         .align 8; .global end_regstate; end_regstate:                   \
         .word 4;
 
-#include "../../../sw/lib/atombones.h"
+// #include "../../../sw/lib/atombones.h"
 
 //TODO: Add code here to run after all tests have been run
 // The .align 4 ensures that the signature begins at a 16-byte boundary
