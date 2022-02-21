@@ -319,6 +319,7 @@
     <property xil_pn:name="Use Synchronous Reset" xil_pn:value="Auto" xil_pn:valueState="default"/>
     <property xil_pn:name="Use Synchronous Set" xil_pn:value="Auto" xil_pn:valueState="default"/>
     <property xil_pn:name="Use Synthesis Constraints File" xil_pn:value="true" xil_pn:valueState="default"/>
+    <property xil_pn:name="User Browsed Strategy Files" xil_pn:value="" xil_pn:valueState="default"/>
     <property xil_pn:name="UserID Code (8 Digit Hexadecimal)" xil_pn:value="0xFFFFFFFF" xil_pn:valueState="default"/>
     <property xil_pn:name="VCCAUX Voltage Level spartan6" xil_pn:value="2.5V" xil_pn:valueState="default"/>
     <property xil_pn:name="VHDL Source Analysis Standard" xil_pn:value="VHDL-93" xil_pn:valueState="default"/>
@@ -359,11 +360,13 @@
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
     <file xil_pn:name="../../rtl/Timescale.vh" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/Config.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/HydrogenSoC_Config.vh" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/AtomRV_wb.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/AtomRV.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/core/Defs.vh" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/Decode.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/RegisterFile.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/core/Utils.vh" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/Alu.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/core/CSR_Unit.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../rtl/uncore/DualPortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
