@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : GPIO.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : GPIO module is a wishbone controlled peripheral 
+//      which contains 16 Gpio pins (Bi-Directional)
+//      
+//      Control register  |   width     | relative address
+//      ------------------|-------------|-------------------
+//        gpio_state        2 bytes         0x00000000
+//        gpio_direction    2 bytes         0x00000002
+// 
+//      each bit in the registers directly corresponds to an io pin.
+//      writing "1" to a bit in gpio_direction configures that pin as
+//      an input, while writing "0" configures it as an output. 
+//      Similarily, writing "1" in gpio_state set a pin "HIGH" while 
+//      writing "0" sets it "LOW".
+//      
+////////////////////////////////////////////////////////////////////
+
 `include "BiDirectionalIO.v"
 
 `default_nettype none
@@ -10,9 +29,7 @@ module GPIO
 
     output  reg     [31:0]  wb_dat_o,
 
-    /* verilator lint_off UNUSED */
     input   wire    [31:0]  wb_dat_i,
-    /* verilator lint_on UNUSED */
 
     input   wire            wb_we_i,
     input   wire    [3:0]   wb_sel_i,

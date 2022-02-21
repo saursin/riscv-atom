@@ -1,9 +1,17 @@
-/**
- * Barebones Atom
- */
+///////////////////////////////////////////////////////////////////
+//  File        : AtomBones.v                                                        
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : AtomBones is a wrapper for AtomRV_wb, it is a 
+//      stub SoC target for AtomSim, which uses software simulated 
+//      memories and communication modules.
+///////////////////////////////////////////////////////////////////
+
 `include "Timescale.vh"
-`include "Config.vh"
+`include "AtomBones_Config.vh"
+
 `include "core/AtomRV.v"
+
+`default_nettype none
 
  module AtomBones
 (
@@ -26,22 +34,22 @@
     input   wire            dmem_ack_i      // DMEM Ack signal
 );
 
-// Core
-AtomRV atom_core
-(
-    .clk_i          (clk_i),   
-    .rst_i          (rst_i),   
-    .imem_addr_o    (imem_addr_o),   
-    .imem_data_i    (imem_data_i),   
-    .imem_valid_o   (imem_valid_o),   
-    .imem_ack_i     (imem_ack_i),   
-    .dmem_addr_o    (dmem_addr_o),   
-    .dmem_data_i    (dmem_data_i),   
-    .dmem_data_o    (dmem_data_o),   
-    .dmem_sel_o     (dmem_sel_o),   
-    .dmem_we_o      (dmem_we_o),   
-    .dmem_valid_o   (dmem_valid_o),   
-    .dmem_ack_i     (dmem_ack_i)
-);
+    // Core
+    AtomRV atom_core
+    (
+        .clk_i          (clk_i),   
+        .rst_i          (rst_i),   
+        .imem_addr_o    (imem_addr_o),   
+        .imem_data_i    (imem_data_i),   
+        .imem_valid_o   (imem_valid_o),   
+        .imem_ack_i     (imem_ack_i),   
+        .dmem_addr_o    (dmem_addr_o),   
+        .dmem_data_i    (dmem_data_i),   
+        .dmem_data_o    (dmem_data_o),   
+        .dmem_sel_o     (dmem_sel_o),   
+        .dmem_we_o      (dmem_we_o),   
+        .dmem_valid_o   (dmem_valid_o),   
+        .dmem_ack_i     (dmem_ack_i)
+    );
 
 endmodule

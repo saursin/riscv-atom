@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : DualPortRAM.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : A Wishbone interfaced RAM with two ports, Port 1 
+//    is a Read/Write port while, Port 2 is a readonly port
+////////////////////////////////////////////////////////////////////
+
 `default_nettype none
 
 module DualPortRAM_wb #(

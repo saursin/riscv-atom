@@ -1,3 +1,29 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : simpleuart_wb.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Wishbone wrapper for simpleuart.v by clifford wolf
+//      
+//  Register Description
+//  ---------------------
+// 
+//  let base address = 0x00000000
+// 
+//  0x00000000 : 8-bit data register (D-Reg)                            [ Read & Write ]
+//      To transmit a byte      : Write to this register
+//      To get recieved value   : Read from this register.
+//          if no value is recieved or value is already read then reg will contain -1.
+//   
+//  0x00000001 : 8-bit status        (S-Reg)                            [ Read Only ]
+//      bit[0] = recv_buf_valid :   recieve buffer has a valid value
+//      bit[1] = tx_busy        :   Transmitter is busy transmitting a byte  
+// 
+//  0x00000004 : 32-bit Clock Divider Register (CD-Reg)                 [ Read & Write ]
+//      CD register sets the speed of uart tx & rx.
+//      if your clk freq is Fc and target baud frequency is Fb then formula for correct value 
+//      of CD reg is:
+//          value = (Fc / Fb) - 2;
+//      
+////////////////////////////////////////////////////////////////////
 `default_nettype none
 
 `include "simpleuart.v"
@@ -27,29 +53,6 @@ module simpleuart_wb
     /* verilator lint_on UNDRIVEN */
 );
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-    Register Description
-    ---------------------
-
-    let base address = 0x00000000
-
-    0x00000000 : 8-bit data register (D-Reg)                            [ Read & Write ]
-        To transmit a byte      : Write to this register
-        To get recieved value   : Read from this register.
-            if no value is recieved or value is already read then reg will contain -1.
-        
-    0x00000001 : 8-bit status        (S-Reg)                            [ Read Only ]
-        bit[0] = recv_buf_valid :   recieve buffer has a valid value
-        bit[1] = tx_busy        :   Transmitter is busy transmitting a byte  
-
-    0x00000004 : 32-bit Clock Divider Register (CD-Reg)                 [ Read & Write ]
-        CD register sets the speed of uart tx & rx.
-        if your clk freq is Fc and target baud frequency is Fb then formula for correct value 
-        of CD reg is:
-            value = (Fc / Fb) - 2;
-*/
-
-
 /*
     if __ATOMSIM_SIMULATION__ is defined, this module behaves as a stub. simpleuart is not 
     instantiated, instead reg_status, reg_data, and reg_div are converted to actual registers

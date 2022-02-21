@@ -1,3 +1,8 @@
+////////////////////////////////////////////////////////////////////   
+//  File        : SinglePortROM.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : A Wishbone interfaced ROM module
+////////////////////////////////////////////////////////////////////
 `default_nettype none
 
 module SinglePortROM_wb #(

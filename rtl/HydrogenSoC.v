@@ -1,7 +1,13 @@
-`default_nettype none
+///////////////////////////////////////////////////////////////////
+//  File        : HydrogenSoC.v
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : HydrogenSoC is an FPGA ready SoC, it consists of
+//      a single atom core with memories and communication modules.
+///////////////////////////////////////////////////////////////////
 
 `include "Timescale.vh"
-`include "Config.vh"
+`include "HydrogenSoC_Config.vh"
+
 `include "core/AtomRV_wb.v"
 `include "uncore/DualPortRAM_wb.v"
 //`include "uncore/SinglePortROM_wb.v"
@@ -10,52 +16,49 @@
 `include "uncore/GPIO.v"
 
 `ifndef verilator
-// Defaults for Xilinx ISE
-`define __IMEM_INIT_FILE__ "code.hex"
-`define __DMEM_INIT_FILE__ "data.hex"
+    // Defaults for Xilinx ISE
+    `define __IMEM_INIT_FILE__ "code.hex"
+    `define __DMEM_INIT_FILE__ "data.hex"
 `endif
 
-/**
- *  === Hydrogen SoC ===
- *  Barebone SoC housing a single atom core, instruction memory, data memory and a uart slave.
- */
+`default_nettype none
 
 module HydrogenSoC
 (
-	 // GLOBAL SIGNALS
-    input wire clk_i,
-    input wire rst_i,
-	
-	 // GPIO
-    inout wire [31:0]   gpio_io,
+    // GLOBAL SIGNALS
+    input   wire        clk_i,
+    input   wire        rst_i,
+    
+    // GPIO
+    inout   wire [31:0] gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
     output  wire        uart_usb_tx_o,
 
-	 input   wire        uart_io_rx_i,
+    input   wire        uart_io_rx_i,
     output  wire        uart_io_tx_o,
-	 
-	 // UART MUX
-	 input 	wire 			uart_mux_sel,
-	 
-	 // TEST POINTS
-    output 	wire 			uart_rx_test_point_o,
-    output  wire			uart_tx_test_point_o
+     
+    // UART MUX
+    input   wire        uart_mux_sel,
+     
+    // TEST POINTS
+    output  wire        uart_rx_test_point_o,
+    output  wire        uart_tx_test_point_o
 );
-	////////////////////////////////////////
-	// UART MUX
-	wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
-	
-	wire uart_tx;
-	assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
-	assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
-	
-	// TEST POINTS
-	assign uart_rx_test_point_o = uart_rx;
-	assign uart_tx_test_point_o = uart_tx;
-	
-	
+    ////////////////////////////////////////
+    // UART MUX
+    wire uart_rx = uart_mux_sel ? uart_io_rx_i : uart_usb_rx_i;
+    
+    wire uart_tx;
+    assign uart_io_tx_o = uart_mux_sel ? uart_tx : 1'b1;
+    assign uart_usb_tx_o = uart_mux_sel ? 1'b1 : uart_tx;
+    
+    // TEST POINTS
+    assign uart_rx_test_point_o = uart_rx;
+    assign uart_tx_test_point_o = uart_tx;
+    
+    
     //////////////////////////////////////////
     // SoC Parameters
 
@@ -68,9 +71,8 @@ module HydrogenSoC
     wire wb_clk_i = clk_i;
     wire wb_rst_i = rst_i;
 
-    /* verilator lint_off UNUSED */
     wire    [31:0]  wb_ibus_adr_o;
-    /* verilator lint_on UNUSED */
+    `UNUSED_VAR(wb_ibus_adr_o)
 
     wire    [31:0]  wb_ibus_dat_i;
     wire            wb_ibus_ack_i;
@@ -84,11 +86,8 @@ module HydrogenSoC
     wire    [3:0]   wb_dbus_sel_o   /* verilator public */;
     wire            wb_dbus_stb_o   /* verilator public */;
     reg             wb_dbus_ack_i   /* verilator public */;
-    
-    /* verilator lint_off UNUSED */
     wire            wb_dbus_cyc_o   /* verilator public */;
-    /* verilator lint_on UNUSED */
-
+    
 
 
     /////////////////////////////////////////////////
@@ -205,7 +204,7 @@ module HydrogenSoC
     reg             wb_uart_stb_i;
     wire            wb_uart_ack_o;
     
-	simpleuart_wb uart (
+    simpleuart_wb uart (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
@@ -220,7 +219,7 @@ module HydrogenSoC
 
         .rx_i       (uart_rx),
         .tx_o       (uart_tx)
-	);
+    );
     
 
     ////////////////////////////////////////////////////
@@ -285,28 +284,34 @@ module HydrogenSoC
     */
     reg [3:0] selected_device /* verilator public */;
     always @(*) begin /* COMBINATORIAL */
-		  // default 
-		  //selected_device = Device_None;
-		
+          // default 
+          //selected_device = Device_None;
+        
         if(wb_dbus_cyc_o) begin
-            if(wb_dbus_adr_o < 32'h00008000)
+            /* verilator lint_off UNSIGNED */
+            if(wb_dbus_adr_o >= `IRAM_ADDR && wb_dbus_adr_o < `IRAM_ADDR+`IRAM_SIZE)
                 selected_device = Device_IRAM;
+            /* verilator lint_on UNSIGNED */
 
-            else if(wb_dbus_adr_o >= 32'h04000000 && wb_dbus_adr_o < 32'h04002000)
+            else if(wb_dbus_adr_o >= `RAM_ADDR && wb_dbus_adr_o < `RAM_ADDR+`RAM_SIZE)
                 selected_device = Device_RAM;
             
-            else if (wb_dbus_adr_o == 32'h08000000 || wb_dbus_adr_o == 32'h08000004)
+            else if (wb_dbus_adr_o >= `UART_ADDR && wb_dbus_adr_o < `UART_ADDR+`UART_SIZE)
                 selected_device = Device_UART;
-            
-            else if (wb_dbus_adr_o == 32'h08000100) // byte addresses 8000010 to 0800001f
+
+            else if (wb_dbus_adr_o >= `GPIO0_ADDR && wb_dbus_adr_o < `GPIO0_ADDR+`GPIO0_SIZE)
                 selected_device = Device_GPIO0;
-            else if (wb_dbus_adr_o == 32'h08000104) // byte addresses 8000010 to 0800001f
+
+            else if (wb_dbus_adr_o >= `GPIO1_ADDR && wb_dbus_adr_o < `GPIO1_ADDR+`GPIO1_SIZE)
                 selected_device = Device_GPIO1;
 
             else begin
-					 selected_device = Device_None;
-                $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
-                $finish();
+                selected_device = Device_None;
+
+                `ifdef verilator
+                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
+                    $finish();
+                `endif
             end
         end
         else begin
@@ -341,13 +346,13 @@ module HydrogenSoC
         logic.
     */
     always @(*) begin /* COMBINATORIAL */
-		  // Defaults
-		  wb_ram_stb_i        = 1'b0;
+          // Defaults
+          wb_ram_stb_i        = 1'b0;
           wb_iram_stb_i       = 1'b0;
-		  wb_uart_stb_i       = 1'b0;
-		  wb_gpio0_stb_i      = 1'b0;
-		  wb_gpio1_stb_i      = 1'b0;
-					 
+          wb_uart_stb_i       = 1'b0;
+          wb_gpio0_stb_i      = 1'b0;
+          wb_gpio1_stb_i      = 1'b0;
+                     
         case(selected_device)
             Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
             Device_IRAM:        wb_iram_stb_i       = wb_dbus_stb_o;
