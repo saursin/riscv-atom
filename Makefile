@@ -60,6 +60,7 @@ Target = atombones
 # Verilog Configs
 VC = verilator
 VFLAGS = -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
+#VFLAGS += -DDPI_LOGGER -DLOG_RVATOM_JUMP
 
 verilog_files =  $(rtl_dir)/Timescale.vh
 verilog_files += $(rtl_dir)/core/Utils.vh 

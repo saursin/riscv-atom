@@ -8,9 +8,9 @@
 #include "../../build/vobj_dir/VHydrogenSoC__Dpi.h"
 
 extern "C" {
-    extern void dpi_trace(const char* format);
-    extern void dpi_trace_start();
-    extern void dpi_trace_stop();
+    extern void dpi_logger(const char* format);
+    extern void dpi_logger_start();
+    extern void dpi_logger_stop();
 }
 
 
@@ -35,33 +35,25 @@ class DPI_Logger
     void log_dump(std::string s)
     {
         if(enabled)
-            logfile << s;
+            logfile << s << std::flush;
     }
-} dpi_logger;
+} dpi_logger_instance;
 
 
 
-void dpi_trace(const char* format)
+void dpi_logger(const char* format)
 {
-    if (!dpi_logger.enabled)
+    if (!dpi_logger_instance.enabled)
         return;
-    
-    // char line[200];
-
-    // // va_list va;
-    // // va_start(va, format);
-    // sprintf(line, format);//, va);
-    // // va_end(va);
-
-    dpi_logger.log_dump(format);
+    dpi_logger_instance.log_dump(format);
 }
 
-void dpi_trace_start()
+void dpi_logger_start()
 {
-    dpi_logger.enable();
+    dpi_logger_instance.enable();
 }
 
-void dpi_trace_stop()
+void dpi_logger_stop()
 {
-    dpi_logger.disable();
+    dpi_logger_instance.disable();
 }
