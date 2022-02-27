@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <defs.h>
 
 char * banner = 
 "\n"
@@ -31,4 +32,9 @@ char * banner =
 int main()
 {
     puts(banner);
+
+    printf("ROM size: %d\tbytes\t(%d KB)\n", MEM_ROM_SIZE, MEM_ROM_SIZE/1024);
+    printf("RAM size: %d\tbytes\t(%d KB)\n", MEM_RAM_SIZE, MEM_RAM_SIZE/1024);
+
+    printf("exiting...\n");
 }
