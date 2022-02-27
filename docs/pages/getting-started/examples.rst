@@ -1,7 +1,7 @@
 **********
 Examples
 **********
-Atom comes with a wide range of examples programs out-of-the-box to test. These examples programs reside 
+The RISC-V Atom project consists of a wide range of examples programs out-of-the-box to test. These examples programs reside 
 in `RVATOM/sw/examples` directory.
 
 Switch to examples directory
@@ -20,7 +20,7 @@ provided makefile as following.
 
   $ make target=atombones ex=hello-asm
 
-The above command should generate a `hello.elf` file in the `hello-asm directory`. Now fire up atomsim and 
+The above command should generate a `hello.elf` file in the `hello-asm` directory. Now fire up atomsim and 
 provide the generated elf file as argument.
 
 ::
@@ -33,7 +33,13 @@ This should output:
   Hello World!
       -- from Assembly
 
-We can test other examples also in the similar fashion.
+We can test other examples also in the similar fashion by using the following syntax:
+:: bash
+
+  $ make target=<TARGET> ex=<EXAMPLE>
+
+Run `make help` to get more information about supported targets an examples.
+
 
 Banner
 =======

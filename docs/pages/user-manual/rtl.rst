@@ -66,7 +66,7 @@ below.
     end
     `endif
 
-For logging the Jumps, user must also deine the `LOG_ATOMRV_JUMP` macro in a similar way. This will generate a 
+For logging the Jumps, user must also define the `LOG_ATOMRV_JUMP` macro in a similar way. This will generate a 
 "run.log" file in the current directory containt all the dumped information.
 
 
