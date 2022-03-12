@@ -1,18 +1,41 @@
-CXX = g++
-CXXFLAGS = -Wall -I../../sim/include/elfio/
-
-SRCS = elfdump.cpp
+#h *** ElfDump Builder ***
 
 BIN_DIR = bin
-BIN = elfdump
+$(shell mkdir -p $(BIN_DIR))
 
-default: $(BIN_DIR)/$(BIN)
+CC = g++
+CFLAGS = -Wall -I../../sim/include/elfio/
+SRCS = elfdump.cpp
+EXE = elfdump
 
-$(BIN_DIR)/$(BIN): $(SRCS)
-	@mkdir -p $(@D)
-	$(CXX) -c $(CXXFLAGS) $^ -o $@
+#f Default TARGET: elfdump
+default: elfdump
+
+.PHONY: elfdump
+elfdump: $(BIN_DIR)/$(EXE)				#t build elfdump
+
+$(BIN_DIR)/$(EXE): $(SRCS)
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 
 .PHONY: clean
-clean:
-	rm -rf $(BIN_DIR)
+clean:									#t clean build files
+	rm -rf $(BIN_DIR)/*
+
+
+.PHONY: super-clean
+super-clean:							#t Revert to untouched state
+	rm -rf $(BIN_DIR)/
+
+
+.PHONY: help
+help: 									#t show help
+	@sed -n 's/^#h //p' Makefile
+	@echo ""
+	@echo "Usage:"
+	@echo "	$$ make [TARGET]"
+	@echo ""
+	@echo "TARGETs:"
+	@egrep -h '\s#t\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?#t "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@sed -n 's/^#f //p' Makefile

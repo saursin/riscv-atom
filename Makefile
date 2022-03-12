@@ -285,3 +285,5 @@ clean-all: clean clean-trace clean-dump clean-init clean-doc clean-lib
 super-clean:
 	rm -rf $(build_dir)/
 	make -C sw/lib/ super-clean
+	make -C sim/docs/ super-clean
+	make -C tools/elfdump/ super-clean
