@@ -1,4 +1,3 @@
-##########################
 PY = python3
 
 default: clean verify
@@ -12,5 +11,4 @@ work:
 	mkdir work
 
 clean:
-	rm -rf work/*
-
+	rm -rf work/
