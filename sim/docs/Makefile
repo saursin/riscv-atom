@@ -29,7 +29,7 @@ $(HTML_DIR)/index.html: $(SRC_FILES)
 
 
 .PHONY: pdf
-pdf: $(MAN_PDF)							#t generate doxygen docs (pdf)
+pdf: doc $(MAN_PDF)							#t generate doxygen docs (pdf)
 
 $(MAN_PDF): $(LATEX_DIR)/refman.pdf
 	mv $^ $@
