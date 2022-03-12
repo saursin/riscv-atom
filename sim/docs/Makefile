@@ -1,3 +1,5 @@
+#h *** AtomSim Code Documentation Generator ***
+
 DOXYFILE = Doxyfile
 
 SRC_DIR = ..
@@ -14,41 +16,47 @@ $(shell mkdir -p $(HTML_DIR) $(LATEX_DIR))
 MAN_PDF = $(BUILD_DIR)/AtomSim.pdf
 
 
-default: html-latex
-all: html-latex pdf
+#f Default TARGET: doc
+default: doc
+all: doc pdf
 
 
-.PHONY: html-latex
-html-latex: $(HTML_DIR)/index.html		## generate doxygen docs (html & latex)
+.PHONY: doc
+doc: $(HTML_DIR)/index.html				#t generate doxygen docs (html & latex)
 
 $(HTML_DIR)/index.html: $(SRC_FILES)
 	doxygen $(DOXYFILE)
 
 
 .PHONY: pdf
-pdf: $(MAN_PDF)							## generate doxygen docs (pdf)
+pdf: $(MAN_PDF)							#t generate doxygen docs (pdf)
 
 $(MAN_PDF): $(LATEX_DIR)/refman.pdf
 	mv $^ $@
 
 $(LATEX_DIR)/refman.pdf:
 	make -C build/latex/
-	
+
 
 
 .PHONY: help
-help: 									## show help
+help: 									#t show help
+	@sed -n 's/^#h //p' Makefile
+	@echo ""
 	@echo "Usage:"
 	@echo "	$$ make [TARGET]"
 	@echo ""
 	@echo "TARGETs:"
-	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@egrep -h '\s#t\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?#t "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@sed -n 's/^#f //p' Makefile
 
 
 .PHONY: clean
-clean:									## clean build files
-	rm -rf build/*
+clean:									#t clean build files
+	rm -rf $(HTML_DIR)/*
+	rm -rf $(LATEX_DIR)/*
 
 .PHONY: super-clean
-super-clean:							## clean build dir
+super-clean:							#t clean build dir
 	rm -rf build/
