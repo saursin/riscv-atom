@@ -5,7 +5,17 @@
 
 #include "svdpi.h"
 #include "verilated_vpi.h"
+
+#ifdef TARGET_ATOMBONES
+#include "../../build/vobj_dir/VAtomBones__Dpi.h"
+#else
+#ifdef TARGET_HYDROGENSOC
 #include "../../build/vobj_dir/VHydrogenSoC__Dpi.h"
+#else
+#error rtl/dpi.cpp: Unknown Target
+#endif
+#endif
+
 
 extern "C" {
     extern void dpi_logger(const char* format);
