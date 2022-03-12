@@ -35,6 +35,7 @@ RISC-V Atom Documentation & User Manual
    :maxdepth: 2
    :caption: User Manual:
    
+   pages/user-manual/rtl.rst
    pages/user-manual/atomsim.rst
    pages/user-manual/convelf.rst
    pages/user-manual/scar.rst

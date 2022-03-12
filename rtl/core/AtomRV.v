@@ -12,6 +12,7 @@
 ///////////////////////////////////////////////////////////////////
 
 `include "../Timescale.vh"
+`include "Utils.vh"
 `include "Defs.vh"
 
 `include "Decode.v"
@@ -162,6 +163,19 @@ module AtomRV
     // Connect pc to imem address input
     assign imem_addr_o = ProgramCounter;
 
+
+    `ifdef DPI_LOGGER
+        initial begin
+            dpi_logger_start();
+        end
+    `endif
+
+    `ifdef LOG_RVATOM_JUMP
+    always @(posedge clk_i) begin
+        if(jump_decision)
+            dpi_logger("Jump  address=0x%x\n", {alu_out[31:1], 1'b0});
+    end
+    `endif
 
     //----------------------------------------------------------
     // PIPELINE REGISTERS
