@@ -236,7 +236,8 @@ elfdump: $(bin_dir)/elfdump
 
 $(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
 	@echo "$(COLOR_GREEN)>> Building elfdump ...$(COLOR_NC)"
-	$(CC) -Wall $^ -o $@
+	make -C $(tool_dir)/elfdump/
+	cp $(tool_dir)/elfdump/bin/* $@
 
 # ======== Scripts ========
 #~	scripts		:	copy scripts/* to build/bin/

@@ -28,7 +28,7 @@ THE SOFTWARE.
 #endif
 
 #include <iostream>
-#include "../../sim/include/elfio/elfio_dump.hpp"
+#include "elfio_dump.hpp"
 
 using namespace ELFIO;
 
