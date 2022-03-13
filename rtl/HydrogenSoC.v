@@ -15,10 +15,18 @@
 `include "uncore/simpleuart_wb.v"
 `include "uncore/GPIO.v"
 
-`ifndef verilator
-    // Defaults for Xilinx ISE
+`ifdef verilator
+    // Macros for Verilator
+
+`else
+`ifdef SYNTHESIS_YOSYS
+    // Macros for Yosys
+
+`else
+    // Macros for Xilinx ISE
     `define __IMEM_INIT_FILE__ "code.hex"
     `define __DMEM_INIT_FILE__ "data.hex"
+`endif
 `endif
 
 `default_nettype none

@@ -15,9 +15,9 @@
   <version xil_pn:ise_version="14.7" xil_pn:schema_version="2"/>
 
   <files>
-    <file xil_pn:name="../../rtl/HydrogenSoC.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../../rtl/HydrogenSoC.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="13"/>
     </file>
     <file xil_pn:name="HydrogenSoC.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
@@ -138,7 +138,7 @@
     <property xil_pn:name="Ignore User Timing Constraints Map" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Ignore User Timing Constraints Par" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Implementation Top" xil_pn:value="Module|HydrogenSoC" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Implementation Top File" xil_pn:value="../../rtl/HydrogenSoC.v" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Implementation Top File" xil_pn:value="../../../rtl/HydrogenSoC.v" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/HydrogenSoC" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Include 'uselib Directive in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Include SIMPRIM Models in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
@@ -359,22 +359,22 @@
     <!-- Do not hand-edit this section, as it will be overwritten when the    -->
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
-    <file xil_pn:name="../../rtl/Timescale.vh" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/HydrogenSoC_Config.vh" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/AtomRV_wb.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/AtomRV.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/Defs.vh" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/Decode.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/RegisterFile.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/Utils.vh" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/Alu.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/core/CSR_Unit.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/DualPortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/SinglePortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/simpleuart_wb.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/simpleuart.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/GPIO.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../rtl/uncore/BiDirectionalIO.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/Timescale.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/HydrogenSoC_Config.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/AtomRV_wb.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/AtomRV.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/Utils.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/Defs.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/Decode.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/RegisterFile.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/Alu.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/core/CSR_Unit.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/DualPortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/SinglePortRAM_wb.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/simpleuart_wb.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/simpleuart.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/GPIO.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../rtl/uncore/BiDirectionalIO.v" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>

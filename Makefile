@@ -40,10 +40,8 @@ trace_dir 		= $(build_dir)/trace
 dump_dir		= $(build_dir)/dump
 init_dir		= $(build_dir)/init
 
-# Doc directory
-doxygen_doc_dir = $(doc_dir)/doxygen
-doxygen_config_file = $(doc_dir)/Doxyfile
-
+# create dirs during parsing of makefile
+$(shell mkdir -p $(bin_dir) $(vobj_dir) $(cobject_dir) $(trace_dir) $(dump_dir) $(init_dir))
 
 # CPP Configs
 CC = g++
@@ -119,7 +117,7 @@ default: sim elfdump scripts libs
 	@echo " 3). scripts"
 	@echo " 4). software libraries"
 
-all : default pdf-docs
+all : default doxy-pdf
 	@echo " 5). doxygen-docs in latex, html & pdf "
 
 
@@ -141,7 +139,7 @@ help : Makefile
 # ======== Sim ========
 #~	sim		:	Build atomsim for specified target [default: atombones]
 .PHONY : sim
-sim: buildFor directories $(bin_dir)/$(sim_executable)
+sim: buildFor $(bin_dir)/$(sim_executable)
 
 buildFor:
 	@echo "$(COLOR_GREEN)>> Checking for existing build target... $(COLOR_NC)"
@@ -159,35 +157,6 @@ buildFor:
 
 	@echo "$(COLOR_GREEN)>> Building Atomsim for $(Target)... $(COLOR_NC)"
 
-# Check directories
-directories : $(build_dir) $(bin_dir)  $(cobject_dir) $(vobject_dir) $(trace_dir) $(dump_dir) $(init_dir) $(doc_dir) $(doxygen_doc_dir)
-
-$(build_dir):
-	mkdir $@
-
-$(bin_dir):
-	mkdir $@
-
-$(cobject_dir):
-	mkdir $@
-
-$(vobject_dir):
-	mkdir $@
-
-$(trace_dir):
-	mkdir $@
-
-$(dump_dir):
-	mkdir $@
-
-$(init_dir):
-	mkdir $@
-
-$(doc_dir):
-	mkdir $@
-
-$(doxygen_doc_dir):
-	mkdir $@
 
 # Verilate verilog
 $(vobject_dir)/V$(verilog_topmodule)__ALLsup.o $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o: $(verilog_files)
@@ -224,24 +193,23 @@ $(bin_dir)/$(sim_executable): $(vobject_dir)/V$(verilog_topmodule)__ALLcls.o $(v
 #~	scar		:	Verify target using scar
 .PHONY: scar
 scar: $(bin_dir)/$(sim_executable)
-	@echo "\n$(COLOR_GREEN)>> Running SCAR $(COLOR_NC)"
-	cd test/scar/ && make
-
+	@echo "\n$(COLOR_GREEN)>> Running SCAR... $(COLOR_NC)"
+	make -C test/scar/
 
 
 # ======== ElfDump ========
 #~	elfdump		:	Build elfdump utility
 .PHONY: elfdump
-elfdump: $(bin_dir)/elfdump
+elfdump:
+	@echo "$(COLOR_GREEN)>> Building elfdump...$(COLOR_NC)"
+	make -C $(tool_dir)/elfdump/
+	cp $(tool_dir)/elfdump/bin/* $(bin_dir)/
 
-$(bin_dir)/elfdump: $(tool_dir)/elfdump/elfdump.cpp
-	@echo "$(COLOR_GREEN)>> Building elfdump ...$(COLOR_NC)"
-	$(CC) -Wall $^ -o $@
 
 # ======== Scripts ========
 #~	scripts		:	copy scripts/* to build/bin/
 .PHONY: scripts
-scripts: $(build_dir) $(bin_dir)
+scripts:
 	@echo "$(COLOR_GREEN)>> copying scripts/* to build/bin/ ...$(COLOR_NC)"
 	cp scripts/* $(bin_dir)/
 
@@ -249,24 +217,24 @@ scripts: $(build_dir) $(bin_dir)
 # ======== SW libs ========
 #~	libs		:	compile software libraries
 .PHONY: libs
-libs: $(build_dir) $(bin_dir)
+libs:
 	@echo "$(COLOR_GREEN)>> Compiling software libraries ...$(COLOR_NC)"
-	cd sw/lib && make Target=$(Target)
+	make -C sw/lib/ Target=$(Target)
 
 
 # ======== Documentation ========
-#~	docs		:	Generate atomsim C++ source documentation
-.PHONY: docs
-docs: $(doc_dir) $(doxygen_doc_dir)
+#~	doxy		:	Generate atomsim C++ source documentation
+.PHONY: doxy
+doxy: 
 	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [latex & html]...$(COLOR_NC)"
-	doxygen $(doxygen_config_file)
+	make -C sim/docs/
 
-#~	pdf-docs	:	Generate atomsim C++ source documentation (pdf)
-.PHONY: pdf-docs
-pdf-docs: docs $(doc_dir) $(doxygen_doc_dir)
+
+#~	doxy-pdf	:	Generate atomsim C++ source documentation (pdf)
+.PHONY: doxy-pdf
+doxy-pdf: doxy
 	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [pdf]...$(COLOR_NC)"
-	cd doc/doxygen/latex && make
-	mv doc/doxygen/latex/refman.pdf doc/Atomsim_source_documentation.pdf
+	make -C sim/docs/ pdf
 
 
 # ======== clean ========
@@ -296,18 +264,17 @@ clean-init:
 	@echo "$(COLOR_GREEN)>> Cleaning init files [$(init_dir)/*] ...$(COLOR_NC)"
 	rm -rf $(init_dir)/*
 
-
 #~	clean-doc	: 	Clean doc dirctory
 .PHONY: clean-doc
 clean-doc:
 	@echo "$(COLOR_GREEN)>> Cleaning docs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
-	rm -rf $(doxygen_doc_dir)/*
+	make -C sim/docs/ clean
 
 #~	clean-lib	: 	Clean lib dirctory
 .PHONY: clean-lib
 clean-lib:
 	@echo "$(COLOR_GREEN)>> Cleaning libs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
-	cd sw/lib && make clean
+	make -C sw/libs/ clean
 
 #~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
@@ -317,5 +284,6 @@ clean-all: clean clean-trace clean-dump clean-init clean-doc clean-lib
 .PHONY: super-clean
 super-clean:
 	rm -rf $(build_dir)/
-	rm -rf $(doxygen_doc_dir)/
-	cd sw/lib && make super-clean
+	make -C sw/lib/ super-clean
+	make -C sim/docs/ super-clean
+	make -C tools/elfdump/ super-clean
