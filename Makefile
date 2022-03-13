@@ -274,7 +274,7 @@ clean-doc:
 .PHONY: clean-lib
 clean-lib:
 	@echo "$(COLOR_GREEN)>> Cleaning libs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
-	make -C sw/libs/ clean
+	make -C sw/lib/ clean
 
 #~	clean-all	:	Clean everything in build diectory
 .PHONY: clean-all
