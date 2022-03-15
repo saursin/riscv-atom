@@ -1,4 +1,4 @@
-name: atomsim-atombones
+name: libcatom-hydrogensoc
 on:
   push:
     branches: [ main ]
@@ -28,4 +28,4 @@ jobs:
 
       - name: Build AtomSim for AtomBones Target
         run:
-          cd riscv-atom; chmod +x install_toolchain.sh; ./install_toolchain.sh; make Target=hydrogensoc lib
+          cd riscv-atom; chmod +x install-toolchain.sh; ./install-toolchain.sh; make Target=hydrogensoc lib
