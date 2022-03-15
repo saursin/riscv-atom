@@ -3,42 +3,43 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: ../doc/diagrams/rvatom-header.drawio.png
+.. image:: diagrams/rvatom-header.drawio.png
 
 |
 
+****************************************
 RISC-V Atom Documentation & User Manual
-========================================
+****************************************
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Overview
+
+   pages/overview/introduction.rst
+   pages/overview/components.rst
+   pages/overview/directory_structure.rst
+   pages/overview/performance.rst
+   pages/overview/fpga_results.rst
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started:
-   
-   pages/getting-started/riscv-atom.rst
-   pages/getting-started/prerequisites.rst
-   pages/getting-started/install.rst
-   pages/getting-started/examples.rst
+   :caption: Getting Started
+
+   pages/getting_started/prerequisites.rst
+   pages/getting_started/install.rst
+   pages/getting_started/examples.rst
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation:
-   
-   pages/documentation/atomrv.rst
-   pages/documentation/targets.rst  
-   pages/documentation/atomsim.rst
+   :caption: Documentation & User Manual
+
+   pages/documentation/riscv_atom/riscv_atom.rst
+   pages/documentation/soc_targets.rst
+   pages/documentation/atomsim/atomsim.rst
    pages/documentation/scar.rst
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: User Manual:
-   
-   pages/user-manual/rtl.rst
-   pages/user-manual/atomsim.rst
-   pages/user-manual/convelf.rst
-   pages/user-manual/scar.rst
+   pages/documentation/convelf.rst
 
 
 Indices and tables

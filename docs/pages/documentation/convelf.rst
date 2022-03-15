@@ -1,13 +1,11 @@
-*********
-ConvELF 
-*********
-ConvELF is a flexible tool written in python to convert ELF executable files to Verilog friendly 
-$readmemh/$readmemb compatible files. ConvELF is basically a target-configurable tool which can be 
-configured by specifying a memory map. `convelf.py` can be either imported into user programs as a 
-module or user may directly use it as a script.
+ConvELF: A Utility Tool for ELF Conversion
+###########################################
+
+ConvELF is a flexible tool written in python to convert ELF executable files to Verilog friendly $readmemh/$readmemb compatible files.It is a target-configurable tool which can be configured by specifying a memory map. `convelf.py` can be either imported into user programs as a module or user may directly use it as a script.
 
 convelf.py as a Python Script
-==============================
+******************************
+
 convelf.py can be invoked as a script by passing elf file as a command-line argument.
 
 ::
@@ -16,7 +14,8 @@ convelf.py can be invoked as a script by passing elf file as a command-line argu
 
 
 convelf.py as a Python Module
-==============================
+******************************
+
 Using ConvELF is easy, just import it into your code and instantiate the ConvELF class.
 
 ::
@@ -27,13 +26,15 @@ Using ConvELF is easy, just import it into your code and instantiate the ConvELF
   ce = CE.ConvELF(ELF_file, Memory_Map)
 
 Now, Generate $readmemh compatible files, using:
+
 ::
 
   # generate output hex files for $readmemh.
   ce.convert('hex')
 
 
-alternatively to generate $readmemb compatible files, using:
+Alternatively to generate $readmemb compatible files, using:
+
 ::
 
    # generate output bin files for $readmemh.
@@ -41,6 +42,7 @@ alternatively to generate $readmemb compatible files, using:
 
 
 ConvELF provides the following object fields to further configure the tool
+
 ::
   
   # RISCV Toolchain Prefix
@@ -61,6 +63,7 @@ ConvELF provides the following object fields to further configure the tool
 
 Memory Map Format
 ==================
+
 Memory map of the target should be specified in python dictionary format.
 one key-value pair (element) in the dictionary must represent one memory block for which a 
 initialization file should be generated. 
