@@ -1,0 +1,35 @@
+AtomSim Command Help  
+====================
+Note regarding convention:
+    [] are used for compulsory and () for optional argument.   
+
+*** General Commands ***
+  h,  help                    : Show command help
+  q,  quit                    : Exit atomsim
+  v,  verbose [on]            : set verbosity on
+              [off]             set verbosity off
+      trace [on] (file)       : Enable VCD tracing; filename: (file)
+            [off]               Disable VCD tracing
+
+*** Control commands ***
+  s,  step [cycles]                     : Step for specified [cycles] (1 if omitted)
+  r,  run                               : Run until finished
+      rst                               : Reset simulation
+  w,  while reg [reg] [cond] [val]      : Run while value of [reg] [cond] [val] is true
+            pc [cond] [val]               Run while value of PC [cond] [val] is true
+            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true
+                                            [cond]: can be any one of {==, !=, <, >, <=, >=}
+
+*** Query Commands ***
+  rg, reg [reg]                   : Display contents of [reg] (all if omitted)
+      *reg [reg] (bytes)          : Display contents of memory at address stored in [reg]
+                                      (bytes): number of bytes to display
+      pc                          : Display current program counter value                      
+      str [hex addr]              : Show NUL-terminated C string at [hex addr]
+  m,  mem [hex addr] (bytes)      : Show contents of memory at [hex addr]
+                                      (bytes): number of bytes to display
+      dumpmem [hex addr] (bytes)  : Dump contents of memory to a file
+                                      (bytes): number of bytes to dump   
+      
+
+
