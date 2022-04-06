@@ -9,7 +9,7 @@ Atom is a 32-bit embedded-class processor based on the [RISC-V](https://riscv.or
 
 Key highlights of Atom are listed below:
 
-- Implements RV32I + M(optional) ISA as defined in the [RISC-V unprivileged ISA manual](https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMAFDQC/riscv-spec-20191213.pdf).
+- Implements RV32I + *M(optional) ISA as defined in the [RISC-V unprivileged ISA manual](https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMAFDQC/riscv-spec-20191213.pdf).
 
 - Simple 2-stage pipelined architecture, ideal for smaller FPGAs.
 
@@ -23,6 +23,7 @@ Key highlights of Atom are listed below:
 
 ***To checkout this project, Please refer to the Getting Started Guide***: [link](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/riscv-atom.html)
 
+*To be added soon
 
 ## Directory Structure
 
