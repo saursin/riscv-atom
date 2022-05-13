@@ -2,6 +2,8 @@
 
 #include "CppLinuxSerial/include/SerialPort.hpp"
 
+#define DEFAULT_BAUDRATE    9600
+
 /**
  * @brief Vuart Class
  * @details Encapsulates the functionality of a virtual uart port with the help of the a modified version of 
@@ -84,12 +86,12 @@ private:
      * @brief Open serial port
      * @param verbose set true to print acknowledgement message
      */
-    inline void _openPort(bool verbose=true);
+    inline void _openPort(bool verbose=DEFAULT_BAUDRATE);
 
     /**
      * @brief Close serial port
      * @param verbose set true to print acknowledgement message
      */
-    inline void _closePort(bool verbose=true);
+    inline void _closePort(bool verbose=DEFAULT_BAUDRATE);
 
 };
