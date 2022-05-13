@@ -4,11 +4,11 @@
 #include <fstream>
 
 // declared in main.cpp
-extern bool no_color_output;
+extern bool NO_COLOR_OUTPUT;
 
 void throwError(std::string er_code, std::string message, bool Exit)
 {
-    if (no_color_output)
+    if (NO_COLOR_OUTPUT)
         std::cerr << "! ERROR ["<< er_code <<"]: " << message << std::endl;
     else
         std::cerr << COLOR_RED <<"! ERROR "<< COLOR_RESET <<"["<< er_code <<"]: " << message << std::endl;
@@ -20,7 +20,7 @@ void throwError(std::string er_code, std::string message, bool Exit)
 
 void throwWarning(std::string wr_code, std::string message)
 {
-    if (no_color_output)
+    if (NO_COLOR_OUTPUT)
         std::cerr << "! WARNING [" << wr_code <<"]: " << message << std::endl;
     else
         std::cerr << COLOR_YELLOW <<"! WARNING " << COLOR_RESET << "[" << wr_code <<"]: " << message << std::endl;
@@ -29,7 +29,7 @@ void throwWarning(std::string wr_code, std::string message)
 
 void throwSuccessMessage(std::string message, bool Exit)
 {
-    if (no_color_output)
+    if (NO_COLOR_OUTPUT)
         std::cout << "SUCCESS : " << message <<std::endl;
     else
         std::cout << COLOR_GREEN <<"SUCCESS " << COLOR_RESET << ": " << message <<std::endl;
