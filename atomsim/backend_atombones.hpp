@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend.h"
+#include "backend.hpp"
 #include "build/verilated/VAtomBones.h"
 
 #include <string>

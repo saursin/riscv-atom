@@ -1,5 +1,5 @@
-#include "atomsim.h"
-#include "util.h"
+#include "atomsim.hpp"
+#include "util.hpp"
 
 #include "verilated.h"
 #include "include/cxxopts/cxxopts.hpp"

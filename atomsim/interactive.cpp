@@ -1,6 +1,6 @@
-#include "atomsim.h"
-#include "backend.h"
-#include "except.h"
+#include "atomsim.hpp"
+#include "backend.hpp"
+#include "except.hpp"
 
 #include <iostream>
 #include <sstream>

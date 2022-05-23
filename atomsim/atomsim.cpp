@@ -1,5 +1,5 @@
-#include "atomsim.h"
-#include "simstate.h"
+#include "atomsim.hpp"
+#include "simstate.hpp"
 #include <iostream>
 
 #include TARGET_HEADER
