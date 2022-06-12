@@ -44,7 +44,9 @@ $(shell mkdir -p $(OBJ_DIR) $(BIN_DIR) $(VERILATED_DIR) $(INIT_DIR) $(DEPDIR))
 
 VC := verilator
 VFLAGS := -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
-VERILATOR_INCLUDE_PATH := /usr/share/verilator/include
+
+# This should point to verilator include directory
+VERILATOR_INCLUDE_PATH := /usr/local/share/verilator/include
 
 # Core files
 VSRCS =  $(RTL_DIR)/Timescale.vh
@@ -135,6 +137,8 @@ DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 # Append verilator objects	(verilated.o & verilated_vcd_c.o)
 OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o		
 
+LDFLAGS += -L build/verilated
+LDLIBS += -l:V${VTOPMODULE}__ALL.a
 
 # Append DPI objects & add DPI flags 	(if DPI is defined)
 ifdef DPI
@@ -156,7 +160,8 @@ endif
 # Recepies
 
 default: sim
-sim: $(EXE)								#t Build AtomSim
+sim: lib_verilated $(EXE)	# Build atomsim
+lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 
 # Verilate verilog
@@ -188,7 +193,7 @@ $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp $(DEPDIR)/%.Td
 
 
 # Link & Create executable
-$(EXE): $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a $(OBJS)
+$(EXE): $(OBJS)
 	@echo "$(COLOR_GREEN)Linking shared object and driver to create executable...$(COLOR_NC)"
 	$(CC) $^ -o $@ $(LDLIBS) $(LDFLAGS)
 
