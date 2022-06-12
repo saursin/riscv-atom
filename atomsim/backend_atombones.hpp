@@ -3,12 +3,13 @@
 #include "backend.hpp"
 #include "build/verilated/VAtomBones.h"
 
-#include <string>
-#include <map>
 #include <memory>
 
 #define ATOMSIM_TARGETNAME  "atombones"
 #define TARGET_ATOMBONES
+
+class Memory;
+class Vuart;
 
 struct Backend_config
 {
@@ -23,11 +24,6 @@ struct Backend_config
     uint32_t vuart_baudrate     = 9600;
 };
 
-
-class Atomsim;
-class Simstate;
-class Memory;
-class Vuart;
 
 class Backend_atomsim: public Backend<VAtomBones>
 {

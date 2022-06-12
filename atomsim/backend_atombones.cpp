@@ -1,11 +1,12 @@
 #include "backend_atombones.hpp"
+
 #include "atomsim.hpp"
 #include "simstate.hpp"
-#include "testbench.hpp"
+// #include "testbench.hpp"
 #include "memory.hpp"
 #include "vuart.hpp"
 #include "except.hpp"
-#include "util.hpp"
+// #include "util.hpp"
 
 #include "build/verilated/VAtomBones.h"
 #include "build/verilated/VAtomBones_AtomBones.h"
@@ -16,12 +17,13 @@
 
 #define RV_INSTR_EBREAK 0x100073
 
+
 Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
-    Backend(sim, &(*(sim->simstate_))),
+    Backend(sim, &(sim->simstate_)),
     config_(config)
 {
     // Construct Testbench object
-    // tb = new Testbench<VAtomBones>();
+    tb = new Testbench<VAtomBones>();
 
     // Constuct Memory objects
     try
@@ -372,6 +374,8 @@ int Backend_atomsim::tick()
 
     // Serial port Emulator: Rx Listener
     UART();
+
+    return 0;
 }
 
 

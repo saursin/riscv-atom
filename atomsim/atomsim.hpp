@@ -5,7 +5,7 @@
 // #include <memory>
 
 #include TARGET_HEADER
-// #include "simstate.h"
+#include "simstate.hpp"
 
 // forward declarations
 // class Backend_atomsim;
@@ -57,7 +57,7 @@ private:
     Backend_atomsim backend_;
 
     // Middle-end
-    Simstate *simstate_;
+    Simstate simstate_;
     
 
 

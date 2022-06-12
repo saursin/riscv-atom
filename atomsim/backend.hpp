@@ -1,12 +1,12 @@
 #pragma once
 
+#include "testbench.hpp"
+#include "util.hpp"
+
 #include <string>
 
-#include "util.hpp"
-#include "testbench.hpp"
 
-// Forward declaration
-template <class VTop> class Testbench;
+// // Forward declaration
 class Atomsim;
 class Simstate;
 
