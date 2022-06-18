@@ -6,6 +6,8 @@
 #include <sstream>
 #include <map>
 
+#define DEBUG_PRINT_T2B
+
 void Atomsim::display_dbg_screen()
 {
     // calculate change in PC.    
@@ -122,7 +124,9 @@ void Atomsim::run_interactive_mode()
         // execute
         try
         {
-            if (funcs.count(cmd))
+            if(input=="")
+                (this->*funcs["step"])(cmd, args);
+            else if (funcs.count(cmd))
                 (this->*funcs[cmd])(cmd, args);
             else
                 std::cout << "Unknown command " << cmd << std::endl;
