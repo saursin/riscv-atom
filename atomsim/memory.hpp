@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
+#include <vector>
 
 union Word_alias
 {
@@ -105,3 +107,5 @@ private:
      */
     bool is_write_protected_;
 };
+
+unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_signatures);
