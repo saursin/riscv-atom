@@ -282,8 +282,7 @@ int Backend_atomsim::tick()
     }
 
     if(sim_->sim_config_.debug_flag)
-        std::cout << "update\n";
-        // sim_->displayData();
+        sim_->display_dbg_screen();
 
 
     // ===== Check Hault Condition =====

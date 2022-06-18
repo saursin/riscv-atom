@@ -85,6 +85,18 @@ public:
      */
     void closeTrace();
 
+    /**
+     * @brief Get the total tick count from tb
+     * @return uint64_t 
+     */
+    uint64_t get_total_tick_count();
+
+    /**
+     * @brief Get the tick count from tb
+     * @return uint64_t 
+     */
+    uint64_t get_tick_count();
+
 protected:
 	/**
      * @brief Pointer to Atomsim object
@@ -165,4 +177,16 @@ template <class VTarget>
 void Backend<VTarget>::closeTrace()
 {
     tb->closeTrace();
+}
+
+template <class VTarget>
+uint64_t Backend<VTarget>::get_total_tick_count()
+{
+    return tb->get_total_tickcount();
+}
+
+template <class VTarget>
+uint64_t Backend<VTarget>::get_tick_count()
+{
+    return tb->get_tickcount();
 }

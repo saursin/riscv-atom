@@ -77,6 +77,9 @@ private:
     };
 
     friend class Backend_atomsim;
+    
+    // display debug screen
+    void display_dbg_screen();
 
     // interactive Commands
 
