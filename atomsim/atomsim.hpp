@@ -11,6 +11,7 @@
 // class Backend_atomsim;
 // class Simstate;
 struct Backend_config;
+struct DisassembledLine;
 
 /**
  * @brief Configuration struct for Atomsim class
@@ -59,12 +60,15 @@ private:
     // Middle-end
     Simstate simstate_;
     
-
-
-    
+   
     bool trace_opened = false;
     bool is_running = false;
-    
+
+    /**
+     * @brief Disassembly of input file
+     */
+	std::map<uint32_t, DisassembledLine> disassembly;
+
     /**
      * @brief Register ABI names used in debug display
      */

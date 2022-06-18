@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 // declared in main.cpp
 extern bool NO_COLOR_OUTPUT;
@@ -143,4 +144,65 @@ void fWrite (std::vector<std::string> data, std::string filepath)
         File << data[i] <<"\n";
     }
     File.close();
+}
+
+
+std::string GetStdoutFromCommand(std::string cmd, bool get_output = true) {
+
+  std::string data;
+  FILE * stream;
+  const int max_buffer = 256;
+  char buffer[max_buffer];
+  cmd.append(" 2>&1");
+
+  stream = popen(cmd.c_str(), "r");
+
+  if (get_output && stream) {
+    while (!feof(stream))
+      if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+    pclose(stream);
+  }
+  return data;
+}
+
+
+std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
+{
+	std::string command = "";
+	#ifdef RV32_COMPILER
+		command +="riscv32-unknown-elf-objdump -d ";
+	#else
+		command += "riscv64-unknown-elf-objdump -d ";
+	#endif
+	command+=filename;
+	
+	// Get command output
+	std::string output = GetStdoutFromCommand(command);
+	
+	std::stringstream s(output);
+
+	// Parse command output
+	std::map<uint32_t, DisassembledLine> dis;
+	
+	std::string line;
+	while(std::getline(s, line))
+	{        
+        if(strip(line).length() == 0)
+            continue;
+
+        if(!(line.back() == ':' || line[0] != ' '))
+        {
+    
+            line = strip(line);
+            unsigned int colonAt = line.find(':');
+
+            uint32_t addr = std::stoi(strip(line.substr(0, colonAt)), 0, 16);
+            DisassembledLine d;
+            d.instr = (uint32_t)std::stol(strip(line.substr(colonAt+1, colonAt+15)), 0, 16);
+            d.disassembly = strip(line.substr(colonAt+16));
+
+            dis.insert({addr, d});
+        }
+	}
+	return dis;
 }

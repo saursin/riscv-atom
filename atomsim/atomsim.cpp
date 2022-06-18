@@ -11,6 +11,9 @@ Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     if (sim_config_.verbose_flag)
 		std::cout << "AtomSim [" << backend_.getTargetName() << "]" << std::endl;
 
+    // get input file disassembly   
+    disassembly = getDisassembly(sim_config_.ifile);
+    
     // Open trace if specified at CLI
     if (sim_config_.trace_flag)
     {

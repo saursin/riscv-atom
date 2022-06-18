@@ -1,6 +1,7 @@
 #include "atomsim.hpp"
 #include "backend.hpp"
 #include "except.hpp"
+#include "util.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -32,7 +33,7 @@ void Atomsim::display_dbg_screen()
     printf("pc : 0x%08x   ir : 0x%08x\n", simstate_.state_.pc_e, simstate_.state_.ins_e);
     printf(STYLE_NO_BOLD);
     
-    // std::cout << "[ " <<  ((disassembly[state.pc_e].instr==state.ins_e) ? disassembly[state.pc_e].disassembly : "-" )<< " ]";
+    std::cout << "[ " <<  ((disassembly[ simstate_.state_.pc_e].instr==simstate_.state_.ins_e) ? disassembly[simstate_.state_.pc_e].disassembly : "-" )<< " ]";
 
     if(wasJump)
         std::cout << " => nop (pipeline flush)";

@@ -38,20 +38,15 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     }
     
     
-    // get input file disassembly   
-    // disassembly = getDisassembly(ifile);
-
     // ====== Initialize ========
     // Initialize memory
     // load text section
     try
     {
-        std::cout << "loaing in imem\n";
         mem_["imem"]->set_write_protect(false);
         init_from_elf(mem_["imem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
         mem_["imem"]->set_write_protect(true);
 
-        std::cout << "loaing in dmem\n";
         init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
     }
     catch(const std::exception& e)

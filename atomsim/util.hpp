@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 // Color codes for output formatting
@@ -115,3 +116,32 @@ std::vector<std::string> fRead (std::string filepath);
  * @param filepath Filepath
  */
 void fWrite (std::vector<std::string> data, std::string filepath);
+
+
+//////////////////////////////////////////////////////////////////////////////
+// Misc
+
+/**
+ * @brief Get the Stdout From shell Command
+ * 
+ * @param cmd shell command to execute
+ * @param get_output if true, returns stdout, else moves on(even if command isn't still complete)
+ * @return std::string command output
+ */
+std::string GetStdoutFromCommand(std::string cmd, bool get_output);
+
+
+struct DisassembledLine
+{
+    uint32_t instr;
+    std::string disassembly;
+};
+
+
+/**
+ * @brief Get the Disassembly of input file using riscv objdump
+ * 
+ * @param filename input filename
+ * @return std::map<uint32_t, std::string> map of disassembly
+ */
+std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename);
