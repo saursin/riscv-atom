@@ -57,7 +57,11 @@ void Memory::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
 void Memory::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
     if(is_write_protected_)
-        throw Atomsim_exception("attempted to store in a write-protected memory");
+    {
+        char except_buf[70];
+        sprintf(except_buf, "Attempted to store in a write-protected memory @ address [0x%08x]", start_addr);
+        throw Atomsim_exception(except_buf);
+    }
 
     // exception message buffer
     char except_buf[50];

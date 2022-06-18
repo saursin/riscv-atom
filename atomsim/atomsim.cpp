@@ -46,7 +46,7 @@ int Atomsim::run()
     }
     catch(std::exception &e)
     {
-        std::cerr << "Runtime exception: " <<e.what() << std::endl;
+        std::cerr << "Runtime exception: " << e.what() << std::endl;
         return 1;
     }
     return 0;

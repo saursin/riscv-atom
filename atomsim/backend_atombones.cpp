@@ -49,7 +49,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
         std::cout << "loaing in imem\n";
         mem_["imem"]->set_write_protect(false);
         init_from_elf(mem_["imem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
-        mem_["dmem"]->set_write_protect(true);
+        mem_["imem"]->set_write_protect(true);
 
         std::cout << "loaing in dmem\n";
         init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
