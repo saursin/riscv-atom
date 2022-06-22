@@ -99,7 +99,7 @@ Backend_atomsim::~Backend_atomsim()
     mem_.clear();
 }
 
-void Backend_atomsim::serviceMemoryRequest()
+void Backend_atomsim::service_mem_req()
 {    
     // Clear all ack signals
     tb->m_core->imem_ack_i = 0;
@@ -265,7 +265,7 @@ int Backend_atomsim::tick()
     }
 
     // Service Memory Request
-    serviceMemoryRequest();
+    service_mem_req();
 
     // Tick clock once
     tb->tick();
@@ -386,67 +386,4 @@ int Backend_atomsim::tick()
 
     return 0;
 }
-
-
-void Backend_atomsim::dumpmem(std::string file, uint32_t strt_addr, uint32_t end_addr)
-{
-    // uint32_t size = end_addr - strt_addr;
-    // std::vector<std::string> fcontents;
-    
-    // if(size < 1*1024*1024 /*1 MB*/)
-    // {
-    //     for(uint32_t addr = strt_addr; addr<end_addr; addr+=4)
-    //     {
-    //         if(addr >= imem_->get_base_addr() && addr < imem_->get_base_addr()+imem_->get_size())
-    //         {
-
-    //         }
-    //         else if(addr >= dmem_->get_base_addr() && addr < dmem_->get_base_addr()+dmem_->get_size())
-    //         {
-
-    //         }
-    //         else if(addr >= pmem_->get_base_addr() && addr < pmem_->get_base_addr()+pmem_->get_size())
-    //         {
-
-    //         }
-    //         else
-    //         {
-
-    //         }
-
-
-    //     }
-
-    // }
-    // else
-    //     throwError("","Option not available due to excessive imem size (>1MB)\n", false);
-
-    
-    
-
-
-
-    // if(imem_->size() < 1*1024*1024)	// 1MB
-    // {    
-    //     for(unsigned int i=0; i<imem_->size()-4; i+=4)
-    //     {	
-    //         Word_alias w;
-    //         char hex [30];
-    //         sprintf(hex, "0x%08x\t:\t0x%08x", i, imem->fetch(i));
-    //         fcontents.push_back(hex);
-    //     }
-    //     fWrite(fcontents, std::string(default_dump_dir)+"/"+file);
-    // }
-
-    std::cout << "Dumpmem not implemented\n";
-    
-}
-
-//     /**
-//  * @brief Get contents of a memory location
-//  */
-// uint32_t getMemContents(uint32_t addr)
-// {
-//     return mem->fetchWord(addr);
-// }
 

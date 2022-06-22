@@ -2,6 +2,7 @@
 
 #include "testbench.hpp"
 #include "util.hpp"
+#include "except.hpp"
 
 #include <string>
 
@@ -33,7 +34,7 @@ public:
      * @brief Get the Target Name                       [** OVERRIDE **]
      * @return std::string 
      */
-    virtual std::string getTargetName() = 0;
+    virtual std::string get_target_name() = 0;
 
 	/**
 	 * @brief reset the backend
@@ -62,13 +63,13 @@ public:
      * @brief Open trace file 
      * @param file 
      */
-    void openTrace(std::string file);
+    void open_trace(std::string file);
 
     /**
      * @brief Open trace file 
      * @param file 
      */
-    void closeTrace();
+    void close_trace();
 
     /**
      * @brief Get the total tick count from tb
@@ -155,13 +156,13 @@ bool Backend<VTarget>::done()
 }
 
 template <class VTarget>
-void Backend<VTarget>::openTrace(std::string file)
+void Backend<VTarget>::open_trace(std::string file)
 {
     tb->openTrace(file.c_str());
 }
 
 template <class VTarget>
-void Backend<VTarget>::closeTrace()
+void Backend<VTarget>::close_trace()
 {
     tb->closeTrace();
 }
@@ -179,13 +180,13 @@ uint64_t Backend<VTarget>::get_tick_count()
 }
 
 template <class VTarget>
-void fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend<VTarget>::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
     throw Atomsim_exception("fetching from current target's memory is not supported");
 }
 
 template <class VTarget>
-void store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend<VTarget>::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
     throw Atomsim_exception("storing to current target's memory is not supported");
 }

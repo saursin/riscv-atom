@@ -9,7 +9,7 @@ Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     backend_(this, bk_config)  // create backend
 {   
     if (sim_config_.verbose_flag)
-		std::cout << "AtomSim [" << backend_.getTargetName() << "]" << std::endl;
+		std::cout << "AtomSim [" << backend_.get_target_name() << "]" << std::endl;
 
     // get input file disassembly   
     disassembly = getDisassembly(sim_config_.ifile);
@@ -17,7 +17,7 @@ Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     // Open trace if specified at CLI
     if (sim_config_.trace_flag)
     {
-        backend_.openTrace(sim_config.trace_file.c_str());
+        backend_.open_trace(sim_config.trace_file.c_str());
         trace_opened = true;
         if (sim_config_.verbose_flag)
             std::cout << "Trace enabled : \"" << sim_config.trace_file << "\" opened for output.\n";
