@@ -67,7 +67,6 @@ void Atomsim::display_dbg_screen()
 
 void _parse_line(const std::string s, std::string &cmd, std::vector<std::string> &args)
 {
-
     std::stringstream ss(s);
     std::string tmp;
 
@@ -105,10 +104,10 @@ void Atomsim::run_interactive_mode()
                     funcs["str"]        = &Atomsim::cmd_str;
     funcs["m"] =    funcs["mem"]        = &Atomsim::cmd_mem;
                     funcs["dumpmem"]    = &Atomsim::cmd_dumpmem;
+  
+    static std::string prev_cmd;
+    static std::vector<std::string> prev_args;
 
-    static std::string last_input;
-
-    
     while(!backend_.done())
     {
         std::string input;
@@ -126,9 +125,21 @@ void Atomsim::run_interactive_mode()
         try
         {
             if(input=="")
-                (this->*funcs["step"])(cmd, args);
-            else if (funcs.count(cmd))
+            {
+                // curr cmd = last cmd
+                cmd = prev_cmd;
+                args = prev_args;
+            }
+
+            if (funcs.count(cmd))
+            {
+                // prev <= current
+                prev_cmd = cmd;
+                prev_args = args;
+
+                // Execute command
                 (this->*funcs[cmd])(cmd, args);
+            }
             else
                 std::cout << "Unknown command " << cmd << std::endl;
         } catch(std::exception& e) 
