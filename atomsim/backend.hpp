@@ -6,13 +6,20 @@
 #include <string>
 
 
-// // Forward declaration
+// Forward declaration
 class Atomsim;
 class Simstate;
 
 /**
  * @brief Backend class
  * Backend class encapsulates low level querying & control of the RTL
+ * 
+ * - Methods marked with [** OVERRIDE **] need to be overridden by 
+ *   child class, these are responsible for critical functions to work 
+ *   correctly.
+ * 
+ * - Methods marked with [** MAY OVERRIDE **] may/may not be overriden, 
+ *   these are only used for additional functionality.
  */
 template <class VTarget>
 class Backend
@@ -23,46 +30,26 @@ public:
     ~Backend();
 
     /**
-     * @brief Get the Target Name
+     * @brief Get the Target Name                       [** OVERRIDE **]
      * @return std::string 
      */
     virtual std::string getTargetName() = 0;
-
 
 	/**
 	 * @brief reset the backend
 	 */
 	void reset();
 
-
 	/**
 	 * @brief probe all internal signals and registers and 
-	 * update state of middle-end
+	 * update state of middle-end                       [** OVERRIDE **]
 	 */
 	virtual void refresh_state() = 0;
-
-
-    /**
-     * @brief Dump contents of memory into a file
-     * 
-     * @param file dumpfile
-     * @param strt_addr starting address
-     * @param end_addr end address
-     */
-    void dumpmem(std::string file, uint32_t strt_addr, uint32_t end_addr);
-
-
-    /**
-     * @brief Get contents of a memory location
-     */
-    uint32_t getMemContents(uint32_t addr);
-
 
 	/**
 	 * @brief Tick for one cycle
 	 */
 	int tick();
-
 
 	/**
 	 * @brief check if simulation is done
@@ -71,13 +58,11 @@ public:
 	 */
 	bool done();
 
-
     /**
      * @brief Open trace file 
      * @param file 
      */
     void openTrace(std::string file);
-
 
     /**
      * @brief Open trace file 
@@ -97,6 +82,24 @@ public:
      */
     uint64_t get_tick_count();
 
+    /**
+     * @brief fetch bytes from target memory            [** MAY OVERRIDE **]
+     * 
+     * @param start_addr starting address
+     * @param buf byte buffer 
+     * @param buf_sz buffer size
+     */
+    virtual void fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
+
+    /**
+     * @brief store bytes to target memory              [** MAY OVERRIDE **]
+     * 
+     * @param start_addr starting address
+     * @param buf byte buffer 
+     * @param buf_sz buffer size
+     */
+    virtual void store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
+
 protected:
 	/**
      * @brief Pointer to Atomsim object
@@ -111,7 +114,7 @@ protected:
     /**
 	 * @brief Pointer to testbench object
 	 */
-	Testbench<VTarget> *tb;  
+	Testbench<VTarget> *tb;
 };
 
 
@@ -136,20 +139,6 @@ void Backend<VTarget>::reset()
 }
 
 template <class VTarget>
-void Backend<VTarget>::dumpmem(std::string file, uint32_t strt_addr, uint32_t end_addr)
-{
-    throwError("", "Memory dumps not supported in current target");
-}
-
-template <class VTarget>
-uint32_t Backend<VTarget>::getMemContents(uint32_t addr)
-{
-    throwError("", "Viewing memory content not supported in current target", true);
-    return 0;
-}
-
-
-template <class VTarget>
 int Backend<VTarget>::tick()
 {
     if(done())
@@ -159,13 +148,11 @@ int Backend<VTarget>::tick()
     return 0;
 }
 
-
 template <class VTarget>
 bool Backend<VTarget>::done()
 {
     return tb->done();
 }
-
 
 template <class VTarget>
 void Backend<VTarget>::openTrace(std::string file)
@@ -189,4 +176,16 @@ template <class VTarget>
 uint64_t Backend<VTarget>::get_tick_count()
 {
     return tb->get_tickcount();
+}
+
+template <class VTarget>
+void fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+{
+    throw Atomsim_exception("fetching from current target's memory is not supported");
+}
+
+template <class VTarget>
+void store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+{
+    throw Atomsim_exception("storing to current target's memory is not supported");
 }
