@@ -65,6 +65,7 @@ void Atomsim::display_dbg_screen()
     }
 }
 
+
 void _parse_line(const std::string s, std::string &cmd, std::vector<std::string> &args)
 {
     std::stringstream ss(s);
@@ -80,6 +81,24 @@ void _parse_line(const std::string s, std::string &cmd, std::vector<std::string>
     while (ss >> tmp)
         args.push_back(tmp);
 }
+
+
+/**
+ * @brief Parse integer, hexadecimal or binary number from string
+ * @param s string
+ * @return int 
+ */
+int _parse_num(std::string s)
+{
+    int r;
+    if(s.substr(0, 2) == "0x")			// Hex Number
+        r = std::stoi(s, nullptr, 16);
+    else if(s.substr(0, 2) == "0b")		// Binary Number
+        r = std::stoi(s, nullptr , 2);
+    else								// Decimal Number
+        r = std::stoi(s, nullptr, 10);
+}
+
 
 void Atomsim::run_interactive_mode()
 {
@@ -141,7 +160,10 @@ void Atomsim::run_interactive_mode()
                 (this->*funcs[cmd])(cmd, args);
             }
             else
-                std::cout << "Unknown command " << cmd << std::endl;
+            {
+                if(cmd.length() != 0)
+                    std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
+            }
         } catch(std::exception& e) 
         {
             std::cout << "Bad or missing arguments for command: " << e.what() << cmd << std::endl;
@@ -181,8 +203,9 @@ void Atomsim::cmd_help(const std::string&, const std::vector<std::string>&)
     "                                      (bytes): number of bytes to display\n"
     "      pc                          : Display current program counter value\n"
     "      str [hex addr]              : Show NUL-terminated C string at [hex addr]\n"
-    "  m,  mem [hex addr] (bytes)      : Show contents of memory at [hex addr]\n"
+    "  m,  mem [hex addr] (bytes) (wpl): Show contents of memory at [hex addr]\n"
     "                                      (bytes): number of bytes to display\n"
+    "                                      (wpl): number of words per line\n"
     "      dumpmem [hex addr] (bytes)  : Dump contents of memory to a file\n"
     "                                      (bytes): number of bytes to dump   \n"
     "\n" 
@@ -270,7 +293,45 @@ void Atomsim::cmd_str(const std::string &cmd, const std::vector<std::string> &ar
 
 void Atomsim::cmd_mem(const std::string &cmd, const std::vector<std::string> &args)
 {
-    std::cout << "command not implemented" << std::endl;
+    if(args.size() == 0)
+        throwError("CMD0", "\"mem\" command expects address as argument\n", false);
+    else if(args.size() == 1 || args.size() == 2 || args.size() == 3)
+    {
+        uint32_t addr;
+        uint32_t size = 4;
+        uint32_t wpl = 4;   // words per line
+
+        // parse base address
+        addr = _parse_num(args[0]);
+
+        // parse fetch size
+        if(args.size() == 2)
+            size = _parse_num(args[1]);
+        
+        // parse words per line
+        if(args.size() == 3)
+            size = _parse_num(args[2]);
+
+        uint8_t buf [size];
+        backend_.fetch(addr, buf, size);
+
+        // Pretty print
+        for (unsigned i=0; i<size; i+=1)
+        {
+            // address
+            if(i%wpl == 0)
+                printf("%08x: ", 4*(addr+i));
+            
+            // data
+            printf("%08x ", buf[i]);
+
+            if(i%wpl == wpl-1)
+                printf("\n");
+        }
+        printf("\n");
+    }
+    else
+        throwError("CMD0", "too many arguments for \"mem\" command\n", false);
 }
 
 
