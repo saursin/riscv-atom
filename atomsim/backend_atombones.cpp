@@ -387,3 +387,48 @@ int Backend_atomsim::tick()
     return 0;
 }
 
+void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+{
+    bool success = false;
+    for (auto mem_block: mem_)  // search for mem blk
+    {
+        std::shared_ptr<Memory> m = mem_block.second;
+        if( start_addr >= m->get_base_addr() && start_addr < m->get_base_addr() + m->get_size())
+        {
+            if(start_addr+buf_sz > m->get_base_addr() + m->get_size())
+                throwError("", "cant fetch; bufsize too large for mem", false);
+            
+            m->fetch(start_addr, buf, buf_sz);
+            success = true;
+            break;  // exit search loop
+        }
+    }
+
+    if (!success)
+    {
+        throw Atomsim_exception("memory fetch failed: no mem block at given address");
+    }
+}
+    
+void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+{
+    bool success = false;
+    for (auto mem_block: mem_)  // search for mem blk
+    {
+        std::shared_ptr<Memory> m = mem_block.second;
+        if( start_addr >= m->get_base_addr() && start_addr < m->get_base_addr() + m->get_size())
+        {
+            if(start_addr+buf_sz > m->get_base_addr() + m->get_size())
+                throwError("", "cant store; bufsize too large for mem", false);
+            
+            m->store(start_addr, buf, buf_sz);
+            success = true;
+            break;  // exit search loop
+        }
+    }
+
+    if (!success)
+    {
+        throw Atomsim_exception("memory fetch failed: no mem block at given address");
+    }
+}

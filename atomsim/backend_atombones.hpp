@@ -54,6 +54,10 @@ public:
     void UART();
 
     int tick();
+   
+    void fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
+
+    void store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
 
 private:
     /**
