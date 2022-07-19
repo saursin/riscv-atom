@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <math.h>
 #include <map>
 
 #define DEBUG_PRINT_T2B
@@ -99,6 +100,58 @@ int _parse_num(std::string s)
         r = std::stoi(s, nullptr, 10);
 }
 
+/**
+ * @brief print hex dump of a memory buffer
+ * 
+ * @param buf mem buffer
+ * @param bufsz buffer size
+ * @param base_addr base address of buffer
+ * @param word_view 
+ * @param ascii_view 
+ */
+void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool word_view=true, bool ascii_view=true)
+{
+    const unsigned BYTES_PER_WORD = 4;
+
+    // Process every byte in the data.
+    for(unsigned i=0; i<bufsz; i++)
+    {
+        if (i % BYTES_PER_WORD == 0)
+        {
+            // Print address
+            printf("%08d:", i+base_addr);   
+        }
+               
+        // Now the hex code for the specific character.
+        printf(" %02x", ((unsigned char*)buf)[i]);
+
+
+        if(i % BYTES_PER_WORD == BYTES_PER_WORD-1)
+        {
+            if(word_view)
+            {
+                uint32_t word = 0;
+                word = word | (((uint32_t) buf[i]) << 24);
+                word = word | (((uint32_t) buf[i-1]) << 16);
+                word = word | (((uint32_t) buf[i-2]) << 8);
+                word = word | (((uint32_t) buf[i-3]));
+                printf(" | %08x", word);
+            }
+
+            if(ascii_view)
+            {
+                printf(" | ");
+                printf("%c", (buf[i] < 0x20) || (buf[i-3] > 0x7e) ? '.' : buf[i]);
+                printf("%c", (buf[i] < 0x20) || (buf[i-2] > 0x7e) ? '.' : buf[i]);
+                printf("%c", (buf[i] < 0x20) || (buf[i-1] > 0x7e) ? '.' : buf[i]);
+                printf("%c", (buf[i] < 0x20) || (buf[i] > 0x7e) ? '.' : buf[i]);
+            }
+
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
 
 void Atomsim::run_interactive_mode()
 {
@@ -189,23 +242,25 @@ void Atomsim::cmd_help(const std::string&, const std::vector<std::string>&)
     "            [off]               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
-    "  s,  step [cycles]                     : Step for specified [cycles] (1 if omitted)\n"
-    "  r,  run                               : Run until finished\n"
-    "      rst                               : Reset simulation\n"
-    "  w,  while reg [reg] [cond] [val]      : Run while value of [reg] [cond] [val] is true\n"
+    "  s,  step [cycles]                    : Step for specified [cycles] (1 if omitted)\n"
+    "  r,  run                              : Run until finished\n"
+    "      rst                              : Reset simulation\n"
+    "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
     "            pc [cond] [val]               Run while value of PC [cond] [val] is true\n"
     "            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true\n"
     "                                            [cond]: can be any one of {==, !=, <, >, <=, >=}\n"
     "\n"
     "*** Query Commands ***\n"
-    "  x,  reg [reg]                   : Display contents of [reg] (all if omitted)\n"
-    "      *reg [reg] (bytes)          : Display contents of memory at address stored in [reg]\n"
-    "                                      (bytes): number of bytes to display\n"
-    "      pc                          : Display current program counter value\n"
-    "      str [hex addr]              : Show NUL-terminated C string at [hex addr]\n"
-    "  m,  mem [hex addr] (bytes) (wpl): Show contents of memory at [hex addr]\n"
-    "                                      (bytes): number of bytes to display\n"
-    "                                      (wpl): number of words per line\n"
+    "  x,  reg [reg]                        : Display contents of [reg] (all if omitted)\n"
+    "      *reg [reg] (bytes)               : Display contents of memory at address stored in [reg]\n"
+    "                                           (bytes): number of bytes to display\n"
+    "      pc                               : Display current program counter value\n"
+    "      str [hex addr]                   : Show NUL-terminated C string at [hex addr]\n"
+    "  m,  mem [hex addr] (bytes) (flags)   : Show contents of memory at [hex addr]\n"
+    "                                           (bytes): number of bytes to display\n"
+    "                                           (flags): \n"
+    "                                                   -w : display word view\n"
+    "                                                   -a : display ascii view\n"
     "      dumpmem [hex addr] (bytes)  : Dump contents of memory to a file\n"
     "                                      (bytes): number of bytes to dump   \n"
     "\n" 
@@ -295,40 +350,35 @@ void Atomsim::cmd_mem(const std::string &cmd, const std::vector<std::string> &ar
 {
     if(args.size() == 0)
         throwError("CMD0", "\"mem\" command expects address as argument\n", false);
-    else if(args.size() == 1 || args.size() == 2 || args.size() == 3)
+    else if(args.size() == 1 || args.size() == 2 || args.size() == 3 || args.size() == 4)     //  base address, num bytes, coloumns
     {
         uint32_t addr;
         uint32_t size = 4;
-        uint32_t wpl = 4;   // words per line
+        bool wordview = false;
+        bool asciiview = false;
 
         // parse base address
         addr = _parse_num(args[0]);
 
         // parse fetch size
-        if(args.size() == 2)
+        if(args.size() >= 2)
             size = _parse_num(args[1]);
-        
-        // parse words per line
-        if(args.size() == 3)
-            size = _parse_num(args[2]);
 
+
+        for(unsigned i=2; i<args.size(); i++)
+        {
+            if (args[i] == "-w")
+                wordview = true;
+            if (args[i] == "-a")
+                asciiview = true;
+        }
+        
         uint8_t buf [size];
         backend_.fetch(addr, buf, size);
 
-        // Pretty print
-        for (unsigned i=0; i<size; i+=1)
-        {
-            // address
-            if(i%wpl == 0)
-                printf("%08x: ", 4*(addr+i));
-            
-            // data
-            printf("%08x ", buf[i]);
+        printf("%d\n", size);
 
-            if(i%wpl == wpl-1)
-                printf("\n");
-        }
-        printf("\n");
+        _hexdump(buf, size, addr, wordview, asciiview);
     }
     else
         throwError("CMD0", "too many arguments for \"mem\" command\n", false);
