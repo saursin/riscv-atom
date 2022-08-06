@@ -4,7 +4,10 @@
 export RVATOM="/home/${USER}/work/riscv/riscv-atom"
 
 # add $RVATOM/build/bin to path
-export PATH="$RVATOM/build/bin:$PATH"
+export PATH="$RVATOM/atomsim/build/bin:$PATH"
+
+# add $RVATOM/scripts to path
+export PATH="$RVATOM/scripts:$PATH"
 
 # export RVATOM_LIBS variable
 export RVATOM_LIB="$RVATOM/sw/lib"

@@ -84,17 +84,22 @@ private:
     /**
      * @brief tracks if the VCD trace is opened
      */
-    bool trace_opened = false;
+    bool trace_opened_ = false;
+
+    /**
+     * @brief Keeps track of backend status
+     */
+    bool bkend_running_ = false;
 
     /**
      * @brief Disassembly of input file
      */
-	std::map<uint32_t, DisassembledLine> disassembly;
+	std::map<uint32_t, DisassembledLine> disassembly_;
 
     /**
      * @brief Register ABI names used in debug display
      */
-    const std::vector<std::string> reg_names = 
+    const std::vector<std::string> reg_names_ = 
     {
         "x0  (zero) ",	"x1  (ra)   ",	"x2  (sp)   ",	"x3  (gp)   ",	"x4  (tp)   ",	"x5  (t0)   ",	"x6  (t1)   ",	"x7  (t2)   ",
         "x8  (s0/fp)",	"x9  (s1)   ",	"x10 (a0)   ",	"x11 (a1)   ",	"x12 (a2)   ",	"x13 (a3)   ",	"x14 (a4)   ",	"x15 (a5)   ",

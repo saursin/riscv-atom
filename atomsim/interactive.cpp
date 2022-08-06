@@ -34,7 +34,7 @@ void Atomsim::display_dbg_screen()
     printf("pc : 0x%08x   ir : 0x%08x\n", simstate_.state_.pc_e, simstate_.state_.ins_e);
     printf(STYLE_NO_BOLD);
     
-    std::cout << "[ " <<  ((disassembly[ simstate_.state_.pc_e].instr==simstate_.state_.ins_e) ? disassembly[simstate_.state_.pc_e].disassembly : "-" )<< " ]";
+    std::cout << "[ " <<  ((this->disassembly_[ simstate_.state_.pc_e].instr==simstate_.state_.ins_e) ? this->disassembly_[simstate_.state_.pc_e].disassembly : "-" )<< " ]";
 
     if(wasJump)
         std::cout << " => nop (pipeline flush)";
@@ -58,7 +58,7 @@ void Atomsim::display_dbg_screen()
         {
             for(int j=0; j<cols; j++)
             {
-                printf(" %s: 0x%08x  ", reg_names[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
+                printf(" %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
             }
             printf("\n");
         }
@@ -242,7 +242,7 @@ void Atomsim::cmd_help(const std::string&, const std::vector<std::string>&)
     "            [off]               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
-    "  s,  step [cycles]                    : Step for specified [cycles] (1 if omitted)\n"
+    "  s,  step (cycles)                    : Step for specified cycles (default: 1)\n"
     "  r,  run                              : Run until finished\n"
     "      rst                              : Reset simulation\n"
     "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
@@ -300,13 +300,15 @@ void Atomsim::cmd_trace(const std::string &cmd, const std::vector<std::string> &
 
 void Atomsim::cmd_step(const std::string &cmd, const std::vector<std::string> &args)
 {
-    step();
+    // step backend
+    this->step();
 }
 
 
 void Atomsim::cmd_run(const std::string &cmd, const std::vector<std::string> &args)
 {
-    std::cout << "command not implemented" << std::endl;
+    // run backend
+    this->run();
 }
 
 
