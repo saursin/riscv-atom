@@ -112,8 +112,9 @@ unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_s
 
 
     // Read elf and initialize memory
+
     // if(verbose_flag)
-    std::cout << "Segments found : "<< seg_num <<"\n";
+    //     std::cout << "Segments found : "<< seg_num <<"\n";
     
     unsigned int i = 0;
     while (i < seg_num) // iterate over all segments

@@ -255,7 +255,7 @@ void Backend_atomsim::UART()
     */
     if(tb->m_core->dmem_valid_o && ~tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
     {
-        uint8_t w[2] = {0x00, (uint8_t)-1};
+        uint8_t w[2] = {0x00, (uint8_t)-1};                 // TODO: use word alias here
         mem_["pmem"]->store(0x08000000, w, 2);
     }
 }
@@ -391,7 +391,7 @@ int Backend_atomsim::tick()
     return 0;
 }
 
-void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
 {
     bool success = false;
     for (auto mem_block: mem_)  // search for mem blk
@@ -414,7 +414,7 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
     }
 }
     
-void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
 {
     bool success = false;
     for (auto mem_block: mem_)  // search for mem blk

@@ -40,29 +40,51 @@ struct Atomsim_config
 class Atomsim
 {
 public:
+    /**
+     * @brief Construct a new Atomsim object
+     * 
+     * @param sim_config config struct for sim
+     * @param bk_config config struct for backend
+     */
     Atomsim(Atomsim_config sim_config, Backend_config bk_config);
 
+    /**
+     * @brief step simulation by a cycle
+     */
     void step();
 
+    /**
+     * @brief run simulation until finished
+     * @return int return code (non 0 if finished)
+     */
     int run();
 
+    /**
+     * @brief enter interactive mode
+     */
     void run_interactive_mode();
         
-    // void displayData();
-
 
 private:
+    /**
+     * @brief config struct object for sim
+     */
     Atomsim_config sim_config_;
 
-    // Back-end
+    /**
+     * @brief Backend object
+     */
     Backend_atomsim backend_;
 
-    // Middle-end
+    /**
+     * @brief Middle-end object (cached state of backend)
+     */
     Simstate simstate_;
     
-   
+    /**
+     * @brief tracks if the VCD trace is opened
+     */
     bool trace_opened = false;
-    bool is_running = false;
 
     /**
      * @brief Disassembly of input file
