@@ -153,9 +153,9 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool w
     printf("\n");
 }
 
-void Atomsim::run_interactive_mode()
+int Atomsim::run_interactive_mode()
 {
-    typedef void (Atomsim::*interactive_func)(const std::string &cmd, const std::vector<std::string>&);
+    typedef int (Atomsim::*interactive_func)(const std::vector<std::string>&);
     
     // construct look up table of functions
     std::map<std::string,interactive_func> funcs;
@@ -210,7 +210,11 @@ void Atomsim::run_interactive_mode()
                 prev_args = args;
 
                 // Execute command
-                (this->*funcs[cmd])(cmd, args);
+                int rval = (this->*funcs[cmd])(args);
+                
+                // analyze rval
+                if(rval != ATOMSIM_RCODE_OK)
+                    return rval;
             }
             else
             {
@@ -224,10 +228,12 @@ void Atomsim::run_interactive_mode()
     }
     
     CTRL_C_PRESSED = false;
+
+    return ATOMSIM_RCODE_EXIT_SIM;
 }
 
 
-void Atomsim::cmd_help(const std::string&, const std::vector<std::string>&)
+int Atomsim::cmd_help(const std::vector<std::string>&)
 {
     std::cout << 
     "AtomSim Command Help  \n"
@@ -269,16 +275,17 @@ void Atomsim::cmd_help(const std::string&, const std::vector<std::string>&)
     "    - while running, press ctrl+c to stop & return to console immediately\n"
     "    - pressing enter repeats last used command\n"
     << std::flush;
+    return 0;
 }
 
 
-void Atomsim::cmd_quit(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_quit(const std::vector<std::string> &args)
 {
-    exit(EXIT_SUCCESS);         // FIXME: replace with a proper way of exiting
+    return ATOMSIM_RCODE_EXIT_SIM;
 }
 
 
-void Atomsim::cmd_verbose(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_verbose(const std::vector<std::string> &args)
 {
     if (args.size() != 1)
         throw Atomsim_exception("too few/many args");
@@ -289,66 +296,76 @@ void Atomsim::cmd_verbose(const std::string &cmd, const std::vector<std::string>
         sim_config_.verbose_flag = false;
     else 
         throw Atomsim_exception("arg can be on/off");
+    
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_trace(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_trace(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_step(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_step(const std::vector<std::string> &args)
 {
     // step backend
     this->step();
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_run(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_run(const std::vector<std::string> &args)
 {
-    // run backend
-    this->run();
+    // exit interactive mode
+    return ATOMSIM_RCODE_EXIT;
 }
 
 
-void Atomsim::cmd_rst(const std::string &cmd, const std::vector<std::string> &args)
-{
-    std::cout << "command not implemented" << std::endl;
-}
-
-
-void Atomsim::cmd_while(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_rst(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_reg(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_while(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_dereference_reg(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_reg(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_pc(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_dereference_reg(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_str(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_pc(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_mem(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_str(const std::vector<std::string> &args)
+{
+    std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
+}
+
+
+int Atomsim::cmd_mem(const std::vector<std::string> &args)
 {
     if(args.size() == 0)
         throwError("CMD0", "\"mem\" command expects address as argument\n", false);
@@ -382,11 +399,13 @@ void Atomsim::cmd_mem(const std::string &cmd, const std::vector<std::string> &ar
     }
     else
         throwError("CMD0", "too many arguments for \"mem\" command\n", false);
+    return ATOMSIM_RCODE_OK;
 }
 
 
-void Atomsim::cmd_dumpmem(const std::string &cmd, const std::vector<std::string> &args)
+int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
 {
     std::cout << "command not implemented" << std::endl;
+    return ATOMSIM_RCODE_OK;
 }
 

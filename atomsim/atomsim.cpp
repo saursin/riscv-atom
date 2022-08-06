@@ -38,11 +38,22 @@ int Atomsim::run()
     // tick backend and update backend status, until ctrl+c is.
     try
     {
+        bkend_running_ = true;
         do
         {
             if(CTRL_C_PRESSED || sim_config_.debug_flag)
             {
-                run_interactive_mode();
+                int rval = run_interactive_mode();
+
+                if (rval == ATOMSIM_RCODE_EXIT)
+                {
+                    sim_config_.debug_flag = false;
+                    CTRL_C_PRESSED = false;
+                    continue;
+                }
+                else if (rval == ATOMSIM_RCODE_EXIT_SIM)
+                    return 0;
+
             }
             else
             {

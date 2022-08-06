@@ -7,6 +7,10 @@
 #include TARGET_HEADER
 #include "simstate.hpp"
 
+#define ATOMSIM_RCODE_OK 0
+#define ATOMSIM_RCODE_EXIT 1
+#define ATOMSIM_RCODE_EXIT_SIM 2
+
 // forward declarations
 // class Backend_atomsim;
 // class Simstate;
@@ -61,8 +65,10 @@ public:
 
     /**
      * @brief enter interactive mode
+     * 
+     * @returns int return code [if 2: exit sim]
      */
-    void run_interactive_mode();
+    int run_interactive_mode();
         
 
 private:
@@ -115,24 +121,24 @@ private:
     // interactive Commands
 
     // General Commands
-    void cmd_help(const std::string&, const std::vector<std::string>&);
-    void cmd_quit(const std::string&, const std::vector<std::string>&);
-    void cmd_verbose(const std::string&, const std::vector<std::string>&);
-    void cmd_trace(const std::string&, const std::vector<std::string>&);
+    int cmd_help(const std::vector<std::string>&);
+    int cmd_quit(const std::vector<std::string>&);
+    int cmd_verbose(const std::vector<std::string>&);
+    int cmd_trace(const std::vector<std::string>&);
     
     // Control Commands
-    void cmd_step(const std::string&, const std::vector<std::string>&);
-    void cmd_run(const std::string&, const std::vector<std::string>&);
-    void cmd_rst(const std::string&, const std::vector<std::string>&);
-    void cmd_while(const std::string&, const std::vector<std::string>&);
+    int cmd_step(const std::vector<std::string>&);
+    int cmd_run(const std::vector<std::string>&);
+    int cmd_rst(const std::vector<std::string>&);
+    int cmd_while(const std::vector<std::string>&);
 
     // Query Commands
-    void cmd_reg(const std::string&, const std::vector<std::string>&);
-    void cmd_dereference_reg(const std::string&, const std::vector<std::string>&);
-    void cmd_pc(const std::string&, const std::vector<std::string>&);
-    void cmd_str(const std::string&, const std::vector<std::string>&);
-    void cmd_mem(const std::string&, const std::vector<std::string>&);
-    void cmd_dumpmem(const std::string&, const std::vector<std::string>&);
+    int cmd_reg(const std::vector<std::string>&);
+    int cmd_dereference_reg(const std::vector<std::string>&);
+    int cmd_pc(const std::vector<std::string>&);
+    int cmd_str(const std::vector<std::string>&);
+    int cmd_mem(const std::vector<std::string>&);
+    int cmd_dumpmem(const std::vector<std::string>&);
 
     
 };

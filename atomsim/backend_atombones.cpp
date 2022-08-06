@@ -376,7 +376,7 @@ int Backend_atomsim::tick()
         }
 
         if (sim_->sim_config_.verbose_flag)
-            std::cout << "Haulting @ tick " << tb->m_tickcount_total;
+            std::cout << "Haulting @ tick " << tb->m_tickcount_total << std::endl;
         return 1;
     }
     if(tb->m_tickcount_total > sim_->sim_config_.maxitr)
