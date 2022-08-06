@@ -119,7 +119,7 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool w
         if (i % BYTES_PER_WORD == 0)
         {
             // Print address
-            printf("%08d:", i+base_addr);   
+            printf("0x%08x:", i+base_addr);
         }
                
         // Now the hex code for the specific character.
@@ -375,8 +375,6 @@ void Atomsim::cmd_mem(const std::string &cmd, const std::vector<std::string> &ar
         
         uint8_t buf [size];
         backend_.fetch(addr, buf, size);
-
-        printf("%d\n", size);
 
         _hexdump(buf, size, addr, wordview, asciiview);
     }
