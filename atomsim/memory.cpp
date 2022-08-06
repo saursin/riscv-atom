@@ -32,9 +32,6 @@ Memory::~Memory()
 
 void Memory::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
-    // exception message buffer
-    char except_buf[50];
-
     uint32_t rel_start_addr = start_addr - addr_offset_;    // relative to current memory block
 
     for (uint32_t i = 0; i < buf_sz; i++)
@@ -44,7 +41,8 @@ void Memory::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
         
         if (!(indx < size_))    // check bounds
         {
-            sprintf(except_buf, "invalid fetch address [0x%08x]", start_addr + i);
+            char except_buf[50];
+            sprintf(except_buf, "Can't fetch, address outside range of memory [0x%08x]", start_addr + i);
             throw Atomsim_exception(except_buf);
         }
 
@@ -63,9 +61,6 @@ void Memory::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
         throw Atomsim_exception(except_buf);
     }
 
-    // exception message buffer
-    char except_buf[50];
-
     uint32_t rel_start_addr = start_addr - addr_offset_;    // relative to current memory block
 
     for (uint32_t i = 0; i < buf_sz; i++)
@@ -75,7 +70,8 @@ void Memory::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
         
         if (!(indx < size_))    // check bounds
         {
-            sprintf(except_buf, "invalid store address [0x%08x]", start_addr + i);
+            char except_buf[50];
+            sprintf(except_buf, "Can't store, address outside range of memory [0x%08x]", start_addr + i);
             throw Atomsim_exception(except_buf);
         }
 
@@ -137,7 +133,7 @@ unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_s
                 if (seg_strt_addr >= m->get_base_addr()  && seg_strt_addr+seg_size <= m->get_base_addr()+m->get_size())
                 {
                     // if(verbose_flag)
-                    printf("Loading Segment %d @ 0x%08x --- ", i, (unsigned int) reader.segments[i]->get_physical_address());
+                    printf("Loading segment %d @ 0x%08x ... \t", i, (unsigned int) reader.segments[i]->get_physical_address());
                     
                     m->store(seg_strt_addr, (uint8_t*)seg_data, seg_size);
                     
@@ -154,5 +150,5 @@ unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_s
         }
         i++;
     }
-    return (unsigned int) reader.get_entry();	
+    return (unsigned int) reader.get_entry();
 }

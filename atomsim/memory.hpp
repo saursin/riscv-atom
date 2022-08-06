@@ -4,12 +4,18 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Union representing a word. 
+ * it can be accessed as a word, 2 element array of halfwords or 
+ * a 4 element array of bytes.
+ */
 union Word_alias
 {
     uint8_t byte [4];
     uint16_t hword [2];
     uint32_t word;
 };
+
 
 /**
  * @brief Memory class
@@ -108,4 +114,14 @@ private:
     bool is_write_protected_;
 };
 
+
+
+/**
+ * @brief Initialize a memory from an elf file
+ * 
+ * @param m memory ptr
+ * @param filepath elf file path
+ * @param flag_signatures section signatures to load
+ * @return unsigned entry point
+ */
 unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_signatures);
