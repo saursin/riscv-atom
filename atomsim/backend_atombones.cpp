@@ -128,11 +128,15 @@ void Backend_atomsim::service_mem_req()
                 if(tb->m_core->dmem_we_o)	// Writes
                 {
                     Word_alias data_w = {.word = tb->m_core->dmem_data_o};
-                    
-                    if(tb->m_core->dmem_sel_o & 0b0001) m->store(daddr, &data_w.byte[3], 1);
-                    if(tb->m_core->dmem_sel_o & 0b0010) m->store(daddr, &data_w.byte[2], 1);
-                    if(tb->m_core->dmem_sel_o & 0b0100) m->store(daddr, &data_w.byte[1], 1);
-                    if(tb->m_core->dmem_sel_o & 0b1000) m->store(daddr, &data_w.byte[0], 1);
+
+                    if(tb->m_core->dmem_sel_o & 0b0001) 
+                        m->store(daddr, &data_w.byte[0], 1);
+                    if(tb->m_core->dmem_sel_o & 0b0010) 
+                        m->store(daddr, &data_w.byte[1], 1);
+                    if(tb->m_core->dmem_sel_o & 0b0100) 
+                        m->store(daddr, &data_w.byte[2], 1);
+                    if(tb->m_core->dmem_sel_o & 0b1000) 
+                        m->store(daddr, &data_w.byte[3], 1);
                 }
                 else    // Reads
                 {
@@ -241,7 +245,7 @@ void Backend_atomsim::UART()
             
     if(recv != (uint8_t)-1)	// something recieved
     {
-        uint8_t w[2] = {0x01, recv};
+        uint8_t w[2] = {0x01, recv};                        // TODO: use word alias here
         mem_["pmem"]->store(0x08000000, w, 2);
     }
 
