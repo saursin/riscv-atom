@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /**
- * @brief TESTBENCH Class
+ * @brief TESTBENCH Class; Instantiates topmodule, keep track of cycles elapsed, handles VCD trace generation.
  * 
  * @tparam VTop module to be instantiated
  */
@@ -15,21 +15,19 @@ public:
 
 	/**
 	 * @brief Construct a new TESTBENCH object
-	 * 
 	 */
 	Testbench(void);
 
 
 	/**
 	 * @brief Destroy the TESTBENCH object
-	 * 
 	 */
 	virtual ~Testbench(void);
 
 
 	/**
 	 * @brief Open/create a trace file
-	 * 
+     * 
 	 * @param vcdname name of vcd file
 	 */
 	virtual	void openTrace(const char *vcdname);
@@ -37,7 +35,6 @@ public:
 
 	/**
 	 * @brief Close a trace file
-	 * 
 	 */
 	virtual void closeTrace(void);
 
@@ -50,14 +47,12 @@ public:
 
 	/**
 	 * @brief Reset topmodule
-	 * 
 	 */
 	virtual void reset(void);
 
 
 	/**
 	 * @brief Run for one cycle
-	 * 
 	 */
 	virtual void tick(void);
 
@@ -73,6 +68,7 @@ public:
 
     /**
      * @brief Get the tickcount (since last reset)
+     * 
      * @return uint64_t ticks
      */
     virtual uint64_t get_tickcount()        { return m_tickcount; }
@@ -80,22 +76,37 @@ public:
 
     /**
      * @brief Get the total tickcounts
+     * 
      * @return uint64_t ticks
      */
     virtual uint64_t get_total_tickcount()  { return m_tickcount_total; }
 
 private:
+    /**
+     * @brief topmodule ptr
+     */
 	VTop 			* m_core = NULL;
+
+    /**
+     * @brief trace obj ptr
+     */
 	VerilatedVcdC	* m_trace = NULL;
-	uint64_t        m_tickcount = 0;     			// TickCounter to count clock cycles fom last reset
-	uint64_t        m_tickcount_total = 0;   		// TickCounter to count clock cycles
+
+    /**
+     * @brief TickCounter to count clock cycles fom last reset
+     */
+	uint64_t        m_tickcount = 0;
+
+    /**
+     * @brief TickCounter to count clock cycles
+     */
+	uint64_t        m_tickcount_total = 0;
 
 	friend class Backend_atomsim;
 };
 
 
 
-// Constructor: Instantiates a new VTop
 template <class VTop>
 Testbench<VTop>::Testbench(void)
 {
@@ -105,7 +116,6 @@ Testbench<VTop>::Testbench(void)
 }
 
 
-// Destructor 
 template <class VTop>
 Testbench<VTop>::~Testbench(void)
 {
@@ -209,4 +219,3 @@ bool Testbench<VTop>::done(void)
 {
     return (Verilated::gotFinish()); 
 }
-
