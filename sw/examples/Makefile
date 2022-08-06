@@ -105,7 +105,7 @@ run: $(ex)/$(executable)					## Run example
 
 
 objdump: $(ex)/$(executable)				## Dump disassembly
-	riscv64-unknown-elf-objdump -htd $^
+	riscv64-unknown-elf-objdump -htd $^ > $^.objdump
 
 
 .PHONY: clean
