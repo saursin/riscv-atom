@@ -10,7 +10,7 @@ public:
     : msg_(msg)
     {}
 
-    char * what () 
+    virtual const char * what () const noexcept
     {
         return (char *)msg_.c_str();
     }
