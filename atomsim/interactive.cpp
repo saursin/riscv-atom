@@ -2,6 +2,7 @@
 #include "backend.hpp"
 #include "except.hpp"
 #include "util.hpp"
+#include "memory.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -182,9 +183,8 @@ int Atomsim::run_interactive_mode()
 
     while(!backend_.done())
     {
-        std::string input;
-
         // get input
+        std::string input;
         std::cout << ": ";
         getline(std::cin, input);
         
@@ -194,41 +194,42 @@ int Atomsim::run_interactive_mode()
         _parse_line(input, cmd, args);
 
         // execute
-        try
+        if(input=="")
         {
-            if(input=="")
-            {
-                // curr cmd = last cmd
-                cmd = prev_cmd;
-                args = prev_args;
-            }
+            // curr cmd = last cmd
+            cmd = prev_cmd;
+            args = prev_args;
+        }
 
-            if (funcs.count(cmd))
-            {
-                // prev <= current
-                prev_cmd = cmd;
-                prev_args = args;
+        if (funcs.count(cmd))
+        {
+            // prev <= current
+            prev_cmd = cmd;
+            prev_args = args;
 
+            try
+            {
                 // Execute command
                 int rval = (this->*funcs[cmd])(args);
-                
+
                 // analyze rval
                 if(rval != ATOMSIM_RCODE_OK)
                     return rval;
-            }
-            else
+
+            } catch(std::exception &e)
             {
-                if(cmd.length() != 0)
-                    std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
+                throwError("CMDERR", e.what(), false);
             }
-        } catch(std::exception& e) 
-        {
-            std::cout << "Bad or missing arguments for command: " << e.what() << cmd << std::endl;
         }
+        else
+        {
+            if(cmd.length() != 0)
+                std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
+        }
+
     }
     
     CTRL_C_PRESSED = false;
-
     return ATOMSIM_RCODE_EXIT_SIM;
 }
 
@@ -267,8 +268,10 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "                                           (flags): \n"
     "                                                   -w : display word view\n"
     "                                                   -a : display ascii view\n"
-    "      dumpmem [hex addr] (bytes)  : Dump contents of memory to a file\n"
-    "                                      (bytes): number of bytes to dump   \n"
+    "      dumpmem [addr] [bytes] (file)    : Dump contents of memory to a file\n"
+    "                                           addr: address to start dumping from\n"
+    "                                           bytes: number of bytes to dump\n"
+    "                                           file: file path (default: memdump.txt)\n"
     "\n" 
     "Note:\n"
     "    - [] are used for compulsory and () for optional argument.\n"
@@ -311,14 +314,18 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
 int Atomsim::cmd_step(const std::vector<std::string> &args)
 {
     // step backend
-    this->step();
+    unsigned cycles = (args.size()>0) ? _parse_num(args[0]) : 1;
+    
+    for(unsigned c = 0; c < cycles; c++)
+        this->step();
+    
     return ATOMSIM_RCODE_OK;
 }
 
 
 int Atomsim::cmd_run(const std::vector<std::string> &args)
 {
-    // exit interactive mode
+    // exit interactive mode & enter normal mode
     return ATOMSIM_RCODE_EXIT;
 }
 
@@ -368,7 +375,7 @@ int Atomsim::cmd_str(const std::vector<std::string> &args)
 int Atomsim::cmd_mem(const std::vector<std::string> &args)
 {
     if(args.size() == 0)
-        throwError("CMD0", "\"mem\" command expects address as argument\n", false);
+        throw Atomsim_exception("\"mem\" command expects address as argument\n");
     else if(args.size() == 1 || args.size() == 2 || args.size() == 3 || args.size() == 4)     //  base address, num bytes, coloumns
     {
         uint32_t addr;
@@ -398,14 +405,40 @@ int Atomsim::cmd_mem(const std::vector<std::string> &args)
         _hexdump(buf, size, addr, wordview, asciiview);
     }
     else
-        throwError("CMD0", "too many arguments for \"mem\" command\n", false);
+        throw Atomsim_exception("too many arguments for \"mem\" command\n");
     return ATOMSIM_RCODE_OK;
 }
 
 
 int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
 {
-    std::cout << "command not implemented" << std::endl;
+    if(args.size() < 1)
+        throw Atomsim_exception("expected address as 1st argument\n");
+    if(args.size() < 2)
+        throw Atomsim_exception("expected size as 2nd argument\n");
+    
+    unsigned addr = _parse_num(args[0]);
+    unsigned size = _parse_num(args[1]);
+    
+    std::string fpath = "memdump.txt";
+    if(args.size() > 2)
+        fpath = std::string(args[2]);
+       
+    uint8_t buf [size];
+    backend_.fetch(addr, buf, size);
+
+        
+    FILE * fptr = fopen(fpath.c_str(), "w");
+    
+    if(!fptr)
+        throw Atomsim_exception("cant open/create filen\n");
+    
+    FILE * tmp = stdout;    // preserve the original stdout
+    stdout = fptr; // redirect stdout file
+    _hexdump(buf, size, addr, true, true);
+    stdout = tmp; // restore stdout
+    fclose(fptr);
+    
     return ATOMSIM_RCODE_OK;
 }
 
