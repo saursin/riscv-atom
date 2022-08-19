@@ -192,39 +192,38 @@ int Atomsim::run_interactive_mode()
         std::vector<std::string> args;
         _parse_line(input, cmd, args);
 
-        // execute
+        // preprocess: if input blank, use last command instead
         if(input=="")
         {
-            // curr cmd = last cmd
+            // curr cmd <= last cmd
             cmd = prev_cmd;
             args = prev_args;
         }
+        
+        // prev <= current
+        prev_cmd = cmd;
+        prev_args = args;
+
+        // execute
+        if (funcs.count(cmd)) // check if command exists
+        {
+            try
+            {
+                // Execute command
+                int rval = (this->*funcs[cmd])(args);
+
+                // analyze rval
+                if(rval != ATOMSIM_RCODE_OK)
+                    return rval;
+
+            } catch(std::exception &e)
+            {
+                throwError("CMDERR", e.what(), false);
+            }
+        }
         else
         {
-            // prev <= current
-            prev_cmd = cmd;
-            prev_args = args;
-
-            if (funcs.count(cmd)) // check if command exists
-            {
-                try
-                {
-                    // Execute command
-                    int rval = (this->*funcs[cmd])(args);
-
-                    // analyze rval
-                    if(rval != ATOMSIM_RCODE_OK)
-                        return rval;
-
-                } catch(std::exception &e)
-                {
-                    throwError("CMDERR", e.what(), false);
-                }
-            }
-            else
-            {
-                std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
-            }
+            std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
         }
     }
     
