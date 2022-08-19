@@ -287,7 +287,7 @@ int Backend_atomsim::tick()
 
 
     // ===== Check Hault Condition =====
-    if (simstate_->state_.ins_e == RV_INSTR_EBREAK)
+    if (tb->m_core->AtomBones->atom_core->InstructionRegister == RV_INSTR_EBREAK)  // can't rely on stimstate.state.ins_e cuz that's only updated conditionally
     {
         // ============ REGISTER FILE DUMP (For SCAR) ==============
         if(sim_->sim_config_.dump_on_ebreak_flag)
