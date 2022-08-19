@@ -277,6 +277,10 @@ int Backend_atomsim::tick()
     // Refresh Data
     if(sim_->sim_config_.debug_flag || sim_->sim_config_.dump_on_ebreak_flag)
     {
+        /* We need to refresh state data to print debug screen in debug mode and
+         * to keep track of instruction register being equal to ebreak, \
+         * in case dump_on_ebreak is set
+         */
         refresh_state();
     }
 

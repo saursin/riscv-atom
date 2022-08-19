@@ -20,21 +20,22 @@
 // Global Variables
 // (use extern in other files)
 
-volatile bool CTRL_C_PRESSED = 0;
-volatile bool NO_COLOR_OUTPUT = 0;
+volatile bool CTRL_C_PRESSED = false;
+bool NO_COLOR_OUTPUT = 0;
 
 
 /**
  * @brief Handle SIGINT (Ctrl+C)
  * @param signal_num 
  */
-void sigint_handler(int signal_num)
+static void sigint_handler(int signal_num)
 {
 	if(CTRL_C_PRESSED)	// variable already set
-		exit(1);
+		exit(-1);
 	
-	std::cerr << "Recieved SIGINT [" << signal_num << "]" << std::endl;
-	CTRL_C_PRESSED = signal_num;
+	std::cerr << "\nRecieved SIGINT [" << signal_num << "]" << std::endl;
+	CTRL_C_PRESSED = true;
+	signal(signal_num, &sigint_handler);
 }
 
 
@@ -149,8 +150,8 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
  */
 int main(int argc, char ** argv)
 {
-	signal(SIGINT, sigint_handler);	// Define SIGINT handler
-
+	// Define SIGINT handler
+	signal(SIGINT, &sigint_handler);
 
 	// Configure Atomsim
     Atomsim_config sim_config;		// Sim config parameters
@@ -163,7 +164,6 @@ int main(int argc, char ** argv)
 	parse_commandline_args(argc, argv, sim_config, backend_config);
 	
 	int exitcode=0;
-
 	try
 	{
 		// Initialize Sim

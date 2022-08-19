@@ -39,10 +39,13 @@ int Atomsim::run()
     try
     {
         bkend_running_ = true;  // assume this; since simulation is just started
-        do
+        while (bkend_running_)
         {
-            if(CTRL_C_PRESSED || sim_config_.debug_flag)
+            if(sim_config_.debug_flag || CTRL_C_PRESSED)
             {
+                // we might enter here using ctrl+c also therefore need to set this
+                sim_config_.debug_flag = true;  
+
                 // enter interactive mode
                 int rval = run_interactive_mode();
 
@@ -51,18 +54,15 @@ int Atomsim::run()
                     // back to run mode
                     sim_config_.debug_flag = false;
                     CTRL_C_PRESSED = false;
-                    continue;
                 }
                 else if (rval == ATOMSIM_RCODE_EXIT_SIM)
                     return 0;   // exit sim
-
             }
             else
             {
                 step();
             }
         }
-        while (bkend_running_);
     }
     catch(std::exception &e)
     {

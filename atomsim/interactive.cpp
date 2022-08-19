@@ -168,7 +168,6 @@ int Atomsim::run_interactive_mode()
 
     funcs["s"] =    funcs["step"]       = &Atomsim::cmd_step;
     funcs["r"] =    funcs["run"]        = &Atomsim::cmd_run;
-                    funcs["rst"]        = &Atomsim::cmd_rst;
     funcs["w"] =    funcs["while"]      = &Atomsim::cmd_while;
 
     funcs["x"] =    funcs["reg"]        = &Atomsim::cmd_reg;
@@ -200,35 +199,36 @@ int Atomsim::run_interactive_mode()
             cmd = prev_cmd;
             args = prev_args;
         }
-
-        if (funcs.count(cmd))
+        else
         {
             // prev <= current
             prev_cmd = cmd;
             prev_args = args;
 
-            try
+            if (funcs.count(cmd)) // check if command exists
             {
-                // Execute command
-                int rval = (this->*funcs[cmd])(args);
+                try
+                {
+                    // Execute command
+                    int rval = (this->*funcs[cmd])(args);
 
-                // analyze rval
-                if(rval != ATOMSIM_RCODE_OK)
-                    return rval;
+                    // analyze rval
+                    if(rval != ATOMSIM_RCODE_OK)
+                        return rval;
 
-            } catch(std::exception &e)
+                } catch(std::exception &e)
+                {
+                    throwError("CMDERR", e.what(), false);
+                }
+            }
+            else
             {
-                throwError("CMDERR", e.what(), false);
+                std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
             }
         }
-        else
-        {
-            if(cmd.length() != 0)
-                std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
-        }
-
     }
     
+    // control reaches here only if backend is done
     CTRL_C_PRESSED = false;
     return ATOMSIM_RCODE_EXIT_SIM;
 }
@@ -238,20 +238,18 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
 {
     std::cout << 
     "AtomSim Command Help  \n"
-    "====================\n"
+    "====================  \n"
     "\n"
     "*** General Commands ***\n"
     "  h,  help                    : Show command help\n"
     "  q,  quit                    : Exit atomsim\n"
-    "  v,  verbose [on]            : set verbosity on\n"
-    "              [off]             set verbosity off\n"
-    "      trace [on] (file)       : Enable VCD tracing; filename: (file)\n"
-    "            [off]               Disable VCD tracing\n"
+    "  v,  verbose [on/off]        : set verbosity (on/off) (toggle if ommitted)\n"
+    // "      trace <on> [filepath]   : Enable VCD tracing. (default: run.vcd)\n"
+    // "            <off>               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
-    "  s,  step (cycles)                    : Step for specified cycles (default: 1)\n"
+    "  s,  step [cycles]                    : Step for specified cycles (default: 1)\n"
     "  r,  run                              : Run until finished\n"
-    "      rst                              : Reset simulation\n"
     "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
     "            pc [cond] [val]               Run while value of PC [cond] [val] is true\n"
     "            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true\n"
@@ -278,7 +276,7 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "    - while running, press ctrl+c to stop & return to console immediately\n"
     "    - pressing enter repeats last used command\n"
     << std::flush;
-    return 0;
+    return ATOMSIM_RCODE_OK;
 }
 
 
@@ -290,15 +288,22 @@ int Atomsim::cmd_quit(const std::vector<std::string> &args)
 
 int Atomsim::cmd_verbose(const std::vector<std::string> &args)
 {
-    if (args.size() != 1)
-        throw Atomsim_exception("too few/many args");
-    
-    if(args[0] == "on")
-        sim_config_.verbose_flag = true;
-    else if(args[0] == "off")
-        sim_config_.verbose_flag = false;
-    else 
-        throw Atomsim_exception("arg can be on/off");
+    if(args.size() == 0)   // argument omitted: toggle verbosity
+    {
+        sim_config_.verbose_flag = !sim_config_.verbose_flag;
+        std::cout << "verbose: " << sim_config_.verbose_flag << std::endl;
+    }
+    else if(args.size() == 1)
+    {
+        if(args[0] == "on")
+            sim_config_.verbose_flag = true;
+        else if(args[0] == "off")
+            sim_config_.verbose_flag = false;
+        else 
+            throw Atomsim_exception("arg can only be on/off");
+    }
+    else
+        throw Atomsim_exception("too few/many args\n verbose commands expect one argument (on/off)");
     
     return ATOMSIM_RCODE_OK;
 }
@@ -313,11 +318,18 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
 
 int Atomsim::cmd_step(const std::vector<std::string> &args)
 {
-    // step backend
-    unsigned cycles = (args.size()>0) ? _parse_num(args[0]) : 1;
-    
-    for(unsigned c = 0; c < cycles; c++)
+    if(args.size() == 0)   // step 1
+    {
         this->step();
+    }
+    else if(args.size() == 1)  // step n
+    {
+        unsigned cycles = _parse_num(args[0]);
+        for(unsigned c = 0; c < cycles; c++)
+            this->step();
+    }
+    else
+        throw Atomsim_exception("too few/many args\n");
     
     return ATOMSIM_RCODE_OK;
 }
@@ -327,13 +339,12 @@ int Atomsim::cmd_run(const std::vector<std::string> &args)
 {
     // exit interactive mode & enter normal mode
     return ATOMSIM_RCODE_EXIT;
-}
 
+    // CTRL_C_PRESSED = false;
+    // while(!CTRL_C_PRESSED)
+    //     this->step();
 
-int Atomsim::cmd_rst(const std::vector<std::string> &args)
-{
-    std::cout << "command not implemented" << std::endl;
-    return ATOMSIM_RCODE_OK;
+    // return ATOMSIM_RCODE_OK;
 }
 
 
