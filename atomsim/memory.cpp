@@ -131,10 +131,10 @@ unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_s
                 const char* seg_data = reader.segments[i]->get_data();
 
                 // check bounds
-                if (seg_base_addr >= m->get_base_addr()  && seg_base_addr+seg_size <= m->get_base_addr()+m->get_size())
+                if (seg_base_addr >= m->get_base_addr() && seg_base_addr < m->get_base_addr() + m->get_size() && seg_base_addr+seg_size <= m->get_base_addr()+m->get_size())
                 {
                     // initialize memory
-
+                    // printf("mem-base=%08x, sz=%08x\n", m->get_base_addr(), m->get_size());
                     // if(verbose_flag)
                     printf("Loading segment %d [base=0x%08x, sz=% 6d bytes, at=0x%08x] ...\t", i, (unsigned) seg_base_addr, (unsigned) seg_size, (unsigned) seg_base_addr);
                     m->store(seg_base_addr, (uint8_t*)seg_data, seg_size);

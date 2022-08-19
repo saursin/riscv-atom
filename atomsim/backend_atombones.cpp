@@ -43,10 +43,14 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     // load text section
     try
     {
+        if(sim_->sim_config_.verbose_flag) 
+            std::cout << "Initializing imem:" << std::endl;
         mem_["imem"]->set_write_protect(false);
         init_from_elf(mem_["imem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
         mem_["imem"]->set_write_protect(true);
 
+        if(sim_->sim_config_.verbose_flag) 
+            std::cout << "Initializing dmem:" << std::endl;
         init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
     }
     catch(const std::exception& e)
@@ -132,11 +136,11 @@ void Backend_atomsim::service_mem_req()
                     if(tb->m_core->dmem_sel_o & 0b0001) 
                         m->store(daddr, &data_w.byte[0], 1);
                     if(tb->m_core->dmem_sel_o & 0b0010) 
-                        m->store(daddr, &data_w.byte[1], 1);
+                        m->store(daddr+1, &data_w.byte[1], 1);
                     if(tb->m_core->dmem_sel_o & 0b0100) 
-                        m->store(daddr, &data_w.byte[2], 1);
+                        m->store(daddr+2, &data_w.byte[2], 1);
                     if(tb->m_core->dmem_sel_o & 0b1000) 
-                        m->store(daddr, &data_w.byte[3], 1);
+                        m->store(daddr+3, &data_w.byte[3], 1);
                 }
                 else    // Reads
                 {
@@ -209,17 +213,7 @@ void Backend_atomsim::UART()
             std::cout << c;
 
         wait=2;	// Wait for 2 cycles
-    }
-    
-    try
-    {
-        /* code */
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    
+    } 
     
     if(wait>0)
     {
@@ -245,8 +239,10 @@ void Backend_atomsim::UART()
             
     if(recv != (uint8_t)-1)	// something recieved
     {
-        uint8_t w[2] = {0x01, recv};                        // TODO: use word alias here
-        mem_["pmem"]->store(0x08000000, w, 2);
+        uint8_t w = 0b1;
+        mem_["pmem"]->store(0x08000001, &w, 1);
+        w = recv;
+        mem_["pmem"]->store(0x08000000, &w, 1);
     }
 
     /*
@@ -255,8 +251,10 @@ void Backend_atomsim::UART()
     */
     if(tb->m_core->dmem_valid_o && !(bool)tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
     {
-        uint8_t w[2] = {0x00, (uint8_t)-1};                 // TODO: use word alias here
-        mem_["pmem"]->store(0x08000000, w, 2);
+        uint8_t w = 0b0;
+        mem_["pmem"]->store(0x08000001, &w, 1);
+        w = (uint8_t)-1;
+        mem_["pmem"]->store(0x08000000, &w, 1);
     }
 }
 
@@ -289,7 +287,7 @@ int Backend_atomsim::tick()
 
 
     // ===== Check Hault Condition =====
-    if (tb->m_core->AtomBones->atom_core->InstructionRegister == RV_INSTR_EBREAK)
+    if (simstate_->state_.ins_e == RV_INSTR_EBREAK)
     {
         // ============ REGISTER FILE DUMP (For SCAR) ==============
         if(sim_->sim_config_.dump_on_ebreak_flag)
@@ -311,7 +309,7 @@ int Backend_atomsim::tick()
             }
 
 
-            fWrite(fcontents, sim_->sim_config_.dump_file.length() != 0 ? sim_->sim_config_.dump_file : "dump.log");
+            fWrite(fcontents, sim_->sim_config_.dump_file);
         }
         
         // ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============
