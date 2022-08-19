@@ -10,6 +10,7 @@
 #include <map>
 
 #define DEBUG_PRINT_T2B
+#define DEFAULT_DUMPMEM_PATH "memdump.txt"
 
 void Atomsim::display_dbg_screen()
 {
@@ -90,15 +91,16 @@ void _parse_line(const std::string s, std::string &cmd, std::vector<std::string>
  * @param s string
  * @return int 
  */
-int _parse_num(std::string s)
+long long _parse_num(std::string s)
 {
-    int r;
+    long long r;
     if(s.substr(0, 2) == "0x")			// Hex Number
-        r = std::stoi(s, nullptr, 16);
+        r = std::stoll(s, nullptr, 16);
     else if(s.substr(0, 2) == "0b")		// Binary Number
-        r = std::stoi(s, nullptr , 2);
+        r = std::stoll(s, nullptr , 2);
     else								// Decimal Number
-        r = std::stoi(s, nullptr, 10);
+        r = std::stoll(s, nullptr, 10);
+    return r;
 }
 
 /**
@@ -236,44 +238,48 @@ int Atomsim::run_interactive_mode()
 int Atomsim::cmd_help(const std::vector<std::string>&)
 {
     std::cout << 
+    // -------------------------------- 80 coloumns ---------------------------------|
     "AtomSim Command Help  \n"
     "====================  \n"
-    "\n"
     "*** General Commands ***\n"
-    "  h,  help                    : Show command help\n"
-    "  q,  quit                    : Exit atomsim\n"
-    "  v,  verbose [on/off]        : set verbosity (on/off) (toggle if ommitted)\n"
+    "  h, help                       : Show command help (this)\n"
+    "  q, quit                       : Quit atomsim\n"
+    "  v, verbose [\"on\"/\"off\"]       : set verbosity (toggle if ommitted)\n"
     // "      trace <on> [filepath]   : Enable VCD tracing. (default: run.vcd)\n"
     // "            <off>               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
-    "  s,  step [cycles]                    : Step for specified cycles (default: 1)\n"
-    "  r,  run                              : Run until finished\n"
-    "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
-    "            pc [cond] [val]               Run while value of PC [cond] [val] is true\n"
-    "            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true\n"
-    "                                            [cond]: can be any one of {==, !=, <, >, <=, >=}\n"
+    "  s, step [cycles]              : Step for specified cycles (default: 1)\n"
+    "  r, run                        : Run until finished (press ctrl+c to return\n" 
+    "                                  to console)\n"
+    // "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
+    // "            pc [cond] [val]               Run while value of PC [cond] [val] is true\n"
+    // "            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true\n"
+    // "                                            [cond]: can be any one of {==, !=, <, >, <=, >=}\n"
     "\n"
     "*** Query Commands ***\n"
-    "  x,  reg [reg]                        : Display contents of [reg] (all if omitted)\n"
-    "      *reg [reg] (bytes)               : Display contents of memory at address stored in [reg]\n"
-    "                                           (bytes): number of bytes to display\n"
-    "      pc                               : Display current program counter value\n"
-    "      str [hex addr]                   : Show NUL-terminated C string at [hex addr]\n"
-    "  m,  mem [hex addr] (bytes) (flags)   : Show contents of memory at [hex addr]\n"
-    "                                           (bytes): number of bytes to display\n"
-    "                                           (flags): \n"
-    "                                                   -w : display word view\n"
-    "                                                   -a : display ascii view\n"
-    "      dumpmem [addr] [bytes] (file)    : Dump contents of memory to a file\n"
-    "                                           addr: address to start dumping from\n"
-    "                                           bytes: number of bytes to dump\n"
-    "                                           file: file path (default: memdump.txt)\n"
+    // "  x,  reg [reg]                        : Display contents of [reg] (all if omitted)\n"
+    // "      *reg [reg] (bytes)               : Display contents of memory at address stored in [reg]\n"
+    // "                                           (bytes): number of bytes to display\n"
+    // "      pc                               : Display current program counter value\n"
+    // "      str [addr]                   : Show NUL-terminated C string at [hex addr]\n"
+    "  m, mem <addr> [bytes] [flags]     : Show contents of memory at <addr>\n"
+    "                                        addr: start address\n"
+    "                                        bytes: number of bytes (default: 4)\n"
+    "                                        flags: \n"
+    "                                          -w : display word view\n"
+    "                                          -a : display ascii view\n"
+    "     dumpmem <addr> <bytes> <file>  : Dump contents of memory to a file\n"
+    "                                        addr: start address\n"
+    "                                        bytes: number of bytes\n"
+    "                                        file: file path (default: " DEFAULT_DUMPMEM_PATH ")\n"
     "\n" 
     "Note:\n"
-    "    - [] are used for compulsory and () for optional argument.\n"
-    "    - while running, press ctrl+c to stop & return to console immediately\n"
-    "    - pressing enter repeats last used command\n"
+    "  - <> are used for compulsory and [] for optional arguments.\n"
+    "  - while running, press ctrl+c to stop & return to console immediately.\n"
+    "  - pressing enter repeats last used command.\n"
+    "  - numeric arguments can be given in decimal, hexadecimal (prefix with 0x) \n"
+    "    or binary (prefix with 0b)\n"
     << std::flush;
     return ATOMSIM_RCODE_OK;
 }
@@ -323,8 +329,10 @@ int Atomsim::cmd_step(const std::vector<std::string> &args)
     }
     else if(args.size() == 1)  // step n
     {
-        unsigned cycles = _parse_num(args[0]);
-        for(unsigned c = 0; c < cycles; c++)
+        long long cycles = _parse_num(args[0]);
+        if (cycles < 0)
+            throw Atomsim_exception("cycles out of bounds\n");
+        for(long long c = 0; c < cycles; c++)
             this->step();
     }
     else
@@ -385,28 +393,36 @@ int Atomsim::cmd_str(const std::vector<std::string> &args)
 int Atomsim::cmd_mem(const std::vector<std::string> &args)
 {
     if(args.size() == 0)
-        throw Atomsim_exception("\"mem\" command expects address as argument\n");
+        throw Atomsim_exception("\"mem\" command expects address as 1st argument\n");
     else if(args.size() == 1 || args.size() == 2 || args.size() == 3 || args.size() == 4)     //  base address, num bytes, coloumns
     {
-        uint32_t addr;
-        uint32_t size = 4;
+        long long addr;
+        long long size = 4;
         bool wordview = false;
         bool asciiview = false;
 
         // parse base address
         addr = _parse_num(args[0]);
+        if (addr < 0 || addr > UINT32_MAX)
+            throw Atomsim_exception("addr out of bounds\n");
 
         // parse fetch size
         if(args.size() >= 2)
-            size = _parse_num(args[1]);
+        {
+            size = _parse_num(args[1]);          
+            if (size < 0 || size > UINT32_MAX)
+                throw Atomsim_exception("size out of bounds\n");
+        }
 
 
         for(unsigned i=2; i<args.size(); i++)
         {
             if (args[i] == "-w")
                 wordview = true;
-            if (args[i] == "-a")
+            else if (args[i] == "-a")
                 asciiview = true;
+            else
+                throw Atomsim_exception("invlid arg \""+args[i]+"\"\n");
         }
         
         uint8_t buf [size];
@@ -427,10 +443,15 @@ int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
     if(args.size() < 2)
         throw Atomsim_exception("expected size as 2nd argument\n");
     
-    unsigned addr = _parse_num(args[0]);
-    unsigned size = _parse_num(args[1]);
+    long long addr = _parse_num(args[0]);
+    if (addr < 0 || addr > UINT32_MAX)
+        throw Atomsim_exception("addr out of bounds\n");
+
+    long long size = _parse_num(args[1]);
+    if (size < 0 || size > UINT32_MAX)
+        throw Atomsim_exception("size out of bounds\n");
     
-    std::string fpath = "memdump.txt";
+    std::string fpath = DEFAULT_DUMPMEM_PATH;
     if(args.size() > 2)
         fpath = std::string(args[2]);
        
