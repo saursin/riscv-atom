@@ -180,13 +180,13 @@ uint64_t Backend<VTarget>::get_tick_count()
 }
 
 template <class VTarget>
-void Backend<VTarget>::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend<VTarget>::fetch(const uint32_t /*start_addr*/, uint8_t */*buf*/, const uint32_t /*buf_sz*/)
 {
     throw Atomsim_exception("fetching from current target's memory is not supported");
 }
 
 template <class VTarget>
-void Backend<VTarget>::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
+void Backend<VTarget>::store(const uint32_t /*start_addr*/, uint8_t */*buf*/, const uint32_t /*buf_sz*/)
 {
     throw Atomsim_exception("storing to current target's memory is not supported");
 }

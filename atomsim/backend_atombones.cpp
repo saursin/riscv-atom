@@ -253,7 +253,7 @@ void Backend_atomsim::UART()
         If atom core tries to read data register, clear the data register (put -1) and clear 
         status bit[0].
     */
-    if(tb->m_core->dmem_valid_o && ~tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
+    if(tb->m_core->dmem_valid_o && !(bool)tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
     {
         uint8_t w[2] = {0x00, (uint8_t)-1};                 // TODO: use word alias here
         mem_["pmem"]->store(0x08000000, w, 2);

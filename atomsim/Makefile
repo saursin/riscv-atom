@@ -65,7 +65,7 @@ VFLAGS += -D__DMEM_INIT_FILE__='"$(INIT_DIR)/data.hex"'
 # CPP configs
 
 CC := g++
-CFLAGS :=  -std=c++11 -Wall -Wextra #-pedantic
+CFLAGS :=  -std=c++11 -faligned-new -Wall -Wextra #-pedantic
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 LDFLAGS := -lCppLinuxSerial
 LDLIBS := -L include/CppLinuxSerial/

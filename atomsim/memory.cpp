@@ -41,7 +41,7 @@ void Memory::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
         
         if (!(indx < size_))    // check bounds
         {
-            char except_buf[50];
+            char except_buf[70];
             sprintf(except_buf, "Can't fetch, address outside range of memory [0x%08x]", start_addr + i);
             throw Atomsim_exception(except_buf);
         }
@@ -70,7 +70,7 @@ void Memory::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_s
         
         if (!(indx < size_))    // check bounds
         {
-            char except_buf[50];
+            char except_buf[70];
             sprintf(except_buf, "Can't store, address outside range of memory [0x%08x]", start_addr + i);
             throw Atomsim_exception(except_buf);
         }

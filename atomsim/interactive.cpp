@@ -285,7 +285,7 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
 }
 
 
-int Atomsim::cmd_quit(const std::vector<std::string> &args)
+int Atomsim::cmd_quit(const std::vector<std::string> &/*args*/)
 {
     return ATOMSIM_RCODE_EXIT_SIM;
 }
@@ -314,7 +314,7 @@ int Atomsim::cmd_verbose(const std::vector<std::string> &args)
 }
 
 
-int Atomsim::cmd_trace(const std::vector<std::string> &args)
+int Atomsim::cmd_trace(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
@@ -342,7 +342,7 @@ int Atomsim::cmd_step(const std::vector<std::string> &args)
 }
 
 
-int Atomsim::cmd_run(const std::vector<std::string> &args)
+int Atomsim::cmd_run(const std::vector<std::string> &/*args*/)
 {
     // exit interactive mode & enter normal mode
     return ATOMSIM_RCODE_EXIT;
@@ -355,35 +355,35 @@ int Atomsim::cmd_run(const std::vector<std::string> &args)
 }
 
 
-int Atomsim::cmd_while(const std::vector<std::string> &args)
+int Atomsim::cmd_while(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
 }
 
 
-int Atomsim::cmd_reg(const std::vector<std::string> &args)
+int Atomsim::cmd_reg(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
 }
 
 
-int Atomsim::cmd_dereference_reg(const std::vector<std::string> &args)
+int Atomsim::cmd_dereference_reg(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
 }
 
 
-int Atomsim::cmd_pc(const std::vector<std::string> &args)
+int Atomsim::cmd_pc(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
 }
 
 
-int Atomsim::cmd_str(const std::vector<std::string> &args)
+int Atomsim::cmd_str(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return ATOMSIM_RCODE_OK;
