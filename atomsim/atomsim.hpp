@@ -33,8 +33,8 @@ struct Atomsim_config
     std::string ifile       = "";
     
     unsigned long int maxitr    = 1000000;
-    std::string trace_file      = "";
-    std::string dump_file       = "";
+    std::string trace_file      = "trace.vcd";  //  default loc: curr directory
+    std::string dump_file       = "dump.txt";
     std::string signature_file  = "";
 
     bool print_info_topdown = true;
