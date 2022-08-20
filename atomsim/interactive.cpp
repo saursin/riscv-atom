@@ -11,6 +11,7 @@
 
 #define DEBUG_PRINT_T2B
 #define DEFAULT_DUMPMEM_PATH "memdump.txt"
+#define DEFAULT_TRACEFILE_PATH "trace.vcd"
 
 void Atomsim::display_dbg_screen()
 {
@@ -245,8 +246,8 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "  h, help                       : Show command help (this)\n"
     "  q, quit                       : Quit atomsim\n"
     "  v, verbose [\"on\"/\"off\"]       : set verbosity (toggle if ommitted)\n"
-    // "      trace <on> [filepath]   : Enable VCD tracing. (default: run.vcd)\n"
-    // "            <off>               Disable VCD tracing\n"
+    "      trace <on> [filepath]   : Enable VCD tracing. (default: " DEFAULT_TRACEFILE_PATH ")\n"
+    "            <off>               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
     "  s, step [cycles]              : Step for specified cycles (default: 1)\n"
@@ -314,9 +315,49 @@ int Atomsim::cmd_verbose(const std::vector<std::string> &args)
 }
 
 
-int Atomsim::cmd_trace(const std::vector<std::string> &/*args*/)
+int Atomsim::cmd_trace(const std::vector<std::string> &args)
 {
-    std::cout << "command not implemented" << std::endl;
+    if (args.size() < 1)
+        throw Atomsim_exception("trace command expects \"on\"/\"off\" as 1st argument");
+    else
+    {
+        if(args[0] == "on")
+        {
+            if(sim_config_.trace_flag)
+            {
+                std::cout << "Trace already enabled" << std::endl;
+                return ATOMSIM_RCODE_OK;
+            }
+            
+            // enable trace
+            std::string tracefile = DEFAULT_TRACEFILE_PATH;
+            if(args.size() >= 2)
+                tracefile = args[1];
+
+            backend_.open_trace(tracefile);
+            std::cout << "Trace enabled: \"" << tracefile << "\" opened for VCD output.\n";
+            sim_config_.trace_flag = true;
+        }
+        else if(args[0] == "off")
+        {
+            if(!sim_config_.trace_flag)
+            {
+                std::cout << "Trace was not enabled" << std::endl;
+                return ATOMSIM_RCODE_OK;
+            }
+
+            // disable trace
+            backend_.close_trace();
+            std::cout << "Trace disabled\n";
+            sim_config_.trace_flag = false;
+
+        }
+        else
+            throw Atomsim_exception("1st arg can be only be \"on\"/\"off\"");
+    }
+
+
+
     return ATOMSIM_RCODE_OK;
 }
 
