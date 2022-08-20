@@ -20,23 +20,25 @@
 COLOR_RED 		= \033[0;31m
 COLOR_GREEN 	= \033[0;32m
 COLOR_YELLOW 	= \033[0;33m
+COLOR_CYAN 	    = \033[0;36m
 COLOR_NC 		= \033[0m
 
 Target ?= atombones
+
+MKFLAGS := -s
 #======================================================================
 # Recepies
 #======================================================================
 default: sim elfdump scripts lib
-	@echo "\n$(COLOR_GREEN)----------------------------------------------"
-	@echo "Build Succesful!"
-	@echo "----------------------------------------------$(COLOR_NC)"
-	@echo " 1). atomsim [$(Target)]"
-	@echo " 2). elfdump tool"
-	@echo " 3). scripts"
-	@echo " 4). software libraries"
+	@echo "\n$(COLOR_GREEN)=============================="
+	@echo "       Build Succesful!"
+	@echo "==============================$(COLOR_NC)"
+	@echo " - atomsim [$(Target)]"
+	@echo " - elfdump tool"
+	@echo " - software libraries"
 
 all : default doxy-pdf
-	@echo " 5). doxygen-docs in latex, html & pdf "
+	@echo " - doxygen-docs in latex, html & pdf "
 
 
 #======== Help ========
@@ -48,82 +50,82 @@ all : default doxy-pdf
 help : Makefile
 	@echo "*** RISC-V Atom root Makefile ***"
 	@echo "Usage:"
-	@echo "	$$ make target=<atomsim/hydrogensoc> [TARGET]"
+	@echo "	$$ make target=<atombones/hydrogensoc> [TARGET]"
 	@echo ""
 	@echo "TARGETs:"
-	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n", $$1, $$2}'
 	@echo ""
 
 
 # ======== AtomSim ========
 .PHONY : sim
-sim:                       			## Build atomsim for specified target [default: atombones]
-	@echo "$(COLOR_GREEN)>> Building Atomsim...$(COLOR_NC)"
-	make -C atomsim Target=$(Target) DEBUG=1
+sim:                       			## Build atomsim for given target [default: atombones]
+	@echo "$(COLOR_GREEN)>> Building Atomsim ...$(COLOR_NC)"
+	make $(MKFLAGS) -C sim Target=$(Target) DEBUG=1
 
 
 .PHONY: clean-sim
 clean-sim:							## Clean atomsim build files
-	@echo "$(COLOR_GREEN)>> Cleaning atomsim [$(atomsim)/build/*] ...$(COLOR_NC)"
-	make -C atomsim clean
+	@echo "$(COLOR_GREEN)>> Cleaning atomsim build files [sim/build/*] ...$(COLOR_NC)"
+	make $(MKFLAGS) -C sim clean
 
 
 # ======== SCAR ========
 .PHONY: scar     			
 scar: $(bin_dir)/$(sim_executable)	## Verify target using scar
-	@echo "\n$(COLOR_GREEN)>> Running SCAR... $(COLOR_NC)"
-	make -C test/scar/
+	@echo "$(COLOR_GREEN)>> Running SCAR... $(COLOR_NC)"
+	make $(MKFLAGS) -C test/scar/
 
 
 .PHONY: clean-scar
 clean-scar:							## Clean scar directory
-	@echo "$(COLOR_GREEN)>> Cleaning libs [test/scar/work/*] ...$(COLOR_NC)"
-	make -C test/scar/ clean
+	@echo "$(COLOR_GREEN)>> Cleaning scar working directory [test/scar/work/*] ...$(COLOR_NC)"
+	make $(MKFLAGS) -C test/scar/ clean
 
 
 # ======== ElfDump ========
 .PHONY: elfdump
 elfdump:							## Build elfdump utility
 	@echo "$(COLOR_GREEN)>> Building elfdump...$(COLOR_NC)"
-	make -C tools/elfdump/
+	make $(MKFLAGS) -C tools/elfdump/
 
 
 .PHONY: clean-elfdump
 clean-elfdump:					    ## Clean elfdump directory
 	@echo "$(COLOR_GREEN)>> Cleaning elfdump directory [tools/elfdump/bin/*] ...$(COLOR_NC)"
-	make -C tools/elfdump clean
+	make $(MKFLAGS) -C tools/elfdump clean
 
 
 # ======== SW libs ========
 .PHONY: lib
 lib:								## compile software libraries
 	@echo "$(COLOR_GREEN)>> Compiling software libraries ...$(COLOR_NC)"
-	make -C sw/lib/ Target=$(Target)
+	make $(MKFLAGS) -C sw/lib/ Target=$(Target)
 
 
 .PHONY: clean-lib
 clean-lib:							## Clean software libs
-	@echo "$(COLOR_GREEN)>> Cleaning libs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
-	make -C sw/lib/ clean
+	@echo "$(COLOR_GREEN)>> Cleaning build files for lib [sw/lib/] ...$(COLOR_NC)"
+	make $(MKFLAGS) -C sw/lib/ clean
 
 
 # ======== Documentation ========
 .PHONY: doxy
 doxy:								## Generate atomsim C++ source documentation
 	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [latex & html]...$(COLOR_NC)"
-	make -C sim/docs/
+	make $(MKFLAGS) -C sim/docs/
 
 
 .PHONY: doxy-pdf
 doxy-pdf: doxy						## Generate atomsim C++ source documentation (pdf)
 	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [pdf]...$(COLOR_NC)"
-	make -C sim/docs/ pdf
+	make $(MKFLAGS) -C sim/docs/ pdf
 
 
-.PHONY: clean-doc
-clean-doc:							## Clean generated docs
-	@echo "$(COLOR_GREEN)>> Cleaning docs [$(doxygen_doc_dir)/*] ...$(COLOR_NC)"
-	make -C sim/docs/ clean
+.PHONY: clean-doxy
+clean-doxy:							## Clean build files for Atomsim docs
+	@echo "$(COLOR_GREEN)>> Cleaning docs [sim/docs/*] ...$(COLOR_NC)"
+	make $(MKFLAGS) -C sim/docs/ clean
 
 
 # ======== clean ========
@@ -132,4 +134,4 @@ clean: clean-sim					## Alias for clean-sim
 
 
 .PHONY: clean-all					
-clean-all: clean-sim clean-doc clean-lib clean-scar 	## Clean all build files
+clean-all: clean-sim clean-doxy clean-lib clean-scar 	## Clean all build files

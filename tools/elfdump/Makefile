@@ -15,7 +15,7 @@ default: elfdump
 elfdump: $(BIN_DIR)/$(EXE)				#t build elfdump
 
 $(BIN_DIR)/$(EXE): $(SRCS)
-	$(CC) -c $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@
 
 
 .PHONY: clean

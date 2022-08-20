@@ -20,6 +20,7 @@ ifndef NO_COLOR
 COLOR_RED 		:= \033[0;31m
 COLOR_GREEN 	:= \033[0;32m
 COLOR_YELLOW 	:= \033[0;33m
+COLOR_CYAN 	    := \033[0;36m
 COLOR_NC 		:= \033[0m
 endif
 
@@ -160,41 +161,41 @@ endif
 # Recepies
 
 default: sim
-sim: lib_verilated $(EXE)	# Build atomsim
+sim: lib_verilated $(EXE)					#t Build atomsim
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VTOPMODULE_FILE) $(VSRCS)
-	@echo "$(COLOR_GREEN)Verilating RTL...$(COLOR_NC)"
+	@echo "$(COLOR_CYAN)Verilating RTL...$(COLOR_NC)"
 	$(VC) $(VFLAGS) $< --Mdir $(VERILATED_DIR)
 
-	@echo "$(COLOR_GREEN)Generating shared object... $(COLOR_NC)"
+	@echo "$(COLOR_CYAN)Generating shared object... $(COLOR_NC)"
 	make -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk
 
 
 # Generic rule to compile Cpp Files in .
 $(OBJ_DIR)/%.o: %.cpp
 $(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_GREEN)Compiling...	[$@	<-	$<] $(COLOR_NC)(using r1)"
+	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r1)"
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files in VERILATOR_INCLUDE_PATH (verilated.cpp & verilated.vcd_c.cpp)
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_GREEN)Compiling...	[$@	<-	$<] $(COLOR_NC)(using r3)"
+	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r2)"
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files rtl/dpi
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_GREEN)Compiling...	[$@	<-	$<] $(COLOR_NC)(using r4)"
+	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r3)"
 	$(COMPILE_CPP_MACRO) $<
 
 
 # Link & Create executable
 $(EXE): $(OBJS)
-	@echo "$(COLOR_GREEN)Linking shared object and driver to create executable...$(COLOR_NC)"
+	@echo "$(COLOR_CYAN)Linking shared object and driver to create executable...$(COLOR_NC)"
 	$(CC) $^ -o $@ $(LDLIBS) $(LDFLAGS)
 
 
@@ -231,7 +232,6 @@ help: 									#t Show help
 
 # Extra info footer
 
-#f Default TARGET: sim
 #f 
 #f SIMTARGETs:
 #f 	atombones

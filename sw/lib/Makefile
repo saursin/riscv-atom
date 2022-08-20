@@ -1,5 +1,5 @@
 # Bash color codes
-COLOR_GREEN 	= \033[0;32m
+COLOR_CYAN	    = \033[0;36m
 COLOR_NC 		= \033[0m
 
 Target=None
@@ -34,21 +34,21 @@ $(OBJ_DIR):
 
 # Create libcatom.a
 $(LIB): $(OBJS)
-	@echo "$(COLOR_GREEN)>> Generating $(LIB)... $(COLOR_NC)"
+	@echo "$(COLOR_CYAN)Generating $(LIB)... $(COLOR_NC)"
 	ar rcs $@ $^
-	@echo "$(COLOR_GREEN)>> Done! $(COLOR_NC)"
 
 # Compile all c files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 # Compile all s files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
+	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 .PHONY: clean
 clean:
-	@echo "$(COLOR_GREEN)>> Cleaning Build Files... $(COLOR_NC)"
 	rm -f $(OBJ_DIR)/*.o
 	rm -f $(LIB)
 
