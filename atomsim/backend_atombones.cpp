@@ -31,7 +31,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     {
         mem_["imem"] = std::shared_ptr<Memory> (new Memory(config_.imem_size_kb * 1024, config_.imem_offset, true));
         mem_["dmem"] = std::shared_ptr<Memory> (new Memory(config_.dmem_size_kb * 1024, config_.dmem_offset, false));
-        mem_["pmem"] = std::shared_ptr<Memory> (new Memory(1024, 0x08000000, false));
+        mem_["pmem"] = std::shared_ptr<Memory> (new Memory(1 * 1024, 0x08000000, false));
     }
     catch(const std::exception& e)
     {
@@ -53,6 +53,11 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
         if(sim_->sim_config_.verbose_flag) 
             std::cout << "Initializing dmem:" << std::endl;
         init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
+
+        // initialize uart registers {words at 0x08000000 and 0x08000004}
+        uint8_t b[] = {(uint8_t)-1, 0, 0, 0,
+                       0, 0, 0, 0 };
+        mem_["pmem"]->store(0x08000000, b, 8);
     }
     catch(const std::exception& e)
     {
@@ -128,11 +133,11 @@ void Backend_atomsim::service_mem_req()
         for (auto mem_block: mem_)
         {
             std::shared_ptr<Memory> m = mem_block.second;
-            if( daddr >= m->get_base_addr() && daddr < m->get_base_addr() + m->get_size())
+            if(m->addr_in_range(daddr))
             {
-                if(tb->m_core->dmem_we_o)	// Writes
+                if(tb->m_core->dmem_we_o)	// *** Writes ***
                 {
-                    Word_alias data_w = {.word = tb->m_core->dmem_data_o};
+                    Word_alias data_w = {.word = (uint32_t)tb->m_core->dmem_data_o};
 
                     if(tb->m_core->dmem_sel_o & 0b0001) 
                         m->store(daddr, &data_w.byte[0], 1);
@@ -143,7 +148,7 @@ void Backend_atomsim::service_mem_req()
                     if(tb->m_core->dmem_sel_o & 0b1000) 
                         m->store(daddr+3, &data_w.byte[3], 1);
                 }
-                else    // Reads
+                else                        // *** Reads ***
                 {
                     // Read will always result in a fetch word at word boundry just before the address.
                     Word_alias data_w;
@@ -200,7 +205,7 @@ void Backend_atomsim::UART()
         the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
         of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
         as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
-        When we fine 'we' asserted, we read the value and wait for 2 cycles after it. This 
+        When we find 'we' asserted, we read the value and wait for 2 cycles after it. This 
         prevents multiple reads of data in same transaction.
     */		
     static int wait = 0;
@@ -244,14 +249,23 @@ void Backend_atomsim::UART()
         mem_["pmem"]->store(0x08000000, b, 2);
     }
 
-    /*
-        If atom core tries to read data register, clear the data register (put -1) and clear 
-        status bit[0].
-    */
-    if(tb->m_core->dmem_valid_o && !(bool)tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
+
+    // Action to be done if core read/wrote to UART registers in this cycle
+    if(tb->m_core->dmem_valid_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
     {
-        uint8_t b[] = {(uint8_t)-1, 0b0};
-        mem_["pmem"]->store(0x08000000, b, 2);
+        if(tb->m_core->dmem_we_o)   // tried to write to DREG
+        {
+            // since dreg is a read only register therefore core writes 
+            // should idelally have no effect, so we restore the value to 0xff
+            uint8_t b [] = {(uint8_t)((char)-1)};
+            mem_["pmem"]->store(0x08000000, b, 1);
+        }
+        else                        // tried to write from DREG
+        {
+            // reset dreg value, clear status reg bit[0]
+            uint8_t b[] = {(uint8_t)-1, 0b0};
+            mem_["pmem"]->store(0x08000000, b, 2);
+        }
     }
 }
 
@@ -265,6 +279,9 @@ int Backend_atomsim::tick()
 
     // Service Memory Request
     service_mem_req();
+    
+    // perform uart transaction (if any)
+    UART();
 
     // Tick clock once
     tb->tick();
@@ -384,9 +401,6 @@ int Backend_atomsim::tick()
         return 1;
     }		
 
-    // Serial port Emulator: Rx Listener
-    UART();
-
     return 0;
 }
 
@@ -396,10 +410,10 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
     for (auto mem_block: mem_)  // search for mem blk
     {
         std::shared_ptr<Memory> m = mem_block.second;
-        if( start_addr >= m->get_base_addr() && start_addr < m->get_base_addr() + m->get_size())
+        if(m->addr_in_range(start_addr))
         {
-            if(start_addr+buf_sz > m->get_base_addr() + m->get_size())
-                throwError("", "cant fetch; bufsize too large for mem", false);
+            if(!m->block_in_range(start_addr, buf_sz))
+                throw Atomsim_exception("cant fetch; bufsize too large for mem");
             
             m->fetch(start_addr, buf, buf_sz);
             success = true;
@@ -419,10 +433,10 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
     for (auto mem_block: mem_)  // search for mem blk
     {
         std::shared_ptr<Memory> m = mem_block.second;
-        if( start_addr >= m->get_base_addr() && start_addr < m->get_base_addr() + m->get_size())
+        if(m->addr_in_range(start_addr))
         {
-            if(start_addr+buf_sz > m->get_base_addr() + m->get_size())
-                throwError("", "cant store; bufsize too large for mem", false);
+            if(!m->block_in_range(start_addr, buf_sz))
+                throw Atomsim_exception("cant store; bufsize too large for mem");
             
             m->store(start_addr, buf, buf_sz);
             success = true;
@@ -432,6 +446,6 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
 
     if (!success)
     {
-        throw Atomsim_exception("memory fetch failed: no mem block at given address");
+        throw Atomsim_exception("memory store failed: no mem block at given address");
     }
 }
