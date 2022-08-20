@@ -6,11 +6,11 @@ export RVATOM=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
 # export RVATOM_LIB variable
 export RVATOM_LIB="$RVATOM/sw/lib"
 
-# add atomsim to path ($RVATOM/atomsim/build/bin)
-export PATH="$RVATOM/atomsim/build/bin:$PATH"
+# add atomsim to path ($RVATOM/sim/build/bin)
+export PATH="$RVATOM/sim/build/bin:$PATH"
 
 # add elfdump to path ($RVATOM/tools/elfdump/bin)
-export PATH="$RVATOM/tools/elfdump/build/bin:$PATH"
+export PATH="$RVATOM/tools/elfdump/bin:$PATH"
 
 # add $RVATOM/scripts to path
 export PATH="$RVATOM/scripts:$PATH"
