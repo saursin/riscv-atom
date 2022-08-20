@@ -92,6 +92,31 @@ public:
     uint32_t get_base_addr() { return addr_offset_;}
 
 
+    /**
+     * @brief check if given address is in range of current memory block
+     * 
+     * @param addr address
+     * @return true 
+     * @return false 
+     */
+    inline bool addr_in_range(uint32_t addr)
+    {
+        return (addr >= addr_offset_ && addr < (addr_offset_ + size_));
+    }
+
+    /**
+     * @brief check if given block is in range of current memory block
+     * 
+     * @param blk_addr block base address
+     * @param blk_sz block size
+     * @return true 
+     * @return false 
+     */
+    inline bool block_in_range(uint32_t blk_addr, uint32_t blk_sz)
+    {
+        return addr_in_range(blk_addr) && ((blk_addr + blk_sz) < (addr_offset_ + size_));
+    }
+
 private:
 	/**
 	 * @brief pointer to memory array
