@@ -19,7 +19,6 @@ struct Backend_config
     uint32_t dmem_offset    = 0x04000000;
     uint32_t dmem_size_kb   = (64*1024);    // default: 64 MB
 
-    bool using_vuart            = false;
     std::string vuart_portname  = "";
     uint32_t vuart_baudrate     = 9600;
 };

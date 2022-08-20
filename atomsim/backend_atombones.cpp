@@ -20,7 +20,8 @@
 
 Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     Backend(sim, &(sim->simstate_)),
-    config_(config)
+    config_(config),
+    using_vuart_(config.vuart_portname != "")
 {
     // Construct Testbench object
     tb = new Testbench<VAtomBones>();
@@ -69,7 +70,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     // ====== Initialize Communication ========
 
     // create a new vuart object
-    if(config_.using_vuart)
+    if(using_vuart_)
     {	
         vuart_ = new Vuart(config_.vuart_portname, config_.vuart_baudrate);
             
@@ -92,7 +93,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
 
 Backend_atomsim::~Backend_atomsim()
 {
-    if (config_.using_vuart)
+    if (using_vuart_)
     {
         // destroy vuart object
         if(vuart_ != nullptr)
@@ -207,7 +208,7 @@ void Backend_atomsim::UART()
     {
         char c = (char)tb->m_core->dmem_data_o;
 
-        if (config_.using_vuart)
+        if (using_vuart_)
             vuart_->send(c);
         else
             std::cout << c;
@@ -228,7 +229,7 @@ void Backend_atomsim::UART()
         dummy hardware register of simpluart_wb, and set bit[0] of status register.
     */
     static uint8_t recv;
-    if(config_.using_vuart)
+    if(using_vuart_)
     {
         recv = vuart_->recieve();
     }
@@ -239,10 +240,8 @@ void Backend_atomsim::UART()
             
     if(recv != (uint8_t)-1)	// something recieved
     {
-        uint8_t w = 0b1;
-        mem_["pmem"]->store(0x08000001, &w, 1);
-        w = recv;
-        mem_["pmem"]->store(0x08000000, &w, 1);
+        uint8_t b[] = {recv, 0b1};
+        mem_["pmem"]->store(0x08000000, b, 2);
     }
 
     /*
@@ -251,10 +250,8 @@ void Backend_atomsim::UART()
     */
     if(tb->m_core->dmem_valid_o && !(bool)tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
     {
-        uint8_t w = 0b0;
-        mem_["pmem"]->store(0x08000001, &w, 1);
-        w = (uint8_t)-1;
-        mem_["pmem"]->store(0x08000000, &w, 1);
+        uint8_t b[] = {(uint8_t)-1, 0b0};
+        mem_["pmem"]->store(0x08000000, b, 2);
     }
 }
 
