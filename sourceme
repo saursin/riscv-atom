@@ -1,13 +1,16 @@
 ## RISCV-ATOM Environment Variabes
 
-# export RVATOM variable
-export RVATOM="/home/${USER}/work/riscv/riscv-atom"
+# export RVATOM variable (get dir containing this sourceme file)
+export RVATOM=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
 
-# add $RVATOM/build/bin to path
+# export RVATOM_LIB variable
+export RVATOM_LIB="$RVATOM/sw/lib"
+
+# add atomsim to path ($RVATOM/atomsim/build/bin)
 export PATH="$RVATOM/atomsim/build/bin:$PATH"
+
+# add elfdump to path ($RVATOM/tools/elfdump/bin)
+export PATH="$RVATOM/tools/elfdump/build/bin:$PATH"
 
 # add $RVATOM/scripts to path
 export PATH="$RVATOM/scripts:$PATH"
-
-# export RVATOM_LIBS variable
-export RVATOM_LIB="$RVATOM/sw/lib"
