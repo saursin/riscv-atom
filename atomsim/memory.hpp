@@ -114,7 +114,8 @@ public:
      */
     inline bool block_in_range(uint32_t blk_addr, uint32_t blk_sz)
     {
-        return addr_in_range(blk_addr) && ((blk_addr + blk_sz) < (addr_offset_ + size_));
+        return addr_in_range(blk_addr)                          // start addr in range
+        && ((blk_addr + blk_sz - 1) (addr_offset_ + size_));    // end address in range
     }
 
 private:
