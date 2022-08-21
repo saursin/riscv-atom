@@ -105,7 +105,7 @@ Backend_atomsim::~Backend_atomsim()
             delete vuart_;
     }
 
-    // delete tb;
+    delete tb;
     mem_.clear();
 }
 

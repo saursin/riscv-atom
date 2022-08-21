@@ -28,7 +28,6 @@ class Backend
 public:
 
     Backend(Atomsim *sim_ptr, Simstate *simstate_ptr);
-    ~Backend();
 
     /**
      * @brief Get the Target Name                       [** OVERRIDE **]
@@ -114,6 +113,7 @@ protected:
 
     /**
 	 * @brief Pointer to testbench object
+     * NOTE: To be initialized and deleted by child class
 	 */
 	Testbench<VTarget> *tb;
 };
@@ -123,15 +123,7 @@ template <class VTarget>
 Backend<VTarget>::Backend(Atomsim *sim_ptr, Simstate *simstate_ptr):
     sim_(sim_ptr),
     simstate_(simstate_ptr)
-{
-    tb = new Testbench<VTarget>();
-}
-
-template <class VTarget>
-Backend<VTarget>::~Backend()
-{
-    delete tb;
-}
+{}
 
 template <class VTarget>
 void Backend<VTarget>::reset()
