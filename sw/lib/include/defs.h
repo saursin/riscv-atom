@@ -26,6 +26,7 @@ typedef unsigned long size_t;
     #define UART_CD_REG_ADDR 0x08000004
 
     // ---------- GPIO ------------
+    #define GPIO
     #define GPIO_PINCOUNT 32
     #define GPIO_SETWIDTH 16
     #define GPIO_ADDR 0x08000100
@@ -39,13 +40,15 @@ typedef unsigned long size_t;
     #define MEM_ROM_SIZE    64*1024*1024    // 64 MB
 
     #define MEM_RAM_BEGIN   0x04000000
-    #define MEM_RAM_SIZE    16*1024*1024    // 64 MB
+    #define MEM_RAM_SIZE    64*1024*1024    // 64 MB
 
     // ---------- UART ------------
     #define UART_D_REG_ADDR 0x08000000
     #define UART_S_REG_ADDR 0x08000001
     #define UART_CD_REG_ADDR 0x08000004
 
+    // ------ CLOCK FREQUENCY --------
+    #define CLK_FREQ 12000000
 #else
     #warning Must define a target for defs.h
 #endif

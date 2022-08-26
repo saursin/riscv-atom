@@ -40,9 +40,6 @@ module GPIO
     inout  wire    [15:0]   gpio_io
 );
 
-localparam DIR_OUTPUT   = 1'b0;
-localparam DIR_INPUT    = 1'b1;
-
 // Set Ack_o
 always @(posedge wb_clk_i) begin
   if (wb_rst_i)

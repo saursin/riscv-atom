@@ -22,7 +22,7 @@ class ConvELF:
         self.INCLUDE_SECTIONS = ['.text', '.rodata', '.sdata', '.data']
 
         # Name of temporary hex file
-        self.TEMP_FILE = os.getenv("RVATOM")+'/build/init/temp.hex'
+        self.TEMP_FILE = os.getenv("RVATOM")+'/sim/run/temp.hex'
 
         # Echo shell commands during execution
         self.ECHO_CMD = False
@@ -175,8 +175,8 @@ if __name__ == "__main__":
     # === Memory Map Format ===
     #   Device  | ORIGIN    |   SIZE    |   HEXFILE NAME
     HydrogenSoC_MemMap = {
-        'IMEM' : [0x00000000, 0x00008000, os.getenv('RVATOM')+'/build/init/code.hex'],
-        'DMEM' : [0x04000000, 0x00002000, os.getenv('RVATOM')+'/build/init/data.hex']
+        'IMEM' : [0x00000000, 0x00008000, os.getenv('RVATOM')+'/sim/run/code.hex'],
+        'DMEM' : [0x04000000, 0x00002000, os.getenv('RVATOM')+'/sim/run/data.hex']
     }
 
     # Create a convelf object.

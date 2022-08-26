@@ -1,14 +1,11 @@
 PY = python3
 
+$(shell mkdir -p work)
+
 default: clean verify
 
-verify: directories
+verify:
 	$(PY) scar.py
 
-directories: work
-
-work: 
-	mkdir work
-
 clean:
-	rm -rf work/
+	rm -rf work/*
