@@ -27,11 +27,12 @@ BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 VERILATED_DIR := $(BUILD_DIR)/verilated
 BIN_DIR := $(BUILD_DIR)/bin
-INIT_DIR := $(BUILD_DIR)/init
 DEPDIR := $(BUILD_DIR)/.depend
 
+RUN_DIR := run
+
 # make directories during makefile-parse
-$(shell mkdir -p $(OBJ_DIR) $(BIN_DIR) $(VERILATED_DIR) $(INIT_DIR) $(DEPDIR))
+$(shell mkdir -p $(OBJ_DIR) $(BIN_DIR) $(VERILATED_DIR) $(DEPDIR) $(RUN_DIR))
 
 
 ####################################################
@@ -53,8 +54,6 @@ VSRCS += $(RTL_DIR)/core/Decode.v
 VSRCS += $(RTL_DIR)/core/RegisterFile.v 
 VSRCS += $(RTL_DIR)/core/CSR_Unit.v
 
-VFLAGS += -D__IMEM_INIT_FILE__='"$(INIT_DIR)/code.hex"'
-VFLAGS += -D__DMEM_INIT_FILE__='"$(INIT_DIR)/data.hex"'
 
 
 ####################################################
@@ -102,8 +101,8 @@ VSRCS += $(RTL_DIR)/uncore/simpleuart_wb.v
 VSRCS += $(RTL_DIR)/uncore/simpleuart.v
 VSRCS += $(RTL_DIR)/HydrogenSoC_Config.vh
 
-# VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/code.hex"'
-# VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/$(init_dir)/data.hex"'
+VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/code.hex"'
+VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/data.hex"'
 
 SIM_BACKEND_FILE := backend_hydrogensoc.cpp
 CFLAGS += -DTARGET_HEADER='"backend_hydrogensoc.hpp"'

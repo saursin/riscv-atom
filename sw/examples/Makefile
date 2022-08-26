@@ -96,12 +96,13 @@ help : Makefile								## show help
 
 	
 $(ex)/$(executable): $(SRC_FILES)
-	@echo "${COLOR_CYAN}Building \"${ex}\" example...		${COLOR_NC}[$@ <- $^]"
+	@echo "${COLOR_CYAN}>> Building \"${ex}\" example"
+	@printf "$(COLOR_CYAN)Compiling   %-35s <-  %s$(COLOR_NC)\n" $@ $<
 	cd $(ex) && $(COMPILE_SCRIPT) $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 
 run: $(ex)/$(executable)					## Run example
-	@echo "${COLOR_CYAN}Running \"${ex}\" example...${COLOR_NC}"
+	@echo "${COLOR_CYAN}Running \"${ex}\" example ${COLOR_NC}"
 	atomsim $(ATOMSIM_ARGS) $^
 
 
@@ -111,18 +112,18 @@ objdump: $(ex)/$(executable)				## Dump disassembly
 
 .PHONY: clean
 clean:										## Clean executable
-	@echo "${COLOR_CYAN}Cleaning \"${ex}\" example binaries... ${COLOR_NC}"
+	@echo "${COLOR_CYAN}Cleaning \"${ex}\" example binaries ${COLOR_NC}"
 	rm -f $(ex)/$(executable)
 
 
 all:										## Build all examples
-	@$(patsubst %/,echo "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}"; make ex=%;,${EXAMPLE_DIRS})
+	@$(patsubst %/, make ex=%;,${EXAMPLE_DIRS})
 
 
 run-all:									## Build & run all examples
-	@$(patsubst %/,echo "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}"; make ex=% run;,${EXAMPLE_DIRS})
+	@$(patsubst %/, echo "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}"; make -s ex=% run;,${EXAMPLE_DIRS})
 
 
 .PHONY: clean-all
 clean-all:									## Clean all executables
-	@$(patsubst %/,echo "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}"; make ex=% clean;,${EXAMPLE_DIRS})
+	@$(patsubst %/, make -s ex=% clean;,${EXAMPLE_DIRS})
