@@ -65,7 +65,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		options.add_options("General")
 		("h,help", "Show this message")
 		("version", "Show version information")
-		("simtarget", "Show current AtomSim Target")
+		("soctarget", "Show current AtomSim SoC target")
 		("no-color", "Don't show colored output", cxxopts::value<bool>(sim_config.no_color_flag)->default_value(default_sim_config.no_color_flag?"true":"false"))
 		("i,input", "Specify an input file", cxxopts::value<std::string>(sim_config.ifile))
 		;
@@ -119,7 +119,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 			std::cout << ATOMSIM_VERSION " [ " ATOMSIM_TARGETNAME " ] " <<  std::endl;
 			exit(EXIT_SUCCESS);
 		}
-		if (result.count("simtarget"))
+		if (result.count("soctarget"))
 		{
 			std::cout << ATOMSIM_TARGETNAME << std::endl;
 			exit(EXIT_SUCCESS);

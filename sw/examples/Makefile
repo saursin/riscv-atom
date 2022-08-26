@@ -1,5 +1,5 @@
 # Atomsim target (to be oerridden):	Default target is auto-detected
-Target ?= $(shell atomsim --simtarget)
+soctarget ?= $(shell atomsim --soctarget)
 
 # current example (to be overridden)
 ex ?= None
@@ -57,13 +57,13 @@ endif
 
 
 # select compile script
-ifeq ($(Target), atombones)
+ifeq ($(soctarget), atombones)
 COMPILE_SCRIPT = compile-atombones
 else
-ifeq ($(Target), hydrogensoc)
+ifeq ($(soctarget), hydrogensoc)
 COMPILE_SCRIPT = compile-hydrogensoc
 else
-$(error Invalid atomsim target: $(Target))
+$(error Invalid SoC target target: $(soctarget))
 endif
 endif
 
@@ -81,7 +81,7 @@ default: $(ex)/$(executable) # compile
 help : Makefile								## show help
 	@echo "*** Makefile for compiling & running examples ***"
 	@echo "Usage:"
-	@echo "	$$ make Target=<atombones/hydrogensoc> ex=<EXAMPLE> [TARGET]"
+	@echo "	$$ make soctarget=<atombones/hydrogensoc> ex=<EXAMPLE> [TARGET]"
 	@echo ""
 	@echo "TARGETs:"
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -91,7 +91,7 @@ help : Makefile								## show help
 	@echo ""
 	@echo "Note:"
 	@echo " - To compile an example don't specify TARGET"
-	@echo " - Following TARGETs can be run without overriding \"ex\" & \"Target\" variables"
+	@echo " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables"
 	@echo "	help, all, clean-all"
 
 	

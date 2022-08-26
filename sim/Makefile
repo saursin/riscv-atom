@@ -1,15 +1,9 @@
 #h *** Makefile for Building AtomSim ***
 
-# This is a self-documenting makefile
-# Use "#h comment..." to add a line to header
-# Use "#f comment..." to add a line to footer
-# Use "#t comment..." to add info about target
-
-
 ####################################################
-# ovveride these with CLI
+# override these with CLI
 
-Target ?= atombones
+soctarget ?= atombones
 # Debug = 1
 # DPI = 1
 # NO_COLOR = 1
@@ -62,6 +56,7 @@ VSRCS += $(RTL_DIR)/core/CSR_Unit.v
 VFLAGS += -D__IMEM_INIT_FILE__='"$(INIT_DIR)/code.hex"'
 VFLAGS += -D__DMEM_INIT_FILE__='"$(INIT_DIR)/data.hex"'
 
+
 ####################################################
 # CPP configs
 
@@ -82,9 +77,9 @@ COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 
 ####################################################
-# Target Specific definitions
+# SOCtarget Specific definitions
 
-ifeq ($(Target), atombones) 	# =========================[ AtomBones ]
+ifeq ($(soctarget), atombones) 	    # =========================[ AtomBones ]
 
 VTOPMODULE := AtomBones
 VTOPMODULE_FILE := $(RTL_DIR)/$(VTOPMODULE).v
@@ -93,7 +88,7 @@ CFLAGS += -DTARGET_HEADER='"backend_atombones.hpp"'
 
 
 else
-ifeq ($(Target), hydrogensoc) 	# =========================[ HydrogenSoC ]
+ifeq ($(soctarget), hydrogensoc) 	# =========================[ HydrogenSoC ]
 
 VTOPMODULE := HydrogenSoC
 VTOPMODULE_FILE := $(RTL_DIR)/$(VTOPMODULE).v
@@ -114,7 +109,7 @@ SIM_BACKEND_FILE := backend_hydrogensoc.cpp
 CFLAGS += -DTARGET_HEADER='"backend_hydrogensoc.hpp"'
 
 else
-$(error Build target for AtomSim not specified; Specify a target using: make Target=<atomsim/hydrogensoc>)
+$(error Build target for AtomSim not specified; Specify a target using: make soctarget=<atomsim/hydrogensoc>)
 endif
 endif
 
@@ -139,7 +134,7 @@ DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o		
 
 LDFLAGS += -L build/verilated
-LDLIBS += -l:V${VTOPMODULE}__ALL.a
+LDLIBS += -l:V$(VTOPMODULE)__ALL.a
 
 # Append DPI objects & add DPI flags 	(if DPI is defined)
 ifdef DPI
@@ -160,44 +155,45 @@ endif
 ####################################################
 # Recepies
 
-default: sim
+default: sim								#t Alias for sim
 sim: lib_verilated $(EXE)					#t Build atomsim
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VTOPMODULE_FILE) $(VSRCS)
-	@echo "$(COLOR_CYAN)Verilating RTL...$(COLOR_NC)"
+	@printf "$(COLOR_CYAN)Verilating Verilog files$(COLOR_NC)\n"
 	$(VC) $(VFLAGS) $< --Mdir $(VERILATED_DIR)
 
-	@echo "$(COLOR_CYAN)Generating shared object... $(COLOR_NC)"
+	@printf "$(COLOR_CYAN)Generating shared object$(COLOR_NC)\n"
 	make -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk
 
 
 # Generic rule to compile Cpp Files in .
 $(OBJ_DIR)/%.o: %.cpp
 $(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r1)"
+	@printf "$(COLOR_CYAN)Compiling   %-35s <-  %s$(COLOR_NC)\n" $@ $<
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files in VERILATOR_INCLUDE_PATH (verilated.cpp & verilated.vcd_c.cpp)
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r2)"
+	@printf "$(COLOR_CYAN)Compiling   %-35s <-  %s$(COLOR_NC)\n" $@ $<
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files rtl/dpi
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp $(DEPDIR)/%.Td
-	@echo "$(COLOR_CYAN)Compiling... [ $@	<-	$< ] $(COLOR_NC)(r3)"
+	@printf "$(COLOR_CYAN)Compiling   %-35s <-  %s$(COLOR_NC)\n" $@ $<
 	$(COMPILE_CPP_MACRO) $<
 
 
 # Link & Create executable
 $(EXE): $(OBJS)
-	@echo "$(COLOR_CYAN)Linking shared object and driver to create executable...$(COLOR_NC)"
+	@printf "$(COLOR_CYAN)Linking shared object and driver to create executable $(COLOR_NC)\n"
 	$(CC) $^ -o $@ $(LDLIBS) $(LDFLAGS)
 
+	@printf "$(COLOR_CYAN)Build successful! $(COLOR_NC)\n"
 
 .PRECIOUS: $(DEPDIR)/%.Td
 $(DEPDIR)/%.Td: ;
@@ -209,12 +205,7 @@ $(DEPDIR)/%.Td: ;
 
 .PHONY: clean
 clean:									#t Clean build files
-	rm -rf $(OBJ_DIR)/* $(VERILATED_DIR)/* $(BIN_DIR)/* $(DEPDIR)/*
-
-
-.PHONY: super-clean
-super-clean:							#t Revert to untouched state (clean build dir)
-	rm -rf $(BUILD_DIR)/
+	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/* $(VERILATED_DIR)/* $(DEPDIR)/*
 
 
 .PHONY: help
@@ -222,10 +213,10 @@ help: 									#t Show help
 	@sed -n 's/^#h //p' Makefile
 	@echo ""
 	@echo "Usage:"
-	@echo "	$$ make Target=<SIMTARGET> (TARGET)"
+	@echo "	$$ make soctarget=[SOCTARGET] [TARGET]"
 	@echo ""
 	@echo "TARGETs:"
-	@egrep -h '\s#t\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?#t "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@egrep -h '\s#t\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?#t "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@sed -n 's/^#f //p' Makefile
 
@@ -233,14 +224,13 @@ help: 									#t Show help
 # Extra info footer
 
 #f 
-#f SIMTARGETs:
+#f SOCTARGETs:
 #f 	atombones
 #f 	hydrogensoc
 #f 
 #f Note:
-#f  - Use DEBUG=1/2/3  to build debug binary (also sets debug level)
+#f  - Use DEBUG=1/2/3 to build debug binary (also sets debug level)
 #f  - Use DPI=1 to enable DPI support in RTL
 #f  - Use NO_COLOR=1 to disable coloured output
-
 ####################################################
 -include $(DEPS)
