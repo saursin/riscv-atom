@@ -96,8 +96,7 @@ help : Makefile								## show help
 
 	
 $(ex)/$(executable): $(SRC_FILES)
-	@echo "${COLOR_CYAN}>> Building \"${ex}\" example"
-	@printf "$(COLOR_CYAN)Compiling   %-35s <-  %s$(COLOR_NC)\n" $@ $<
+	@printf "$(COLOR_CYAN)%-15s | Compiling   %-35s <-  %s$(COLOR_NC)\n" ${ex} $@ $<
 	cd $(ex) && $(COMPILE_SCRIPT) $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 
@@ -117,7 +116,7 @@ clean:										## Clean executable
 
 
 all:										## Build all examples
-	@$(patsubst %/, make ex=%;,${EXAMPLE_DIRS})
+	@$(patsubst %/, make -s ex=%;,${EXAMPLE_DIRS})
 
 
 run-all:									## Build & run all examples

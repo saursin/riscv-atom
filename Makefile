@@ -55,7 +55,7 @@ default: sim elfdump lib   			## Build sim, elfdump, and libs
 	@echo " - elfdump tool"
 	@echo " - software libraries"
 
-all : default doxy-pdf				## Build default with docs
+all : doxy-pdf default				## Build default with docs
 	@echo " - doxygen-docs in latex, html & pdf "
 
 
