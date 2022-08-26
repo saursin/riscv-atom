@@ -28,4 +28,4 @@ jobs:
 
       - name: Build AtomSim for AtomBones Target
         run:
-          cd riscv-atom && make Target=atombones sim
+          cd riscv-atom && make soctarget=atombones sim
