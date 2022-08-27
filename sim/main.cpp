@@ -15,7 +15,7 @@
 #include TARGET_HEADER
 
 // define atomsim version
-#define ATOMSIM_VERSION "v2.0"
+#define ATOMSIM_VERSION "v2.2"
 
 // Global Variables
 // (use extern in other files)
