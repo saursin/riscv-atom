@@ -14,8 +14,10 @@
 #include "build/verilated/VHydrogenSoC_AtomRV.h"
 #include "build/verilated/VHydrogenSoC_RegisterFile__R20_RB5.h"
 
-#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ad_Mz2.h"
+//#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
+#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
+//#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ad_Mz2.h"
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "build/verilated/VHydrogenSoC_simpleuart_wb.h"
 
 

@@ -28,4 +28,4 @@ jobs:
 
       - name: Build AtomSim for Hydrogensoc Target
         run:
-          cd riscv-atom && pwd && make Target=hydrogensoc sim
+          cd riscv-atom && pwd && make soctarget=hydrogensoc sim
