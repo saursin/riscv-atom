@@ -1,6 +1,9 @@
 #include "defs.h"
 #include "gpio.h"
 
+// compile only for Hydrogensoc
+#ifdef TARGET_HYDROGENSOC
+
 /**
  * @brief Initialize GPIO
  */
@@ -96,3 +99,4 @@ gpio_direction gpio_getmode(int pin)
     unsigned short gpio_set_val = *((volatile short*) (GPIO_ADDR+addr_offset));
     return (gpio_set_val & (1 << pin_index)) ? INPUT : OUTPUT;
 }
+#endif

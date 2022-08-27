@@ -17,8 +17,8 @@ CC = 'gcc'
 CFLAGS = ['-march=rv32i', '-mabi=ilp32', '-nostartfiles']
 LDFLAGS = ['-T', linker_script_path]
 
-EXEC = '../../build/bin/atomsim'
-EXEC_FLAGS = ['--ebreak-dump', '--maxitr', '10000', '--trace-dir', work_dir]
+EXEC = 'atomsim'
+EXEC_FLAGS = ['--ebreak-dump', '--maxitr', '10000', '--trace-file', work_dir+'/trace.vcd', '--dump-file', work_dir+'/dump.txt', '-v']
 
 
 ###############################################################################################
@@ -67,7 +67,7 @@ def search():
 
 
 
-def compile(tests):
+def compile(tests, save_objdump=False):
     for t in tests:
         print(Fore.GREEN+'compile: '+Style.RESET_ALL+t)
         dump = subprocess.run(
@@ -81,6 +81,17 @@ def compile(tests):
         if (dump.returncode != 0):
             print(Fore.RED+"EXITING due to compile error!"+Style.RESET_ALL)
             exit()
+
+        # get objdumpdump
+        if save_objdump:
+            dump = subprocess.run(
+                [RVPREFIX+'objdump', '-htd', work_dir+'/'+t[0:-2]+'.elf'], capture_output=True, text=True
+            )
+            if len(dump.stdout) != 0:
+                with open(work_dir+'/'+t[0:-2]+'.objdump', 'w') as f:
+                    f.write(dump.stdout)
+            if len(dump.stderr) != 0:
+                print('stderr: '+ dump.stderr)
 
 
 
@@ -142,7 +153,7 @@ def verify(test):
         return None
 
     
-    # copy dump file
+    # copy dump file   
     os.system('cp '+work_dir+'/dump.txt '+work_dir+'/'+test[0:-2]+'_dump.txt')
 
 
@@ -223,7 +234,7 @@ if __name__ == "__main__":
 
     # Compile all
     print(Fore.CYAN+"> Stage-2:"+Style.RESET_ALL+" Compiling tests...")
-    compile(tests)
+    compile(tests, save_objdump=True)
 
     print(80*"=")
 
@@ -235,7 +246,7 @@ if __name__ == "__main__":
     passed_tests = []
 
     for t in tests:
-        execute_status = execute(t, mute=True)
+        execute_status = execute(t, mute=False)
         verify_status = verify(t)
 
         if execute_status == True:

@@ -71,10 +71,7 @@ reg [31:0] reg_div /* verilator public */ = 1;
 `endif
 
 // Register selection
-localparam SDReg = 1'b0;        // Status and Data register
-localparam CDReg = 1'b1;        // Clock Divider register
-
-wire select_sd_reg = (wb_adr_i == SDReg);
+wire select_sd_reg = (wb_adr_i == 1'b0);       // Address mapping:  0x00=SDReg  0x01=CDReg
 wire select_cd_reg = !select_sd_reg;
 
 // Output data bus
