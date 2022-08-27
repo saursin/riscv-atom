@@ -42,7 +42,12 @@ VC := verilator
 VFLAGS := -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
 
 # This should point to verilator include directory
-VERILATOR_INCLUDE_PATH := /usr/local/share/verilator/include
+VERILATOR_INCLUDE_PATH := /usr/share/verilator/include
+
+ifeq ("$(wildcard $(VERILATOR_INCLUDE_PATH)/verilated_vcd_c.cpp)","")
+$(error Verilator include path invalid; Set correct Verilator include path in sim/Makefile)
+endif
+
 
 # Core files
 VSRCS =  $(RTL_DIR)/Timescale.vh
