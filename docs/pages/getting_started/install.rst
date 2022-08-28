@@ -9,23 +9,23 @@ Clone the repository
   $ cd riscv-atom     # switch to riscv-atom directory
 
 
-.. note:: All the commands are executed from the root directory unless explicitly mentioned. We'll refer to this root directory as ``RVATOM_ROOT``.
+.. note:: All the commands are executed from the root directory unless explicitly mentioned. We'll refer to this root directory as ``RVATOM``.
 
 
 Add RISC-V Atom environment variables to $PATH
 **************************************************
 
 #. ``RVATOM`` environment variable must point to root of riscv-atom directory for the tools & scripts to work properly.
-#. ``RVATOM`` environment variable must point to the ``RVATOM_ROOT/sw/lib`` folder. This variable is used by the compile scripts to locate *libcatom*.
+#. ``RVATOM`` environment variable must point to the ``RVATOM/sw/lib`` folder. This variable is used by the compile scripts to locate *libcatom*.
 
-Define ``RVATOM`` and ``RVATOM_LIB`` envronment variables in our ``.bashrc`` file. For convenience, ``RVATOM_ROOT/build/bin`` directory should also be added to path. This will allow you to invoke atomsim and other scripts and tools from anywhere.
+Define ``RVATOM`` and ``RVATOM_LIB`` envronment variables in our ``.bashrc`` file. For convenience, ``RVATOM/build/bin`` directory should also be added to path. This will allow you to invoke atomsim and other scripts and tools from anywhere.
 
 For this purpose, append the following lines in your ``.bashrc`` file.
 
 .. code-block:: bash
 
   # export RVATOM variable
-  export RVATOM="<path_to_RVATOM_ROOT>"
+  export RVATOM="<path_to_RVATOM>"
 
   # export RVATOM_LIBS variable
   export RVATOM_LIB="$RVATOM/sw/lib"
@@ -34,7 +34,7 @@ For this purpose, append the following lines in your ``.bashrc`` file.
   export PATH="$RVATOM/build/bin:$PATH"
 
 
-replace "`path_to_RVATOM_ROOT`" in above command to your machine specific absolute path to the riscv-atom directory.
+replace "`path_to_RVATOM`" in above command to your machine specific absolute path to the riscv-atom directory.
 
 If you are hesitant in modifying the ``.bashrc`` file, you may alternatively source the provided ``sourceme`` file every time you work with the project.
 
