@@ -1,7 +1,10 @@
 AtomSim: A simulation tool for Atom based SoCs
 ###############################################
 
-AtomSim is an interactive RTL simulator for Atom based SoCs. It provides an interface which is similar to the RISC-V Spike simulator, but simulates the actual RTL in the backend. Atomsim is a modular and flexible simulaion solution based on Verilator, due to which it can achieve a very high simulation rate. AtomSim is a feature rich tool which makes it very powerful for debugging code on the Atom CPU.
+AtomSim is an interactive RTL simulator for Atom based SoCs. It provides an interface which is similar to the RISC-V 
+Spike simulator, but simulates the actual RTL in the backend. Atomsim is a modular and flexible simulaion solution 
+based on Verilator, due to which it can achieve a very high simulation rate. AtomSim is a feature rich tool which makes 
+it very powerful for debugging code on the Atom CPU.
 
 Key Features of AtomSim are listed below:
 
@@ -13,6 +16,12 @@ Key Features of AtomSim are listed below:
 #. Supports memory dumps.
 #. Compatible with RISC-V compliance tests framework.
 #. Compatible with SCAR framework.
+
+The following figure depicts the architecture of atomsim.
+
+.. image:: ../../../diagrams/atomsim_arch.png
+
+See :doc:`../../getting_started/building` for info on how to build atomsim.
 
 To view available command line options, use:
 
