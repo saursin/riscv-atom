@@ -155,9 +155,12 @@ help:										## Show help
 	@echo "	$(patsubst %/,%,${EXAMPLE_DIRS})"
 	@echo ""
 	@echo "Note:"
-	@echo " - To compile an example don't specify TARGET"
 	@echo " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables"
 	@echo "	help, all, clean-all"
+	@echo " - To save objdump,, set the \"objdump\" variable to \"true\" in the CLI."
+	@echo " - To save run using vuart, set the vuart variable to the path of the simport"
+    
+
 
 
 .PHONY: compile
