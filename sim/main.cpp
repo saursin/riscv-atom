@@ -57,7 +57,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 	try
 	{
 		// Usage Message Header
-		cxxopts::Options options(argv[0], "AtomSim " ATOMSIM_VERSION "\nSimulator for Atom based systems [ " ATOMSIM_TARGETNAME " ]");
+		cxxopts::Options options(argv[0], "AtomSim " ATOMSIM_VERSION "\nInteractive RTL Simulator for Atom based systems [ " ATOMSIM_TARGETNAME " ]");
 		
 		options.positional_help("input").show_positional_help();
 

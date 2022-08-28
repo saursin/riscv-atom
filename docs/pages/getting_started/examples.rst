@@ -29,16 +29,22 @@ provide the generated elf file as argument.
   Hello World!
     -- from Assembly
 
+Alternatively, use make run to run the example.
+
+.. code-block:: bash
+
+  $ make soctarget=atombones ex=hello-asm run
+
 
 We can compile other examples also in the similar fashion by using the following syntax:
 
 .. code-block:: bash
 
-  $ make target=<TARGET> ex=<EXAMPLE> compile
-  $ make target=<TARGET> ex=<EXAMPLE> run
+  $ make soctarget=<TARGET> ex=<EXAMPLE> compile
+  $ make soctarget=<TARGET> ex=<EXAMPLE> run
 
 .. note::
-  Run ``$ make help`` to get more information about supported targets an examples.
+  Run ``$ make help`` to get more information about supported targets and examples.
 
 Banner Example 
 ***************
@@ -98,7 +104,7 @@ Therefore we can alternatively get the same result by using the make command (in
 
 .. code-block:: bash
 
-  $ make target=atombones run-all
+  $ make soctarget=atombones run-all
 
 
 Using Atomsim Vuart
@@ -135,3 +141,43 @@ And on the other terminal (terminal-1) run atomsim as following
 You should now be able to see the output on the terminal-2.
 
 To close the screen command press ``ctrl+a``, type ``:quit`` and press ``enter``.
+
+
+Adding New Examples
+====================
+
+To add a new example to the existing framework, simply create a directory under the ``RVATOM/sw/examples`` directory.
+
+.. code-block:: bash
+
+  $ mkdir newexample
+
+
+Next, put your source files under this directory. 
+
+.. code-block:: c
+
+  $ cat newexample.c
+  #include <stdio.h>
+  void main()
+  {
+      char hello[] = "New Example\n";
+      printf(hello);
+      return;
+  }
+
+
+Finally add a new file named ``Makefile.include`` in the same directory which defines the name of the source files and 
+executable file as follows.  
+
+
+.. code-block:: bash
+
+  $ cat Makefile.include
+  src_files = newexample.c
+  executable = newexample.elf
+
+
+That's it! Now you can use the same compile and run commands as discussed earlier to run this example.
+
+

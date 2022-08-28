@@ -27,7 +27,7 @@ RISC-V Atom Documentation & User Manual
    :caption: Getting Started
 
    pages/getting_started/prerequisites.rst
-   pages/getting_started/install.rst
+   pages/getting_started/building.rst
    pages/getting_started/examples.rst
 
 

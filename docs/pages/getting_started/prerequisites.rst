@@ -22,7 +22,7 @@ This step is needed to make sure the apt package list is up to date.
 
 Install git, make, python3, gcc & other tools
 ==============================================
-GNU C/C++ compilers and Make and other essential build tools are conviniently packaged as ``build-essential`` meta package.
+GNU C/C++ compilers and Make and other essential build tools are conveniently packaged as ``build-essential`` meta package.
 
 .. code-block:: bash
 
@@ -31,7 +31,7 @@ GNU C/C++ compilers and Make and other essential build tools are conviniently pa
 
 Install Verilator
 ==================
-Verilator will be used By Atomsim to =verilate= Verilog RTL into C++.
+Verilator will be used By Atomsim to *Verilate* Verilog RTL into C++.
 
 .. code-block:: bash
 
@@ -95,12 +95,12 @@ These packages are essential for generating Latex documentation using Doxygen.
   $ sudo apt -y install texlive-latex-recommended texlive-pictures texlive-latex-extra latexmk
 
 
-Install sphinx
-===============
+Install sphinx & other python dependencies
+===========================================
 Sphinx is used to generate the RISC-V Atom Documentation and User-Manual in PDF & HTML.
 
 .. code-block:: bash
 
-  $ pip install sphinx
+  $ cd docs/ && pip install -r requirements.txt
 
 

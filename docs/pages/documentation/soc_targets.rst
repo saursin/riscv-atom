@@ -7,7 +7,10 @@ interface (e.g. AtomBones) and as complex as multi-core fully-fledged SOCs.
 AtomBones
 **********
 
+.. image:: ../../../diagrams/AtomBones.png
 
 
-HydroGenSoC
+HydrogenSoC
 ************
+
+.. image:: ../../diagrams/HydrogenSoC.png
