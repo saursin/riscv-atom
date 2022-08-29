@@ -367,7 +367,7 @@
                 /* for "times" */
 #endif
 
-#define Mic_secs_Per_Second     1000000.0
+#define Mic_secs_Per_Second     1000000
                 /* Berkeley UNIX C returns process times in seconds/HZ */
 
 #ifdef  NOSTRUCTASSIGN

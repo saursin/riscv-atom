@@ -16,6 +16,11 @@
  */
 
 #include "dhry.h"
+#include <string.h>
+
+  #ifndef DHRY_ITERS
+  #define DHRY_ITERS 2000
+  #endif
 
 /* Global Variables: */
 
@@ -118,6 +123,9 @@ main ()
     printf ("Program compiled without 'register' attribute\n");
     printf ("\n");
   }
+#ifdef DHRY_ITERS
+  Number_Of_Runs = DHRY_ITERS;
+#else
   printf ("Please give the number of runs through the benchmark: ");
   {
     int n;
@@ -125,6 +133,7 @@ main ()
     Number_Of_Runs = n;
   }
   printf ("\n");
+#endif
 
   printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
 
@@ -278,9 +287,11 @@ main ()
                         / (float) User_Time;
 #endif
     printf ("Microseconds for one run through Dhrystone: ");
-    printf ("%6.1f \n", Microseconds);
+    //printf ("%6.1f \n", Microseconds);
+    printf ("%d \n", (int)Microseconds);
     printf ("Dhrystones per Second:                      ");
-    printf ("%6.1f \n", Dhrystones_Per_Second);
+    //printf ("%6.1f \n", Dhrystones_Per_Second);
+    printf ("%d \n", (int)Dhrystones_Per_Second);
     printf ("\n");
   }
   
