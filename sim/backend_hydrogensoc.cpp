@@ -36,7 +36,12 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     using_vuart_(config.vuart_portname != "")
 {
     // generate image files by converting ELF file to memory image files
-    std::string cmd_output = GetStdoutFromCommand("python3 $RVATOM/scripts/convelf.py "+ sim_->sim_config_.ifile, true);
+    char * varval = getenv("RVATOM");
+    if(!varval)
+        throw Atomsim_exception("cant find $RVATOM env variable");
+    std::string rvatom(varval);
+    
+    std::string cmd_output = GetStdoutFromCommand("python3 "+rvatom+"/scripts/convelf.py -t elf -j "+rvatom+"/scripts/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
     if(cmd_output.length() > 0)
     {
         throw Atomsim_exception(cmd_output);

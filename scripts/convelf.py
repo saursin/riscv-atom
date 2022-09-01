@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+from difflib import Match
 import os
 import sys
 import textwrap
@@ -12,88 +13,28 @@ class ConvELF:
     # @param infile input elf file
     # @param map memory map
     def __init__(self, infile, map):
-        self.__input_elf_file = infile
+        self.__input_file = infile
         self.__memory_map = map
-        
-        # RISCV Toolchain Prefix
-        self.RVPREFIX = 'riscv64-unknown-elf-'
 
-        # Sections to load into hex files
-        self.INCLUDE_SECTIONS = ['.text', '.rodata', '.sdata', '.data']
+    def convert(self):
+        """
+        parse and convert file 
+        """
 
-        # Name of temporary hex file
-        self.TEMP_FILE = os.getenv("RVATOM")+'/sim/run/temp.hex'
-
-        # Echo shell commands during execution
-        self.ECHO_CMD = False
-
-        # Delete temp file after conversion
-        self.DELETE_TEMPFILE = True
-
-    def __runcommand(self, command, echo=True):
-        if echo:
-            for c in command:
-                print(c+' ', end = '')
-            print()
-
-        # Execute shell command using python subprocess module
-        dump = subprocess.run(
-            command , capture_output=True, text=True
-        )
-
-        # dump stderr & stdout if their length is non zero
-        if len(dump.stderr) !=0:
-            print(dump.stderr)
-            sys.exit()
-
-        if len(dump.stderr) !=0:
-            print(dump.stderr)
-            sys.exit()
-
-
-    def __genTempFile(self):
-        # prepare objcopy command
-        command = [self.RVPREFIX+'objcopy', '-O', 'verilog']
-
-        for sec in self.INCLUDE_SECTIONS:
-            command+=['-j', sec]
-        
-        command+=['--reverse-bytes=4', '--verilog-data-width','4', self.__input_elf_file, self.TEMP_FILE]
-        
-        # Execute command to generate tempfile
-        self.__runcommand(command, self.ECHO_CMD)
-        
-
-
-    def __rmTempFile(self):
-        # execute command to remove tempfile
-        self.__runcommand(['rm', '-f', self.TEMP_FILE], self.ECHO_CMD)
-
-
-
-    def convert(self, outformat = 'hex'):
-        # ===== Step-1 =====
-        # use objcopy to generate a verilog memory instantiation file : temp.hex
-        self.__genTempFile()
-
-
-        # ===== Step-2 =====
-        # parse and convert file
-
-        # open tempfile
-        tfile = open(self.TEMP_FILE, 'r')
+        # open hex file
+        tfile = open(self.__input_file, 'r')
 
         # get device names from map
         mapkeys = self.__memory_map.keys()
 
         # create empty files
         for k in mapkeys:
-            with open(self.__memory_map[k][2], 'w') as fp:
+            with open(self.__memory_map[k][3], 'w') as fp:
                 pass
         
         # create a dummy file handle 
         # TODO: find a more efficient way to create a variable of type file.
-        ofile = open(self.TEMP_FILE, 'r')
+        ofile = open(self.__input_file, 'r')
         ofile.close()
 
         # Declare a variable to keep track of current address
@@ -133,7 +74,7 @@ class ConvELF:
                             ofile.close()
                         
                         # open file for writing
-                        ofile = open(self.__memory_map[k][2], 'w')
+                        ofile = open(self.__memory_map[k][3], 'w')
 
             
                 # write line
@@ -141,17 +82,11 @@ class ConvELF:
                 ofile.write('\n')
 
                 # increment current address
-                currAddr+=1
+                currAddr+=4
         
         # close all files
         ofile.close()
         tfile.close()
-
-
-        # ===== Step-3 ===== 
-        # Remove temp file
-        if(self.DELETE_TEMPFILE):
-            memImg = self.__rmTempFile()
 
 
     def printFreeSpace(self, map):
@@ -166,24 +101,173 @@ class ConvELF:
             percentage = "{:.2f}".format(consumed*100/size)
             print(k+":  " +str(consumed)+ " out of " +str(size)+ " bytes consumed   \t( "+str(percentage)+" % )")
 
-if __name__ == "__main__":
-    # arg check
-    if len(sys.argv) != 2:
-        print(Fore.RED+"ERROR!: "+Style.RESET_ALL+"Wrong number of args\n Usage: $ python3 convelf.py [inputFile]")
+
+def parse_num(s:str) -> int:
+    if len(s) > 2 and s[0:2] == '0x':
+        return int(s[2:], 16)
+    elif len(s) > 2 and s[0:2] == '0b':
+        return int(s[2:], 2)
+    else:
+        return int(s)
+
+
+def parse_json(json_path: str) -> dict:
+    import json, re
+    
+    # read json
+    f = open(json_path, 'r') 
+    data = json.load(f)
+    f.close()
+
+    for seg in data.keys():
+        assert len(data[seg]) == 4, f"invalid json format; invalid len of list for seg {seg} in {json_path}"
+
+        # parse base address
+        data[seg][0] = parse_num(data[seg][0])
+
+        # parse mem size
+        data[seg][1] = parse_num(data[seg][1])
+        
+        # parse impath, replace $XYZ environment variables from impath
+        impath = data[seg][3]
+        while '${' in impath:
+            for match in re.finditer(r'\${[A-Z|a-z|_]*}', impath):
+                var = impath[match.start()+2:match.end()-1]
+                varval = os.getenv(var)
+                if varval:
+                    impath = impath[0:match.start()] + varval + impath[match.end():]
+                else:
+                    print(f"undefined environment variable '{var}' in file '{json_path}'")
+                break
+        
+        data[seg][3] = impath
+    return data
+
+
+def run_cmd(command, echo=True):
+    if echo:
+        for c in command:
+            print(c+' ', end = '')
+        print()
+
+    # Execute shell command using python subprocess module
+    dump = subprocess.run(
+        command , capture_output=True, text=True
+    )
+
+    # dump stderr & stdout if their length is non zero
+    if len(dump.stderr) !=0:
+        print(dump.stderr)
         sys.exit()
 
-    # === Memory Map Format ===
-    #   Device  | ORIGIN    |   SIZE    |   HEXFILE NAME
-    HydrogenSoC_MemMap = {
-        'IMEM' : [0x00000000, 0x00008000, os.getenv('RVATOM')+'/sim/run/code.hex'],
-        'DMEM' : [0x04000000, 0x00002000, os.getenv('RVATOM')+'/sim/run/data.hex']
-    }
+    if len(dump.stderr) !=0:
+        print(dump.stderr)
+        sys.exit()
 
-    # Create a convelf object.
-    ce = ConvELF(sys.argv[1], HydrogenSoC_MemMap)
 
-    # generate output hex files.
-    ce.convert('hex')
 
-    # Print consumption report
-    #ce.printFreeSpace(HydrogenSoC_MemMap)
+if __name__ == "__main__":
+    # Default values
+    default_inp_file_type = "elf"
+    default_toolchaion_prefix = "riscv64-unknown-elf"
+    default_sections_to_keep = ['.text*', '.rodata*', '.sdata*', '.data*']
+
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file", help="input file", type=str)
+    parser.add_argument("-v", "--verbose", help="enable verbose output", action="store_true")
+    parser.add_argument("-t", help=f"input file type (default: {default_inp_file_type})", type=str, choices = ["elf", "hex"], default=default_inp_file_type)
+    parser.add_argument("-j", "--json", help="parse memory map from json file", type=str)
+    parser.add_argument("-m", "--mem", help="add memory segment", type=str, action="append")
+    parser.add_argument("-s", "--section", help="specify section to dump in output files", type=str, action="append")
+    parser.add_argument("--prefix", help=f"provide toolchain prefix (default: {default_toolchaion_prefix})", type=str, default=default_toolchaion_prefix)
+    parser.add_argument("--keep-temp", help="keep temporary files", action="store_true")
+    args = parser.parse_args()
+
+    verbose = args.verbose
+    input_file = args.file
+    
+
+    if (verbose):
+        print("input file:", input_file, "  ("+args.t+")")
+    
+
+    # parse json if specified
+    memory_map = {}
+    if (args.json):
+        if (verbose):
+            print(f"parsing JSON file '{args.json}'")
+        memory_map = parse_json(args.json)
+
+    # parse mem flags
+    if(args.mem):
+        for segspecifier in args.mem:
+            sep = [i for i in range(len(segspecifier)) if segspecifier.startswith(":", i)]
+            assert len(sep) == 4, f"invalid number of items in segspecifier '{segspecifier}'"
+            
+            segname = segspecifier[0:sep[0]]
+            segaddr = parse_num(segspecifier[sep[0]+1:sep[1]])
+            segsize = parse_num(segspecifier[sep[1]+1:sep[2]])
+            segimtype = segspecifier[sep[2]+1:sep[3]]
+            segimg = segspecifier[sep[3]+1:]
+            
+            #print(segname, segaddr, segsize, segimtype, segimg)
+            assert segname not in memory_map.keys(), f"seg {segname} already present in map"
+
+            memory_map[segname] = [segaddr, segsize, segimtype, segimg]
+
+
+    # perform checks
+    for seg in memory_map.keys():
+        assert memory_map[seg][0] >= 0, f"base address of segment '{seg}' should be greater than 0"
+        assert memory_map[seg][1] >= 0, f"size of segment '{seg}' should be greater than 0"
+        assert memory_map[seg][2] in ["h", "b"], f"invalid imtype in segment '{seg}'"
+
+    # print map
+    if (verbose):
+        print("Memory Map :")
+        print("-----------------+------------+--------------+-----+---------------- -")
+        print(" Segment         | Base Addr  |   Size       | Typ | Impath ")
+        print("-----------------+------------+--------------+-----+---------------- -")
+        for seg in memory_map.keys():
+            print(" {: <15s} | 0x{:08x} | {: ^10d} B | {: >3s} | {:s}".format(seg, memory_map[seg][0], memory_map[seg][1], "hex" if memory_map[seg][2]=="h" else "bin", memory_map[seg][3]))
+        print("-----------------+------------+--------------+-----+---------------- -")
+
+    # check if input file is of elf format -> convert to verilog hex
+    sections_to_keep = default_sections_to_keep
+    if(args.section):
+        for sec in args.section:
+            assert sec not in sections_to_keep, f"section '{sec}' already present in sections to keep"
+            sections_to_keep += [sec]
+    
+    if(verbose):
+        print('Sections to keep:', sections_to_keep)
+    
+    tmp_file = None
+
+    if (args.t == "elf"):
+        tmp_file = input_file + '.hex'
+
+        if (verbose):
+            print(f"converting elf to hex: '{tmp_file}'")
+        
+        command = [args.prefix+'-objcopy', '-O', 'verilog']
+        for sec in sections_to_keep:
+            command+=['-j', sec]
+        command+=['--reverse-bytes=4', '--verilog-data-width','4', input_file, tmp_file]
+        run_cmd(command, verbose)
+
+    # convert
+    ce = ConvELF(tmp_file if args.t=='elf' else input_file, memory_map)
+
+    if (verbose):
+        print('splitting hexfile')
+    
+    ce.convert()
+    
+    # delete temp file
+    if args.t=='elf' and not args.keep_temp:
+        if (verbose):
+            print(f"removing temp file '{tmp_file}'")
+        run_cmd(['rm', '-f', tmp_file], verbose)
