@@ -15,8 +15,8 @@
 #include "build/verilated/VHydrogenSoC_RegisterFile__R20_RB5.h"
 
 //#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
-#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
-//#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ad_Mz2.h"
+// #include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "build/verilated/VHydrogenSoC_simpleuart_wb.h"
 
@@ -41,7 +41,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
         throw Atomsim_exception("cant find $RVATOM env variable");
     std::string rvatom(varval);
     
-    std::string cmd_output = GetStdoutFromCommand("python3 "+rvatom+"/scripts/convelf.py -t elf -j "+rvatom+"/scripts/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
+    std::string cmd_output = GetStdoutFromCommand("python3 "+rvatom+"/scripts/convelf.py -t elf -j "+rvatom+"/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
     if(cmd_output.length() > 0)
     {
         throw Atomsim_exception(cmd_output);

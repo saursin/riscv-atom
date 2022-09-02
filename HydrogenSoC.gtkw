@@ -1,63 +1,88 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Aug 24 12:25:44 2021
+[*] Fri Sep  2 14:30:41 2022
 [*]
-[dumpfile] "/home/frozenalpha/git/riscv/riscv-atom/build/trace/trace.vcd"
-[dumpfile_mtime] "Tue Aug 24 12:24:46 2021"
-[dumpfile_size] 67163254
-[savefile] "/home/frozenalpha/git/riscv/riscv-atom/Trace_HydrogenSoC.gtkw"
-[timestart] 149690
-[size] 1366 717
+[dumpfile] "/home/saursin/work/riscv/riscv-atom/sim/run/trace.vcd"
+[dumpfile_mtime] "Fri Sep  2 12:57:43 2022"
+[dumpfile_size] 1171735
+[savefile] "/home/saursin/work/riscv/riscv-atom/HydrogenSoC.gtkw"
+[timestart] 8
+[size] 1600 871
 [pos] -1 -1
-*-7.848547 150125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-10.848547 620 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.HydrogenSoC.
-[treeopen] TOP.HydrogenSoC.atom_wb_core.
+[treeopen] TOP.HydrogenSoC.arb3x1.
+[treeopen] TOP.HydrogenSoC.arb3x1.arb_inst.
 [treeopen] TOP.HydrogenSoC.atom_wb_core.atom_core.
-[sst_width] 212
-[signals_width] 291
+[sst_width] 358
+[signals_width] 258
 [sst_expanded] 1
-[sst_vpaned_height] 184
+[sst_vpaned_height] 313
+@22
+TOP.HydrogenSoC.ctr[31:0]
 @28
 [color] 4
 TOP.rst_i
-[color] 4
+[color] 3
 TOP.clk_i
-[color] 7
-TOP.uart_tx_o
-[color] 7
-TOP.uart_rx_i
 @200
--IBUS
-@22
-[color] 1
-TOP.HydrogenSoC.wb_ibus_adr_o[31:0]
-[color] 1
-TOP.HydrogenSoC.wb_ibus_dat_i[31:0]
-@28
-[color] 1
-TOP.HydrogenSoC.wb_ibus_ack_i
-@200
--DBUS
+-Core
+-Core_IPort
 @22
 [color] 2
-TOP.HydrogenSoC.wb_dbus_adr_o[31:0]
+TOP.HydrogenSoC.core_iport_wb_adr_o[31:0]
 [color] 2
-TOP.HydrogenSoC.wb_dbus_dat_i[31:0]
-[color] 2
-TOP.HydrogenSoC.wb_dbus_dat_o[31:0]
-[color] 2
-TOP.HydrogenSoC.wb_dbus_sel_o[3:0]
+TOP.HydrogenSoC.core_iport_wb_dat_i[31:0]
 @28
 [color] 2
-TOP.HydrogenSoC.wb_dbus_stb_o
+TOP.HydrogenSoC.core_iport_wb_cyc_o
 [color] 2
-TOP.HydrogenSoC.wb_dbus_we_o
-[color] 2
-TOP.HydrogenSoC.wb_dbus_ack_i
-[color] 2
-TOP.HydrogenSoC.wb_gpio0_ack_o
+TOP.HydrogenSoC.core_iport_wb_ack_i
 @200
+-
+-Core_DPort
+@22
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_adr_o[31:0]
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_dat_o[31:0]
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_dat_i[31:0]
+@28
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_cyc_o
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_stb_o
+@22
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_sel_o[3:0]
+@28
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_we_o
+[color] 2
+TOP.HydrogenSoC.core_dport_wb_ack_i
+@200
+-
+-ARB
+@28
++{TOP.HydrogenSoC.arb3x1.request[2:0]} TOP.HydrogenSoC.arb3x1.request[2:0]
+TOP.HydrogenSoC.arb3x1.grant[2:0]
+TOP.HydrogenSoC.arb3x1.grant_valid
+@22
+TOP.HydrogenSoC.arb_wb_adr_o[31:0]
+TOP.HydrogenSoC.arb_wb_dat_o[31:0]
+TOP.HydrogenSoC.arb_wb_dat_i[31:0]
+TOP.HydrogenSoC.arb_wb_sel_o[3:0]
+@28
+TOP.HydrogenSoC.arb_wb_cyc_o
+TOP.HydrogenSoC.arb_wb_stb_o
+TOP.HydrogenSoC.arb_wb_we_o
+TOP.HydrogenSoC.arb_wb_ack_i
+@200
+-
 -UART
+@29
+TOP.HydrogenSoC.uart.tx_o
 [pattern_trace] 1
 [pattern_trace] 0

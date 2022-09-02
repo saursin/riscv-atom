@@ -1,0 +1,4 @@
+{
+    "IMEM" : ["0x00000000", "0x00008000", "h", "${RVATOM}/sim/run/code.hex"],
+    "DMEM" : ["0x04000000", "0x00002000", "h", "${RVATOM}/sim/run/data.hex"]
+}
