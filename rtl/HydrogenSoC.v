@@ -91,8 +91,6 @@ module HydrogenSoC(
     wire    [3:0]   fp_wb_sel_o     = 4'b0000;
     wire            fp_wb_stb_o     = 1'b0;
     wire            fp_wb_ack_i;    `UNUSED_VAR(fp_wb_ack_i)
-    wire            fp_wb_err_i;    `UNUSED_VAR(fp_wb_err_i)
-    wire            fp_wb_rty_i;    `UNUSED_VAR(fp_wb_rty_i)
     wire            fp_wb_cyc_o     = 1'b0;
 
     // ********************* Core *********************
@@ -105,8 +103,6 @@ module HydrogenSoC(
     wire    [3:0]   core_iport_wb_sel_o     = 4'b1111;
     wire            core_iport_wb_stb_o;
     wire            core_iport_wb_ack_i;
-    wire            core_iport_wb_err_i;    `UNUSED_VAR(core_iport_wb_err_i)
-    wire            core_iport_wb_rty_i;    `UNUSED_VAR(core_iport_wb_rty_i)
     wire            core_iport_wb_cyc_o;
 
     
@@ -118,8 +114,6 @@ module HydrogenSoC(
     wire    [3:0]   core_dport_wb_sel_o;
     wire            core_dport_wb_stb_o;
     wire            core_dport_wb_ack_i;
-    wire            core_dport_wb_err_i;    `UNUSED_VAR(core_dport_wb_err_i)
-    wire            core_dport_wb_rty_i;    `UNUSED_VAR(core_dport_wb_rty_i)
     wire            core_dport_wb_cyc_o;
 
 
@@ -155,8 +149,6 @@ module HydrogenSoC(
     wire    [3:0]   arb_wb_sel_o;
     wire            arb_wb_stb_o;
     reg             arb_wb_ack_i;
-    reg             arb_wb_err_i = 1'b0;
-    reg             arb_wb_rty_i = 1'b0;
     wire            arb_wb_cyc_o;
 
     arbiter3_wb #(
@@ -175,8 +167,6 @@ module HydrogenSoC(
         .wbm0_sel_i     (core_iport_wb_sel_o),
         .wbm0_stb_i     (core_iport_wb_stb_o),
         .wbm0_ack_o     (core_iport_wb_ack_i),
-        .wbm0_err_o     (core_iport_wb_err_i),
-        .wbm0_rty_o     (core_iport_wb_rty_i),
         .wbm0_cyc_i     (core_iport_wb_cyc_o),
 
         // Wishbone master 1 input
@@ -187,8 +177,6 @@ module HydrogenSoC(
         .wbm1_sel_i     (core_dport_wb_sel_o),
         .wbm1_stb_i     (core_dport_wb_stb_o),
         .wbm1_ack_o     (core_dport_wb_ack_i),
-        .wbm1_err_o     (core_dport_wb_err_i),
-        .wbm1_rty_o     (core_dport_wb_rty_i),
         .wbm1_cyc_i     (core_dport_wb_cyc_o),
 
         // Wishbone master 2 input
@@ -199,8 +187,6 @@ module HydrogenSoC(
         .wbm2_sel_i     (fp_wb_sel_o),
         .wbm2_stb_i     (fp_wb_stb_o),
         .wbm2_ack_o     (fp_wb_ack_i),
-        .wbm2_err_o     (fp_wb_err_i),
-        .wbm2_rty_o     (fp_wb_rty_i),
         .wbm2_cyc_i     (fp_wb_cyc_o),
 
         // Wishbone slave output
@@ -211,8 +197,6 @@ module HydrogenSoC(
         .wbs_sel_o      (arb_wb_sel_o),
         .wbs_stb_o      (arb_wb_stb_o),
         .wbs_ack_i      (arb_wb_ack_i),
-        .wbs_err_i      (arb_wb_err_i),
-        .wbs_rty_i      (arb_wb_rty_i),
         .wbs_cyc_o      (arb_wb_cyc_o)
     );
 

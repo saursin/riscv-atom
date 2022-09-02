@@ -53,8 +53,6 @@ module arbiter3_wb #
     input  wire [SELECT_WIDTH-1:0] wbm0_sel_i,    // SEL_I() select input
     input  wire                    wbm0_stb_i,    // STB_I strobe input
     output wire                    wbm0_ack_o,    // ACK_O acknowledge output
-    output wire                    wbm0_err_o,    // ERR_O error output
-    output wire                    wbm0_rty_o,    // RTY_O retry output
     input  wire                    wbm0_cyc_i,    // CYC_I cycle input
 
     /*
@@ -67,8 +65,6 @@ module arbiter3_wb #
     input  wire [SELECT_WIDTH-1:0] wbm1_sel_i,    // SEL_I() select input
     input  wire                    wbm1_stb_i,    // STB_I strobe input
     output wire                    wbm1_ack_o,    // ACK_O acknowledge output
-    output wire                    wbm1_err_o,    // ERR_O error output
-    output wire                    wbm1_rty_o,    // RTY_O retry output
     input  wire                    wbm1_cyc_i,    // CYC_I cycle input
 
     /*
@@ -81,8 +77,6 @@ module arbiter3_wb #
     input  wire [SELECT_WIDTH-1:0] wbm2_sel_i,    // SEL_I() select input
     input  wire                    wbm2_stb_i,    // STB_I strobe input
     output wire                    wbm2_ack_o,    // ACK_O acknowledge output
-    output wire                    wbm2_err_o,    // ERR_O error output
-    output wire                    wbm2_rty_o,    // RTY_O retry output
     input  wire                    wbm2_cyc_i,    // CYC_I cycle input
 
     /*
@@ -95,8 +89,6 @@ module arbiter3_wb #
     output wire [SELECT_WIDTH-1:0] wbs_sel_o,     // SEL_O() select output
     output wire                    wbs_stb_o,     // STB_O strobe output
     input  wire                    wbs_ack_i,     // ACK_I acknowledge input
-    input  wire                    wbs_err_i,     // ERR_I error input
-    input  wire                    wbs_rty_i,     // RTY_I retry input
     output wire                    wbs_cyc_o      // CYC_O cycle output
 );
 
@@ -115,20 +107,14 @@ wire wbm2_sel = grant[2] & grant_valid;
 // master 0
 assign wbm0_dat_o = wbs_dat_i;
 assign wbm0_ack_o = wbs_ack_i & wbm0_sel;
-assign wbm0_err_o = wbs_err_i & wbm0_sel;
-assign wbm0_rty_o = wbs_rty_i & wbm0_sel;
 
 // master 1
 assign wbm1_dat_o = wbs_dat_i;
 assign wbm1_ack_o = wbs_ack_i & wbm1_sel;
-assign wbm1_err_o = wbs_err_i & wbm1_sel;
-assign wbm1_rty_o = wbs_rty_i & wbm1_sel;
 
 // master 2
 assign wbm2_dat_o = wbs_dat_i;
 assign wbm2_ack_o = wbs_ack_i & wbm2_sel;
-assign wbm2_err_o = wbs_err_i & wbm2_sel;
-assign wbm2_rty_o = wbs_rty_i & wbm2_sel;
 
 // slave
 assign wbs_adr_o = wbm0_sel ? wbm0_adr_i :
