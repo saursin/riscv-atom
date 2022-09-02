@@ -17,23 +17,22 @@ module AtomRV_wb
     input   wire            wb_rst_i,
 
     // === IBUS Wishbone Master Interface ===
-    output  wire    [31:0]  wb_ibus_adr_o,
-    input   wire    [31:0]  wb_ibus_dat_i,
+    output  reg     [31:0]  iport_wb_adr_o,
+    input   wire    [31:0]  iport_wb_dat_i,
+    output  reg             iport_wb_cyc_o,
+    output  reg             iport_wb_stb_o,
+    input   wire            iport_wb_ack_i,
 
-    output  wire            wb_ibus_stb_o,
-    input   wire            wb_ibus_ack_i,
 
     // === DBUS Wishbone Master Interface === 
-    output  wire    [31:0]  wb_dbus_adr_o,
-    output  wire    [31:0]  wb_dbus_dat_o,
-    input   wire    [31:0]  wb_dbus_dat_i,
-    
-    output  wire            wb_dbus_we_o,
-    output  wire    [3:0]   wb_dbus_sel_o,
-
-    output  wire            wb_dbus_stb_o,
-    input   wire            wb_dbus_ack_i,
-    output  wire            wb_dbus_cyc_o
+    output  reg     [31:0]  dport_wb_adr_o,
+    output  reg     [31:0]  dport_wb_dat_o,
+    input   wire    [31:0]  dport_wb_dat_i,
+    output  reg             dport_wb_cyc_o,
+    output  reg             dport_wb_stb_o,
+    output  reg             dport_wb_we_o,
+    output  reg     [3:0]   dport_wb_sel_o,  
+    input   wire            dport_wb_ack_i
 
     // === IRQ Interface ===
     //input   wire    [31:0]  irq,
@@ -82,26 +81,126 @@ module AtomRV_wb
         .dmem_ack_i     (dmem_ack_i) 
     );
     
-    ////////////////////////////////////////////////////////////
-    /// IBUS Wishbone Logic
 
-    assign wb_ibus_adr_o = imem_addr_o;
-    assign imem_data_i = wb_ibus_dat_i;
-    assign wb_ibus_stb_o = imem_valid_o;
-    assign imem_ack_i = wb_ibus_ack_i;
-
+	localparam WBIDLE = 1'b0;
+	localparam WBACTIV = 1'b1;
 
     ////////////////////////////////////////////////////////////
-    /// DBUS Wishbone Logic
-    assign wb_dbus_adr_o = dmem_addr_o;
-    assign dmem_data_i = wb_dbus_dat_i;
-    assign wb_dbus_dat_o = dmem_data_o;
+    /// IPORT Wishbone Logic
+    assign imem_ack_i = iport_wb_ack_i;
+    assign imem_data_i = iport_wb_dat_i;
 
-    assign wb_dbus_sel_o = dmem_sel_o;
-    assign wb_dbus_we_o = dmem_we_o;
+    reg iport_state = WBIDLE;
 
-    assign wb_dbus_stb_o = dmem_valid_o;
-    assign dmem_ack_i = wb_dbus_ack_i;
+    always @(posedge wb_clk_i) begin
+        if(wb_rst_i) begin
+            iport_wb_adr_o <= 0;
+            iport_wb_cyc_o <= 0;
+            iport_wb_stb_o <= 0;
+            iport_state <= WBIDLE;
+        end
+        else begin
+            case(iport_state)
+                WBIDLE: begin
+                    if(imem_valid_o) begin
+                        iport_wb_adr_o <= imem_addr_o;
+                        iport_wb_cyc_o <= 1'b1;
+                        iport_wb_stb_o <= 1'b1;
+                        iport_state <= WBACTIV;
+                    end else begin
+                        iport_wb_cyc_o <= 1'b0;
+                        iport_wb_stb_o <= 1'b0;
+                    end
+                end
+                WBACTIV: begin
+                    if(iport_wb_ack_i) begin
+                        iport_wb_cyc_o <= 1'b0;
+                        iport_wb_stb_o <= 1'b0;
+                        iport_state <= WBIDLE;
+                    end
+                end
+                default:
+                    iport_state <= WBIDLE;
+            endcase
+        end
+    end
 
-    assign wb_dbus_cyc_o = wb_dbus_stb_o;
+
+    ////////////////////////////////////////////////////////////
+    /// DPORT Wishbone Logic
+    assign dmem_ack_i = dport_wb_ack_i;
+    assign dmem_data_i = dport_wb_dat_i;
+
+    reg dport_state = WBIDLE;
+
+    always @(posedge wb_clk_i) begin
+        if(wb_rst_i) begin
+            dport_wb_adr_o <= 32'd00000000;
+            dport_wb_dat_o <= 32'h00000000;
+            dport_wb_cyc_o <= 1'b0;
+            dport_wb_stb_o <= 1'b0;
+            dport_wb_we_o  <= 1'b0;
+            dport_wb_sel_o <= 4'b0000;
+            dport_state <= WBIDLE;
+        end
+        else begin
+            case(dport_state)
+                WBIDLE: begin
+                    if(dmem_valid_o) begin
+                        dport_wb_adr_o <= dmem_addr_o;
+                        dport_wb_dat_o <= dmem_data_o;
+                        dport_wb_we_o <= dmem_we_o;
+                        dport_wb_sel_o <= dmem_sel_o;
+                        dport_wb_cyc_o <= 1'b1;
+                        dport_wb_stb_o <= 1'b1;
+                        dport_state <= WBACTIV;
+                    end else begin
+                        dport_wb_cyc_o <= 1'b0;
+                        dport_wb_stb_o <= 1'b0;
+                        dport_wb_we_o <= 1'b0;
+                    end
+                end
+                WBACTIV: begin
+                    if(dport_wb_ack_i) begin
+                        dport_wb_cyc_o <= 1'b0;
+                        dport_wb_stb_o <= 1'b0;
+                        dport_wb_we_o <= 1'b0;
+                        dport_state <= WBIDLE;
+                    end
+                end
+                default:
+                    dport_state <= WBIDLE;
+            endcase
+        end
+    end
+
+
+
+    // // output  reg     [31:0]  wb_ibus_adr_o,
+    // // input   wire    [31:0]  wb_ibus_dat_i,
+
+    // // output  reg             wb_ibus_cyc_o,
+    // // output  reg             wb_ibus_stb_o,
+    // // input   wire            wb_ibus_ack_i,
+    
+
+    // // assign wb_ibus_adr_o = imem_addr_o;
+    // // assign imem_data_i = wb_ibus_dat_i;
+    // // assign wb_ibus_stb_o = imem_valid_o;
+    // // assign imem_ack_i = wb_ibus_ack_i;
+
+
+    // ////////////////////////////////////////////////////////////
+    // /// DBUS Wishbone Logic
+    // assign dport_wb_adr_o   = dmem_addr_o;
+    // assign dmem_data_i      = dport_wb_dat_i;
+    // assign dport_wb_dat_o   = dmem_data_o;
+
+    // assign dport_wb_sel_o   = dmem_sel_o;
+    // assign dport_wb_we_o    = dmem_we_o;
+
+    // assign dport_wb_stb_o   = dmem_valid_o;
+    // assign dmem_ack_i       = dport_wb_ack_i;
+
+    // assign dport_wb_cyc_o   = dport_wb_stb_o;
 endmodule
