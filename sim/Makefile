@@ -106,8 +106,8 @@ VSRCS += $(RTL_DIR)/uncore/simpleuart_wb.v
 VSRCS += $(RTL_DIR)/uncore/simpleuart.v
 VSRCS += $(RTL_DIR)/HydrogenSoC_Config.vh
 
-VFLAGS += -D__IMEM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/code.hex"'
-VFLAGS += -D__DMEM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/data.hex"'
+VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
+VFLAGS += -D__RAM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/ram.hex"'
 
 SIM_BACKEND_FILE := backend_hydrogensoc.cpp
 CFLAGS += -DTARGET_HEADER='"backend_hydrogensoc.hpp"'

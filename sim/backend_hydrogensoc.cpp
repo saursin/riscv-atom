@@ -25,10 +25,13 @@
 
 #define RV_INSTR_EBREAK 0x100073
 
-#define IMEM_ADDR 0x00000000
-#define IMEM_SIZE 32 * 1024    // 32 KB
-#define DMEM_ADDR 0x04000000
-#define DMEM_SIZE 8 * 1024     // 8 KB
+// ROM
+#define ROM_ADDR        0x00010000
+#define ROM_SIZE        0x00004000   // 16 KB
+
+// RAM
+#define RAM_ADDR        0x20000000
+#define RAM_SIZE        0x00008000   // 32 KB
 
 Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     Backend(sim, &(sim->simstate_)),
@@ -297,12 +300,12 @@ int Backend_atomsim::tick()
 
             for(uint32_t addr=begin_signature_at; addr<end_signature_at; addr+=4)
             {
-                uint32_t index = addr - DMEM_ADDR;
+                uint32_t index = addr - RAM_ADDR;
                 
-                if (!(index > 0 && index < DMEM_SIZE - 4))    // check bounds
+                if (!(index > 0 && index < RAM_SIZE - 4))    // check bounds
                     throw Atomsim_exception("Signature out of bounds"+std::to_string(addr));
 
-                uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->dmem->mem[addr/4];
+                uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->ram->mem[addr/4];
 
                 char temp [50];
                 sprintf(temp, "%08x", value);

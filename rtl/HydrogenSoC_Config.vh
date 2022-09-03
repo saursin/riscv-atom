@@ -9,29 +9,32 @@
 `define __HYDROGENSOC_CONFIG_VH__
 
 // Reset address
-`define SOC_RESET_ADDRESS   32'h00000000
+`define SOC_RESET_ADDRESS   32'h0001_0000
 
-// SoC Peripherals
 
-// IRAM
-`define IMEM_ADDR   32'h00000000    // 0 GB boundry
-`define IMEM_SIZE   32'h00008000    // 32 KB
+/////////////// Memory Map ///////////////
+// Macros used by Wishbone interconnect
+// see: <link to memory map description>
+
+// ROM
+`define ROM_ADDR        32'h0001_0000
+`define ROM_SIZE        32'h0000_4000   // 16 KB
 
 // RAM
-`define DMEM_ADDR    32'h04000000    // 0.5 GB boundry
-`define DMEM_SIZE    32'h00002000    // 8 KB
+`define RAM_ADDR        32'h2000_0000
+`define RAM_SIZE        32'h0000_8000   // 32 KB
 
 // UART
-`define UART_ADDR   32'h08000000    // 1.0 GB boundry
-`define UART_SIZE   32'h00000008    // 8 bytes
+`define UART_ADDR       32'h4000_0000
+`define UART_SIZE       32'h0000_0008   // 8 bytes
 
 // GPIO 0
-`define GPIO0_ADDR  32'h08000100
-`define GPIO0_SIZE  32'h00000004    // 4 bytes
+`define GPIO0_ADDR      32'h4002_0000
+`define GPIO0_SIZE      32'h0000_0004   // 4 bytes
 
 // GPIO 1
-`define GPIO1_ADDR  32'h08000104
-`define GPIO1_SIZE  32'h00000004    // 4 bytes
+`define GPIO1_ADDR      32'h4002_0100
+`define GPIO1_SIZE      32'h0000_0004   // 4 bytes
 
 
 `endif // __HYDROGENSOC_CONFIG_VH__
