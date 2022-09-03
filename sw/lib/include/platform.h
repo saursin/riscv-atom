@@ -1,5 +1,5 @@
-#ifndef __DEFS_H__
-#define __DEFS_H__
+#ifndef __PLATFORM_H__
+#define __PLATFORM_H__
 
 // ============== Target Independent Definitions ==============
 // Useful Macros
@@ -50,8 +50,8 @@ typedef unsigned long size_t;
     // ------ CLOCK FREQUENCY --------
     #define CLK_FREQ 12000000
 #else
-    #warning Must define a target for defs.h
+    #warning Must define a target for platform.h
 #endif
 #endif
 
-#endif //__DEFS_H__
+#endif //__PLATFORM_H__

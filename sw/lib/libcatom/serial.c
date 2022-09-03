@@ -1,4 +1,4 @@
-#include "defs.h"
+#include "platform.h"
 #include "serial.h"
 #include "time.h"
 
