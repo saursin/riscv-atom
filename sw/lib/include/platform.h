@@ -1,5 +1,5 @@
-#ifndef __DEFS_H__
-#define __DEFS_H__
+#ifndef __PLATFORM_H__
+#define __PLATFORM_H__
 
 // ============== Target Independent Definitions ==============
 // Useful Macros
@@ -14,22 +14,22 @@ typedef unsigned long size_t;
 
 // ============== Target Specific Definitions ==============
 #ifdef TARGET_HYDROGENSOC
-    #define MEM_ROM_BEGIN   0x00000000
-    #define MEM_ROM_SIZE    32*1024         // 64 KB
+    #define MEM_ROM_BEGIN   0x00010000
+    #define MEM_ROM_SIZE    16*1024        // 16 KB
 
-    #define MEM_RAM_BEGIN   0x04000000
-    #define MEM_RAM_SIZE    8*1024         // 8 KB
+    #define MEM_RAM_BEGIN   0x20000000
+    #define MEM_RAM_SIZE    32*1024         // 32 KB
 
     // ---------- UART ------------
-    #define UART_D_REG_ADDR 0x08000000
-    #define UART_S_REG_ADDR 0x08000001
-    #define UART_CD_REG_ADDR 0x08000004
+    #define UART_D_REG_ADDR 0x40000000
+    #define UART_S_REG_ADDR 0x40000001
+    #define UART_CD_REG_ADDR 0x40000004
 
     // ---------- GPIO ------------
     #define GPIO
     #define GPIO_PINCOUNT 32
     #define GPIO_SETWIDTH 16
-    #define GPIO_ADDR 0x08000100
+    #define GPIO_ADDR 0x40002000
 
     // ------ CLOCK FREQUENCY --------
     #define CLK_FREQ 12000000
@@ -50,8 +50,8 @@ typedef unsigned long size_t;
     // ------ CLOCK FREQUENCY --------
     #define CLK_FREQ 12000000
 #else
-    #warning Must define a target for defs.h
+    #warning Must define a target for platform.h
 #endif
 #endif
 
-#endif //__DEFS_H__
+#endif //__PLATFORM_H__

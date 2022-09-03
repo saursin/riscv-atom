@@ -12,8 +12,8 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x00000000, LENGTH = 32K    /* 32 KB @ 0x0 */
-    RAM (rwx): ORIGIN = 0x04000000, LENGTH = 8K    /* 8 KB @ 0x04000000 (0.5GB boundry)*/
+    ROM (rx) : ORIGIN = 0x00010000, LENGTH = 16K   /* 16KB */
+    RAM (rwx): ORIGIN = 0x20000000, LENGTH = 32K   /* 32KB */
 }
 
 SECTIONS

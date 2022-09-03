@@ -1,6 +1,6 @@
 #ifndef __TIME_H__
 #define __TIME_H__
-#include <defs.h>
+#include "platform.h"
 
 #define SW_SLEEP
 // #define TIMER_SLEEP

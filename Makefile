@@ -43,6 +43,11 @@ doxy_dir	:= sim/docs
 # Flags to the makefiles
 MKFLAGS := -s
 
+# Check if RVATOM env variable is set
+ifeq ($(RVATOM),)
+    $(error RVATOM environment variable not set; did you forget to source the sourceme script?)
+endif
+
 #======================================================================
 # Recepies
 #======================================================================

@@ -8,6 +8,7 @@
 `include "Timescale.vh"
 `include "HydrogenSoC_Config.vh"
 
+`include "uncore/wishbone/arbiter3_wb.v"
 `include "core/AtomRV_wb.v"
 `include "uncore/DualPortRAM_wb.v"
 //`include "uncore/SinglePortROM_wb.v"
@@ -24,19 +25,18 @@
 
 `else
     // Macros for Xilinx ISE
-    `define __IMEM_INIT_FILE__ "code.hex"
-    `define __DMEM_INIT_FILE__ "data.hex"
+    `define __ROM_INIT_FILE__ "rom.hex"
+    `define __RAM_INIT_FILE__ "ram.hex"
 `endif
 `endif
 
 `default_nettype none
 
-module HydrogenSoC
-(
+module HydrogenSoC(
     // GLOBAL SIGNALS
     input   wire        clk_i,
     input   wire        rst_i,
-    
+
     // GPIO
     inout   wire [31:0] gpio_io,
 
@@ -46,7 +46,7 @@ module HydrogenSoC
 
     input   wire        uart_io_rx_i,
     output  wire        uart_io_tx_o,
-     
+
     // UART MUX
     input   wire        uart_mux_sel,
      
@@ -65,165 +65,207 @@ module HydrogenSoC
     // TEST POINTS
     assign uart_rx_test_point_o = uart_rx;
     assign uart_tx_test_point_o = uart_tx;
-    
+
     
     //////////////////////////////////////////
     // SoC Parameters
+    parameter ROM_ADR_SIZE = $clog2(`ROM_SIZE);
+    parameter RAM_ADR_SIZE = $clog2(`RAM_SIZE);
 
-    parameter IMEM_ADR_SIZE = 15;   // 32KB
-    parameter DMEM_ADR_SIZE = 13;   // 8KB
+    reg [31:0] ctr =32'd0;
+    always @(posedge clk_i)
+        ctr <= ctr + 1;
 
-    //////////////////////////////////////////
-    // Global Bus Signals
 
+    ////////////////////////////////// Wishbone Interconnect //////////////////////////////////
     wire wb_clk_i = clk_i;
     wire wb_rst_i = rst_i;
 
-    wire    [31:0]  wb_ibus_adr_o;
-    `UNUSED_VAR(wb_ibus_adr_o)
+    // ******************* FrontPort *********************
+    // FrontPort Signals
+    wire    [31:0]  fp_wb_adr_o     = 32'h00000000;
+    wire    [31:0]  fp_wb_dat_o     = 32'h00000000;
+    wire    [31:0]  fp_wb_dat_i;    `UNUSED_VAR(fp_wb_dat_i)
+    wire            fp_wb_we_o      = 1'b0;
+    wire    [3:0]   fp_wb_sel_o     = 4'b0000;
+    wire            fp_wb_stb_o     = 1'b0;
+    wire            fp_wb_ack_i;    `UNUSED_VAR(fp_wb_ack_i)
+    wire            fp_wb_cyc_o     = 1'b0;
 
-    wire    [31:0]  wb_ibus_dat_i;
-    wire            wb_ibus_ack_i;
-    wire            wb_ibus_stb_o;
-
-
-    wire    [31:0]  wb_dbus_adr_o   /* verilator public */;
-    wire    [31:0]  wb_dbus_dat_o   /* verilator public */;
-    reg     [31:0]  wb_dbus_dat_i   /* verilator public */;    
-    wire            wb_dbus_we_o    /* verilator public */;
-    wire    [3:0]   wb_dbus_sel_o   /* verilator public */;
-    wire            wb_dbus_stb_o   /* verilator public */;
-    reg             wb_dbus_ack_i   /* verilator public */;
-    wire            wb_dbus_cyc_o   /* verilator public */;
+    // ********************* Core *********************
     
+    // IPort Signals
+    wire    [31:0]  core_iport_wb_adr_o;
+    wire    [31:0]  core_iport_wb_dat_o     = 32'h000000;
+    wire    [31:0]  core_iport_wb_dat_i;
+    wire            core_iport_wb_we_o      = 1'b0;
+    wire    [3:0]   core_iport_wb_sel_o     = 4'b1111;
+    wire            core_iport_wb_stb_o;
+    wire            core_iport_wb_ack_i;
+    wire            core_iport_wb_cyc_o;
+
+    
+    // DPort Signals
+    wire    [31:0]  core_dport_wb_adr_o;
+    wire    [31:0]  core_dport_wb_dat_o;
+    wire    [31:0]  core_dport_wb_dat_i;
+    wire            core_dport_wb_we_o;
+    wire    [3:0]   core_dport_wb_sel_o;
+    wire            core_dport_wb_stb_o;
+    wire            core_dport_wb_ack_i;
+    wire            core_dport_wb_cyc_o;
 
 
-    /////////////////////////////////////////////////
-    // Atom Wishbone Core
     AtomRV_wb atom_wb_core
     (   
         .wb_clk_i       (wb_clk_i),
         .wb_rst_i       (wb_rst_i),
 
         // === IBUS Wishbone Master Interface ===
-        .wb_ibus_adr_o  (wb_ibus_adr_o),
-        .wb_ibus_dat_i  (wb_ibus_dat_i),
-
-        .wb_ibus_stb_o  (wb_ibus_stb_o),
-        .wb_ibus_ack_i  (wb_ibus_ack_i),
+        .iport_wb_adr_o  (core_iport_wb_adr_o),
+        .iport_wb_dat_i  (core_iport_wb_dat_i),
+        .iport_wb_cyc_o  (core_iport_wb_cyc_o),
+        .iport_wb_stb_o  (core_iport_wb_stb_o),
+        .iport_wb_ack_i  (core_iport_wb_ack_i),
          
         // === DBUS Wishbone Master Interface ===
-        .wb_dbus_adr_o  (wb_dbus_adr_o),
-        .wb_dbus_dat_o  (wb_dbus_dat_o),
-        .wb_dbus_dat_i  (wb_dbus_dat_i),
-        
-        .wb_dbus_we_o   (wb_dbus_we_o),
-        .wb_dbus_sel_o  (wb_dbus_sel_o),
-
-        .wb_dbus_stb_o  (wb_dbus_stb_o),
-        .wb_dbus_ack_i  (wb_dbus_ack_i),
-        .wb_dbus_cyc_o  (wb_dbus_cyc_o)
-
-        // === IRQ Interface ===
-        //input   wire    [31:0]  irq,
-        //output  reg     [31:0]  eoi
+        .dport_wb_adr_o  (core_dport_wb_adr_o),
+        .dport_wb_dat_o  (core_dport_wb_dat_o),
+        .dport_wb_dat_i  (core_dport_wb_dat_i),
+        .dport_wb_we_o   (core_dport_wb_we_o),
+        .dport_wb_sel_o  (core_dport_wb_sel_o),
+        .dport_wb_stb_o  (core_dport_wb_stb_o),
+        .dport_wb_ack_i  (core_dport_wb_ack_i),
+        .dport_wb_cyc_o  (core_dport_wb_cyc_o)
     );
 
 
+    // ********************* Arbiter *********************
+    wire    [31:0]  arb_wb_adr_o;
+    reg     [31:0]  arb_wb_dat_i;
+    wire    [31:0]  arb_wb_dat_o;
+    wire            arb_wb_we_o;
+    wire    [3:0]   arb_wb_sel_o;
+    wire            arb_wb_stb_o;
+    reg             arb_wb_ack_i;
+    wire            arb_wb_cyc_o;
 
-    ////////////////////////////////////////////////////
-    // Instruction Memory
+    arbiter3_wb #(
+        .DATA_WIDTH (32),
+        .ADDR_WIDTH (32),
+        .SELECT_WIDTH (4)
+    ) arb3x1 (
+        .clk        (clk_i),
+        .rst        (rst_i),
 
-    // SinglePortROM_wb #(
-    //     .ADDR_WIDTH(IMEM_ADR_SIZE),
-    //     .MEM_INIT_FILE(`__IMEM_INIT_FILE__)
-    // ) imem
-    // (
-    //     .clk_i      (wb_clk_i),
-    //     .rst_i      (wb_rst_i),
+        // Wishbone master 0 input
+        .wbm0_adr_i     (core_iport_wb_adr_o),
+        .wbm0_dat_i     (core_iport_wb_dat_o),
+        .wbm0_dat_o     (core_iport_wb_dat_i),
+        .wbm0_we_i      (core_iport_wb_we_o),
+        .wbm0_sel_i     (core_iport_wb_sel_o),
+        .wbm0_stb_i     (core_iport_wb_stb_o),
+        .wbm0_ack_o     (core_iport_wb_ack_i),
+        .wbm0_cyc_i     (core_iport_wb_cyc_o),
 
-    //     .addr_i     (wb_ibus_adr_o[IMEM_ADR_SIZE-1:2]),
-    //     .data_o     (wb_ibus_dat_i),
+        // Wishbone master 1 input
+        .wbm1_adr_i     (core_dport_wb_adr_o),
+        .wbm1_dat_i     (core_dport_wb_dat_o),
+        .wbm1_dat_o     (core_dport_wb_dat_i),
+        .wbm1_we_i      (core_dport_wb_we_o),
+        .wbm1_sel_i     (core_dport_wb_sel_o),
+        .wbm1_stb_i     (core_dport_wb_stb_o),
+        .wbm1_ack_o     (core_dport_wb_ack_i),
+        .wbm1_cyc_i     (core_dport_wb_cyc_o),
 
-    //     .stb_i      (wb_ibus_stb_o),
-    //     .ack_o      (wb_ibus_ack_i)
-    // );
+        // Wishbone master 2 input
+        .wbm2_adr_i     (fp_wb_adr_o),
+        .wbm2_dat_i     (fp_wb_dat_o),
+        .wbm2_dat_o     (fp_wb_dat_i),
+        .wbm2_we_i      (fp_wb_we_o),
+        .wbm2_sel_i     (fp_wb_sel_o),
+        .wbm2_stb_i     (fp_wb_stb_o),
+        .wbm2_ack_o     (fp_wb_ack_i),
+        .wbm2_cyc_i     (fp_wb_cyc_o),
 
-    wire    [31:0] wb_iram_data_o;
-    reg            wb_iram_stb_i;
-    wire           wb_iram_ack_o;
-
-
-    DualPortRAM_wb #(
-        .ADDR_WIDTH(IMEM_ADR_SIZE),
-        .MEM_FILE(`__IMEM_INIT_FILE__)
-    ) imem
-    (
-        // Global Signals^M
-        .wb_clk_i           (wb_clk_i),
-        .wb_rst_i           (wb_rst_i),
-
-        .wb_adr_i           (wb_dbus_adr_o[IMEM_ADR_SIZE-1:2]),
-        .wb_dat_o           (wb_iram_data_o),
-        .wb_dat_i           (wb_dbus_dat_o),
-        .wb_we_i            (wb_dbus_we_o),
-        .wb_sel_i           (wb_dbus_sel_o),
-
-        .wb_stb_i           (wb_iram_stb_i),
-        .wb_ack_o           (wb_iram_ack_o),
-
-        .wb_roport_adr_i    (wb_ibus_adr_o[IMEM_ADR_SIZE-1:2]),
-        .wb_roport_dat_o    (wb_ibus_dat_i),
-        .wb_roport_stb_i    (wb_ibus_stb_o),
-        .wb_roport_ack_o    (wb_ibus_ack_i)
+        // Wishbone slave output
+        .wbs_adr_o      (arb_wb_adr_o),
+        .wbs_dat_i      (arb_wb_dat_i),
+        .wbs_dat_o      (arb_wb_dat_o),
+        .wbs_we_o       (arb_wb_we_o), 
+        .wbs_sel_o      (arb_wb_sel_o),
+        .wbs_stb_o      (arb_wb_stb_o),
+        .wbs_ack_i      (arb_wb_ack_i),
+        .wbs_cyc_o      (arb_wb_cyc_o)
     );
 
 
-    ////////////////////////////////////////////////////
-    // Data Memory
-
-    wire    [31:0] wb_ram_data_o; 
-    reg            wb_ram_stb_i;
-    wire           wb_ram_ack_o;
+    // ********************* ROM *********************
+    wire    [31:0]      rom_wb_dat_o; 
+    reg                 rom_wb_stb_i;
+    wire                rom_wb_ack_o;
 
     SinglePortRAM_wb #(
-        .ADDR_WIDTH(DMEM_ADR_SIZE),
-        .MEM_FILE(`__DMEM_INIT_FILE__)
-    ) dmem 
+        .ADDR_WIDTH(ROM_ADR_SIZE),
+        .MEM_FILE(`__ROM_INIT_FILE__)
+    ) rom 
     (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_adr_i   (wb_dbus_adr_o[DMEM_ADR_SIZE-1:2]),
-        .wb_dat_o   (wb_ram_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
+        .wb_adr_i   (arb_wb_adr_o[ROM_ADR_SIZE-1:2]),
+        .wb_dat_o   (rom_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
 
-        .wb_stb_i   (wb_ram_stb_i),
-        .wb_ack_o   (wb_ram_ack_o)
+        .wb_stb_i   (rom_wb_stb_i),
+        .wb_ack_o   (rom_wb_ack_o)
     );
 
+    // ********************* RAM *********************
+
+    wire    [31:0]      ram_wb_dat_o; 
+    reg                 ram_wb_stb_i;
+    wire                ram_wb_ack_o;
+
+    SinglePortRAM_wb #(
+        .ADDR_WIDTH(RAM_ADR_SIZE),
+        .MEM_FILE(`__RAM_INIT_FILE__)
+    ) ram 
+    (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
+
+        .wb_adr_i   (arb_wb_adr_o[RAM_ADR_SIZE-1:2]),
+        .wb_dat_o   (ram_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
+
+        .wb_stb_i   (ram_wb_stb_i),
+        .wb_ack_o   (ram_wb_ack_o)
+    );
 
 
     //////////////////////////////////////////////////
     // UART
-    wire    [31:0]  wb_uart_data_o;
-    reg             wb_uart_stb_i;
-    wire            wb_uart_ack_o;
+    wire    [31:0]  uart_wb_dat_o;
+    reg             uart_wb_stb_i;
+    wire            uart_wb_ack_o;
     
     simpleuart_wb uart (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_adr_i   (wb_dbus_adr_o[2]),
-        .wb_dat_o   (wb_uart_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
+        .wb_adr_i   (arb_wb_adr_o[2]),
+        .wb_dat_o   (uart_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
 
-        .wb_stb_i   (wb_uart_stb_i),
-        .wb_ack_o   (wb_uart_ack_o),
+        .wb_stb_i   (uart_wb_stb_i),
+        .wb_ack_o   (uart_wb_ack_o),
 
         .rx_i       (uart_rx),
         .tx_o       (uart_tx)
@@ -232,44 +274,44 @@ module HydrogenSoC
 
     ////////////////////////////////////////////////////
     // GPIO
-    wire    [31:0] wb_gpio0_data_o;
-    reg     wb_gpio0_stb_i;
-    wire    wb_gpio0_ack_o;
+    wire    [31:0]  gpio0_wb_dat_o;
+    reg             gpio0_wb_stb_i;
+    wire            gpio0_wb_ack_o;
     
     GPIO gpio0
     (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_dat_o   (wb_gpio0_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
+        .wb_dat_o   (gpio0_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
     
-        .wb_stb_i   (wb_gpio0_stb_i),
-        .wb_ack_o   (wb_gpio0_ack_o),
+        .wb_stb_i   (gpio0_wb_stb_i),
+        .wb_ack_o   (gpio0_wb_ack_o),
 
         .gpio_io     (gpio_io[15:0])
     );
 
-    wire    [31:0] wb_gpio1_data_o;
-    reg     wb_gpio1_stb_i;
-    wire    wb_gpio1_ack_o;
+    wire    [31:0]  gpio1_wb_dat_o;
+    reg             gpio1_wb_stb_i;
+    wire            gpio1_wb_ack_o;
     
     GPIO gpio1
     (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_dat_o   (wb_gpio1_data_o),
-        .wb_dat_i   (wb_dbus_dat_o),
-        .wb_we_i    (wb_dbus_we_o),
-        .wb_sel_i   (wb_dbus_sel_o),
+        .wb_dat_o   (gpio1_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
     
-        .wb_stb_i   (wb_gpio1_stb_i),
-        .wb_ack_o   (wb_gpio1_ack_o),
+        .wb_stb_i   (gpio1_wb_stb_i),
+        .wb_ack_o   (gpio1_wb_ack_o),
 
-        .gpio_io     (gpio_io[31:16])
+        .gpio_io    (gpio_io[31:16])
     );
 
     ////////////////////////////////////////////////////
@@ -277,8 +319,8 @@ module HydrogenSoC
 
     // Devices
     localparam Device_None      = 4'd0;
-    localparam Device_RAM       = 4'd1;
-    localparam Device_IRAM      = 4'd2;
+    localparam Device_ROM       = 4'd1;
+    localparam Device_RAM       = 4'd2;
     localparam Device_UART      = 4'd3;
     localparam Device_GPIO0     = 4'd4;
     localparam Device_GPIO1     = 4'd5;
@@ -295,29 +337,29 @@ module HydrogenSoC
           // default 
           //selected_device = Device_None;
         
-        if(wb_dbus_cyc_o) begin
+        if(arb_wb_cyc_o) begin
             /* verilator lint_off UNSIGNED */
-            if(wb_dbus_adr_o >= `IRAM_ADDR && wb_dbus_adr_o < `IRAM_ADDR+`IRAM_SIZE)
-                selected_device = Device_IRAM;
+            if(arb_wb_adr_o >= `ROM_ADDR && arb_wb_adr_o < `ROM_ADDR+`ROM_SIZE)
+                selected_device = Device_ROM;
             /* verilator lint_on UNSIGNED */
 
-            else if(wb_dbus_adr_o >= `RAM_ADDR && wb_dbus_adr_o < `RAM_ADDR+`RAM_SIZE)
+            else if(arb_wb_adr_o >= `RAM_ADDR && arb_wb_adr_o < `RAM_ADDR+`RAM_SIZE)
                 selected_device = Device_RAM;
             
-            else if (wb_dbus_adr_o >= `UART_ADDR && wb_dbus_adr_o < `UART_ADDR+`UART_SIZE)
+            else if (arb_wb_adr_o >= `UART_ADDR && arb_wb_adr_o < `UART_ADDR+`UART_SIZE)
                 selected_device = Device_UART;
 
-            else if (wb_dbus_adr_o >= `GPIO0_ADDR && wb_dbus_adr_o < `GPIO0_ADDR+`GPIO0_SIZE)
+            else if (arb_wb_adr_o >= `GPIO0_ADDR && arb_wb_adr_o < `GPIO0_ADDR+`GPIO0_SIZE)
                 selected_device = Device_GPIO0;
 
-            else if (wb_dbus_adr_o >= `GPIO1_ADDR && wb_dbus_adr_o < `GPIO1_ADDR+`GPIO1_SIZE)
+            else if (arb_wb_adr_o >= `GPIO1_ADDR && arb_wb_adr_o < `GPIO1_ADDR+`GPIO1_SIZE)
                 selected_device = Device_GPIO1;
 
             else begin
                 selected_device = Device_None;
 
                 `ifdef verilator
-                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", wb_dbus_adr_o);
+                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", arb_wb_adr_o);
                     $finish();
                 `endif
             end
@@ -334,14 +376,14 @@ module HydrogenSoC
     */
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
-            Device_RAM:         wb_dbus_dat_i = wb_ram_data_o;
-            Device_IRAM:        wb_dbus_dat_i = wb_iram_data_o;
-            Device_UART:        wb_dbus_dat_i = wb_uart_data_o;
-            Device_GPIO0:       wb_dbus_dat_i = wb_gpio0_data_o;
-            Device_GPIO1:       wb_dbus_dat_i = wb_gpio1_data_o;
+            Device_ROM:         arb_wb_dat_i = rom_wb_dat_o;
+            Device_RAM:         arb_wb_dat_i = ram_wb_dat_o;
+            Device_UART:        arb_wb_dat_i = uart_wb_dat_o;
+            Device_GPIO0:       arb_wb_dat_i = gpio0_wb_dat_o;
+            Device_GPIO1:       arb_wb_dat_i = gpio1_wb_dat_o;
 
             default: begin
-                wb_dbus_dat_i = 32'h00000000;
+                arb_wb_dat_i = 32'h00000000;
             end
         endcase
     end
@@ -355,25 +397,25 @@ module HydrogenSoC
     */
     always @(*) begin /* COMBINATORIAL */
           // Defaults
-          wb_ram_stb_i        = 1'b0;
-          wb_iram_stb_i       = 1'b0;
-          wb_uart_stb_i       = 1'b0;
-          wb_gpio0_stb_i      = 1'b0;
-          wb_gpio1_stb_i      = 1'b0;
+          rom_wb_stb_i      = 1'b0;
+          ram_wb_stb_i      = 1'b0;
+          uart_wb_stb_i     = 1'b0;
+          gpio0_wb_stb_i    = 1'b0;
+          gpio1_wb_stb_i    = 1'b0;
                      
         case(selected_device)
-            Device_RAM:         wb_ram_stb_i        = wb_dbus_stb_o;
-            Device_IRAM:        wb_iram_stb_i       = wb_dbus_stb_o;
-            Device_UART:        wb_uart_stb_i       = wb_dbus_stb_o;
-            Device_GPIO0:       wb_gpio0_stb_i      = wb_dbus_stb_o;
-            Device_GPIO1:       wb_gpio1_stb_i      = wb_dbus_stb_o;
+            Device_ROM:         rom_wb_stb_i        = arb_wb_stb_o;
+            Device_RAM:         ram_wb_stb_i        = arb_wb_stb_o;
+            Device_UART:        uart_wb_stb_i       = arb_wb_stb_o;
+            Device_GPIO0:       gpio0_wb_stb_i      = arb_wb_stb_o;
+            Device_GPIO1:       gpio1_wb_stb_i      = arb_wb_stb_o;
 
             default: begin
-                wb_ram_stb_i        = 1'b0;
-                wb_iram_stb_i       = 1'b0;
-                wb_uart_stb_i       = 1'b0;
-                wb_gpio0_stb_i      = 1'b0;
-                wb_gpio1_stb_i      = 1'b0;
+                rom_wb_stb_i        = 1'b0;
+                ram_wb_stb_i        = 1'b0;
+                uart_wb_stb_i       = 1'b0;
+                gpio0_wb_stb_i      = 1'b0;
+                gpio1_wb_stb_i      = 1'b0;
             end
         endcase
     end
@@ -385,13 +427,13 @@ module HydrogenSoC
     */
     always @(*) begin /* COMBINATORIAL */
         case(selected_device)
-            Device_RAM:         wb_dbus_ack_i = wb_ram_ack_o;
-            Device_IRAM:        wb_dbus_ack_i = wb_iram_ack_o;
-            Device_UART:        wb_dbus_ack_i = wb_uart_ack_o;
-            Device_GPIO0:       wb_dbus_ack_i = wb_gpio0_ack_o;
-            Device_GPIO1:       wb_dbus_ack_i = wb_gpio1_ack_o;
+            Device_ROM:         arb_wb_ack_i = rom_wb_ack_o;
+            Device_RAM:         arb_wb_ack_i = ram_wb_ack_o;
+            Device_UART:        arb_wb_ack_i = uart_wb_ack_o;
+            Device_GPIO0:       arb_wb_ack_i = gpio0_wb_ack_o;
+            Device_GPIO1:       arb_wb_ack_i = gpio1_wb_ack_o;
             default:
-                wb_dbus_ack_i = 1'b0;
+                arb_wb_ack_i = 1'b0;
         endcase
     end
 

@@ -15,8 +15,8 @@
 #include "build/verilated/VHydrogenSoC_RegisterFile__R20_RB5.h"
 
 //#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
-#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
-//#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ad_Mz2.h"
+// #include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "build/verilated/VHydrogenSoC_simpleuart_wb.h"
 
@@ -25,10 +25,13 @@
 
 #define RV_INSTR_EBREAK 0x100073
 
-#define IMEM_ADDR 0x00000000
-#define IMEM_SIZE 32 * 1024    // 32 KB
-#define DMEM_ADDR 0x04000000
-#define DMEM_SIZE 8 * 1024     // 8 KB
+// ROM
+#define ROM_ADDR        0x00010000
+#define ROM_SIZE        0x00004000   // 16 KB
+
+// RAM
+#define RAM_ADDR        0x20000000
+#define RAM_SIZE        0x00008000   // 32 KB
 
 Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     Backend(sim, &(sim->simstate_)),
@@ -41,7 +44,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
         throw Atomsim_exception("cant find $RVATOM env variable");
     std::string rvatom(varval);
     
-    std::string cmd_output = GetStdoutFromCommand("python3 "+rvatom+"/scripts/convelf.py -t elf -j "+rvatom+"/scripts/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
+    std::string cmd_output = GetStdoutFromCommand("python3 "+rvatom+"/scripts/convelf.py -t elf -j "+rvatom+"/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
     if(cmd_output.length() > 0)
     {
         throw Atomsim_exception(cmd_output);
@@ -297,12 +300,12 @@ int Backend_atomsim::tick()
 
             for(uint32_t addr=begin_signature_at; addr<end_signature_at; addr+=4)
             {
-                uint32_t index = addr - DMEM_ADDR;
+                uint32_t index = addr - RAM_ADDR;
                 
-                if (!(index > 0 && index < DMEM_SIZE - 4))    // check bounds
+                if (!(index > 0 && index < RAM_SIZE - 4))    // check bounds
                     throw Atomsim_exception("Signature out of bounds"+std::to_string(addr));
 
-                uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->dmem->mem[addr/4];
+                uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->ram->mem[addr/4];
 
                 char temp [50];
                 sprintf(temp, "%08x", value);

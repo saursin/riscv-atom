@@ -1,0 +1,5 @@
+{
+    "IMEM" :    ["0x00010000", "0x00004000", "h", "${RVATOM}/sim/run/rom.hex"],
+    "DMEM" :    ["0x20000000", "0x00008000", "h", "${RVATOM}/sim/run/ram.hex"],
+    "FLASH" :   ["0x60000000", "0x00800000", "h", "${RVATOM}/sim/run/flash.hex"]
+}

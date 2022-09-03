@@ -1,3 +1,4 @@
 *.elf
 *.o
 *.objdump
+*.hex

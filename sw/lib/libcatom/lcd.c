@@ -1,6 +1,6 @@
 #include "lcd.h"
 
-#include "defs.h"
+#include "platform.h"
 #include "gpio.h"
 #include "time.h"
 

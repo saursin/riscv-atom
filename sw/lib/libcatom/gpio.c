@@ -1,8 +1,8 @@
-#include "defs.h"
+#include "platform.h"
 #include "gpio.h"
 
 // compile only for Hydrogensoc
-#ifdef TARGET_HYDROGENSOC
+#ifdef GPIO
 
 /**
  * @brief Initialize GPIO
