@@ -11,13 +11,10 @@ LDFLAGS := -lCppLinuxSerial -pthread
 
 default: bin/srpoke
 
-bin/srpoke: obj/vuart.o obj/util.o obj/srpoke.o
+bin/srpoke: obj/vuart.o obj/srpoke.o
 	g++ $(LDLIBS) -o $@ $^ $(LDFLAGS)
 
 obj/vuart.o: $(SIMDIR)/vuart.cpp
-	g++ -c $(CFLAGS) -o $@ $^
-
-obj/util.o: $(SIMDIR)/util.cpp
 	g++ -c $(CFLAGS) -o $@ $^
 
 obj/srpoke.o: srpoke.cpp

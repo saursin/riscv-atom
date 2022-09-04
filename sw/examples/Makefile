@@ -17,7 +17,7 @@ ex ?= None
 vuart ?= None
 
 # Save objdump while compiling    (may be overridden)
-objdump ?= false
+objdump ?= true
 
 ########################################################################
 # Checks
