@@ -19,7 +19,7 @@ public:
      * @param portname name of the port
      * @param baud baud-rate (bps)
      */
-    Vuart(std::string portname, int baud=9600);
+    Vuart(std::string portname, int baud=DEFAULT_BAUDRATE);
 
     /**
      * @brief Destroy the Vuart object
@@ -30,7 +30,7 @@ public:
      * @brief set baud rate
      * @param baud baud-rate
      */
-    void setbaud(unsigned int baud=9600);
+    void setbaud(unsigned int baud=DEFAULT_BAUDRATE);
 
     /**
      * @brief Get current baudrate
@@ -54,10 +54,10 @@ public:
     /**
      * @brief get char in buffer
      * @details Immediately returns the char present in the recieve buffer
-     * if no chr present returns 255 i.e. -1
+     * if no chr present returns (int)-1
      * @return char character
      */
-    char recieve();
+    int recieve();
 
     /**
      * @brief Clean any garbage in the recieve buffer
@@ -86,12 +86,12 @@ private:
      * @brief Open serial port
      * @param verbose set true to print acknowledgement message
      */
-    inline void _openPort(bool verbose=DEFAULT_BAUDRATE);
+    inline void _openPort();
 
     /**
      * @brief Close serial port
      * @param verbose set true to print acknowledgement message
      */
-    inline void _closePort(bool verbose=DEFAULT_BAUDRATE);
+    inline void _closePort();
 
 };

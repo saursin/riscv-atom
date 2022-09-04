@@ -15,6 +15,8 @@
 
 #include "elfio/elfio.hpp"
 
+#define UART_ADDR 0x08000000
+
 #define RV_INSTR_EBREAK 0x100073
 
 
@@ -233,38 +235,38 @@ void Backend_atomsim::UART()
         variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
         dummy hardware register of simpluart_wb, and set bit[0] of status register.
     */
-    static uint8_t recv;
+    static int recv;
     if(using_vuart_)
     {
         recv = vuart_->recieve();
     }
     else
     {
-        recv = (uint8_t)-1;
+        recv = (int)-1;
     }	
             
-    if(recv != (uint8_t)-1)	// something recieved
+    if(recv != (int)-1)	// something recieved
     {
-        uint8_t b[] = {recv, 0b1};
-        mem_["pmem"]->store(0x08000000, b, 2);
+        uint8_t b[] = {(uint8_t)recv, 0b1};
+        mem_["pmem"]->store(UART_ADDR, b, 2);
     }
 
 
     // Action to be done if core read/wrote to UART registers in this cycle
-    if(tb->m_core->dmem_valid_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
+    if(tb->m_core->dmem_valid_o && tb->m_core->dmem_addr_o==UART_ADDR && tb->m_core->dmem_sel_o==0b0001)
     {
         if(tb->m_core->dmem_we_o)   // tried to write to DREG
         {
             // since dreg is a read only register therefore core writes 
-            // should idelally have no effect, so we restore the value to 0xff
-            uint8_t b [] = {(uint8_t)((char)-1)};
-            mem_["pmem"]->store(0x08000000, b, 1);
+            // should ideally have no effect, so we restore the value to prev value
+            uint8_t b [] = {(uint8_t) recv};
+            mem_["pmem"]->store(UART_ADDR, b, 1);
         }
-        else                        // tried to write from DREG
+        else                        // tried to read from DREG
         {
-            // reset dreg value, clear status reg bit[0]
-            uint8_t b[] = {(uint8_t)-1, 0b0};
-            mem_["pmem"]->store(0x08000000, b, 2);
+            // clear status reg bit[0]
+            uint8_t b[] = {0b0};
+            mem_["pmem"]->store(UART_ADDR + 1, b, 1);
         }
     }
 }

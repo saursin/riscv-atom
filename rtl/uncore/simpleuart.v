@@ -58,7 +58,7 @@ module simpleuart #(parameter integer DEFAULT_DIV = 1) (
 	wire   send_busy = (send_bitcnt != 0);
     assign reg_status = {6'd0, send_busy, recv_buf_valid};
 
-	assign reg_dat_do = recv_buf_valid ? recv_buf_data : ~8'd0;
+	assign reg_dat_do = recv_buf_data;
 
 	always @(posedge clk) begin
 		if (reset) begin
