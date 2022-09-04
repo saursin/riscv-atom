@@ -1,23 +1,17 @@
 #include "vuart.hpp"
 
-#include "util.hpp"
+#include <string>
 
 // Helper functions
-inline void Vuart::_openPort(bool verbose)
+inline void Vuart::_openPort()
 {
     port->Open();
     isopen = true;
-
-    if(verbose)
-        port->Write("\r\nVuart::Atomsim connected! (baud:"+std::to_string(getbaud())+")\r\n");
 }
 
 
-inline void Vuart::_closePort(bool verbose)
+inline void Vuart::_closePort()
 {
-    if(verbose)
-        port->Write("\r\nVuart::Atomsim disconnected!\r\n");
-
     port->Close();
     isopen = false;
 }
@@ -29,14 +23,7 @@ Vuart::Vuart(std::string portname, int baud)
     setbaud(baud);
 
     // create a new port object
-    try
-    {
-        port = new mn::CppLinuxSerial::SerialPort(portname, port_baudrate);
-    }
-    catch(const mn::CppLinuxSerial::Exception& e)
-    {
-        throwError("VUART", e.what(), true);
-    }
+    port = new mn::CppLinuxSerial::SerialPort(portname, port_baudrate);
 
     /* Set timeout to 0: i.e. Non blocking Mode
         This (paired with 1 byte recieve buffer of the library) enables the latest pressed key 
@@ -45,14 +32,14 @@ Vuart::Vuart(std::string portname, int baud)
     port->SetTimeout(0);
 
     // Open port
-    _openPort(true);
+    _openPort();
 }
 
 
 Vuart::~Vuart()
 {
     // close port
-    _closePort(true);
+    _closePort();
 
     // destroy port object
     delete port;
@@ -71,19 +58,18 @@ void Vuart::setbaud(unsigned int baud)
             port_baudrate=mn::CppLinuxSerial::BaudRate::B_115200; break;
         
         default:
-            throwError("VPORT_BAUD", "Invalid baud rate: "+std::to_string(baud), true);
-            return;
+            throw "Invalid baud rate";
     }
 
     // if already opened
     if(isopen)
     {
         // Close port, change baudrate, and reopen
-        _closePort(true);
+        _closePort();
 
         port->SetBaudRate(port_baudrate);
         
-        _openPort(true);
+        _openPort();
     }
 }
 
@@ -120,15 +106,15 @@ void Vuart::send(char c)
 }
 
 
-char Vuart::recieve()
+int Vuart::recieve()
 {        
     std::vector<uint8_t> vec;
     port->ReadBinary(vec);
 
     if(vec.size()==0)
-        return -1;
+        return (int) -1;
     else
-        return (char) vec[0];
+        return (int) vec[0];
 }
 
 

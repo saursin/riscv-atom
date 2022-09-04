@@ -161,20 +161,20 @@ void Backend_atomsim::UART()
         variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
         dummy hardware register of simpluart_wb, and set bit[0] of status register.
     */
-    static uint8_t recv;
+    static int recv;
     if(using_vuart_)
     {
         recv = vuart_->recieve();
     }
     else
     {
-        recv = (uint8_t)-1;
+        recv = (int)-1;
     }	
             
-    if(recv != (uint8_t)-1)	// something recieved
+    if(recv != (int)-1)	// something recieved
     {
         tb->m_core->HydrogenSoC->uart->reg_status = 1;
-        tb->m_core->HydrogenSoC->uart->reg_data = recv;
+        tb->m_core->HydrogenSoC->uart->reg_data = (char) recv;
     }
 
 
@@ -182,11 +182,11 @@ void Backend_atomsim::UART()
     if(tb->m_core->HydrogenSoC->uart->reg_data_re)   // tried to read from DREG
     {
         tb->m_core->HydrogenSoC->uart->reg_status = 0;
-        tb->m_core->HydrogenSoC->uart->reg_data = (char)-1;
+        // tb->m_core->HydrogenSoC->uart->reg_data = (char)-1;
     }
     if(tb->m_core->HydrogenSoC->uart->reg_data_we)   // tried to write to DREG
     {
-        tb->m_core->HydrogenSoC->uart->reg_data = (char)-1;
+        tb->m_core->HydrogenSoC->uart->reg_data = (char) recv;
     }
 
 }

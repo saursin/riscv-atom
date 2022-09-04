@@ -52,12 +52,11 @@ endif
 # Recepies
 #======================================================================
 
-default: sim elfdump lib   			## Build sim, elfdump, and libs
+default: sim lib   					## Build sim, elfdump, and libs
 	@echo "\n$(COLOR_GREEN)=============================="
 	@echo "       Build Succesful!"
 	@echo "==============================$(COLOR_NC)"
 	@echo " - atomsim [$(soctarget)]"
-	@echo " - elfdump tool"
 	@echo " - software libraries"
 
 all : doxy-pdf default				## Build default with docs
@@ -155,7 +154,7 @@ clean-doxy:							## Clean build files for Atomsim docs
 
 # ======== clean ========
 .PHONY: clean						
-clean: clean-sim					## Alias for clean-sim
+clean: clean-sim clean-lib					## Alias for clean-sim, clean-lib
 
 
 .PHONY: clean-all					
