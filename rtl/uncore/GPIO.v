@@ -16,9 +16,6 @@
 //      writing "0" sets it "LOW".
 //      
 ////////////////////////////////////////////////////////////////////
-
-`include "BiDirectionalIO.v"
-
 `default_nettype none
 
 module GPIO

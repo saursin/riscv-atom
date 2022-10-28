@@ -5,8 +5,6 @@
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
-`include "../Timescale.vh"
-
 module Decode
 (
     input   wire    [31:0]  instr_i,

@@ -3,7 +3,6 @@
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
 //  Description : A Wishbone interfaced RAM with single Read/Write port
 ////////////////////////////////////////////////////////////////////
-
 `default_nettype none
 
 module SinglePortRAM_wb #(

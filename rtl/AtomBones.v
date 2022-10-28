@@ -5,15 +5,9 @@
 //      stub SoC target for AtomSim, which uses software simulated 
 //      memories and communication modules.
 ///////////////////////////////////////////////////////////////////
-
-`include "Timescale.vh"
-`include "AtomBones_Config.vh"
-
-`include "core/AtomRV.v"
-
 `default_nettype none
 
- module AtomBones
+module AtomBones
 (
     input   wire    clk_i,
     input   wire    rst_i,

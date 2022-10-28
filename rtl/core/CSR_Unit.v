@@ -4,10 +4,6 @@
 //  Description : Control & Status Register (CSR) unit contains logic 
 //      to read and write to the CSR registers
 ////////////////////////////////////////////////////////////////////
-
-`include "Utils.vh"
-`include "Defs.vh"
-
 `default_nettype none
 
 module CSR_Unit

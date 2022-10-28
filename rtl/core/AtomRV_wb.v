@@ -3,9 +3,6 @@
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
 //  Description : Wishbone wrapper for Atom core
 ////////////////////////////////////////////////////////////////////
-
-`include "AtomRV.v"
-
 `default_nettype none
 
 /*

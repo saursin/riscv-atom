@@ -39,7 +39,9 @@ $(shell mkdir -p $(OBJ_DIR) $(BIN_DIR) $(VERILATED_DIR) $(DEPDIR) $(RUN_DIR))
 # Verilog Configs
 
 VC := verilator
-VFLAGS := -cc -Wall --relative-includes --trace -D__ATOMSIM_SIMULATION__
+VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__
+VFLAGS += -I$(RTL_DIR) -I$(RTL_DIR)/common -I$(RTL_DIR)/core
+VFLAGS += --Mdir $(VERILATED_DIR)
 
 # This should point to verilator include directory
 VERILATOR_INCLUDE_PATH := /usr/share/verilator/include
@@ -50,11 +52,8 @@ endif
 
 
 # Core files
-VSRCS =  $(RTL_DIR)/Timescale.vh
-VSRCS += $(RTL_DIR)/core/Utils.vh 
-VSRCS += $(RTL_DIR)/core/Defs.vh 
-VSRCS += $(RTL_DIR)/core/AtomRV.v 
-VSRCS += $(RTL_DIR)/core/Alu.v 
+VSRCS := $(RTL_DIR)/core/AtomRV.v
+VSRCS += $(RTL_DIR)/core/Alu.v
 VSRCS += $(RTL_DIR)/core/Decode.v 
 VSRCS += $(RTL_DIR)/core/RegisterFile.v 
 VSRCS += $(RTL_DIR)/core/CSR_Unit.v
@@ -97,14 +96,21 @@ ifeq ($(soctarget), hydrogensoc) 	# =========================[ HydrogenSoC ]
 VTOPMODULE := HydrogenSoC
 VTOPMODULE_FILE := $(RTL_DIR)/$(VTOPMODULE).v
 
+# core wrapper
 VSRCS += $(RTL_DIR)/core/AtomRV_wb.v 
+
+# arbiter
+VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter.v
+VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter3_wb.v
+VSRCS += $(RTL_DIR)/uncore/wishbone/priority_encoder.v
+
+# periphs
 VSRCS += $(RTL_DIR)/uncore/BiDirectionalIO.v
 VSRCS += $(RTL_DIR)/uncore/GPIO.v
 VSRCS += $(RTL_DIR)/uncore/DualPortRAM_wb.v
 VSRCS += $(RTL_DIR)/uncore/SinglePortRAM_wb.v
 VSRCS += $(RTL_DIR)/uncore/simpleuart_wb.v
 VSRCS += $(RTL_DIR)/uncore/simpleuart.v
-VSRCS += $(RTL_DIR)/HydrogenSoC_Config.vh
 
 VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
 VFLAGS += -D__RAM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/ram.hex"'
@@ -167,7 +173,7 @@ lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VTOPMODULE_FILE) $(VSRCS)
 	@printf "$(COLOR_CYAN)Verilating Verilog files$(COLOR_NC)\n"
-	$(VC) $(VFLAGS) $< --Mdir $(VERILATED_DIR)
+	$(VC) $(VFLAGS) $^
 
 	@printf "$(COLOR_CYAN)Generating shared object$(COLOR_NC)\n"
 	make -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk

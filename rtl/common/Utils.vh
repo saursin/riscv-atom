@@ -3,7 +3,7 @@
 
 `ifdef verilator
 `ifdef DPI_LOGGER
-`include "../dpi/util_dpi.vh"
+`include "util_dpi.vh"
 `endif
 `endif
 

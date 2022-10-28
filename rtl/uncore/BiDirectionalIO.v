@@ -3,7 +3,6 @@
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
 //  Description : BiDirectional IO (for GPIO pins)
 ////////////////////////////////////////////////////////////////////
-
 `default_nettype none
 
 module BiDirectionalIO

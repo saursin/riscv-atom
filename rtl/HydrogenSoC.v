@@ -4,17 +4,8 @@
 //  Description : HydrogenSoC is an FPGA ready SoC, it consists of
 //      a single atom core with memories and communication modules.
 ///////////////////////////////////////////////////////////////////
-
-`include "Timescale.vh"
 `include "HydrogenSoC_Config.vh"
-
-`include "uncore/wishbone/arbiter3_wb.v"
-`include "core/AtomRV_wb.v"
-`include "uncore/DualPortRAM_wb.v"
-//`include "uncore/SinglePortROM_wb.v"
-`include "uncore/SinglePortRAM_wb.v"
-`include "uncore/simpleuart_wb.v"
-`include "uncore/GPIO.v"
+`include "Utils.vh"
 
 `ifdef verilator
     // Macros for Verilator

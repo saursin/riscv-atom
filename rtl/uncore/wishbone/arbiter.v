@@ -23,9 +23,7 @@ THE SOFTWARE.
 */
 
 // Language: Verilog 2001
-`include "priority_encoder.v"
 `default_nettype none
-`timescale 1ns / 1ps
 
 /*
  * Arbiter module

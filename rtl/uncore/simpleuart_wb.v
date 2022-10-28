@@ -26,8 +26,6 @@
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
-`include "simpleuart.v"
-
 module simpleuart_wb
 (
     // Wishbone Interface

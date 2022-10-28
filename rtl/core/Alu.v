@@ -12,10 +12,7 @@
 //          -   Logical Shift Right (Single Cycle)
 //          -   Arthmetic Shift Right (Single Cycle)
 ////////////////////////////////////////////////////////////////////
-
-`include "../Timescale.vh"
 `include "Defs.vh"
-
 `default_nettype none
 
 module Alu

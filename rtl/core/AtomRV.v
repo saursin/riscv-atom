@@ -10,15 +10,8 @@
 //  Description : Atom is a 2-stage pipelined embedded class 32-bit 
 //      RISCV core. It is based on RV32I ISA
 ///////////////////////////////////////////////////////////////////
-
-`include "../Timescale.vh"
-`include "Utils.vh"
 `include "Defs.vh"
-
-`include "Decode.v"
-`include "RegisterFile.v"
-`include "Alu.v"
-`include "CSR_Unit.v"
+`include "Utils.vh"
 
 `default_nettype none
 
