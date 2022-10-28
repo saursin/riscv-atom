@@ -50,10 +50,6 @@
 `define CMP_FUNC_GEU    3'd6
 
 
-// Register File
-`define RF_R0_IS_ZERO
-
-
 // ALU
 `define ALU_FUNC_ADD 3'd0
 `define ALU_FUNC_SUB 3'd1

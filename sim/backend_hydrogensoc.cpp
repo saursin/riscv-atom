@@ -12,7 +12,7 @@
 #include "build/verilated/VHydrogenSoC_HydrogenSoC.h"
 #include "build/verilated/VHydrogenSoC_AtomRV_wb.h"
 #include "build/verilated/VHydrogenSoC_AtomRV.h"
-#include "build/verilated/VHydrogenSoC_RegisterFile__R20_RB5.h"
+#include "build/verilated/VHydrogenSoC_RegisterFile.h"
 
 //#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
 // #include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"

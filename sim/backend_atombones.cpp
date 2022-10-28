@@ -11,7 +11,7 @@
 #include "build/verilated/VAtomBones.h"
 #include "build/verilated/VAtomBones_AtomBones.h"
 #include "build/verilated/VAtomBones_AtomRV.h"
-#include "build/verilated/VAtomBones_RegisterFile__R20_RB5.h"
+#include "build/verilated/VAtomBones_RegisterFile.h"
 
 #include "elfio/elfio.hpp"
 

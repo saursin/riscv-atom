@@ -15,6 +15,15 @@
 
 `default_nettype none
 
+//`define RVE
+
+`ifdef RVE
+    `define NUM_REGS 16
+`else
+    `define NUM_REGS 32
+`endif
+
+
 module AtomRV
 (
     // ========== General ==========
@@ -293,21 +302,37 @@ module AtomRV
     wire    [31:0]  rf_rs1;
     wire    [31:0]  rf_rs2;
 
-    RegisterFile  #(.REG_WIDTH(32), .REG_ADDR_WIDTH(5)) rf
-    (
-        .Ra_Sel_i   (d_rs1_sel),
-        .Ra_o       (rf_rs1),
-
-        .Rb_Sel_i   (d_rs2_sel),
-        .Rb_o       (rf_rs2),
-
-        .Data_We_i  (d_rf_we & !stall_stage2),
-        .Rd_Sel_i   (d_rd_sel),
-        .Data_i     (rf_rd_data),
-
+    RegisterFile#(
+        .REG_WIDTH(32), 
+        .NUM_REGS(`NUM_REGS),
+        .R0_IS_ZERO(1)
+    ) rf (
         .Clk_i      (clk_i),
-        .Rst_i      (rst_i)
+        .Rst_i      (rst_i),
+        
+        `ifdef RVE
+        .Ra_Sel_i   (d_rs1_sel[3:0]),
+        .Rb_Sel_i   (d_rs2_sel[3:0]),
+        .Rd_Sel_i   (d_rd_sel[3:0]),
+        `else
+        .Ra_Sel_i   (d_rs1_sel),
+        .Rb_Sel_i   (d_rs2_sel),
+        .Rd_Sel_i   (d_rd_sel),
+        `endif
+                
+        .Ra_o       (rf_rs1),
+        .Rb_o       (rf_rs2),
+        .Data_We_i  (d_rf_we & !stall_stage2),
+        .Data_i     (rf_rd_data)
     );
+
+    `ifdef RVE
+        // We need these because we are not using MSB 
+        // of select lines in RVE
+        `UNUSED_VAR(d_rs1_sel)
+        `UNUSED_VAR(d_rs2_sel)
+        `UNUSED_VAR(d_rd_sel)
+    `endif
 
 
     /*
