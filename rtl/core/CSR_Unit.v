@@ -6,8 +6,13 @@
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
-module CSR_Unit
+module CSR_Unit#
 (
+    parameter [31:0]    VEND_ID     = 32'h0000_0000,
+    parameter [31:0]    ARCH_ID     = 32'h0000_0000,
+    parameter [31:0]    IMPL_ID     = 32'h0000_0000,
+    parameter [31:0]    HART_ID     = 32'h0000_0000
+)(
     // Global signals
     input   wire    clk_i,
     input   wire    rst_i,
@@ -68,16 +73,16 @@ module CSR_Unit
         read_value = 0;
         
         case(addr_i)
-            12'hc00: begin
-                read_value = csr_cycle[31:0];
-            end
+            12'hf11: read_value = VEND_ID;
+            12'hf12: read_value = ARCH_ID;
+            12'hf13: read_value = IMPL_ID;
+            12'hf14: read_value = HART_ID;
 
-            12'hc80: begin
-                read_value = csr_cycle[63:32];
-            end
-                
+            12'hc00: read_value = csr_cycle[31:0];  // cycle
+            12'hc80: read_value = csr_cycle[63:32]; // cycleh
             default: begin
-                read_value = 0;
+                $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
+                read_value = 32'hxxxx_xxxx;
             end
                 
         endcase

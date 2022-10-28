@@ -15,14 +15,12 @@
 
 `default_nettype none
 
-`ifdef RV_E
-    `define NUM_REGS 16
-`else
-    `define NUM_REGS 32
-`endif
-
-
-module AtomRV
+module AtomRV # (   
+    parameter [31:0]    VEND_ID     = 32'h0000_0000,
+    parameter [31:0]    ARCH_ID     = 32'h0000_0000,
+    parameter [31:0]    IMPL_ID     = 32'h0000_0000,
+    parameter [31:0]    HART_ID     = 32'h0000_0000
+)
 (
     // ========== General ==========
     input   wire            clk_i,          // clock
@@ -306,30 +304,31 @@ module AtomRV
         endcase
     end
 
+
+    `ifdef RV_E
+    localparam RF_INDX_BITS = 3;
+    localparam RF_NREGS = 16;
+    `else
+    localparam RF_INDX_BITS = 4;
+    localparam RF_NREGS = 32;
+    `endif
+
     wire    [31:0]  rf_rs1;
     wire    [31:0]  rf_rs2;
 
     RegisterFile#(
         .REG_WIDTH(32), 
-        .NUM_REGS(`NUM_REGS),
+        .NUM_REGS(RF_NREGS),
         .R0_IS_ZERO(1)
     ) rf (
         .Clk_i      (clk_i),
         .Rst_i      (rst_i),
-        
-        `ifdef RV_E
-        .Ra_Sel_i   (d_rs1_sel[3:0]),
-        .Rb_Sel_i   (d_rs2_sel[3:0]),
-        .Rd_Sel_i   (d_rd_sel[3:0]),
-        `else
-        .Ra_Sel_i   (d_rs1_sel),
-        .Rb_Sel_i   (d_rs2_sel),
-        .Rd_Sel_i   (d_rd_sel),
-        `endif
-                
+        .Ra_Sel_i   (d_rs1_sel[RF_INDX_BITS:0]),
         .Ra_o       (rf_rs1),
+        .Rb_Sel_i   (d_rs2_sel[RF_INDX_BITS:0]),
         .Rb_o       (rf_rs2),
         .Data_We_i  (d_rf_we & !stall_stage2),
+        .Rd_Sel_i   (d_rd_sel[RF_INDX_BITS:0]),
         .Data_i     (rf_rd_data)
     );
 
@@ -397,8 +396,13 @@ module AtomRV
     // check if it is imm type CSR instruction and send data_i accordingly
     wire    [31:0]  csru_data_i = d_csru_op_sel[2] ? {{27{1'b0}}, d_rs1_sel} : rf_rs1;
 
-    CSR_Unit csr_unit
+    CSR_Unit#
     (
+        .VEND_ID    (VEND_ID),
+        .ARCH_ID    (ARCH_ID),
+        .IMPL_ID    (IMPL_ID),
+        .HART_ID    (HART_ID)
+    ) csr_unit (
         // Global signals
         .clk_i   (clk_i),
         .rst_i   (rst_i),

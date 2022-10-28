@@ -11,6 +11,15 @@
 // Reset address
 `define SOC_RESET_ADDRESS   32'h0001_0000
 
+// Enable E ext.
+// `define RV_E
+
+// Enable ZICSR ext.
+`define RV_ZICSR
+
+// Enable C extenstion
+// `define RV_C
+
 
 /////////////// Memory Map ///////////////
 // Macros used by Wishbone interconnect
