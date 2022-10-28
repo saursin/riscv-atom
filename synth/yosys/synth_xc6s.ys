@@ -1,4 +1,0 @@
-read_verilog -DSYNTHESIS_YOSYS -D__IMEM_INIT_FILE__="../../synth/yosys/init.hex" -D__DMEM_INIT_FILE__="../../synth/yosys/init.hex" ../../rtl/HydrogenSoC.v
-
-synth_xilinx -family xc6s
-tee -a report.txt stat

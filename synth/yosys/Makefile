@@ -1,7 +1,6 @@
-Target ?= hydrogensoc
-SCRIPT = synth_xc6s.ys
-REPORT = synth_report.txt
-LOG = synth_synth.log
+SCRIPT := synth.tcl
+REPORT := synth_report.txt
+LOG := synth.log
 
 default: synth
 
@@ -17,7 +16,7 @@ help : Makefile		## show help
 .PHONY: synth
 synth:		## synthesize
 	@echo "Running Synthesis..."
-	yosys -s $(SCRIPT) > $(LOG) 2>&1
+	yosys -c $(SCRIPT) > $(LOG) 2>&1
 	@echo "Generated log: 		$(LOG)"
 	@echo "Generated report: 	$(REPORT)"
 
