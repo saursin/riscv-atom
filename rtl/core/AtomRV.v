@@ -15,9 +15,7 @@
 
 `default_nettype none
 
-//`define RVE
-
-`ifdef RVE
+`ifdef RV_E
     `define NUM_REGS 16
 `else
     `define NUM_REGS 32
@@ -248,8 +246,11 @@ module AtomRV
     wire    [2:0]   d_mem_access_width;
     wire            d_mem_load_store;
     wire            d_mem_we;
+
+    `ifdef RV_ZICSR
     wire    [2:0]   d_csru_op_sel;
     wire            d_csru_we;
+    `endif
 
 
     Decode decode
@@ -272,9 +273,13 @@ module AtomRV
         .alu_op_sel_o       (d_alu_op_sel),
         .mem_access_width_o (d_mem_access_width),
         .d_mem_load_store   (d_mem_load_store),
-        .mem_we_o           (d_mem_we),
+        .mem_we_o           (d_mem_we)
+        
+        `ifdef RV_ZICSR
+        ,
         .csru_op_sel_o      (d_csru_op_sel),
         .csru_we_o          (d_csru_we)
+        `endif
     );
 
 
@@ -293,7 +298,9 @@ module AtomRV
             3'd2:   rf_rd_data = alu_out;
             3'd3:   rf_rd_data = {31'd0, comparison_result};
             3'd4:   rf_rd_data = memload;
+            `ifdef RV_ZICSR
             3'd5:   rf_rd_data = csru_data_o;
+            `endif
 
             default: rf_rd_data = 32'd0;
         endcase
@@ -310,7 +317,7 @@ module AtomRV
         .Clk_i      (clk_i),
         .Rst_i      (rst_i),
         
-        `ifdef RVE
+        `ifdef RV_E
         .Ra_Sel_i   (d_rs1_sel[3:0]),
         .Rb_Sel_i   (d_rs2_sel[3:0]),
         .Rd_Sel_i   (d_rd_sel[3:0]),
@@ -326,9 +333,9 @@ module AtomRV
         .Data_i     (rf_rd_data)
     );
 
-    `ifdef RVE
+    `ifdef RV_E
         // We need these because we are not using MSB 
-        // of select lines in RVE
+        // of select lines in RV_E
         `UNUSED_VAR(d_rs1_sel)
         `UNUSED_VAR(d_rs2_sel)
         `UNUSED_VAR(d_rd_sel)
@@ -379,7 +386,7 @@ module AtomRV
         endcase
     end
 
-
+    `ifdef RV_ZICSR
     /*
         ////// CSR Unit //////
         Contains all the Control and status registers
@@ -403,6 +410,7 @@ module AtomRV
         .we_i   (d_csru_we),
         .data_o (csru_data_o)
     );
+    `endif
 
 
     /*
