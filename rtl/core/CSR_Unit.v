@@ -81,7 +81,7 @@ module CSR_Unit#
             12'hc00: read_value = csr_cycle[31:0];  // cycle
             12'hc80: read_value = csr_cycle[63:32]; // cycleh
             default: begin
-                $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
+                // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;
             end
                 
