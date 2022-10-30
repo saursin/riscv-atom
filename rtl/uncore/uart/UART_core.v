@@ -32,7 +32,8 @@ module UART_core
     output  wire            tx_buf_empty,
     output  wire            rx_buf_valid,
     output  wire            err_framing,
-    output  wire            err_parity
+    output  wire            err_parity,
+    output  wire            rx_parity
 );
 
     /////////////////////////////////////////////////////
@@ -41,6 +42,7 @@ module UART_core
     assign  rx_buf_valid    = recv_buf_valid;
     assign  err_framing     = recv_framing_error;
     assign  err_parity      = recv_parity_error;
+    assign  rx_parity       = recv_parity_bit;
 
     assign reg_dat_do = recv_pattern;
 
@@ -160,7 +162,6 @@ module UART_core
     reg [8:0] send_pattern; // data + parity
     reg [3:0] send_state;
     reg [31:0] send_divcnt;
-    reg send_dummy;
     reg send_stopbit;
    
     reg send_tx = 1;

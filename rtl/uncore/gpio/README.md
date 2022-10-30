@@ -17,7 +17,7 @@ GPIO IP with Wishbone B-4 Interface.
 
 ## Register Definitions
 ```
-(0x00)  DAT   Data Register
+1. (0x00)  DAT   Data Register
   ------------------------------------------
   [31:N]      -   -       Reserved
   [N-1:0]     RW  0x0     Data
@@ -31,7 +31,7 @@ GPIO IP with Wishbone B-4 Interface.
   * Bit == 0: LOW, Bit==1: HIGH
 
 
-(0x04)  TSC   Tri-state contol Register
+2. (0x04)  TSC   Tri-state contol Register
   ------------------------------------------
   [31:N]      -   -       Reserved
   [N-1:0]     RW  0x0     Value
@@ -39,7 +39,7 @@ GPIO IP with Wishbone B-4 Interface.
   * BIT == 0: configure pin as output, BIT == 1: configure pin as input.
 
 
-(0x08)  INC   Interrupt Control Register
+3. (0x08)  INC   Interrupt Control Register
   ------------------------------------------
   [31:0]      -   -       Not Implemented
   ------------------------------------------

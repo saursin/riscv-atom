@@ -7,7 +7,7 @@
 `default_nettype none
 
 module UART#(
-    parameter DEFAULT_DIV = 3,
+    parameter DEFAULT_DIV = 3
 )(
     // Wishbone Interface
     input   wire                    wb_clk_i,
@@ -81,7 +81,7 @@ always @(*) /* COMBINATORIAL */ begin
     case(wb_adr_i)
         2'b00: /* THR-RBR */    wb_dat_o = {24'd0, core_reg_data};
         2'b01: /* LCR */        wb_dat_o = {24'd0, reg_lcr};
-        2'b10: /* LSR */        wb_dat_o = {28'd0, core_err_parity, core_err_framing, core_send_buf_empty, core_recv_buf_valid};
+        2'b10: /* LSR */        wb_dat_o = {27'd0, core_rx_parity_bit, core_err_parity, core_err_framing, core_send_buf_empty, core_recv_buf_valid};
         2'b11: /* DIV */        wb_dat_o = reg_div;
     endcase
 end
@@ -90,7 +90,8 @@ wire    [7:0]   core_reg_data;
 wire            core_send_buf_empty;
 wire            core_recv_buf_valid;
 wire            core_err_framing;
-wire            core_err_parity;           
+wire            core_err_parity;
+wire            core_rx_parity_bit;        
 
 // Core Instance
 UART_core uart_core_i
@@ -115,7 +116,8 @@ UART_core uart_core_i
     .tx_buf_empty           (core_send_buf_empty),
     .rx_buf_valid           (core_recv_buf_valid),
     .err_framing            (core_err_framing),
-    .err_parity             (core_err_parity)
+    .err_parity             (core_err_parity),
+    .rx_parity              (core_rx_parity_bit)
 );
 
 
