@@ -7,7 +7,7 @@
 `default_nettype none
 
 module UART#(
-    parameter DEFAULT_DIV = 3
+    parameter DEFAULT_DIV = 1
 )(
     // Wishbone Interface
     input   wire                    wb_clk_i,
@@ -52,8 +52,8 @@ wire    [3:0]   we  = {4{wb_we_i & wb_stb_i}} & wb_sel_i;
 reg     [7:0]   reg_lcr = 0;
 reg     [31:0]  reg_div = 0;
 
-wire reg_data_we = (wb_adr_i == 2'b11) && wb_we_i && wb_stb_i && wb_sel_i[0];
-wire reg_data_re = (wb_adr_i == 2'b11) && !wb_we_i && wb_stb_i;
+wire reg_data_we = (wb_adr_i == 2'b00) && wb_we_i && wb_stb_i && wb_sel_i[0];
+wire reg_data_re = (wb_adr_i == 2'b00) && !wb_we_i && wb_stb_i;
 
 // Handle Writes
 always @(posedge wb_clk_i) begin

@@ -38,11 +38,11 @@
 
 // UART
 `define UART_ADDR       32'h4000_0000
-`define UART_SIZE       8               // 8 Bytes  (2 words)
+`define UART_SIZE       16              // 16 Bytes  (4 words)
 
 // GPIO
 `define GPIO_ADDR       32'h4000_2000
-`define GPIO_SIZE       16              // 16 bytes (4 words)
+`define GPIO_SIZE       12              // 12 bytes (3 words)
 
 
 `endif // __HYDROGENSOC_CONFIG_VH__

@@ -245,11 +245,11 @@ module HydrogenSoC(
     reg             uart_wb_stb_i;
     wire            uart_wb_ack_o;
     
-    simpleuart_wb uart (
+    UART uart (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_adr_i   (arb_wb_adr_o[2]),
+        .wb_adr_i   (arb_wb_adr_o[3:2]),
         .wb_dat_o   (uart_wb_dat_o),
         .wb_dat_i   (arb_wb_dat_o),
         .wb_we_i    (arb_wb_we_o),

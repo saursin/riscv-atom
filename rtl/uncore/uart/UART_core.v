@@ -183,8 +183,8 @@ module UART_core
                     if(tx_en && reg_dat_we) begin
                         send_pattern <= {(~even_parity) ^ get_even_parity(reg_dat_di[7:0]), reg_dat_di[7:0]};
                         send_state <= 1;
-                        send_divcnt <= 0;
                     end
+                    send_divcnt <= 0;
                 end
                 1: /* START BIT */ begin
                     send_tx <= 0;
@@ -217,6 +217,7 @@ module UART_core
                     if (send_divcnt > divisor) begin
                         send_tx <= send_pattern[0];
                         send_pattern <= send_pattern >> 1;
+                        send_divcnt <= 0;
 
                         if(send_state == 9) begin // If in last data bit state
                             if(enable_parity)
