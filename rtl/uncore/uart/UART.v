@@ -58,7 +58,7 @@ wire reg_data_re = (wb_adr_i == 2'b00) && !wb_we_i && wb_stb_i;
 // Handle Writes
 always @(posedge wb_clk_i) begin
     if(wb_rst_i) begin
-        reg_lcr <= 0;
+        reg_lcr <= 'b11;
         reg_div <= DEFAULT_DIV;
     end else begin
         case(wb_adr_i)
