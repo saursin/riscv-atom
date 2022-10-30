@@ -109,8 +109,8 @@ VSRCS += $(RTL_DIR)/uncore/gpio/IOBuf.v
 VSRCS += $(RTL_DIR)/uncore/gpio/GPIO.v
 VSRCS += $(RTL_DIR)/uncore/mem/DualPortRAM_wb.v
 VSRCS += $(RTL_DIR)/uncore/mem/SinglePortRAM_wb.v
-VSRCS += $(RTL_DIR)/uncore/uart/simpleuart_wb.v
-VSRCS += $(RTL_DIR)/uncore/uart/simpleuart.v
+VSRCS += $(RTL_DIR)/uncore/uart/UART.v
+VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
 
 VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
 VFLAGS += -D__RAM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/ram.hex"'

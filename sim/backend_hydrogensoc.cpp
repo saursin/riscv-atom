@@ -18,8 +18,14 @@
 // #include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
-#include "build/verilated/VHydrogenSoC_simpleuart_wb.h"
+#include "build/verilated/VHydrogenSoC_UART.h"
 
+
+#ifdef DBG
+#define D(x) x
+#else
+#define D(x)
+#endif
 
 #include "elfio/elfio.hpp"
 
@@ -127,68 +133,100 @@ void Backend_atomsim::refresh_state()
 
 void Backend_atomsim::UART()
 {
-    // --------- Atom->port -----------
-    /*
-        Since in classical single wishbone write transaction, wb_we pin remains asserted until 
-        the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
-        of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
-        as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
-        When we find 'we' asserted, we read the value and wait for 2 cycles after it. This 
-        prevents multiple reads of data in same transaction.
-    */		
-    static int wait = 0;
-    if(wait==0 && tb->m_core->HydrogenSoC->uart->reg_data_we)
-    {
-        char c = (char)tb->m_core->HydrogenSoC->uart->wb_dat_i;
+    typedef enum {
+        IDLE,
+        START_BIT,
+        DATA_BITS,
+        STOP_BIT
+    } UART_State;
 
-        if (using_vuart_)
-            vuart_->send(c);
-        else
-            std::cout << c;
+    // const int baud = 115200;         // For real-time simulation
+    // int FR = 12000000/(baud + 2);
 
-        wait=2;	// Wait for 2 cycles
-    } 
-    
-    if(wait>0)
-    {
-        wait--;
+    int FR = 3; // Fastest Possible for Simulation
+
+    //////////////////////// RECIEVE ///////////////////////////
+    static bool recv_prev_tx = false;       // prev tx pin value
+    static UART_State recv_state = IDLE;    // current state
+    static int recv_wait_cyc = 0;           // number of cycles to wait
+    static int recv_got_bits = 0;           // number of bits received
+    static uint8_t recv_byte = 0;           // data byte
+
+    // Sample TX
+    bool tx = tb->m_core->uart_usb_tx_o;
+
+    if(recv_wait_cyc){
+        D(printf("wait %d\n", recv_wait_cyc);)
+        recv_wait_cyc--;
+    } else {
+        switch(recv_state) {
+        case IDLE:
+            // wait for falling edge on tx
+            if (recv_prev_tx==true && tx == false) {
+                recv_state = START_BIT;
+                recv_byte = 0;
+                recv_got_bits = 0;
+                D(printf("@%ld: detected negedge on tx\n", tb->get_total_tickcount());)
+                recv_wait_cyc = FR/2-1;
+            }
+            break;
+        
+        case START_BIT:
+            // check start bit
+            if (tx == false) {
+                D(printf("start_bit: ok\n");)
+                recv_state = DATA_BITS;
+                recv_wait_cyc = FR-1;
+            }
+            else {
+                D(printf("err: no start bit\n");)
+                recv_state = IDLE;
+            }
+            break;
+        
+        case DATA_BITS:
+            recv_byte = (recv_byte >> 1) | (((uint8_t)tx) << 7);
+            D(printf("tx=%d; got_bits=%d; byte: %02x\n", tx, recv_got_bits, recv_byte);)
+            recv_got_bits++;
+
+            if(recv_got_bits == 8) {
+                recv_state = STOP_BIT;
+            }
+            else {
+                recv_state = DATA_BITS;  // loop
+            }
+            recv_wait_cyc = FR-1;
+            break;
+        
+        case STOP_BIT:
+            // check stop bit
+            if(tx==true) {
+                D(printf("Recieved Byte! = 0x%02x\n", recv_byte);)
+                if (using_vuart_)
+                    vuart_->send(recv_byte);
+                else
+                    std::cout << recv_byte;
+                
+                recv_wait_cyc = FR/2-1;
+                recv_state = IDLE;
+            }
+            else {
+                printf("UART: Framing error, '%c' (0x%02x)\n", recv_byte, recv_byte);
+                recv_state = IDLE;
+            }
+            break;
+
+        default:
+            recv_state = IDLE;
+
+        }
+
+    recv_prev_tx = tx;
     }
 
-    // --------- Port->atom -----------
-    /*
-        This section of code deals with port to sim uart communication. port->recieve() is 
-        called in every sim cycle (sim tick). value of recieve buffer is stored in 'recv' 
-        variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
-        dummy hardware register of simpluart_wb, and set bit[0] of status register.
-    */
-    static int recv;
-    if(using_vuart_)
-    {
-        recv = vuart_->recieve();
-    }
-    else
-    {
-        recv = (int)-1;
-    }	
-            
-    if(recv != (int)-1)	// something recieved
-    {
-        tb->m_core->HydrogenSoC->uart->reg_status = 1;
-        tb->m_core->HydrogenSoC->uart->reg_data = (char) recv;
-    }
 
-
-    // Action to be done if core read/wrote to UART registers in this cycle
-    if(tb->m_core->HydrogenSoC->uart->reg_data_re)   // tried to read from DREG
-    {
-        tb->m_core->HydrogenSoC->uart->reg_status = 0;
-        // tb->m_core->HydrogenSoC->uart->reg_data = (char)-1;
-    }
-    if(tb->m_core->HydrogenSoC->uart->reg_data_we)   // tried to write to DREG
-    {
-        tb->m_core->HydrogenSoC->uart->reg_data = (char) recv;
-    }
-
+    // Set RX
+    tb->m_core->uart_usb_rx_i = 1;
 }
 
 
