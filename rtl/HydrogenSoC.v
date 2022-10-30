@@ -29,7 +29,7 @@ module HydrogenSoC(
     input   wire        rst_i,
 
     // GPIO
-    inout   wire [31:0] gpio_io,
+    inout   wire [`NGPIO-1:0] gpio_io,
 
     // UART
     input   wire        uart_usb_rx_i,
@@ -265,44 +265,26 @@ module HydrogenSoC(
 
     ////////////////////////////////////////////////////
     // GPIO
-    wire    [31:0]  gpio0_wb_dat_o;
-    reg             gpio0_wb_stb_i;
-    wire            gpio0_wb_ack_o;
+    wire    [31:0]  gpio_wb_dat_o;
+    reg             gpio_wb_stb_i;
+    wire            gpio_wb_ack_o;
     
-    GPIO gpio0
-    (
+    GPIO #(
+        .N(`NGPIO)
+    ) gpio (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 
-        .wb_dat_o   (gpio0_wb_dat_o),
+        .wb_adr_i   (arb_wb_adr_o[3:2]),
+        .wb_dat_o   (gpio_wb_dat_o),
         .wb_dat_i   (arb_wb_dat_o),
         .wb_we_i    (arb_wb_we_o),
         .wb_sel_i   (arb_wb_sel_o),
     
-        .wb_stb_i   (gpio0_wb_stb_i),
-        .wb_ack_o   (gpio0_wb_ack_o),
+        .wb_stb_i   (gpio_wb_stb_i),
+        .wb_ack_o   (gpio_wb_ack_o),
 
-        .gpio_io     (gpio_io[15:0])
-    );
-
-    wire    [31:0]  gpio1_wb_dat_o;
-    reg             gpio1_wb_stb_i;
-    wire            gpio1_wb_ack_o;
-    
-    GPIO gpio1
-    (
-        .wb_clk_i   (wb_clk_i),
-        .wb_rst_i   (wb_rst_i),
-
-        .wb_dat_o   (gpio1_wb_dat_o),
-        .wb_dat_i   (arb_wb_dat_o),
-        .wb_we_i    (arb_wb_we_o),
-        .wb_sel_i   (arb_wb_sel_o),
-    
-        .wb_stb_i   (gpio1_wb_stb_i),
-        .wb_ack_o   (gpio1_wb_ack_o),
-
-        .gpio_io    (gpio_io[31:16])
+        .gpio_io    (gpio_io)
     );
 
     ////////////////////////////////////////////////////
@@ -313,8 +295,7 @@ module HydrogenSoC(
     localparam Device_ROM       = 4'd1;
     localparam Device_RAM       = 4'd2;
     localparam Device_UART      = 4'd3;
-    localparam Device_GPIO0     = 4'd4;
-    localparam Device_GPIO1     = 4'd5;
+    localparam Device_GPIO      = 4'd4;
 
     /*
         === Device selection ===
@@ -340,11 +321,8 @@ module HydrogenSoC(
             else if (arb_wb_adr_o >= `UART_ADDR && arb_wb_adr_o < `UART_ADDR+`UART_SIZE)
                 selected_device = Device_UART;
 
-            else if (arb_wb_adr_o >= `GPIO0_ADDR && arb_wb_adr_o < `GPIO0_ADDR+`GPIO0_SIZE)
-                selected_device = Device_GPIO0;
-
-            else if (arb_wb_adr_o >= `GPIO1_ADDR && arb_wb_adr_o < `GPIO1_ADDR+`GPIO1_SIZE)
-                selected_device = Device_GPIO1;
+            else if (arb_wb_adr_o >= `GPIO_ADDR && arb_wb_adr_o < `GPIO_ADDR+`GPIO_SIZE)
+                selected_device = Device_GPIO;
 
             else begin
                 selected_device = Device_None;
@@ -370,8 +348,7 @@ module HydrogenSoC(
             Device_ROM:         arb_wb_dat_i = rom_wb_dat_o;
             Device_RAM:         arb_wb_dat_i = ram_wb_dat_o;
             Device_UART:        arb_wb_dat_i = uart_wb_dat_o;
-            Device_GPIO0:       arb_wb_dat_i = gpio0_wb_dat_o;
-            Device_GPIO1:       arb_wb_dat_i = gpio1_wb_dat_o;
+            Device_GPIO:        arb_wb_dat_i = gpio_wb_dat_o;
 
             default: begin
                 arb_wb_dat_i = 32'h00000000;
@@ -391,22 +368,20 @@ module HydrogenSoC(
           rom_wb_stb_i      = 1'b0;
           ram_wb_stb_i      = 1'b0;
           uart_wb_stb_i     = 1'b0;
-          gpio0_wb_stb_i    = 1'b0;
-          gpio1_wb_stb_i    = 1'b0;
+          gpio_wb_stb_i     = 1'b0;
                      
         case(selected_device)
             Device_ROM:         rom_wb_stb_i        = arb_wb_stb_o;
             Device_RAM:         ram_wb_stb_i        = arb_wb_stb_o;
             Device_UART:        uart_wb_stb_i       = arb_wb_stb_o;
-            Device_GPIO0:       gpio0_wb_stb_i      = arb_wb_stb_o;
-            Device_GPIO1:       gpio1_wb_stb_i      = arb_wb_stb_o;
+            Device_GPIO:        gpio_wb_stb_i       = arb_wb_stb_o;
 
             default: begin
                 rom_wb_stb_i        = 1'b0;
                 ram_wb_stb_i        = 1'b0;
                 uart_wb_stb_i       = 1'b0;
-                gpio0_wb_stb_i      = 1'b0;
-                gpio1_wb_stb_i      = 1'b0;
+                gpio_wb_stb_i       = 1'b0;
+                gpio_wb_stb_i       = 1'b0;
             end
         endcase
     end
@@ -421,8 +396,7 @@ module HydrogenSoC(
             Device_ROM:         arb_wb_ack_i = rom_wb_ack_o;
             Device_RAM:         arb_wb_ack_i = ram_wb_ack_o;
             Device_UART:        arb_wb_ack_i = uart_wb_ack_o;
-            Device_GPIO0:       arb_wb_ack_i = gpio0_wb_ack_o;
-            Device_GPIO1:       arb_wb_ack_i = gpio1_wb_ack_o;
+            Device_GPIO:        arb_wb_ack_i = gpio_wb_ack_o;
             default:
                 arb_wb_ack_i = 1'b0;
         endcase

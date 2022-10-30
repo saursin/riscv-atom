@@ -100,9 +100,8 @@ void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
             {
                 #ifdef ATOMSIM
                 LEDS[led] = bitget(curr_state, led);
-                #else
-                gpio_set(led, bitget(curr_state, led));
                 #endif
+                gpio_write(led, bitget(curr_state, led));
             }
         }
         sleep(delay);
@@ -119,14 +118,16 @@ void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
 void main()
 {
     int delay;
+    gpio_init();
 
     #ifndef ATOMSIM
     serial_init(B_9600);
-    gpio_init();
     delay = 500;
     #else
     delay = 0;
     #endif
+
+    gpio_setmode(3, INPUT);
 
     printf("\nPattern 1: Rolling\n");
     for(int i=0; i<4; i++)

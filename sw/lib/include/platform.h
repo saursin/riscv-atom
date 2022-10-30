@@ -12,6 +12,21 @@ typedef unsigned long size_t;
 #define NULL ((void*)0)
 #endif
 
+
+// Memory-Mapped Reg Access Macros
+#define REG8(base, offset) *((volatile uint8_t*)    (base + offset))
+#define REG16(base, offset) *((volatile uint16_t*)  (base + offset))
+#define REG32(base, offset) *((volatile uint32_t*)  (base + offset))
+
+
+// Bitmanip Macros
+#define bitset(data, nbit)      ((data) |  (1<<(nbit)))
+#define bitclear(data, nbit)    ((data) & ~(1<<(nbit)))
+#define bitflip(data, nbit)     ((data) ^  (1<<(nbit)))
+#define bitcheck(data, nbit)    ((data) &  (1<<(nbit)))
+// #define bitsetv(data, nbit, val)(((data) &= ~(1<<(nbit))) | (val << nbit))
+
+
 // ============== Target Specific Definitions ==============
 #ifdef TARGET_HYDROGENSOC
     #define MEM_ROM_BEGIN   0x00010000

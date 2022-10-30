@@ -21,6 +21,9 @@
 // `define RV_C
 
 
+`define NGPIO 16    // Number of GPIO Pins to implement
+
+
 /////////////// Memory Map ///////////////
 // Macros used by Wishbone interconnect
 // see: <link to memory map description>
@@ -35,15 +38,11 @@
 
 // UART
 `define UART_ADDR       32'h4000_0000
-`define UART_SIZE       32'h0000_0008   // 8 bytes
+`define UART_SIZE       8               // 8 Bytes  (2 words)
 
-// GPIO 0
-`define GPIO0_ADDR      32'h4002_0000
-`define GPIO0_SIZE      32'h0000_0004   // 4 bytes
-
-// GPIO 1
-`define GPIO1_ADDR      32'h4002_0100
-`define GPIO1_SIZE      32'h0000_0004   // 4 bytes
+// GPIO
+`define GPIO_ADDR       32'h4000_2000
+`define GPIO_SIZE       16              // 16 bytes (4 words)
 
 
 `endif // __HYDROGENSOC_CONFIG_VH__

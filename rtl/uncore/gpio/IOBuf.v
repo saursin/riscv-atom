@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 
-module IOBUF
+module IOBuf
 (
     input   wire    dir_i,      //  Direction control (INPUT=1; OUTPUT=0)
     input   wire    bit_i,      //  Bit value to output to pin

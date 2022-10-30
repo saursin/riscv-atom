@@ -105,12 +105,12 @@ VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter3_wb.v
 VSRCS += $(RTL_DIR)/uncore/wishbone/priority_encoder.v
 
 # periphs
-VSRCS += $(RTL_DIR)/uncore/BiDirectionalIO.v
-VSRCS += $(RTL_DIR)/uncore/GPIO.v
-VSRCS += $(RTL_DIR)/uncore/DualPortRAM_wb.v
-VSRCS += $(RTL_DIR)/uncore/SinglePortRAM_wb.v
-VSRCS += $(RTL_DIR)/uncore/simpleuart_wb.v
-VSRCS += $(RTL_DIR)/uncore/simpleuart.v
+VSRCS += $(RTL_DIR)/uncore/gpio/IOBuf.v
+VSRCS += $(RTL_DIR)/uncore/gpio/GPIO.v
+VSRCS += $(RTL_DIR)/uncore/mem/DualPortRAM_wb.v
+VSRCS += $(RTL_DIR)/uncore/mem/SinglePortRAM_wb.v
+VSRCS += $(RTL_DIR)/uncore/uart/simpleuart_wb.v
+VSRCS += $(RTL_DIR)/uncore/uart/simpleuart.v
 
 VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
 VFLAGS += -D__RAM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/ram.hex"'
