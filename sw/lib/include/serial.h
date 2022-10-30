@@ -1,6 +1,35 @@
 #ifndef __SERIAL_H__
 #define __SERIAL_H__
 
+#include <stdint.h>
+#include <stdbool.h>
+
+// Register Offsets
+#define UART_REG_RBR 0x00
+#define UART_REG_THR 0x00
+#define UART_REG_LCR 0x04
+#define UART_REG_LSR 0x08
+#define UART_REG_DIV 0x0c
+
+// THR
+#define UART_REG_THR_TXDA 0xff
+#define UART_REG_RBR_RXDA 0xff
+
+// LCR
+#define UART_REG_LCR_RXEN 0b00000001
+#define UART_REG_LCR_TXEN 0b00000010
+#define UART_REG_LCR_STPB 0b00000100
+#define UART_REG_LCR_PARB 0b00001000
+#define UART_REG_LCR_EPAR 0b00010000
+#define UART_REG_LCR_LPBK 0b10000000
+
+// LSR
+#define UART_REG_LCR_RVAL 0b00000001
+#define UART_REG_LCR_TEMT 0b00000010
+#define UART_REG_LCR_FERR 0b00000100
+#define UART_REG_LCR_PERR 0b00001000
+
+
 // Baud Rates
 typedef enum
 {
@@ -16,20 +45,30 @@ typedef enum
     B_DEFAULT = 9600
 } serial_baudrate;
 
+typedef struct {
+    unsigned baud;
+    bool rx_enable;
+    bool tx_enable;
+    bool dual_stop_bits;
+    bool enable_parity_bit;
+    bool even_parity;
+    bool loopback_enable;
+}  UART_Config;
+
 /**
- * @brief Initialize SERIAL port
+ * @brief Initialize Serial port
  * 
  * @param baud baud rate
  */
-void serial_init(serial_baudrate baud);
+void serial_init(UART_Config * cfg);
 
 
 /**
- * @brief Get current baud rate
+ * @brief Get current config
  * 
- * @return unsigned int baud rate
+ * @return UART_Config cfg
  */
-serial_baudrate serial_getBaud();
+UART_Config serial_get_config();
 
 
 /**

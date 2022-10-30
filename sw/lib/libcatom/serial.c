@@ -2,53 +2,40 @@
 #include "serial.h"
 #include "time.h"
 
-
-/**
- * @brief Initialize SERIAL port
- * 
- * @param baud baud rate
- */
-void serial_init(serial_baudrate baud)
+void serial_init(UART_Config * cfg)
 {
-    // set baud
-    serial_setBaud(B_DEFAULT);
+    // Set Baud 
+    uint32_t fratio = (CLK_FREQ/cfg->baud);
+    REG32(UART_ADDR, UART_REG_DIV) = fratio - 2;
+    
+    // Initialize UART
+    uint32_t lcr = 0;
+    lcr |= cfg->rx_enable ? UART_REG_LCR_RXEN: 0;
+    lcr |= cfg->tx_enable ? UART_REG_LCR_TXEN: 0;
+    lcr |= cfg->dual_stop_bits ? UART_REG_LCR_STPB: 0;
+    lcr |= cfg->enable_parity_bit ? UART_REG_LCR_PARB: 0;
+    lcr |= cfg->even_parity ? UART_REG_LCR_EPAR: 0;
+    lcr |= cfg->loopback_enable ? UART_REG_LCR_LPBK: 0;
+    REG32(UART_ADDR, UART_REG_LCR) = lcr;
 
     // clear any garbage from data register by reading it once
-    *((volatile char*) UART_D_REG_ADDR);
+    REG32(UART_ADDR, UART_REG_RBR);
 }
 
-
-/**
- * @brief Get current baud rate
- * 
- * @return unsigned int baud rate
- */
-serial_baudrate serial_getBaud()
+UART_Config serial_get_config()
 {
-    int val = *((volatile int*) UART_CD_REG_ADDR);
-    return CLK_FREQ/(val+2);
-}
+    UART_Config cfg;
 
+    // Read LCR
+    uint32_t lcr = REG32(UART_ADDR, UART_REG_LCR);
+    cfg.baud = REG32(UART_ADDR, UART_REG_DIV);
+    cfg.rx_enable = lcr & UART_REG_LCR_RXEN;
+    cfg.tx_enable = lcr & UART_REG_LCR_TXEN;
+    cfg.dual_stop_bits = lcr & UART_REG_LCR_STPB;
+    cfg.enable_parity_bit = lcr & UART_REG_LCR_EPAR;
+    cfg.loopback_enable = lcr & UART_REG_LCR_LPBK;
 
-/**
- * @brief Set baudrate
- * 
- * @param baud baudrate
- */
-void serial_setBaud(serial_baudrate baud)
-{
-    int cd_reg_val = (CLK_FREQ/baud)-2;
-    *((volatile int*) UART_CD_REG_ADDR) = cd_reg_val;
-}
-
-/**
- * @brief Get serial status
- * 
- * @return char 
- */
-char serial_getStatus()
-{
-    return *((volatile char*) UART_S_REG_ADDR);
+    return cfg;
 }
 
 
@@ -63,13 +50,13 @@ void serial_write(char c)
     while(1)    // wait loop
     {
         // check if Tx is busy    
-        if((*((volatile char*) UART_S_REG_ADDR) & 0x02) >> 1)
+        if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
         {
             sleep(1);
             continue;
         }
 
-        *((volatile char*) UART_D_REG_ADDR) = c;    // send character
+        REG8(UART_ADDR, UART_REG_THR) = c;
         break;
     }
 }
@@ -82,11 +69,14 @@ void serial_write(char c)
  */
 char serial_read()
 {
-    char c = (char)-1;
-    while(c == (char)-1)
+    while(1)
     {
-        sleep(1);
-        c = *((volatile char*) UART_D_REG_ADDR);
+        if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
+        {
+            sleep(1);
+            continue;
+        }
+
+        return REG8(UART_ADDR, UART_REG_RBR);
     }
-    return c;
 }

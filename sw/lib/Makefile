@@ -38,7 +38,8 @@ endif
 soctarget_ALLCAPS = $(shell echo $(soctarget) | tr  '[:lower:]' '[:upper:]')
 OPT = true
 
-CC = riscv64-unknown-elf-gcc
+RVPREFIX := riscv64-unknown-elf
+CC := $(RVPREFIX)-gcc
 CFLAGS = -mabi=ilp32 -march=rv32i -ffreestanding -nostartfiles -nostdlib -Wall -I include -DTARGET_$(soctarget_ALLCAPS)
 SRC_DIR = libcatom
 OBJ_DIR = obj
@@ -85,6 +86,7 @@ $(OBJ_DIR):
 $(LIB): $(OBJS)
 	@printf "${COLOR_CYAN}Generating  $(LIB)$(COLOR_NC)\n"
 	ar rcs $@ $^
+	$(RVPREFIX)-objdump -htd $@ > $@.objdump
 	@printf "$(COLOR_CYAN)Build successful! $(COLOR_NC)\n"
 
 

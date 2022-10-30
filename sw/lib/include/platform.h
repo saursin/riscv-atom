@@ -36,10 +36,8 @@ typedef unsigned long size_t;
     #define MEM_RAM_SIZE    32*1024         // 32 KB
 
     // ---------- UART ------------
-    #define UART_D_REG_ADDR 0x40000000
-    #define UART_S_REG_ADDR 0x40000001
-    #define UART_CD_REG_ADDR 0x40000004
-
+    #define UART_ADDR 0x40000000
+    
     // ---------- GPIO ------------
     #define GPIO
     #define GPIO_PINCOUNT 32

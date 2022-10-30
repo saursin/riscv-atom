@@ -6,6 +6,21 @@
 ///////////////////////////////////////////////////////////////////
 // getchar & Putchar use Low-level Serial ports
 
+void _stdio_init()
+{
+    UART_Config cfg = {
+        .baud = 115200,
+        .rx_enable = false,
+        .tx_enable = true,
+        .dual_stop_bits = false,
+        .enable_parity_bit = false,
+        .even_parity = false,
+        .loopback_enable = true        
+    };
+
+    serial_init(&cfg);
+}
+
 /**
  * @brief Reads a character from stdin
  * 

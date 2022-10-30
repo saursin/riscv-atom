@@ -18,8 +18,8 @@ yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/gpio/IOBuf.v"
 yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/gpio/GPIO.v"
 yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/mem/DualPortRAM_wb.v"
 yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/mem/SinglePortRAM_wb.v"
-yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/uart/simpleuart_wb.v"
-yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/uart/simpleuart.v"
+yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/uart/UART.v"
+yosys "read_verilog $rd_vrlg_flags $rtl_dir/uncore/uart/UART_core.v"
 
 # Heirarchy check
 yosys "hierarchy -check -top $verilog_topmodule"

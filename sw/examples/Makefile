@@ -117,7 +117,7 @@ ifeq ($(__check_eg), true)
 
 endif
 
-
+CFLAGS := -O0
 
 ########################################################################
 # all examples directories
