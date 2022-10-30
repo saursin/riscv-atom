@@ -13,26 +13,23 @@ module DualPortRAM_wb #(
 )
 (
     // Global Signals
-    input   wire                    wb_clk_i,
+    input   wire                wb_clk_i,
     input   wire 		            wb_rst_i,
     
     // Wishbone Interface (Read & Write)
     input   wire  [ADDR_WIDTH-1:2]  wb_adr_i,
-    output  reg   [31:0] 	        wb_dat_o,
-    input   wire  [31:0] 	        wb_dat_i,
-    input   wire 		            wb_we_i,
-    input   wire  [3:0] 	        wb_sel_i,
-    
+    output  reg   [31:0] 	          wb_dat_o,
+    input   wire  [31:0] 	          wb_dat_i,
+    input   wire 		                wb_we_i,
+    input   wire  [3:0] 	          wb_sel_i,
     input   wire                    wb_stb_i,
-    output  reg 		            wb_ack_o,
+    output  reg 		                wb_ack_o,
 
     // Wishbone Interface (Read Only)
     input   wire  [ADDR_WIDTH-1:2]  wb_roport_adr_i,
-    output  reg   [31:0] 	        wb_roport_dat_o,
-    
+    output  reg   [31:0] 	          wb_roport_dat_o,
     input   wire                    wb_roport_stb_i,
-    output  reg		                wb_roport_ack_o
-
+    output  reg		                  wb_roport_ack_o
 );
 
 // Calculate depth from address width

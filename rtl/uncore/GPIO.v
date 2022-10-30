@@ -25,12 +25,9 @@ module GPIO
     input   wire            wb_rst_i,
 
     output  reg     [31:0]  wb_dat_o,
-
     input   wire    [31:0]  wb_dat_i,
-
     input   wire            wb_we_i,
     input   wire    [3:0]   wb_sel_i,
-  
     input   wire            wb_stb_i,
     output  reg             wb_ack_o,
 
@@ -59,7 +56,7 @@ reg     [15:0]   gpio_direction = 16'h0000;
 
 genvar i;
 generate for(i=0; i<16; i=i+1) begin:BiDirIO
-    BiDirectionalIO io
+    IOBUF io
     (
         .dir_i  (gpio_direction[i]),
         .bit_i  (gpio_state[i]),

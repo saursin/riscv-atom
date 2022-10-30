@@ -33,13 +33,13 @@ module simpleuart_wb
     input   wire                    wb_rst_i,
 
     input   wire  [2:2]        		wb_adr_i,
-    output  wire  [31:0] 	        	wb_dat_o,
+    output  wire  [31:0] 	        wb_dat_o,
     input   wire  [31:0] 	       	wb_dat_i /* verilator public */,
-    input   wire 		            	wb_we_i,
-    input   wire  [3:0] 	        	wb_sel_i,
+    input   wire 		            wb_we_i,
+    input   wire  [3:0] 	        wb_sel_i,
 
     input   wire                    wb_stb_i,
-    output  reg 		            	wb_ack_o,
+    output  reg 		            wb_ack_o,
 
     // Serial Interface
     /* verilator lint_off UNUSED */
