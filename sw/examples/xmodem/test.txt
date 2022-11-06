@@ -1,0 +1,6 @@
+***************************
+This is an Xmodem test file
+***************************
+0123456789
+A QUICK BROWN FOX JUMPED OVER A LAZY DOG
+a quick brown fox jumped over a lazy DOG

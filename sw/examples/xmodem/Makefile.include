@@ -1,0 +1,2 @@
+src_files = main.c
+executable = xmodem.elf
