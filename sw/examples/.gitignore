@@ -1,4 +1,6 @@
 *.elf
 *.o
+*.bin
+*.map
 *.objdump
 *.hex

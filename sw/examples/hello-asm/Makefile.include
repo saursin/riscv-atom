@@ -1,2 +1,2 @@
-src_files = hello.s
+src_files = hello.S
 executable = hello.elf

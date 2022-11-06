@@ -19,6 +19,12 @@ vuart ?= None
 # Save objdump while compiling    (may be overridden)
 objdump ?= true
 
+# Save binary while compiling     (may be overridden)
+bin ?= true
+
+# Save map file while compiling   (may be overridden)
+map ?= true
+
 ########################################################################
 # Checks
 
@@ -117,7 +123,8 @@ ifeq ($(__check_eg), true)
 
 endif
 
-CFLAGS := -O0
+RVPREFIX := riscv64-unknown-elf
+CFLAGS := -O0 
 
 ########################################################################
 # all examples directories
@@ -130,6 +137,10 @@ ATOMSIM_ARGS = --maxitr=999999999
 # VUART setting
 ifneq ($(vuart), None)
     ATOMSIM_ARGS += --vuart=$(vuart)
+endif
+
+ifeq ($(map), true)
+    LFLAGS += -Xlinker -Map $(executable).map
 endif
 
 .DEFAULT_GOAL := help
@@ -171,7 +182,12 @@ $(ex)/$(executable): $(SRC_FILES)
 	cd $(ex) && $(COMPILE_SCRIPT) $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 ifeq ($(objdump), true)
-	riscv64-unknown-elf-objdump -htd $@ > $@.objdump
+	$(RVPREFIX)-objdump -htd $@ > $@.objdump
+endif
+
+ifeq ($(bin), true)
+	$(RVPREFIX)-objcopy -O binary $@ $@.bin
+	@printf "Binary size: %s bytes\n" $$(stat --format=%s "$@.bin")
 endif
 
 
@@ -187,7 +203,7 @@ objdump: $(ex)/$(executable)				## Dump disassembly
 .PHONY: clean
 clean:										## Clean executable
 	@echo "${COLOR_CYAN}Cleaning \"${ex}\" example binaries ${COLOR_NC}"
-	rm -f $(ex)/$(executable)
+	rm -f $(ex)/$(executable) $(ex)/*.o $(ex)/*.map $(ex)/*.objdump
 
 
 all:										## Build all examples
