@@ -16,10 +16,7 @@ extern bool NO_COLOR_OUTPUT;
 #define CTL_BEL  0x07
 #define CTL_BS   0x08
 #define CTL_HT   0x09
-#define CTL_TAB  0x09
 #define CTL_LF   0x0A
-#define CTL_NL   0x0A
-#define CTL_EOL  0x0A
 #define CTL_VT   0x0B
 #define CTL_FF   0x0C
 #define CTL_CR   0x0D
@@ -44,11 +41,12 @@ extern bool NO_COLOR_OUTPUT;
 #define CTL_SP   0x20
 #define CTL_DEL  0x7F
 
+
 const std::string ascii_ctl_names [] = {
-    "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BS", "HT", 
-    "TAB", "LF", "NL", "EOL", "VT", "FF", "CR", "SO", "SI", "DLE", 
-    "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EOM", "SUB", 
-    "ESC", "FS", "GS", "RS", "US", "SP"};
+    "CTL_NUL", "CTL_SOH", "CTL_STX", "CTL_ETX", "CTL_EOT", "CTL_ENQ", "CTL_ACK", "CTL_BEL", "CTL_BS", 
+"CTL_HT", "CTL_LF", "CTL_VT", "CTL_FF", "CTL_CR", "CTL_SO", "CTL_SI", "CTL_DLE", "CTL_DC1", "CTL_DC2", 
+"CTL_DC3", "CTL_DC4", "CTL_NAK", "CTL_SYN", "CTL_ETB", "CTL_CAN", "CTL_EOM", "CTL_SUB", "CTL_ESC", 
+"CTL_FS", "CTL_GS", "CTL_RS", "CTL_US", "CTL_SP", "CTL_DEL"};
 
 Vuart *vu;
 
@@ -102,7 +100,7 @@ int main(int argc, char** argv)
         
     std::string port(argv[1]);
 
-    Vuart v(port, 9600);
+    Vuart v(port, 115200);
     vu = &v;
 
     std::thread recv_thr(get_rx);
