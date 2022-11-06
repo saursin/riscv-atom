@@ -1,6 +1,6 @@
 /* 
     ========================================
-            Startup code for Atom
+          Startup code for HydrogenSoC
     ========================================
 */
 
@@ -10,24 +10,23 @@
 
 _start:
     # ===== initialization =====
-
     # initialize sp & gp
     la sp, _stack_pointer       # set stack pointer
     la gp, _global_pointer      # set global pointer
 
-    # copy data from rom to ram
-    # (not needed)
-    # la	a0, __data_start
-	# la	a1, __data_source
-	# la	a2, __data_size
-	# call	memcpy
+    // copy data from rom to ram
+    la	a0, _sdata      // destination
+    la	a1, _etext      // source
+    la  t0, _edata
+    sub a2, t0, a0      // size = _edata - _sdata
+	call    memcpy
     
-    # initialize bss section 
-    # (not needed)
-    # la	a0, __bss_start
-	# li	a1, 0
-	# la	a2, __bss_size
-	# call	memset
+    // zero initialize bss section
+    la	a0, _sbss       // destination
+	li	a1, 0           // value = 0
+	la  t0, _ebss
+    sub a2, t0, a0      // size = _sbss - _sbss
+	call	memset
 
     # ===== Call main =====
     li  a0, 0
