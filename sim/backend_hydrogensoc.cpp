@@ -137,7 +137,8 @@ void Backend_atomsim::UART()
         char tchar = bb_uart_->rx_fifo.front();
         if (using_vuart_)
             vuart_->send(tchar); // Redirect to Virtual UART
-        else
+        
+        if (config_.enable_stdio_dump)
             std::cout << tchar << std::flush; // Echo on stdout
 
         bb_uart_->rx_fifo.pop();

@@ -77,6 +77,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		options.add_options("Backend Config")
 		("vuart", "use provided virtual uart port", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
 		("vuart-baud", "Specify virtual uart port baudrate", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
+		("enable-uart-dump", "Enable dumping outgoing UART data to stdout", cxxopts::value<bool>(backend_config.enable_stdio_dump)->default_value(std::to_string(default_backend_config.enable_stdio_dump)))
 		
 		#ifdef TARGET_ATOMBONES
 		("imemsize", "Specify size of instruction memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.imem_size_kb)->default_value(std::to_string(default_backend_config.imem_size_kb)))
