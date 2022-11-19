@@ -13,12 +13,6 @@ $(EXEC): xmodem.c bootloader.c crt0.S
 	riscv64-unknown-elf-gcc $(CFLAGS) -o $@ $^ $(LFLAGS)
 	riscv64-unknown-elf-objdump -htd $@ > $@.objdump
 
-app.elf:
-# %.o: %.c
-# 	riscv64-unknown-elf-gcc $(CFLAGS) -c -o $@ $^
-# 	riscv64-unknown-elf-objdump -htd $@ > $@.objdump
-
-
 .PHONY: clean
 clean:
 	rm -f *.o *.objdump *.map *.elf
