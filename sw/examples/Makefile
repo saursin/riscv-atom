@@ -74,6 +74,12 @@ ifeq ($(__check_env),true)
 endif
 
 
+RVPREFIX := riscv64-unknown-elf
+CFLAGS := -Wall
+CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os
+CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
+
+LINKERSCRIPT := None
 #### check soctarget ####
 ifeq ($(__check_soctarget),true)
 
@@ -91,17 +97,24 @@ ifeq ($(__check_soctarget),true)
 
     # check for validity of soctarget & select compile script
     ifeq ($(soctarget),atombones)
-        COMPILE_SCRIPT = $(RVATOM)/scripts/compile-atombones
+        CFLAGS += -DTARGET_ATOMBONES
+        LINKERSCRIPT:= $(RVATOM_LIB)/link/link.ld
     else
-        ifeq ($(soctarget),hydrogensoc)
-            COMPILE_SCRIPT = $(RVATOM)/scripts/compile-hydrogensoc
-        else
-            $(error Invalid SoC target target $(soctarget))
-        endif
+    ifeq ($(soctarget),hydrogensoc)
+        CFLAGS += -DTARGET_HYDROGENSOC
+        LINKERSCRIPT:= $(RVATOM_LIB)/link/link_hydrogensoc.ld
+    else
+        $(error Invalid SoC target target $(soctarget))
+    endif
+    endif
+
+    ifeq ($(boot), true)
+        LINKERSCRIPT:= ../bootloader/link_app.lds
     endif
 
 endif
 
+LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
 
 #### check ex ####
 ifeq ($(__check_eg), true)
@@ -123,8 +136,7 @@ ifeq ($(__check_eg), true)
 
 endif
 
-RVPREFIX := riscv64-unknown-elf
-CFLAGS := -O0 
+
 
 ########################################################################
 # all examples directories
@@ -179,7 +191,7 @@ compile: $(ex)/$(executable)				## Compile specified example
 
 $(ex)/$(executable): $(SRC_FILES)
 	@printf "$(COLOR_CYAN)%-15s | Compiling   %-35s <-  %s$(COLOR_NC)\n" ${ex} $@ $<
-	cd $(ex) && $(COMPILE_SCRIPT) $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
+	cd $(ex) && $(RVPREFIX)-gcc $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 ifeq ($(objdump), true)
 	$(RVPREFIX)-objdump -htd $@ > $@.objdump
