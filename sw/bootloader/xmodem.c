@@ -4,44 +4,98 @@
 
 //////////////////////////////////////////////////////////
 // Utility Functions
-void udelay(unsigned tick)
+
+#define CSR_CYCLE   0xc00
+#define CSR_CYCLEH  0xc80
+
+/**
+ * @brief Reads CSR register
+ */
+inline uint32_t __attribute__ ((always_inline)) CSR_read(const int csr_id)
 {
-    tick *= DELAY_FACTOR;
-    while(tick--) {
-        asm volatile("");
-    };
+    register uint32_t csr_data;
+    asm volatile ("csrr %[result], %[input_i]" : [result] "=r" (csr_data) : [input_i] "i" (csr_id));
+    return csr_data;
 }
+
+/**
+ * @brief Return no of cycles elapsed by core
+ * @return uint64_t 
+ */
+uint64_t cycles()
+{
+    union 
+    {
+        uint64_t uint64;
+        uint32_t uint32[sizeof(uint64_t)/2];
+    } cycles;
+
+    register uint32_t tmp1, tmp2, tmp3;
+    while(1)
+    {
+        tmp1 = CSR_read(CSR_CYCLEH);
+        tmp2 = CSR_read(CSR_CYCLE);
+        tmp3 = CSR_read(CSR_CYCLEH);
+        if (tmp1 == tmp3) 
+        {
+            break;
+        }
+    }
+
+    cycles.uint32[0] = tmp2;
+    cycles.uint32[1] = tmp3;
+
+    return cycles.uint64;
+} 
 
 //////////////////////////////////////////////////////////
 // IO Functions
-static int _inbyte(int msec)
+
+/**
+ * @brief gets a char from uart
+ * @param timeout_cycles timeout (in cycles)
+ * @return int 
+ */
+static int _inbyte(uint64_t timeout_cycles)
 {
+    uint64_t t0 = cycles();
 	while (!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0)) {
-		if (msec-- <= 0)
-			return -1;
-        udelay(1000);
+		if (cycles() > (t0 + timeout_cycles))
+			return -1;  // Timeout
 	}
 	return (int) REG8(UART_ADDR, UART_REG_RBR);
 }
 
+/**
+ * @brief Sends a char to uart
+ * @param c char
+ */
 static void _outbyte(unsigned char c)
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
-        udelay(1000);
+    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1)) {
+        asm volatile("");
+        // udelay(1000);
+    }
     REG8(UART_ADDR, UART_REG_THR) = c;
 }
 
-
+/**
+ * @brief Flushes uart rxbuf
+ */
 void flush_input()
 {
     while(bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
         REG8(UART_ADDR, UART_REG_RBR);
 }
 
+/**
+ * @brief Flushes uart txbuf
+ */
 void flush_output()
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LCR), 1))
-        udelay(10);
+    while(!bitcheck(REG32(UART_ADDR, UART_REG_LCR), 1)) {
+        asm volatile("");
+    }
 }
 
 //////////////////////////////////////////////////////////////
@@ -96,12 +150,12 @@ uint16_t crc16_ccitt(const void *buf, int len)
 //////////////////////////////////////////////////////////////
 int get_packet(uint8_t pkt_num, uint8_t *buf)
 {
-    uint8_t n = _inbyte(10);
-    uint8_t ni = _inbyte(10);
+    uint8_t n = _inbyte(10*DELAY_PRESCALAR_MSEC);
+    uint8_t ni = _inbyte(10*DELAY_PRESCALAR_MSEC);
     for(uint8_t i=0; i<128; i++)
-        buf[i] = _inbyte(10);
-    uint8_t chk_msb = _inbyte(10);
-    uint8_t chk_lsb = _inbyte(10);
+        buf[i] = _inbyte(10*DELAY_PRESCALAR_MSEC);
+    uint8_t chk_msb = _inbyte(10*DELAY_PRESCALAR_MSEC);
+    uint8_t chk_lsb = _inbyte(10*DELAY_PRESCALAR_MSEC);
     uint16_t crc = crc16_ccitt(buf, 128);
     uint8_t crc_msb = (uint8_t)(crc >> 8);
     uint8_t crc_lsb = (uint8_t)crc;
@@ -124,10 +178,10 @@ xmod_status xmodemReceive(uint8_t * bf, unsigned len)
 
     // SPAM till SOH
     bool got_soh = false;
-    for(uint8_t i=0; i<10; i++)
+    for(uint8_t i=0; i<100; i++)
     {
         _outbyte('C');
-        int c = _inbyte(10);
+        int c = _inbyte(100*DELAY_PRESCALAR_MSEC);
         if (c == (int)-1)
             continue;   // not heard from sender
       
@@ -158,7 +212,7 @@ xmod_status xmodemReceive(uint8_t * bf, unsigned len)
         if(packetnum!=0)
         {
             // check for start
-            int c = _inbyte(10);
+            int c = _inbyte(10*DELAY_PRESCALAR_MSEC);
             if(c==SOH){}
             else if (c==EOT) {
                 _outbyte(ACK);

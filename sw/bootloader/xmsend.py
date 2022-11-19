@@ -10,11 +10,16 @@ import sys
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
+
+# InterByteDelay = 0.2     # SIM_WITH_TRACE: simulation with trace 
+InterByteDelay = 0.005   # NORMAL SIM: 0.001 works, for safety we chose this
+# InterByteDelay = 0.0001  # FPGA:
+
 #############################################################################
 ## UTIL
 
 
-def ctrl_c_handler(signum, frame):
+def ctrl_c_handler(signum, frame): # TODO: at ctrl c, finish current packet and send CAN
     exit(1)
 
 
@@ -37,23 +42,23 @@ class Logger:
     
     def debug(self, msg):
         if self.lvl <= self.DEBUG:
-            print("DEBUG: ", msg, file=(sys.stdout if self.file == None else self.fh))
+            print("DEBUG: ", msg, file=(sys.stdout if self.file == None else self.fh), flush=True)
     
     def info(self, msg):
         if self.lvl <= self.INFO:
-            print("INFO: ", msg, file=(sys.stdout if self.file == None else self.fh))
+            print("INFO: ", msg, file=(sys.stdout if self.file == None else self.fh), flush=True)
     
     def warn(self, msg):
         if self.lvl <= self.WARN:
-            print("WARN: ", msg, file=(sys.stderr if self.file == None else self.fh))
+            print("WARN: ", msg, file=(sys.stderr if self.file == None else self.fh), flush=True)
     
     def error(self, msg):
         if self.lvl <= self.ERROR:
-            print("ERROR: ", msg, file=(sys.stderr if self.file == None else self.fh))
+            print("ERROR: ", msg, file=(sys.stderr if self.file == None else self.fh), flush=True)
     
     def critical(self, msg, abort=True):
         if self.lvl <= self.CRITICAL:
-            print("CRITICAL: ", msg, file=(sys.stderr if self.file == None else self.fh))
+            print("CRITICAL: ", msg, file=(sys.stderr if self.file == None else self.fh), flush=True)
             if abort:
                 exit(1)
 
@@ -95,7 +100,7 @@ class XMODEM:
         self.ser_port_name = port
         self.ser_port_baud = baud
         self.ser_port_timeout = 10
-        self.inter_out_byte_delay = 0.2
+        self.inter_out_byte_delay = InterByteDelay
         self.checksumType = checksum_type
         self.binfile = None
         self.ser = None

@@ -2,7 +2,12 @@
 #define __XMODEM_H__
 #include <stdint.h>
 
-#define DELAY_FACTOR 1  //sim
+#define DELAY_PRESCALAR_MSEC 250  // sim
+
+#define CLK_FREQ 12000000
+// #define DELAY_PRESCALAR_USEC CLK_FREQ/1000000
+// #define DELAY_PRESCALAR_MSEC CLK_FREQ/1000
+// #define DELAY_PRESCALAR_SEC  CLK_FREQ
 
 #define SOH  0x01
 #define STX  0x02

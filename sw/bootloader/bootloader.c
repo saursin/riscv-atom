@@ -12,7 +12,7 @@
 
 #include "xmodem.h"
 
-#define REQUIRE_KEYPRESS_BEFORE_BOOT
+// #define REQUIRE_KEYPRESS_BEFORE_BOOT
 // #define SILENT
 
 #ifdef SILENT
