@@ -12,6 +12,7 @@
 
 #include "xmodem.h"
 
+#define REQUIRE_KEYPRESS_BEFORE_BOOT
 // #define SILENT
 
 #ifdef SILENT
@@ -54,6 +55,12 @@ void init()
 
 void jump_to_application(void)
 {
+    #ifdef REQUIRE_KEYPRESS_BEFORE_BOOT
+    puts("\nPress ENTER to continue boot...\n");
+    while(serial_read()!='\r')
+    {/* wait */}
+    #endif
+
     // Function pointer to the address of the user application
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
 
@@ -72,12 +79,13 @@ void puts(char *ptr)
 {
     while (*ptr)
     {
-        if (*ptr == '\r')
+        if (*ptr == '\n')
             serial_write('\r');
         serial_write(*ptr++);
     }
 }
 
+#ifdef PRINT_APPL_CODE
 void print_hex(unsigned int val, int digits)
 {
     for (int i = (4 * digits) - 4; i >= 0; i -= 4)
@@ -101,6 +109,7 @@ void print_appl()
         puts("\n");
     }
 }
+#endif
 
 int main()
 {
