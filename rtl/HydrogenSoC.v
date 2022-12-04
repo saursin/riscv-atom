@@ -112,6 +112,8 @@ module HydrogenSoC(
         .wb_clk_i       (wb_clk_i),
         .wb_rst_i       (wb_rst_i),
 
+        .reset_vector_i  (`SOC_RESET_ADDRESS),
+
         // === IBUS Wishbone Master Interface ===
         .iport_wb_adr_o  (core_iport_wb_adr_o),
         .iport_wb_dat_i  (core_iport_wb_dat_i),

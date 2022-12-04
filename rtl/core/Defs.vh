@@ -8,15 +8,6 @@
 `define __DEFS_VH__
 
 
-// Reset Address
-`ifdef SOC_RESET_ADDRESS
-    `define RESET_PC_ADDRESS    `SOC_RESET_ADDRESS
-`else
-    // Default
-    `define RESET_PC_ADDRESS    32'h0000000
-`endif
-
-
 // NOP instruction (addi x0, x0, 0)
 `define RV_INSTR_NOP        32'h00000013
 

@@ -26,6 +26,7 @@ module AtomRV # (
     input   wire            clk_i,          // clock
     input   wire            rst_i,          // reset
 
+    input   wire    [31:0]  reset_vector_i,
 
     // ========== IMEM Port ==========
     output  wire    [31:0]  imem_addr_o,    // IMEM Address
@@ -148,7 +149,7 @@ module AtomRV # (
 
     always @(posedge clk_i) begin 
         if(rst_i)
-            ProgramCounter <= `RESET_PC_ADDRESS;
+            ProgramCounter <= reset_vector_i;
 
         else if(jump_decision)
             ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this

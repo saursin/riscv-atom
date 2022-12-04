@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 `default_nettype none
+`include "../../common/Utils.vh"
 
 /*
  * Wishbone 3 port arbiter
