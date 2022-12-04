@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 `default_nettype none
-`timescale 1ns / 1ps
+// `timescale 1ns / 1ps
 
 /*
  * Priority encoder module
@@ -42,7 +42,7 @@ module priority_encoder #
     output wire [WIDTH-1:0]         output_unencoded
 );
 
-parameter LEVELS = WIDTH > 2 ? $clog2(WIDTH) : 1;
+parameter LEVELS = WIDTH > 2 ? $clog2(WIDTH) : 1;       // INFO: ISE complains about $clog2 in localparam
 parameter W = 2**LEVELS;
 
 // pad input to even power of two

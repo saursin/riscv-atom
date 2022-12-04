@@ -11,7 +11,7 @@
 //      RISCV core. It is based on RV32I ISA
 ///////////////////////////////////////////////////////////////////
 `include "Defs.vh"
-`include "Utils.vh"
+// `include "Utils.vh"
 
 `default_nettype none
 

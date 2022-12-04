@@ -5,7 +5,7 @@
 //      a single atom core with memories and communication modules.
 ///////////////////////////////////////////////////////////////////
 `include "HydrogenSoC_Config.vh"
-`include "Utils.vh"
+`include "common/Utils.vh"
 
 `ifdef verilator
     // Macros for Verilator
