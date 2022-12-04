@@ -39,12 +39,12 @@ $(shell mkdir -p $(OBJ_DIR) $(BIN_DIR) $(VERILATED_DIR) $(DEPDIR) $(RUN_DIR))
 # Verilog Configs
 
 VC := verilator
-VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__
+VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --relative-includes
 VFLAGS += -I$(RTL_DIR) -I$(RTL_DIR)/common -I$(RTL_DIR)/core
 VFLAGS += --Mdir $(VERILATED_DIR)
 
 # This should point to verilator include directory
-VERILATOR_INCLUDE_PATH := /usr/share/verilator/include
+VERILATOR_INCLUDE_PATH := /tools/vlsi/verilator/share/verilator/include
 
 ifeq ("$(wildcard $(VERILATOR_INCLUDE_PATH)/verilated_vcd_c.cpp)","")
 $(error Verilator include path invalid; Set correct Verilator include path in sim/Makefile)
