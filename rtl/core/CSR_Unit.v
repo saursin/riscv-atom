@@ -5,6 +5,7 @@
 //      to read and write to the CSR registers
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "../common/Utils.vh"
 
 module CSR_Unit#
 (

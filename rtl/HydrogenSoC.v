@@ -14,7 +14,7 @@
 `ifdef SYNTHESIS_YOSYS
     // Macros for Yosys
 
-`else
+`else // `SYNTHESIS             (macro for ISE synthesis)
     // Macros for Xilinx ISE
     `define __ROM_INIT_FILE__ "rom.hex"
     `define __RAM_INIT_FILE__ "ram.hex"
