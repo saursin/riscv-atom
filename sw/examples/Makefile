@@ -13,6 +13,9 @@ soctarget ?= None
 # example to compile              (to be overridden)
 ex ?= None
 
+# Compile for simulation          (may be overridden)
+sim ?= false
+
 # Vuart for make run example      (may be overridden)
 vuart ?= None
 
@@ -144,7 +147,7 @@ EXAMPLE_DIRS = $(sort $(dir $(wildcard */)))
 SRC_FILES = $(patsubst %, $(ex)/%, $(src_files))
 
 # atomsim args
-ATOMSIM_ARGS = --maxitr=999999999
+ATOMSIM_ARGS = --maxitr=999999999 --enable-uart-dump
 
 # VUART setting
 ifneq ($(vuart), None)
@@ -153,6 +156,10 @@ endif
 
 ifeq ($(map), true)
     LFLAGS += -Xlinker -Map $(executable).map
+endif
+
+ifeq ($(sim), true)
+    CFLAGS += -DSIM
 endif
 
 .DEFAULT_GOAL := help
