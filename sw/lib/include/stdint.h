@@ -1,6 +1,8 @@
 #ifndef __STDINT_H__
 #define __STDINT_H__
 
+#include "stddef.h"
+
 typedef char int8_t;
 typedef short int16_t;
 typedef int int32_t;
@@ -13,11 +15,6 @@ typedef unsigned long long uint64_t;
 
 typedef int64_t intmax_t;
 typedef uint64_t uintmax_t;
-
-#ifndef __SIZE_T_DEFINED
-#define __SIZE_T_DEFINED
-typedef unsigned long size_t;
-#endif
 
 typedef unsigned long uintptr_t;
 typedef long intptr_t;

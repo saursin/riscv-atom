@@ -1,14 +1,7 @@
 #ifndef __STRING_H__
 #define __STRING_H__
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
-#ifndef __SIZE_T_DEFINED
-#define __SIZE_T_DEFINED
-typedef unsigned long size_t;
-#endif
+#include "stddef.h"
 
 #define NUL '\0'
 

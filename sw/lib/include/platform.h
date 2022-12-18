@@ -1,17 +1,8 @@
 #ifndef __PLATFORM_H__
 #define __PLATFORM_H__
+#include "stddef.h"
 
 // ============== Target Independent Definitions ==============
-// Useful Macros
-#ifndef __SIZE_T_DEFINED
-#define __SIZE_T_DEFINED
-typedef unsigned long size_t;
-#endif
-
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
 
 // Bitmanip Macros
 #define bitset(data, nbit)      ((data) |  (1<<(nbit)))

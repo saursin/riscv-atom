@@ -1,15 +1,7 @@
 #ifndef __STDLIB_H___
 #define __STDLIB_H___
 
-// Define value of NULL pointer constant
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-
-#ifndef __SIZE_T_DEFINED
-#define __SIZE_T_DEFINED
-typedef unsigned long size_t;
-#endif
+#include "stddef.h"
 
 // Define Exit codes
 #define EXIT_FAILURE 1
