@@ -206,11 +206,23 @@ module UART_core
                         send_tx <= 1;
 
                         if(enable_dual_stop_bit & !send_stopbit) begin
-                            send_divcnt <= 0;
                             send_state <= 11;
                             send_stopbit <= 1;
                         end else
-                            send_state <= 0;
+                            send_state <= 12;
+                        
+                        send_divcnt <= 0;
+                    end
+                end
+                12: /* POST STOP HOLD */ begin
+                    /*
+                        This is a dummy state that holds the 
+                        line 1 after stop bit state to prevent 
+                        framing error
+                    */
+                    if (send_divcnt > divisor) begin
+                        send_tx <= 1;
+                        send_state <= 0;    // back to IDLE
                     end
                 end
                 default: /* DATA BITS */ begin
