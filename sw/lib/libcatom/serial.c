@@ -48,11 +48,12 @@ void serial_write(char c)
         // check if Tx is busy    
         if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
         {
-            sleep_us(1);
+            sleep_us(20);
             continue;
         }
 
         REG8(UART_ADDR, UART_REG_THR) = c;
+        sleep_us(5);    // delay between characters
         break;
     }
 }
@@ -64,7 +65,7 @@ char serial_read()
     {
         if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
         {
-            sleep_us(1);
+            sleep_us(20);
             continue;
         }
 
