@@ -50,14 +50,14 @@ char spi_transfer(char b)
         // Falling edge of clock : shift out new data on MOSI
         gpio_write(SPI_SCK, LOW);
 		gpio_write(SPI_MOSI, _spi_bitget(b, i) ? HIGH : LOW);
-		sleep(T_CLK_LOW);
+		sleep_us(T_CLK_LOW);
 
         // read available data on MISO
 		r = ((r << 1) | gpio_read(SPI_MISO));
 
         // Rising edge of clock
 		gpio_write(SPI_SCK, HIGH);
-		sleep(T_CLK_HIGH);
+		sleep_us(T_CLK_HIGH);
 	}
 	return r;
 }

@@ -18,7 +18,7 @@ int W25Q64_CS_PIN = 0; // Default
 void _W25Q64_begin_transaction()
 {
 	gpio_write(W25Q64_CS_PIN, LOW);
-	sleep(T_WAIT_AFTER_CS_LOW);
+	sleep_us(T_WAIT_AFTER_CS_LOW);
 }
 
 
@@ -28,7 +28,7 @@ void _W25Q64_begin_transaction()
  */
 void _W25Q64_end_transaction()
 {
-	sleep(T_WAIT_BEFORE_CS_HIGH);
+	sleep_us(T_WAIT_BEFORE_CS_HIGH);
 	gpio_write(W25Q64_CS_PIN, HIGH);
 }
 
@@ -150,7 +150,7 @@ uint16_t W25Q64_pageProgram(uint16_t sect_no, uint16_t inaddr, uint8_t * buf, ui
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
-		sleep(10);
+		sleep_us(10);
 	return rc;
 }
 
@@ -182,7 +182,7 @@ void W25Q64_eraseSector(uint16_t sect_no, bool flagwait)
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
-		sleep(10);
+		sleep_us(10);
 }
 
 
@@ -214,7 +214,7 @@ bool W25Q64_erase32Block(uint16_t blk_no, bool flagwait)
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
-		sleep(10);
+		sleep_us(10);
 	return true;
 }
 
@@ -247,7 +247,7 @@ bool W25Q64_erase64Block(uint16_t blk_no, bool flagwait)
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
-		sleep(10);
+		sleep_us(10);
 	return true;
 }
 
@@ -266,7 +266,7 @@ bool  W25Q64_eraseAll(bool flagwait)
 
 	// Wait till operation completes
 	while(flagwait && W25Q64_isBusy())
-		sleep(10);
+		sleep_us(10);
 	return true;
 }
 

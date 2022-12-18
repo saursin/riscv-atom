@@ -48,7 +48,7 @@ void serial_write(char c)
         // check if Tx is busy    
         if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
         {
-            sleep(1);
+            sleep_us(1);
             continue;
         }
 
@@ -64,7 +64,7 @@ char serial_read()
     {
         if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
         {
-            sleep(1);
+            sleep_us(1);
             continue;
         }
 

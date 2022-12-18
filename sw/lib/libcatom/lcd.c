@@ -52,8 +52,8 @@ void _lcdbus_write(char nibble)
  */
 void _pulse_en()
 {
-    gpio_write(lcd_pin_en, HIGH); sleep(1);
-    gpio_write(lcd_pin_en, LOW); sleep(1);
+    gpio_write(lcd_pin_en, HIGH); sleep_ms(1);
+    gpio_write(lcd_pin_en, LOW); sleep_ms(1);
 }
 
 
@@ -86,7 +86,7 @@ void lcd_init()
     gpio_write(lcd_pin_d7, LOW);
 
     // --------- Init sequence ------------
-    sleep(50);  // 50ms
+    sleep_ms(50);  // 50ms
 
     // Put LCD in 4 bit mode
     // lcd_write(0, 0x03); 
@@ -147,11 +147,11 @@ void lcd_write(int isData, char byte)
     
     // Write Upper
     _lcdbus_write(byte); _pulse_en();
-    sleep(1);
+    sleep_ms(1);
 
     // Write Lower
     _lcdbus_write(byte << 4); _pulse_en();
-    sleep(1);
+    sleep_ms(1);
 
     // Pull all pins LOW
     gpio_write(lcd_pin_rs, LOW);
@@ -194,7 +194,7 @@ void lcd_putstr(char * str)
 void lcd_clear()
 {
     lcd_write(0, LCD_CLEARDISPLAY);
-    sleep(2);
+    sleep_ms(2);
 }
 
 
@@ -204,7 +204,7 @@ void lcd_clear()
 void lcd_home()
 {
     lcd_write(0, LCD_RETURNHOME);
-    sleep(2);
+    sleep_ms(2);
 }
 
 
