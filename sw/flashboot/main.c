@@ -1,9 +1,9 @@
 #include "platform.h"
-#include "serial.h"
+#include <stdint.h>
 #include "gpio.h"
-
-// #include <stdint.h>
+#include "serial.h"
 #include "time.h"
+#include "mmio.h"
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
@@ -12,16 +12,6 @@ typedef void (*fnc_ptr)(void);
 
 // Get kth bit of number x
 #define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
-
-// #define DELAY_SCALE_FACTOR 1200  // FPGA
-// #define DELAY_SCALE_FACTOR 1  // SIM
-
-// void sleep(long unsigned int count)
-// {
-//     count = count*DELAY_SCALE_FACTOR;
-//     while(count-->0);
-// }
-
 
 //********************** Tiny STDIO **********************
 void putchar(char c)
@@ -99,12 +89,12 @@ void spi_init(struct SPI_Config * cfg)
 void spi_select(struct SPI_Config * cfg)
 {
 	gpio_write(cfg->cs_pin, LOW);
-	sleep(T_WAIT_AFTER_CS_LOW);
+	sleep_us(T_WAIT_AFTER_CS_LOW);
 }
 
 void spi_deselect(struct SPI_Config * cfg)
 {
-	sleep(T_WAIT_BEFORE_CS_HIGH);
+	sleep_us(T_WAIT_BEFORE_CS_HIGH);
     gpio_write(cfg->cs_pin, HIGH);
 }
 
@@ -116,14 +106,14 @@ char spi_transfer(struct SPI_Config * cfg, char b)
         // Falling edge of clock : shift out new data on MOSI
         gpio_write(cfg->sck_pin, LOW);
 		gpio_write(cfg->mosi_pin, _spi_bitget(b, i) ? HIGH : LOW);
-		sleep(T_CLK_LOW);
+		sleep_us(T_CLK_LOW);
 
         // read available data on MISO
 		r = ((r << 1) | gpio_read(cfg->miso_pin));
 
         // Rising edge of clock
 		gpio_write(cfg->sck_pin, HIGH);
-		sleep(T_CLK_HIGH);
+		sleep_us(T_CLK_HIGH);
 	}
 	return r;
 }
@@ -142,9 +132,9 @@ void led_blink(int pin, int count, int delay)
     for(int i=0; i<count; i++) 
     {
         gpio_write(pin, HIGH);
-        sleep(delay);
+        sleep_ms(delay);
         gpio_write(pin, LOW);
-        sleep(delay);
+        sleep_ms(delay);
     }
 }
 
@@ -212,7 +202,7 @@ int main()
     // Blink single (indicates finish of copy operation)
     puts("done\n");
     led_blink(led_pin, 1, 500);
-    sleep(1000);
+    sleep_ms(1000);
 
     // dumphexbuf((uint8_t *)&__approm_start, 1024, 0x000000);
     // dumphexbuf(img, 1024, 0x000000);
