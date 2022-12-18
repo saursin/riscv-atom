@@ -4,3 +4,5 @@
 *.map
 *.objdump
 *.hex
+*.vcd
+*.gtkw
