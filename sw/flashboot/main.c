@@ -12,7 +12,7 @@
 #define FLASH_IMG_SIZE      12 * 1024   // 12 KB
 
 // Enable/Disable UART
-// #define ENABLE_UART
+#define ENABLE_UART
 
 #ifdef ENABLE_UART
 #define D(x) x
