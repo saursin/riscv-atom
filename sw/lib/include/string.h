@@ -52,6 +52,15 @@ size_t strlen(char *s1);
  */
 char *strtok(char *str,char *dptr);
 
+/**
+ * @brief Copy string
+ * 
+ * @param dest destination ptr
+ * @param src source ptr
+ * @return char* destination ptr
+ */
+char * strcpy (char *dest, const char *src);
+
 
 // memory manipulation
 
