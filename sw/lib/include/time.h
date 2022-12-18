@@ -2,27 +2,29 @@
 #define __TIME_H__
 #include "platform.h"
 
-#define SW_SLEEP
-// #define TIMER_SLEEP
-
 typedef unsigned long long int clock_t;
 
-#define DELAY_SCALE_FACTOR 1200
-
-#define CLOCKS_PER_SEC CLK_FREQ
-
 /**
- * @brief sleep for some specified duration
- * 
- * @param count time (in ms)
- */
-void sleep(long unsigned int count);
-
-/**
- * @brief Get current CPU ticks
- * 
+ * @brief Get current CPU ticks (uses cycle csr register)
  * @return clock_t 
  */
  clock_t cycle();
+
+
+/**
+ * @brief sleep for time specified in milliseconds
+ * 
+ * @param ms time (in ms)
+ */
+void sleep_ms(clock_t ms);
+
+
+/**
+ * @brief sleep for time specified in microseconds
+ * 
+ * @param ms time (in us)
+ */
+void sleep_us(clock_t ms);
+
 
 #endif //__TIME_H__
