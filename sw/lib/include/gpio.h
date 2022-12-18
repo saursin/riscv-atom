@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// GPIO Register Offsets
-#define GPIO_REG_DAT 0x00
-#define GPIO_REG_TSC 0x04
-#define GPIO_REG_INT 0x08
+typedef enum {
+    LOW=0, 
+    HIGH=1
+} gpio_state_t;
 
-typedef enum {LOW=0, HIGH=1} gpio_state;
-typedef enum {OUTPUT=0, INPUT=1} gpio_direction;
+typedef enum {
+    OUTPUT=0, 
+    INPUT=1
+} gpio_direction_t;
 
 /**
  * @brief Initialize GPIO
@@ -28,15 +30,15 @@ void gpio_reset();
  * @brief Read the current GPIO pin value
  * 
  * @param pin pin number
- * @return gpio_state pin value
+ * @return gpio_state_t pin value
  */
-gpio_state gpio_read(int pin);
+gpio_state_t gpio_read(int pin);
 
 
 /**
  * @brief Read the current GPIO pins
  * 
- * @return gpio_state pin values
+ * @return gpio_state_t pin values
  */
 uint32_t gpio_readw();
 
@@ -46,7 +48,7 @@ uint32_t gpio_readw();
  * @param pin pin number
  * @param state state
  */
-void gpio_write(int pin, gpio_state state);
+void gpio_write(int pin, gpio_state_t state);
 
 /**
  * @brief Write to GPIO pins
@@ -61,15 +63,15 @@ void gpio_writew(uint32_t state);
  * @param pin pin number
  * @param mode mode (INPUT/OUTPUT)
  */
-void gpio_setmode(int pin, gpio_direction mode);
+void gpio_setmode(int pin, gpio_direction_t mode);
 
 
 /**
  * @brief Get mode of a GPIO pin
  * 
  * @param pin gpio pin
- * @return gpio_direction 
+ * @return gpio_direction_t 
  */
-gpio_direction gpio_getmode(int pin);
+gpio_direction_t gpio_getmode(int pin);
 
 #endif // __GPIO_H__

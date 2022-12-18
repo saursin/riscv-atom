@@ -4,6 +4,11 @@
 // compile only for Hydrogensoc
 #ifdef GPIO
 
+// GPIO Register Offsets
+#define GPIO_REG_DAT 0x00
+#define GPIO_REG_TSC 0x04
+#define GPIO_REG_INT 0x08
+
 void gpio_init()
 {
     return gpio_reset();
@@ -12,12 +17,14 @@ void gpio_init()
 
 void gpio_reset()
 {
+    // Set all pins as outputs
+    REG32(GPIO_ADDR, GPIO_REG_TSC) = 0x00000000;
     // Make all pins LOW
     REG32(GPIO_ADDR, GPIO_REG_DAT) = 0x00000000;
 }
 
 
-gpio_state gpio_read(int pin)
+gpio_state_t gpio_read(int pin)
 {
     uint32_t pinvals = REG32(GPIO_ADDR, GPIO_REG_DAT);
     return bitcheck(pinvals, pin) ? HIGH : LOW;
@@ -30,7 +37,7 @@ uint32_t gpio_readw()
 }
 
 
-void gpio_write(int pin, gpio_state state)
+void gpio_write(int pin, gpio_state_t state)
 {
     uint32_t pinvals = REG32(GPIO_ADDR, GPIO_REG_DAT);
     pinvals = (state == HIGH) ? bitset(pinvals, pin) : bitclear(pinvals, pin);
@@ -44,7 +51,7 @@ void gpio_writew(uint32_t state)
 }
 
 
-void gpio_setmode(int pin, gpio_direction mode)
+void gpio_setmode(int pin, gpio_direction_t mode)
 {
     uint32_t pin_dir = REG32(GPIO_ADDR, GPIO_REG_TSC);
     pin_dir = (mode == INPUT) ? bitset(pin_dir, pin) : bitclear(pin_dir, pin);
@@ -52,11 +59,10 @@ void gpio_setmode(int pin, gpio_direction mode)
 }
 
 
-gpio_direction gpio_getmode(int pin)
+gpio_direction_t gpio_getmode(int pin)
 {
     uint32_t pin_dir = REG32(GPIO_ADDR, GPIO_REG_TSC);
     return bitcheck(pin_dir, pin) ? INPUT : OUTPUT;
 }
-
 
 #endif
