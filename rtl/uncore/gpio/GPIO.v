@@ -61,10 +61,10 @@ wire    [3:0]   we  = {4{wb_we_i & wb_stb_i}} & wb_sel_i;
 wire    [N-1:0] gpio_read_val;
 
 // Holds GPIO pin state to output
-reg     [31:0]  gpio_state = 'd0;
+reg     [31:0]  gpio_state = 32'd0;
 
 // Holds GPIO direction 
-reg     [31:0]  gpio_dir = 'd0;
+reg     [31:0]  gpio_dir = 32'd0;
 
 `UNUSED_VAR(gpio_state)
 `UNUSED_VAR(gpio_dir)
@@ -83,11 +83,11 @@ generate
 endgenerate
 
 
-// Handle Reads & Writes
+// Handle Writes
 always @(posedge wb_clk_i) begin
     if(wb_rst_i) begin
-        gpio_state <= 'd0;
-        gpio_dir <= 'd0;
+        gpio_state <= 32'd0;
+        gpio_dir <= 32'd0;
     end
     else begin
         case(wb_adr_i)
