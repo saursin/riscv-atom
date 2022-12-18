@@ -31,6 +31,8 @@ int xtoi(char *s1)
     return ret;
 }
 
+static int rand_seed = 54973;   // default seed
+
 
 void srand(int x)
 {

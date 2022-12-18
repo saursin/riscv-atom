@@ -32,8 +32,6 @@ int xtoi(char *s1);
 ///////////////////////////////////////////////////////////////////
 // Random Number Generater
 
-static int rand_seed = 54973;   // default seed
-
 /**
  * @brief Seed random number generator
  * 
