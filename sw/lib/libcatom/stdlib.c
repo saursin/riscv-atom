@@ -1,11 +1,5 @@
 #include "stdlib.h"
 
-/**
- * @brief Parse integer from string containing an integer
- * 
- * @param s1 string
- * @return int integer value
- */
 int atoi(char *s1)
 {
     int ret,sig;
@@ -22,12 +16,6 @@ int atoi(char *s1)
 }
 
 
-/**
- * @brief Parse integer from string containing hex value of integer
- * 
- * @param s1 hex string
- * @return int integer value
- */
 int xtoi(char *s1)
 {
     int ret;
@@ -44,22 +32,12 @@ int xtoi(char *s1)
 }
 
 
-/**
- * @brief Seed random number generator
- * 
- * @param x seed
- */
 void srand(int x)
 {
     rand_seed = x;
 }
 
 
-/**
- * @brief Generate random number using a Linear Congruntial Generator algorithm
- * 
- * @return int random integer
- */
 int rand()
 {
     return rand_seed = (rand_seed * 1103515245 + 12345) & RAND_MAX;

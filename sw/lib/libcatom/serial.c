@@ -1,6 +1,8 @@
 #include "platform.h"
-#include "serial.h"
+#include "mmio.h"
 #include "time.h"
+#include "serial.h"
+
 
 void serial_init(UART_Config * cfg)
 {
@@ -39,12 +41,6 @@ UART_Config serial_get_config()
 }
 
 
-/**
- * @brief Write a chracter to serial port
- * 
- * @param c chaaracter
- * @return int 
- */
 void serial_write(char c)
 {
     while(1)    // wait loop
@@ -62,11 +58,6 @@ void serial_write(char c)
 }
 
 
-/**
- * @brief Read character from serial port
- * 
- * @return char 
- */
 char serial_read()
 {
     while(1)

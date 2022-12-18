@@ -1,15 +1,5 @@
 #include "string.h"
 
-
-/**
- * @brief Compares the string pointed to, by str1 to the string 
- * pointed to by str2 at most the first n bytes of str1 and str2.
- *
- * @param s1 string1
- * @param s2 string2
- * @param len number of chars to compare
- * @return int 
- */
 int strncmp(char *s1,char *s2,int len)
 {
     while(--len && *s1 && *s2 && (*s1==*s2)) s1++, s2++;
@@ -18,27 +8,12 @@ int strncmp(char *s1,char *s2,int len)
 }
 
 
-/**
- * @brief Compares the string pointed to, by str1 to the string 
- * pointed to by str2.
- * 
- * @param s1 string1
- * @param s2 string2
- * @return int 
- */
 int strcmp(char *s1, char *s2)
 {
     return strncmp(s1,s2,-1);
 }
 
 
-/**
- * @brief Computes the length of the string str up to but not 
- * including the terminating null character.
- * 
- * @param s1 string
- * @return size_t 
- */
 size_t strlen(char *s1)
 {
     size_t len;
@@ -48,14 +23,12 @@ size_t strlen(char *s1)
     return len;
 }
 
+char * strcpy(char *dest, const char *src)
+{
+    return memcpy(dest, src, strlen(src) + 1);
+}
 
-/**
- * @brief Breaks string str into a series of tokens separated by delim.
- * 
- * @param str string
- * @param dptr delimiter
- * @return char* 
- */
+
 char *strtok(char *str,char *dptr)
 {
     static char *nxt = NULL;
@@ -86,14 +59,6 @@ char *strtok(char *str,char *dptr)
 
 // memory manipulation
 
-/**
- * @brief copy a block of memory from a location to another
- * 
- * @param dptr destintion pointer
- * @param sptr source pointer
- * @param len length of block (in bytes)
- * @return char* dptr
- */
 char *memcpy(char *dptr, char *sptr,int len)
 {
     char *ret = dptr;
@@ -103,14 +68,6 @@ char *memcpy(char *dptr, char *sptr,int len)
 }
 
 
-/**
- * @brief Fill a block of memory with given value
- * 
- * @param dptr destintion pointer
- * @param x value to be filled
- * @param len length of the block (in bytes)
- * @return char* 
- */
 char *memset(char *dptr, int x, int len)
 {
     char *ret = dptr;

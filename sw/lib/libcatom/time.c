@@ -1,13 +1,7 @@
 #include <stdint.h>
-#include <csr.h>
-
+#include "csr.h"
 #include "time.h"
 
-/**
- * @brief sleep for some specified duration
- * 
- * @param count time (in ms)
- */
 void sleep(long unsigned int count)
 {
     #ifdef SW_SLEEP
@@ -17,11 +11,6 @@ void sleep(long unsigned int count)
 }
 
 
-/**
- * @brief Get current CPU ticks
- * 
- * @return clock_t 
- */
 clock_t cycle()
 {
     union 

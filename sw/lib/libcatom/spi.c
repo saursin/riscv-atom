@@ -29,9 +29,6 @@ int _spi_bitget(int x, int k)
 
 //////////////////////////////////////////////////////////////
 // API Functions
-/**
- * @brief Initialize SPI
- */
 void spi_init()
 {
     // Set PinModes
@@ -45,12 +42,6 @@ void spi_init()
 }
 
 
-/**
- * @brief Transfer a byte of data (Send as well as recieve)
- * 
- * @param b 
- * @return char 
- */
 char spi_transfer(char b)
 {
 	char r = 0;
@@ -72,14 +63,6 @@ char spi_transfer(char b)
 }
 
 
-/**
- * @brief Transfer multiple bytes of data (Send as well as recieve)
- * 
- * @param send_buf 
- * @param recv_buf 
- * @param len 
- * @return char 
- */
 char *spi_transfer_buf(char *send_buf, char *recv_buf, unsigned int len)
 {
     for(unsigned int i=0; i<len; i++)

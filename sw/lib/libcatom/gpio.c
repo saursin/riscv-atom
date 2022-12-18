@@ -1,4 +1,5 @@
 #include "platform.h"
+#include "mmio.h"
 #include "gpio.h"
 
 // compile only for Hydrogensoc

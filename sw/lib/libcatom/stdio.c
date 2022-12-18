@@ -21,22 +21,13 @@ void _stdio_init()
     serial_init(&cfg);
 }
 
-/**
- * @brief Reads a character from stdin
- * 
- * @return int character
- */
+
 int getchar(void)
 {
     return (int) serial_read();
 }
 
 
-/**
- * @brief Writes a character to stdout.
- * 
- * @param chr character
- */
 void putchar(char chr)
 {
     #ifdef SEND_CR_BEFORE_LF
@@ -50,14 +41,6 @@ void putchar(char chr)
 ///////////////////////////////////////////////////////////////////
 // Other Functions use getchar and putchar
 
-/**
- * @brief reads a line from stdin and stores it into the string pointed to by str
- * 
- * @param str string pointer
- * @param bufsize max size of string object
- * @param echo if enabed, sends the recieved char to stdout
- * @param prompt print prompt before actual string
- */
 char *gets(char * str, int bufsize, bool echo, char * prompt)
 {
     char *ptr = str;
@@ -127,11 +110,6 @@ char *gets(char * str, int bufsize, bool echo, char * prompt)
 }
 
 
-/**
- * @brief writes a string to stdout.
- * 
- * @param ptr pointer to the string 
- */
 void puts(char *ptr)
 {
     while(*ptr) 
@@ -139,13 +117,6 @@ void puts(char *ptr)
 }
 
 
-/**
- * @brief Writes an integer (signed) to stdout
- * 
- * @param n number
- * @param base base
- * @param uppercase upprtcase flag
- */
 void putint(long long n, int base, bool uppercase)
 {
     // If number is smaller than 0, put a - sign
@@ -196,13 +167,6 @@ void putint(long long n, int base, bool uppercase)
 }
 
 
-/**
- * @brief Sends a hexadecimal value to std out
- * 
- * @param val integer value
- * @param digits no of digits to print
- * @param uppercase uppercase flag
- */
 void puthex(unsigned int val, int digits, bool uppercase)
 {
 	for (int i = (4*digits)-4; i >= 0; i -= 4)
@@ -215,13 +179,6 @@ void puthex(unsigned int val, int digits, bool uppercase)
 }
 
 
-/**
- * @brief Printf function
- * 
- * @param fmt format specifier string (with placeholders)
- * @param ... values for placeholders
- * @return int 
- */
 int printf(char *fmt,...)
 {
     va_list ap;
