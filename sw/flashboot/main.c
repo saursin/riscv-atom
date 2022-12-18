@@ -5,6 +5,27 @@
 #include "time.h"
 #include "mmio.h"
 
+// Address offset at which image resides
+#define FLASH_IMG_OFFSET    0x00000000
+
+// Size of Image
+#define FLASH_IMG_SIZE      12 * 1024   // 12 KB
+
+// Enable/Disable UART
+// #define ENABLE_UART
+
+#ifdef ENABLE_UART
+#define D(x) x
+#else
+#define D(x)
+#endif
+
+// number of flashes to indicate entering of bootloader
+#define START_LED_FLASHES   3
+
+// Clear screen at start of bootloader
+#define CLS_AT_START
+
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
 
@@ -13,6 +34,7 @@ typedef void (*fnc_ptr)(void);
 // Get kth bit of number x
 #define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
 
+#ifdef ENABLE_UART
 //********************** Tiny STDIO **********************
 void putchar(char c)
 {
@@ -56,6 +78,7 @@ void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
     }
     putchar('\n');
 }
+#endif
 
 //********************** Bitbang SPI **********************
 // Timing
@@ -160,7 +183,9 @@ uint8_t *flash_read(struct SPI_Config * cfg, uint8_t *buf, uint32_t addr, uint32
 //***************************************************
 int main()
 {
-    // Initialize
+    // ********** Initialize **********
+
+    // Initialize SPI
     const int led_pin = 0;
     /* struct SPI_Config spi_cfg = {    // doesn't work
         .cs_pin = 4,
@@ -175,10 +200,12 @@ int main()
     spi_cfg.mosi_pin = 13;
     spi_cfg.miso_pin = 14;
 
-    spi_init(&spi_cfg);   
+    spi_init(&spi_cfg);
+
+    // Initialize status led gpio pin
     gpio_setmode(led_pin, OUTPUT);
 
-
+    #ifdef ENABLE_UART
     // Initialize UART
     REG32(UART_ADDR, UART_REG_DIV) = 102;   
     uint32_t lcr = 0;
@@ -187,35 +214,34 @@ int main()
     REG32(UART_ADDR, UART_REG_LCR) = lcr;
     // clear any garbage from data register by reading it once
     REG32(UART_ADDR, UART_REG_RBR);
+    #endif
 
-    // putchar(0x1b); putchar('c');  // clear screen
-    puts("*** FlashBoot ***\n");
-    puts("Reading... ");
-    // Blink thrice (indicates start of copy operation)
-    led_blink(led_pin, 3, 50);
+    led_blink(led_pin, START_LED_FLASHES, 50);      // Blink LED START_LED_FLASHES times (signal entering of bootloader)
 
-    // Read & Copy
-    const uint32_t flash_start_addr = 0x00000000;
-    // flash_read(&spi_cfg, img, flash_start_addr, 1024);
-    flash_read(&spi_cfg, (uint8_t *)&__approm_start, flash_start_addr, 12*1024);
+    // Print header
+    #ifdef CLS_AT_START
+    D(putchar(0x1b); putchar('c');)  // clear screen
+    #endif
+    D(puts("********** FlashBoot **********\n");)
 
-    // Blink single (indicates finish of copy operation)
-    puts("done\n");
-    led_blink(led_pin, 1, 500);
-    sleep_ms(1000);
 
-    // dumphexbuf((uint8_t *)&__approm_start, 1024, 0x000000);
-    // dumphexbuf(img, 1024, 0x000000);
-    
-    // Jump to user application
-    puts("Jumping to user application\n-------------------------------------------------------\n");
+    // ********** Read & Copy **********
+    D(puts("Reading... ");)
+    flash_read(&spi_cfg, (uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+    D(puts("done!\n");)
+
+
+    // ********** Jump to user application **********
+    led_blink(led_pin, 1, 500);                     // Blink single (signal jump to user code)
+    D(puts("Jumping to user application\n------------------------------\n"););
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
     app_main();
 
-    // UNREACHABLE
+    // ** UNREACHABLE **
     gpio_setmode(led_pin, OUTPUT);
     while(1){
         gpio_write(led_pin, HIGH);
-        puts("FLASHBOOT_ERR: UNREACHABLE\n");
+        D(puts("FLASHBOOT_ERR: UNREACHABLE\n");)
+        sleep_ms(100);
     }
 }
