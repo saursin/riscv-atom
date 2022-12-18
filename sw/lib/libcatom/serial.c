@@ -53,7 +53,6 @@ void serial_write(char c)
         }
 
         REG8(UART_ADDR, UART_REG_THR) = c;
-        sleep_us(5);    // delay between characters
         break;
     }
 }
