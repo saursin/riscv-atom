@@ -113,7 +113,6 @@ VSRCS += $(RTL_DIR)/uncore/uart/UART.v
 VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
 
 VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
-VFLAGS += -D__RAM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/ram.hex"'
 
 SRCS += bitbang_uart.cpp
 SIM_BACKEND_FILE := backend_hydrogensoc.cpp

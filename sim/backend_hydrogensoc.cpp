@@ -20,7 +20,7 @@
 // #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"
 // #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ae_Mz1.h"
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz2.h"
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af.h"
 #include "build/verilated/VHydrogenSoC_UART.h"
 
 #ifdef DBG

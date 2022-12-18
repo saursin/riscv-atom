@@ -17,7 +17,6 @@
 `else // `SYNTHESIS             (macro for ISE synthesis)
     // Macros for Xilinx ISE
     `define __ROM_INIT_FILE__ "rom.hex"
-    `define __RAM_INIT_FILE__ "ram.hex"
 `endif
 `endif
 
@@ -224,7 +223,7 @@ module HydrogenSoC(
 
     SinglePortRAM_wb #(
         .ADDR_WIDTH(RAM_ADR_SIZE),
-        .MEM_FILE(`__RAM_INIT_FILE__)
+        .MEM_FILE()
     ) ram 
     (
         .wb_clk_i   (wb_clk_i),

@@ -1,5 +1,5 @@
 set rtl_dir                 ../../rtl
-set rd_vrlg_flags           "-DSYNTHESIS_YOSYS -D__ROM_INIT_FILE__=\"init.hex\" -D__RAM_INIT_FILE__=\"init.hex\" -I ../../rtl -I ../../rtl/common -I ../../rtl/core -DRV_E"
+set rd_vrlg_flags           "-DSYNTHESIS_YOSYS -D__ROM_INIT_FILE__=\"init.hex\" -I ../../rtl -I ../../rtl/common -I ../../rtl/core -DRV_E"
 set verilog_topmodule       HydrogenSoC
 
 # Verilog Files
