@@ -30,11 +30,11 @@
 
 // ROM
 `define ROM_ADDR        32'h0001_0000
-`define ROM_SIZE        32'h0000_4000   // 16 KB
+`define ROM_SIZE        32'h0000_8000   // 32 KB
 
 // RAM
 `define RAM_ADDR        32'h2000_0000
-`define RAM_SIZE        32'h0000_8000   // 32 KB
+`define RAM_SIZE        32'h0000_4000   // 16 KB
 
 // UART
 `define UART_ADDR       32'h4000_0000

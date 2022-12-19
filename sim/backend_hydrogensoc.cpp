@@ -35,11 +35,11 @@
 
 // ROM
 #define ROM_ADDR 0x00010000
-#define ROM_SIZE 0x00004000 // 16 KB
+#define ROM_SIZE 0x00008000 // 32 KB
 
 // RAM
 #define RAM_ADDR 0x20000000
-#define RAM_SIZE 0x00008000 // 32 KB
+#define RAM_SIZE 0x00004000 // 16 KB
 
 Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim, &(sim->simstate_)),
                                                                         config_(config),

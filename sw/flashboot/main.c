@@ -10,7 +10,7 @@
 #define FLASH_IMG_OFFSET    0x000c0000
 
 // Size of Image
-#define FLASH_IMG_SIZE      12 * 1024   // 12 KB
+#define FLASH_IMG_SIZE      28 * 1024   // 28 KB
 
 // Enable/Disable UART
 #define ENABLE_UART

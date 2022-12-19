@@ -15,10 +15,10 @@
 // ============== Target Specific Definitions ==============
 #ifdef TARGET_HYDROGENSOC
     #define MEM_ROM_BEGIN   0x00010000
-    #define MEM_ROM_SIZE    16*1024        // 16 KB
+    #define MEM_ROM_SIZE    32*1024        // 32 KB
 
     #define MEM_RAM_BEGIN   0x20000000
-    #define MEM_RAM_SIZE    32*1024         // 32 KB
+    #define MEM_RAM_SIZE    16*1024        // 16 KB
 
     // ---------- UART ------------
     #define UART_ADDR 0x40000000
