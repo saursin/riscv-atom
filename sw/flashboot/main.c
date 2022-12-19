@@ -6,7 +6,7 @@
 #include "mmio.h"
 
 // Address offset at which image resides
-#define FLASH_IMG_OFFSET    0x00000000
+#define FLASH_IMG_OFFSET    0x000c0000
 
 // Size of Image
 #define FLASH_IMG_SIZE      12 * 1024   // 12 KB
@@ -23,6 +23,9 @@
 // number of flashes to indicate entering of bootloader
 #define START_LED_FLASHES   3
 
+// number of flashes to indicate entering of user application
+#define END_LED_FLASHES   1
+
 // Clear screen at start of bootloader
 #define CLS_AT_START
 
@@ -30,9 +33,6 @@ extern uint32_t __approm_start;
 extern uint32_t __approm_size;
 
 typedef void (*fnc_ptr)(void);
-
-// Get kth bit of number x
-#define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
 
 #ifdef ENABLE_UART
 //********************** Tiny STDIO **********************
@@ -48,46 +48,13 @@ void puts(char *ptr)
     while (*ptr)
         putchar(*ptr++);
 }
-
-void puthex(unsigned int val, int digits)
-{
-	for (int i = (4*digits)-4; i >= 0; i -= 4)
-        putchar("0123456789abcdef"[(val >> i) % 16]);
-}
-
-void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
-{
-    const int bpw = 4; // bytes per word
-    const int wpl = 4; // words per line
-
-    for (unsigned i=0; i<len; i++) {
-        // print address at the start of the line
-        if(i%(wpl*bpw) == 0) {
-            puthex(base_addr+i, 8); puts(": ");
-        }
-        
-        // print byte
-        puthex(0xff & buf[i], 2); putchar(' ');
-        
-        // extra space at word boundry
-        if(i%bpw == bpw-1)
-            putchar(' ');
-        
-        if(i%(wpl*bpw) == (wpl*bpw-1)) // end of line 
-            putchar('\n');
-    }
-    putchar('\n');
-}
 #endif
 
 //********************** Bitbang SPI **********************
-// Timing
-#define T_WAIT_AFTER_CS_LOW 0
-#define T_WAIT_BEFORE_CS_HIGH 0
-#define T_CLK_HIGH 0
-#define T_CLK_LOW 0
-#define T_WAIT_AFTER_BYTE 0
+// Get kth bit of number x
+#define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
 
+// Timing
 struct SPI_Config {
     uint8_t cs_pin;
     uint8_t sck_pin;
@@ -112,12 +79,10 @@ void spi_init(struct SPI_Config * cfg)
 void spi_select(struct SPI_Config * cfg)
 {
 	gpio_write(cfg->cs_pin, LOW);
-	sleep_us(T_WAIT_AFTER_CS_LOW);
 }
 
 void spi_deselect(struct SPI_Config * cfg)
 {
-	sleep_us(T_WAIT_BEFORE_CS_HIGH);
     gpio_write(cfg->cs_pin, HIGH);
 }
 
@@ -129,14 +94,12 @@ char spi_transfer(struct SPI_Config * cfg, char b)
         // Falling edge of clock : shift out new data on MOSI
         gpio_write(cfg->sck_pin, LOW);
 		gpio_write(cfg->mosi_pin, _spi_bitget(b, i) ? HIGH : LOW);
-		sleep_us(T_CLK_LOW);
 
         // read available data on MISO
 		r = ((r << 1) | gpio_read(cfg->miso_pin));
 
         // Rising edge of clock
 		gpio_write(cfg->sck_pin, HIGH);
-		sleep_us(T_CLK_HIGH);
 	}
 	return r;
 }
@@ -232,7 +195,7 @@ int main()
 
 
     // ********** Jump to user application **********
-    led_blink(led_pin, 1, 500);                     // Blink single (signal jump to user code)
+    led_blink(led_pin, END_LED_FLASHES, 50);                     // Blink single (signal jump to user code)
     D(puts("Jumping to user application\n------------------------------\n"););
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
     app_main();
