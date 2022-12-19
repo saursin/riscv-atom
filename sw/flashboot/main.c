@@ -5,6 +5,7 @@
 #include "time.h"
 #include "mmio.h"
 
+//--------------------- Settings -----------------------------
 // Address offset at which image resides
 #define FLASH_IMG_OFFSET    0x000c0000
 
@@ -14,12 +15,6 @@
 // Enable/Disable UART
 #define ENABLE_UART
 
-#ifdef ENABLE_UART
-#define D(x) x
-#else
-#define D(x)
-#endif
-
 // number of flashes to indicate entering of bootloader
 #define START_LED_FLASHES   3
 
@@ -28,11 +23,22 @@
 
 // Clear screen at start of bootloader
 #define CLS_AT_START
+//------------------------------------------------------------
+
+#define STRINGIFY(s) #s
+#define EXPAND_AND_STRINGIFY(s) STRINGIFY(s)
+
+#ifdef ENABLE_UART
+#define D(x) x
+#else
+#define D(x)
+#endif
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
 
 typedef void (*fnc_ptr)(void);
+
 
 #ifdef ENABLE_UART
 //********************** Tiny STDIO **********************
@@ -49,6 +55,7 @@ void puts(char *ptr)
         putchar(*ptr++);
 }
 #endif
+
 
 //********************** Bitbang SPI **********************
 // Get kth bit of number x
@@ -76,16 +83,6 @@ void spi_init(struct SPI_Config * cfg)
 	gpio_write(cfg->mosi_pin, LOW);
 }
 
-void spi_select(struct SPI_Config * cfg)
-{
-	gpio_write(cfg->cs_pin, LOW);
-}
-
-void spi_deselect(struct SPI_Config * cfg)
-{
-    gpio_write(cfg->cs_pin, HIGH);
-}
-
 char spi_transfer(struct SPI_Config * cfg, char b)
 {
 	char r = 0;
@@ -102,13 +99,6 @@ char spi_transfer(struct SPI_Config * cfg, char b)
 		gpio_write(cfg->sck_pin, HIGH);
 	}
 	return r;
-}
-
-char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, unsigned int len)
-{
-    for(unsigned int i=0; i<len; i++)
-        *send_buf++ = spi_transfer(cfg, *recv_buf++);
-    return recv_buf;
 }
 
 
@@ -131,14 +121,24 @@ void led_blink(int pin, int count, int delay)
 uint8_t *flash_read(struct SPI_Config * cfg, uint8_t *buf, uint32_t addr, uint32_t len)
 {
 	uint8_t *rval = buf;
-    spi_select(cfg);
+
+    // Deassert CS (Start Txn)
+	gpio_write(cfg->cs_pin, LOW);
+
+    // Send CMD
     spi_transfer(cfg, FLASH_CMD_READ);
+
+    // Send Addr
     spi_transfer(cfg, addr >> 16);
 	spi_transfer(cfg, addr >> 8);
 	spi_transfer(cfg, addr);
+
+    // Get Data
     for(uint32_t i=0; i<len; i++)
 		*(buf++) = spi_transfer(cfg, 0x00);
-	spi_deselect(cfg);
+	
+    // Assert CS (Finish Txn)
+    gpio_write(cfg->cs_pin, HIGH);
 	return rval;
 }
 
@@ -147,9 +147,12 @@ uint8_t *flash_read(struct SPI_Config * cfg, uint8_t *buf, uint32_t addr, uint32
 int main()
 {
     // ********** Initialize **********
+    // Initialize status led gpio pin
+    const int led_pin = 0;
+    gpio_setmode(led_pin, OUTPUT);
+    led_blink(led_pin, START_LED_FLASHES, 50);      // Blink LED START_LED_FLASHES times (signal entering of bootloader)
 
     // Initialize SPI
-    const int led_pin = 0;
     /* struct SPI_Config spi_cfg = {    // doesn't work
         .cs_pin = 4,
         .sck_pin = 7,
@@ -165,9 +168,6 @@ int main()
 
     spi_init(&spi_cfg);
 
-    // Initialize status led gpio pin
-    gpio_setmode(led_pin, OUTPUT);
-
     #ifdef ENABLE_UART
     // Initialize UART
     REG32(UART_ADDR, UART_REG_DIV) = 102;   
@@ -179,8 +179,6 @@ int main()
     REG32(UART_ADDR, UART_REG_RBR);
     #endif
 
-    led_blink(led_pin, START_LED_FLASHES, 50);      // Blink LED START_LED_FLASHES times (signal entering of bootloader)
-
     // Print header
     #ifdef CLS_AT_START
     D(putchar(0x1b); putchar('c');)  // clear screen
@@ -189,9 +187,9 @@ int main()
 
 
     // ********** Read & Copy **********
-    D(puts("Reading... ");)
+    D(puts("Reading from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) " - ");)
     flash_read(&spi_cfg, (uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
-    D(puts("done!\n");)
+    D(puts("Done!\n");)
 
 
     // ********** Jump to user application **********
@@ -199,6 +197,7 @@ int main()
     D(puts("Jumping to user application\n------------------------------\n"););
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
     app_main();
+
 
     // ** UNREACHABLE **
     gpio_setmode(led_pin, OUTPUT);
