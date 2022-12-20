@@ -43,31 +43,17 @@ UART_Config serial_get_config()
 
 void serial_write(char c)
 {
-    while(1)    // wait loop
-    {
-        // check if Tx is busy    
-        if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
-        {
-            sleep_us(20);
-            continue;
-        }
-
-        REG8(UART_ADDR, UART_REG_THR) = c;
-        break;
-    }
+    // Wait till THR is clear
+    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
+        asm volatile("");
+    REG8(UART_ADDR, UART_REG_THR) = c;
 }
 
 
 char serial_read()
 {
-    while(1)
-    {
-        if(! bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
-        {
-            sleep_us(20);
-            continue;
-        }
-
-        return REG8(UART_ADDR, UART_REG_RBR);
-    }
+    // Wait till RBR has anything
+    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
+        asm volatile("");
+    return REG8(UART_ADDR, UART_REG_RBR);
 }
