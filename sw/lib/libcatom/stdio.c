@@ -5,23 +5,6 @@
 
 ///////////////////////////////////////////////////////////////////
 // getchar & Putchar use Low-level Serial ports
-
-void _stdio_init()
-{
-    UART_Config cfg = {
-        .baud = 115200,
-        .rx_enable = false,
-        .tx_enable = true,
-        .dual_stop_bits = false,
-        .enable_parity_bit = false,
-        .even_parity = false,
-        .loopback_enable = true        
-    };
-
-    serial_init(&cfg);
-}
-
-
 int getchar(void)
 {
     return (int) serial_read();
@@ -266,4 +249,28 @@ int printf(char *fmt,...)
     va_end(ap);
 
     return 0;
+}
+
+void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
+{
+    const int bpw = 4; // bytes per word
+    const int wpl = 4; // words per line
+
+    for (unsigned i=0; i<len; i++) {
+        // print address at the start of the line
+        if(i%(wpl*bpw) == 0) {
+            puthex(base_addr+i, 8, false); puts(": ");
+        }
+        
+        // print byte
+        puthex(0xff & buf[i], 2, false); putchar(' ');
+        
+        // extra space at word boundry
+        if(i%bpw == bpw-1)
+            putchar(' ');
+        
+        if(i%(wpl*bpw) == (wpl*bpw-1)) // end of line 
+            putchar('\n');
+    }
+    putchar('\n');
 }

@@ -2,6 +2,7 @@
 #define __STDIO_H__
 
 #include <stdbool.h>
+#include "serial.h"
 
 // Send Carrige Return before Linefeed
 #define SEND_CR_BEFORE_LF
