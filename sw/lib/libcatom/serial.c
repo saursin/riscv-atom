@@ -3,8 +3,14 @@
 #include "time.h"
 #include "serial.h"
 
+void serial_init(uint32_t baud_rate)
+{
+    Serial_Config uart_config = Serial_Config_default;
+    uart_config.baud = baud_rate;
+    serial_set_config(&uart_config);
+}
 
-void serial_init(UART_Config * cfg)
+void serial_set_config(Serial_Config *cfg)
 {
     // Set Baud 
     uint32_t fratio = (CLK_FREQ/cfg->baud);
@@ -24,9 +30,9 @@ void serial_init(UART_Config * cfg)
     REG32(UART_ADDR, UART_REG_RBR);
 }
 
-UART_Config serial_get_config()
+Serial_Config serial_get_config()
 {
-    UART_Config cfg;
+    Serial_Config cfg;
 
     // Read LCR
     uint32_t lcr = REG32(UART_ADDR, UART_REG_LCR);

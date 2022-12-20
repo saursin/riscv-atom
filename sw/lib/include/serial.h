@@ -31,20 +31,19 @@
 
 
 // Baud Rates
-typedef enum
-{
-    B_4800   = 4800,
-    B_9600   = 9600,
-    B_14400  = 14400,
-    B_19200  = 19200,
-    B_28800  = 28800,
-    B_38400  = 38400,
-    B_57600  = 57600,
-    B_115200 = 115200,
+#define UART_BAUD_4800      4800
+#define UART_BAUD_9600      9600
+#define UART_BAUD_14400     14400
+#define UART_BAUD_19200     19200
+#define UART_BAUD_28800     28800
+#define UART_BAUD_38400     38400
+#define UART_BAUD_57600     57600
+#define UART_BAUD_115200    115200
+#define UART_BAUD_DEFAULT   115200
 
-    B_DEFAULT = 9600
-} serial_baudrate;
-
+/**
+ * @brief Serial configuration struct
+ */
 typedef struct {
     unsigned baud;
     bool rx_enable;
@@ -53,38 +52,43 @@ typedef struct {
     bool enable_parity_bit;
     bool even_parity;
     bool loopback_enable;
-}  UART_Config;
+}  Serial_Config;
+
+
+// Default settings
+#define Serial_Config_default  {  \
+    .baud = UART_BAUD_DEFAULT,  \
+    .rx_enable = true,          \
+    .tx_enable = true,          \
+    .dual_stop_bits = false,    \
+    .enable_parity_bit = false, \
+    .even_parity = false,       \
+    .loopback_enable = false    \
+}                               \
+
 
 /**
- * @brief Initialize Serial port
+ * @brief Initializes uart with default settings 
+ * and provided baud rate
  * 
- * @param baud baud rate
+ * @param baud_rate baud rate
  */
-void serial_init(UART_Config * cfg);
+void serial_init(uint32_t baud_rate);
 
 
 /**
- * @brief Get current config
+ * @brief Initializes serial port with given configuration
+ * @param cfg pointer to config struct
+ */
+void serial_set_config(Serial_Config * cfg);
+
+
+/**
+ * @brief Get current serial configuration
  * 
  * @return UART_Config cfg
  */
-UART_Config serial_get_config();
-
-
-/**
- * @brief Set baudrate
- * 
- * @param baud baudrate
- */
-void serial_setBaud(serial_baudrate baud);
-
-
-/**
- * @brief Get serial status
- * 
- * @return char 
- */
-char serial_getStatus();
+Serial_Config serial_get_config();
 
 
 /**
