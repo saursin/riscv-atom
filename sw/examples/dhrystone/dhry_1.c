@@ -16,13 +16,14 @@
  */
 
 #include "dhry.h"
-#include <string.h>
-#include <serial.h>
-#include <stdio.h>
 
-  #ifndef DHRY_ITERS
-  #define DHRY_ITERS 2000
-  #endif
+
+#ifdef RISCV
+#include <stdio.h>
+#ifndef DHRY_ITERS
+#define DHRY_ITERS 2000
+#endif
+#endif
 
 /* Global Variables: */
 
@@ -94,7 +95,7 @@ main ()
   REG   int             Number_Of_Runs;
 
   /* Initializations */
-  #ifndef SIM
+  #ifdef RISCV
   UART_Config cfg = UART_Config_default;
   serial_init(&cfg);
   #endif
@@ -129,7 +130,7 @@ main ()
     printf ("Program compiled without 'register' attribute\n");
     printf ("\n");
   }
-#ifdef DHRY_ITERS
+#ifdef RISCV
   Number_Of_Runs = DHRY_ITERS;
 #else
   printf ("Please give the number of runs through the benchmark: ");
@@ -157,7 +158,9 @@ main ()
 #ifdef MSC_CLOCK
   Begin_Time = clock();
 #endif
-
+#ifdef RISCV
+  Begin_Time = rvcycles();
+#endif
   for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
   {
 
@@ -218,6 +221,9 @@ main ()
 #ifdef MSC_CLOCK
   End_Time = clock();
 #endif
+#ifdef RISCV
+  End_Time = rvcycles();
+#endif
 
   printf ("Execution ends\n");
   printf ("\n");
@@ -274,6 +280,19 @@ main ()
 
   User_Time = End_Time - Begin_Time;
 
+#ifdef RISCV
+  printf("Number Of Runs: %d\n", Number_Of_Runs);
+  printf("cycles Elapsed: %d\n", User_Time);
+  
+  int Dhrystones_Per_Second_Per_MHz = (Number_Of_Runs * 1000000) / User_Time;
+  printf("Dhrystones_Per_Second_Per_MHz: %d\n", Dhrystones_Per_Second_Per_MHz);
+
+  int DMIPS_Per_MHz_x1000 = (1000 * Dhrystones_Per_Second_Per_MHz) / 1757;
+  printf("DMIPS_Per_MHz: %d.%d%d%d\n", DMIPS_Per_MHz_x1000 / 1000,
+		(DMIPS_Per_MHz_x1000 / 100) % 10,
+		(DMIPS_Per_MHz_x1000 / 10) % 10,
+		(DMIPS_Per_MHz_x1000 / 1) % 10);
+#else
   if (User_Time < Too_Small_Time)
   {
     printf ("Measured time too small to obtain meaningful results\n");
@@ -293,14 +312,12 @@ main ()
                         / (float) User_Time;
 #endif
     printf ("Microseconds for one run through Dhrystone: ");
-    //printf ("%6.1f \n", Microseconds);
-    printf ("%d \n", (int)Microseconds);
+    printf ("%6.1f \n", Microseconds);
     printf ("Dhrystones per Second:                      ");
-    //printf ("%6.1f \n", Dhrystones_Per_Second);
-    printf ("%d \n", (int)Dhrystones_Per_Second);
+    printf ("%6.1f \n", Dhrystones_Per_Second);
     printf ("\n");
   }
-  
+#endif
 }
 
 

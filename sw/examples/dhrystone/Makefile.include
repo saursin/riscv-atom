@@ -1,3 +1,3 @@
 src_files = dhry_1.c dhry_2.c util.c
 executable = dhrystone.elf
-CFLAGS += -O3 -DTIME
+CFLAGS += -O3 -DRISCV -DTIME

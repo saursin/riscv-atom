@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-extern long time();
+extern long rvcycles();
 // extern long insn();
 
 extern char *malloc();
@@ -17,11 +17,10 @@ extern int printf(const char *format, ...);
 char heap_memory[1024];
 int heap_memory_used = 0;
 
-long time()
+long rvcycles()
 {
 	int cycles;
 	asm volatile ("rdcycle %0" : "=r"(cycles));
-	// printf("[time() -> %d]", cycles);
 	return cycles;
 }
 
