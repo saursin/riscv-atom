@@ -19,8 +19,10 @@ int iterativeFactorial(int n)
 }
 
 int main()
-{ 
-    printf("Calculating Factorials (iterative):\n");
+{
+    serial_init(UART_BAUD_115200);
+ 
+    puts("Calculating Factorials (iterative):\n");
     
     int i;
     for (i=0; i<10; i++)
@@ -28,11 +30,11 @@ int main()
         printf("%d! = %d\n", i, iterativeFactorial(i));
     }
 
-    printf("\nCalculating Factorials (Recursive):\n");
+    puts("\nCalculating Factorials (Recursive):\n");
     
     for (i=0; i<10; i++)
     {
         printf("%d! = %d\n", i, recursiveFactorial(i));
     }
-
+    return 0;
 }

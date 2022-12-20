@@ -96,8 +96,7 @@ main ()
 
   /* Initializations */
   #ifdef RISCV
-  UART_Config cfg = UART_Config_default;
-  serial_init(&cfg);
+  serial_init(UART_BAUD_115200);
   #endif
   
   Next_Ptr_Glob = (Rec_Pointer) malloc (sizeof (Rec_Type));

@@ -1,6 +1,5 @@
+#include "platform.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <platform.h>
 
 char * banner = 
 "\n"
@@ -28,13 +27,12 @@ char * banner =
 " /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
 "/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
 
-
 int main()
 {
+    serial_init(UART_BAUD_115200);
     puts(banner);
-
     printf("ROM size: %d\tbytes\t(%d KB)\n", MEM_ROM_SIZE, MEM_ROM_SIZE/1024);
     printf("RAM size: %d\tbytes\t(%d KB)\n", MEM_RAM_SIZE, MEM_RAM_SIZE/1024);
-
-    printf("exiting...\n");
+    puts("exiting...\n");
+    return 0;
 }

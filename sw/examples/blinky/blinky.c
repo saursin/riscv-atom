@@ -1,31 +1,8 @@
+#include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
-#include <serial.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-// #define VUART
-
-#ifdef ATOMSIM
 #include <gpio.h>
-
-bool LEDS[8] = {false, false, false, false, false, false, false, false};
-
-void print_LEDS()
-{
-    puts("[");
-    for(int i=7; i>=0; i--)
-    {
-        putchar(LEDS[i] ? '@': '-');
-    }
-    #ifdef VUART
-    puts("]\r");
-    #else
-    puts("]\n");
-    #endif
-}
-#endif
-
 
 uint8_t pat1 [] = 
 {
@@ -86,30 +63,10 @@ bool bitget(uint8_t byte, uint8_t n)
 
 void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
 {
-    //gpio_reset();
-    static uint8_t prev_state = 0;
-    static uint8_t curr_state = 0;
-
     for (int indx= reverse?len:0; reverse?(indx>=0):(indx<len); reverse ? indx--: indx++)
     {
-        curr_state = pat[indx];
-        
-        for (uint8_t led=0; led<8; led++)
-        {
-            if(bitget(prev_state, led) != bitget(curr_state, led))
-            {
-                #ifdef ATOMSIM
-                LEDS[led] = bitget(curr_state, led);
-                #endif
-                gpio_write(led, bitget(curr_state, led));
-            }
-        }
-        sleep(delay);
-
-        #ifdef ATOMSIM
-        print_LEDS();
-        #endif
-        prev_state = curr_state;
+        gpio_writew(pat[indx]);
+        sleep_ms(delay);
     }
 }
 
@@ -117,41 +74,41 @@ void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
 
 void main()
 {
-    int delay;
-    gpio_init();
+    serial_init(UART_BAUD_115200);
 
-    #ifndef ATOMSIM
-    serial_init(B_9600);
-    delay = 500;
-    #else
-    delay = 0;
-    #endif
+    gpio_setmode(0, OUTPUT);
+    gpio_setmode(1, OUTPUT);
+    gpio_setmode(2, OUTPUT);
+    gpio_setmode(3, OUTPUT);
+    gpio_setmode(4, OUTPUT);
+    gpio_setmode(5, OUTPUT);
+    gpio_setmode(6, OUTPUT);
+    gpio_setmode(7, OUTPUT);
 
-    gpio_setmode(3, INPUT);
-
-    printf("\nPattern 1: Rolling\n");
+    puts("Pattern 1: Rolling\n");
     for(int i=0; i<4; i++)
-        run_pattern(pat1, sizeof(pat1), 2*delay, false);
+        run_pattern(pat1, sizeof(pat1), 200, false);
     
-    printf("\nPattern 2: Zig Zag\n");
+    puts("Pattern 2: Zig Zag\n");
     for(int i=0; i<4; i++)
-        run_pattern(pat2, sizeof(pat2), 2*delay, false);
+        run_pattern(pat2, sizeof(pat2), 200, false);
 
-    printf("\nPattern 3: Diverge\n");
+    puts("Pattern 3: Diverge\n");
     for(int i=0; i<4; i++)
-        run_pattern(pat3, sizeof(pat3), 2*delay, false);
+        run_pattern(pat3, sizeof(pat3), 200, false);
 
-    printf("\nPattern 3: Converge\n");
+    puts("Pattern 3: Converge\n");
     for(int i=0; i<4; i++)
-        run_pattern(pat3, sizeof(pat3), 2*delay, true);
+        run_pattern(pat3, sizeof(pat3), 200, true);
     
-    printf("\nPattern 4: Sine\n");
+    puts("Pattern 4: Sine\n");
     for(int i=0; i<8; i++)
-        run_pattern(pat4, sizeof(pat4), delay, false);
+        run_pattern(pat4, sizeof(pat4), 200, false);
 
-    printf("\nPattern 5: Alternate\n");
+    puts("Pattern 5: Alternate\n");
     for(int i=0; i<4; i++)
-        run_pattern(pat5, sizeof(pat5), 10*delay, false);
+        run_pattern(pat5, sizeof(pat5), 200, false);
 
+    gpio_reset();
     return;
 }

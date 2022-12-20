@@ -1,4 +1,6 @@
+#include <platform.h>
 #include <stdio.h>
+#include <serial.h>
 #include <time.h>
 
 #define SV \
@@ -7,7 +9,6 @@ __asm__ volatile ("rdcycleh t6");
 
 #define BRK \
 __asm__ volatile ("ebreak");
-
 
 void print_wall_pattern(int height, int width)
 {
@@ -37,6 +38,8 @@ void print_wall_pattern(int height, int width)
 
 int main()
 {
+    serial_init(UART_BAUD_115200);
+
     clock_t start, end;
 
     start = cycle();
@@ -46,8 +49,9 @@ int main()
     puts("\n\n");
     printf("start: %lld\n", start);
     printf("end  : %lld\n", end);
-    printf("-----------------------\n");
+    puts("-----------------------\n");
     printf("diff : %lld\n", end-start);
-    printf("-----------------------\n");
-    printf("CPS  : %lld\n", (long long) CLOCKS_PER_SEC);
+    puts("-----------------------\n");
+    printf("CPS  : %lld\n", (long long) CLK_FREQ);
+    return 0;
 }
