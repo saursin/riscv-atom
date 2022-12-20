@@ -32,6 +32,8 @@ void myprint(int num, int digits)
  * 
  */
 int main() {
+   serial_init(UART_BAUD_115200);
+
    int rows = 8, coef = 1, space, i, j;
 
    printf("First %d rows of pascal's triangle...\n", rows);

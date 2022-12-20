@@ -45,5 +45,6 @@ int main()
     "\n"
     "       INSTRUCTION SETS WANT TO BE FREE\n\n";
 
+    serial_init(UART_BAUD_115200);
     encode(logo, 1030);
 }

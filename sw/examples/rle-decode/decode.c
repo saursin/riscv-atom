@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-
-
 void decode(char *str, unsigned int length)
 {
     unsigned int i = 0;
@@ -16,6 +14,8 @@ void decode(char *str, unsigned int length)
 
 int main()
 {
+    serial_init(UART_BAUD_115200);
+
     char code[270] = 
     {
         0x20,   0xe,    0x76,   0x20,   0xa,    0x1,    0x20,   0x12,   0x76,   0x1c,   0xa,    0x1,    0x72,   0xd,    0x20,   0x7,    0x76,   0x1a, 
