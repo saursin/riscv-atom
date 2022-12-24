@@ -1,14 +1,13 @@
-#include "atomsim.hpp"
-#include "util.hpp"
-
-#include "verilated.h"
-#include "include/cxxopts/cxxopts.hpp"
-
 #include <iostream>
 #include <csignal>
+#include "include/cxxopts/cxxopts.hpp"
+#include "verilated.h"
+
+#include "util.hpp"
+#include "atomsim.hpp"
 
 #ifndef TARGET_HEADER
-#define TARGET_HEADER "backend_atombones.h"
+#error TARGET_HEADER macro not defined
 #endif
 
 // Include appropriate backend-header
@@ -75,9 +74,9 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		;
 
 		options.add_options("Backend Config")
-		("vuart", "use provided virtual uart port", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
-		("vuart-baud", "Specify virtual uart port baudrate", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
-		("enable-uart-dump", "Enable dumping outgoing UART data to stdout", cxxopts::value<bool>(backend_config.enable_stdio_dump)->default_value(std::to_string(default_backend_config.enable_stdio_dump)))
+		("p,vuart-port", "serial port for virtual UART", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
+		("b,vuart-baud", "serial baud rate for virtual UART", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
+		("u,enable-uart-dump", "Enable dumping UART data (from soc) to stdout", cxxopts::value<bool>(backend_config.enable_uart_dump)->default_value(default_backend_config.enable_uart_dump?"true":"false"))
 		
 		#ifdef TARGET_ATOMBONES
 		("imemsize", "Specify size of instruction memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.imem_size_kb)->default_value(std::to_string(default_backend_config.imem_size_kb)))

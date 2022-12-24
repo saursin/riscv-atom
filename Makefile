@@ -22,13 +22,7 @@
 #	#h and #f will be placed at the header abnd footer of help page
 #	respectively.
 #====================================================================#
-
-# Bash color codes
-COLOR_RED 		= \033[0;31m
-COLOR_GREEN 	= \033[0;32m
-COLOR_YELLOW 	= \033[0;33m
-COLOR_CYAN 	    = \033[0;36m
-COLOR_NC 		= \033[0m
+include common.mk
 
 # soctarget variable (should be overridden using CLI)
 soctarget ?= atombones
@@ -53,102 +47,102 @@ endif
 #======================================================================
 
 default: sim lib   					## Build sim, elfdump, and libs
-	@echo "\n$(COLOR_GREEN)=============================="
-	@echo "       Build Succesful!"
-	@echo "==============================$(COLOR_NC)"
-	@echo " - atomsim [$(soctarget)]"
-	@echo " - software libraries"
+	@printf "\n$(CLR_GR)==============================\n"
+	@printf "       Build Succesful!\n"
+	@printf "==============================$(CLR_NC)\n"
+	@printf " - atomsim [$(soctarget)]\n"
+	@printf " - software libraries\n"
 
 all : doxy-pdf default				## Build default with docs
-	@echo " - doxygen-docs in latex, html & pdf "
+	@printf " - doxygen-docs in latex, html & pdf\n"
 
 
 #======== Help ========
 .PHONY : help
 help : Makefile						## Show help message
-	@echo "*** RISC-V Atom root Makefile ***"
-	@echo "Usage:"
-	@echo "	$$ make soctarget=[SOCTARGET] [TARGET]"
-	@echo ""
+	@printf "****** RISC-V Atom Makefile ******\n"
+	@printf "Usage:\n"
+	@printf "	$$ make soctarget=[SOCTARGET] [TARGET]\n"
+	@printf "\n"
 	
-	@echo "SOCTARGETs:"
-	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" "atombones" "A barebone Atom based SoC with simulated memories"
-	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" "hydrogensoc" "A minimal Atom based SoC"
+	@printf "SOCTARGETs:\n"
+	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "atombones" "A barebone Atom based SoC with simulated memories\n"
+	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "hydrogensoc" "A minimal Atom based SoC\n"
 
-	@echo ""
-	@echo "TARGETs:"
-	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n", $$1, $$2}'
-	@echo ""
+	@printf "\n"
+	@printf "TARGETs:\n"
+	@grep -E -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n", $$1, $$2}'
+	@printf "\n"
 	@sed -n 's/^#f //p' Makefile
 
 
 # ======== AtomSim ========
 .PHONY : sim
 sim:                       			## Build atomsim for given target [default: atombones]
-	@echo "$(COLOR_GREEN)>> Building Atomsim for soctarget=$(soctarget) $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Building Atomsim [soctarget:$(soctarget)] $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=1
 
 
 .PHONY: clean-sim
 clean-sim:							## Clean atomsim build files
-	@echo "$(COLOR_GREEN)>> Cleaning atomsim build files $(COLOR_NC)"
-	make $(MKFLAGS) -C $(sim_dir) clean
+	@printf "$(CLR_GR)>> Cleaning atomsim build files $(CLR_NC)\n"
+	make $(MKFLAGS) -C $(sim_dir)  soctarget=$(soctarget) clean
 
 
 # ======== SCAR ========
 .PHONY: scar     			
 scar: $(bin_dir)/$(sim_executable)	## Verify target using scar
-	@echo "$(COLOR_GREEN)>> Running SCAR $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Running SCAR $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(scar_dir)
 
 
 .PHONY: clean-scar
 clean-scar:							## Clean scar directory
-	@echo "$(COLOR_GREEN)>> Cleaning scar working directory$(COLOR_NC)"
+	@printf "$(CLR_GR)>> Cleaning scar working directory$(CLR_NC)\n"
 	make $(MKFLAGS) -C $(scar_dir) clean
 
 
 # ======== ElfDump ========
 .PHONY: elfdump
 elfdump:							## Build elfdump utility
-	@echo "$(COLOR_GREEN)>> Building elfdump $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Building elfdump $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(elfdump_dir)
 
 
 .PHONY: clean-elfdump
 clean-elfdump:					    ## Clean elfdump directory
-	@echo "$(COLOR_GREEN)>> Cleaning elfdump directory [tools/elfdump/bin/*]$(COLOR_NC)"
+	@printf "$(CLR_GR)>> Cleaning elfdump directory [tools/elfdump/bin/*]$(CLR_NC)\n"
 	make $(MKFLAGS) -C $(elfdump_dir) clean
 
 # ======== SW libs ========
 .PHONY: lib
 lib:								## compile software libraries
-	@echo "$(COLOR_GREEN)>> Compiling software libraries $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Compiling software libraries $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget)
 
 
 .PHONY: clean-lib
 clean-lib:							## Clean software libs
-	@echo "$(COLOR_GREEN)>> Cleaning build files for lib $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Cleaning build files for lib $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(lib_dir) clean
 
 
 # ======== Documentation ========
 .PHONY: doxy
 doxy:								## Generate atomsim C++ source documentation
-	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [latex & html]$(COLOR_NC)"
+	@printf "$(CLR_GR)>> Generating Doxygen C++ documentation [latex & html]$(CLR_NC)\n"
 	make $(MKFLAGS) -C $(doxy_dir)
 
 
 .PHONY: doxy-pdf
 doxy-pdf: doxy						## Generate atomsim C++ source documentation (pdf)
-	@echo "$(COLOR_GREEN)>> Generating Doxygen C++ documentation [pdf]$(COLOR_NC)"
+	@printf "$(CLR_GR)>> Generating Doxygen C++ documentation [pdf]$(CLR_NC)\n"
 	make $(MKFLAGS) -C $(doxy_dir) pdf
 
 
 .PHONY: clean-doxy
 clean-doxy:							## Clean build files for Atomsim docs
-	@echo "$(COLOR_GREEN)>> Cleaning docs $(COLOR_NC)"
+	@printf "$(CLR_GR)>> Cleaning docs $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(doxy_dir) clean
 
 
