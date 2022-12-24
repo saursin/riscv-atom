@@ -15,7 +15,7 @@
 
 #include "elfio/elfio.hpp"
 
-#define UART_ADDR 0x08000000
+#define UART_ADDR 0x40000000
 
 #define RV_INSTR_EBREAK 0x100073
 
@@ -33,7 +33,6 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     {
         mem_["imem"] = std::shared_ptr<Memory> (new Memory(config_.imem_size_kb * 1024, config_.imem_offset, true));
         mem_["dmem"] = std::shared_ptr<Memory> (new Memory(config_.dmem_size_kb * 1024, config_.dmem_offset, false));
-        mem_["pmem"] = std::shared_ptr<Memory> (new Memory(1 * 1024, 0x08000000, false));
     }
     catch(const std::exception& e)
     {
@@ -55,11 +54,6 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
         if(sim_->sim_config_.verbose_flag) 
             std::cout << "Initializing dmem:" << std::endl;
         init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
-
-        // initialize uart registers {words at 0x08000000 and 0x08000004}
-        uint8_t b[] = {(uint8_t)-1, 0, 0, 0,
-                       0, 0, 0, 0 };
-        mem_["pmem"]->store(0x08000000, b, 8);
     }
     catch(const std::exception& e)
     {
@@ -76,9 +70,9 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
 
     // ====== Initialize Communication ========
 
-    // create a new vuart object
     if(using_vuart_)
     {	
+        // create a new vuart object
         vuart_ = new Vuart(config_.vuart_portname, config_.vuart_baudrate);
             
         // Clean recieve buffer
@@ -89,7 +83,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     }
     else
     {
-        if(sim_->sim_config_.verbose_flag)
+        if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
             std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
     }
 
@@ -121,9 +115,9 @@ void Backend_atomsim::service_mem_req()
     uint32_t iaddr = tb->m_core->imem_addr_o & 0xfffffffc;
     if(tb->m_core->imem_valid_o == 1)
     {   
-        Word_alias instr_w;
-        mem_["imem"]->fetch(iaddr, instr_w.byte, 4);
-        tb->m_core->imem_data_i = instr_w.word;
+        Word_alias i_w;
+        mem_["imem"]->fetch(iaddr, i_w.byte, 4);
+        tb->m_core->imem_data_i = i_w.word;
         tb->m_core->imem_ack_i = 1;
     }
 
@@ -131,43 +125,50 @@ void Backend_atomsim::service_mem_req()
     uint32_t daddr = tb->m_core->dmem_addr_o & 0xfffffffc;
     if(tb->m_core->dmem_valid_o)
     {
-        bool success = false;
-        for (auto mem_block: mem_)
+        if(tb->m_core->dmem_we_o)	// *** Writes ***
         {
-            std::shared_ptr<Memory> m = mem_block.second;
-            if(m->addr_in_range(daddr))
+            Word_alias data_w = {.word = (uint32_t)tb->m_core->dmem_data_o};
+            if(daddr == UART_ADDR)  // Handle Writes to UART
             {
-                if(tb->m_core->dmem_we_o)	// *** Writes ***
+                if(tb->m_core->dmem_sel_o & 0b0001)
                 {
-                    Word_alias data_w = {.word = (uint32_t)tb->m_core->dmem_data_o};
-
-                    if(tb->m_core->dmem_sel_o & 0b0001) 
-                        m->store(daddr, &data_w.byte[0], 1);
-                    if(tb->m_core->dmem_sel_o & 0b0010) 
-                        m->store(daddr+1, &data_w.byte[1], 1);
-                    if(tb->m_core->dmem_sel_o & 0b0100) 
-                        m->store(daddr+2, &data_w.byte[2], 1);
-                    if(tb->m_core->dmem_sel_o & 0b1000) 
-                        m->store(daddr+3, &data_w.byte[3], 1);
+                    if(using_vuart_)
+                        vuart_->send(data_w.byte[0]);   // Redirect to Virtual UART
+                    
+                    if(config_.enable_uart_dump)
+                        std::cout << data_w.byte[0] << std::flush; // Echo on stdout
                 }
-                else                        // *** Reads ***
-                {
-                    // Read will always result in a fetch word at word boundry just before the address.
-                    Word_alias data_w;
-                    m->fetch(daddr, data_w.byte, 4);
-                    tb->m_core->dmem_data_i = data_w.word;
-                }
-                tb->m_core->dmem_ack_i = 1;
-
-                success = true;
-                break;  // exit search loop
+            }
+            else                    // Handle Writes
+            {
+                if(tb->m_core->dmem_sel_o & 0b0001) 
+                    this->store(daddr, &data_w.byte[0], 1);
+                if(tb->m_core->dmem_sel_o & 0b0010) 
+                    this->store(daddr+1, &data_w.byte[1], 1);
+                if(tb->m_core->dmem_sel_o & 0b0100) 
+                    this->store(daddr+2, &data_w.byte[2], 1);
+                if(tb->m_core->dmem_sel_o & 0b1000) 
+                    this->store(daddr+3, &data_w.byte[3], 1);
             }
         }
-
-        if (!success)
+        else
         {
-            throw Atomsim_exception("Service memory request failed: address not in range of any memory block");
+            Word_alias data_w;
+            if(daddr == UART_ADDR)  // Handle Reads from Uart
+            {
+                if(using_vuart_)
+                    data_w.word = 0xff & (uint32_t) vuart_->recieve();
+                else
+                    data_w.word = (uint32_t) -1;
+            }
+            else                    // Handle reads
+            {
+                
+                this->fetch(daddr, data_w.byte, 4);
+            }
+            tb->m_core->dmem_data_i = data_w.word;
         }
+        tb->m_core->dmem_ack_i = 1;
     }
 }
 
@@ -199,77 +200,78 @@ void Backend_atomsim::refresh_state()
 }
 
 
-void Backend_atomsim::UART()
-{
-    // --------- Atom->port -----------
-    /*
-        Since in classical single wishbone write transaction, wb_we pin remains asserted until 
-        the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
-        of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
-        as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
-        When we find 'we' asserted, we read the value and wait for 2 cycles after it. This 
-        prevents multiple reads of data in same transaction.
-    */		
-    static int wait = 0;
-    if(wait==0 && tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==0x08000000 && tb->m_core->dmem_sel_o==0b0001)
-    {
-        char c = (char)tb->m_core->dmem_data_o;
-
-        if (using_vuart_)
-            vuart_->send(c);
-        else
-            std::cout << c;
-
-        wait=2;	// Wait for 2 cycles
-    } 
+// void Backend_atomsim::UART()
+// {
     
-    if(wait>0)
-    {
-        wait--;
-    }
+//     // --------- Atom->port -----------
+//     /*
+//         Since in classical single wishbone write transaction, wb_we pin remains asserted until 
+//         the	tansaction is marked finish by the slave by setting the wb_ack pin. From prespective
+//         of UART, it sees the we pin high for multiple cycles and it may mistakenly infer it
+//         as multiple rreads/writes to same addrress. This piece of logic is to prevent that.
+//         When we find 'we' asserted, we read the value and wait for 2 cycles after it. This 
+//         prevents multiple reads of data in same transaction.
+//     */		
+//     static int wait = 0;
+//     if(wait==0 && tb->m_core->dmem_valid_o && tb->m_core->dmem_we_o && tb->m_core->dmem_addr_o==UART_ADDR && tb->m_core->dmem_sel_o & 0b0001)
+//     {
+//         char c = (char)tb->m_core->dmem_data_o;
 
-    // --------- Port->atom -----------
-    /*
-        This section of code deals with port to sim uart communication. port->recieve() is 
-        called in every sim cycle (sim tick). value of recieve buffer is stored in 'recv' 
-        variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
-        dummy hardware register of simpluart_wb, and set bit[0] of status register.
-    */
-    static int recv;
-    if(using_vuart_)
-    {
-        recv = vuart_->recieve();
-    }
-    else
-    {
-        recv = (int)-1;
-    }	
+//         if (using_vuart_)
+//             vuart_->send(c);
+//         else
+//             std::cout << c;
+
+//         wait=2;	// Wait for 2 cycles
+//     } 
+    
+//     if(wait>0)
+//     {
+//         wait--;
+//     }
+
+//     // --------- Port->atom -----------
+//     /*
+//         This section of code deals with port to sim uart communication. port->recieve() is 
+//         called in every sim cycle (sim tick). value of recieve buffer is stored in 'recv' 
+//         variable. Now, if (recv!=-1) i.e. a valid character is present, it is stored in the 
+//         dummy hardware register of simpluart_wb, and set bit[0] of status register.
+//     */
+//     static int recv;
+//     if(using_vuart_)
+//     {
+//         recv = vuart_->recieve();
+//     }
+//     else
+//     {
+//         recv = (int)-1;
+//     }	
             
-    if(recv != (int)-1)	// something recieved
-    {
-        uint8_t b[] = {(uint8_t)recv, 0b1};
-        mem_["pmem"]->store(UART_ADDR, b, 2);
-    }
+//     if(recv != (int)-1)	// something recieved
+//     {
+//         uint8_t b[] = {(uint8_t)recv, 0b1};
+//         mem_["pmem"]->store(UART_ADDR, b, 2);
+//     }
 
 
-    // Action to be done if core read/wrote to UART registers in this cycle
-    if(tb->m_core->dmem_valid_o && tb->m_core->dmem_addr_o==UART_ADDR && tb->m_core->dmem_sel_o==0b0001)
-    {
-        if(tb->m_core->dmem_we_o)   // tried to write to DREG
-        {
-            // since dreg is a read only register therefore core writes 
-            // should ideally have no effect, so we restore the value to prev value
-            uint8_t b [] = {(uint8_t) recv};
-            mem_["pmem"]->store(UART_ADDR, b, 1);
-        }
-        else                        // tried to read from DREG
-        {
-            // clear status reg bit[0]
-            uint8_t b[] = {0b0};
-            mem_["pmem"]->store(UART_ADDR + 1, b, 1);
-        }
-    }
-}
+//     // Action to be done if core read/wrote to UART registers in this cycle
+//     if(tb->m_core->dmem_valid_o && tb->m_core->dmem_addr_o==UART_ADDR && tb->m_core->dmem_sel_o==0b0001)
+//     {
+//         if(tb->m_core->dmem_we_o)   // tried to write to DREG
+//         {
+//             // since dreg is a read only register therefore core writes 
+//             // should ideally have no effect, so we restore the value to prev value
+//             uint8_t b [] = {(uint8_t) recv};
+//             mem_["pmem"]->store(UART_ADDR, b, 1);
+//         }
+//         else                        // tried to read from DREG
+//         {
+//             // clear status reg bit[0]
+//             uint8_t b[] = {0b0};
+//             mem_["pmem"]->store(UART_ADDR + 1, b, 1);
+//         }
+//     }
+// }
 
 
 int Backend_atomsim::tick()
@@ -283,7 +285,7 @@ int Backend_atomsim::tick()
     service_mem_req();
     
     // perform uart transaction (if any)
-    UART();
+    // UART();
 
     // Tick clock once
     tb->tick();
@@ -406,7 +408,7 @@ int Backend_atomsim::tick()
     return 0;
 }
 
-void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
+void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
     bool success = false;
     for (auto mem_block: mem_)  // search for mem blk
@@ -415,7 +417,7 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
         if(m->addr_in_range(start_addr))
         {
             if(!m->block_in_range(start_addr, buf_sz))
-                throw Atomsim_exception("cant fetch; bufsize too large for mem");
+                throw Atomsim_exception("can't fetch; bufsize too large for mem");
             
             m->fetch(start_addr, buf, buf_sz);
             success = true;
@@ -425,11 +427,13 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
 
     if (!success)
     {
-        throw Atomsim_exception("memory fetch failed: no mem block at given address");
+        char hx[10];
+        sprintf(hx, "%08x", start_addr);
+        throw Atomsim_exception("memory fetch failed: no mem block at given address (0x"+std::string(hx)+")");
     }
 }
     
-void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
+void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)
 {
     bool success = false;
     for (auto mem_block: mem_)  // search for mem blk
@@ -438,7 +442,7 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
         if(m->addr_in_range(start_addr))
         {
             if(!m->block_in_range(start_addr, buf_sz))
-                throw Atomsim_exception("cant store; bufsize too large for mem");
+                throw Atomsim_exception("can't store; bufsize too large for mem");
             
             m->store(start_addr, buf, buf_sz);
             success = true;
@@ -448,6 +452,8 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
 
     if (!success)
     {
-        throw Atomsim_exception("memory store failed: no mem block at given address");
+        char hx[10];
+        sprintf(hx, "%08x", start_addr);
+        throw Atomsim_exception("memory store failed: no mem block at given address (0x"+std::string(hx)+")");
     }
 }
