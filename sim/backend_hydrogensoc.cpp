@@ -84,7 +84,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     }
     else
     {
-        if (sim_->sim_config_.verbose_flag)
+        if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
             std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
     }
 
