@@ -1,7 +1,5 @@
-.global main
-
-.text
-main:
+.global _start
+_start:
     la x1, var1
     lw x1, 0(x1)
 

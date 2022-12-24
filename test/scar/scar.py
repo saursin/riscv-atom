@@ -158,14 +158,10 @@ def verify(test):
 
 
     # get dump data
+    dump_file = work_dir+'/'+'dump.txt'
     dcontents = []
-    try:
-        f = open(work_dir+'/'+'dump.txt', 'r')
+    with open(dump_file, 'r') as f:
         dcontents = f.readlines()
-        f.close()
-    except:
-        print("Unable to open file :" + test)
-        return None
     
     dump_data = {}
     # create a dictionary of this data
@@ -176,37 +172,47 @@ def verify(test):
         l = l.strip().split(' ')
         dump_data[l[0]] = l[1]
     
+    print(dump_data)
 
     # process & check assertions
-    assertions = fcontents[i+1:len(fcontents)]
+    assertions = fcontents[assert_block_start+1:len(fcontents)]
+
+
     for assr in assertions:
+        # Parse assertions one-by-one
         if assr.strip() == "":
             continue
 
         assr = assr[2:].strip()
         assr = assr.split(" ")
         
-        op = assr[0]
-        a = assr[1:]
+        assr_op = assr[0]
+        assr_rg = assr[1]
+        assr_val = assr[2]
+        
+        for dump_rg in dump_data.keys():
+            # convert dumpfile regname if needed
+            if dump_rg[0] == 'x':       # pure name
+                pass
+            else:
+                if dump_rg in ['pc', 'ir']:
+                    pass
+                elif dump_rg in reg_names.keys():
+                    dump_rg = reg_names[dump_rg] # convert to pure name if abi name    
+                else:
+                    print(f"Error parsing reg name \"{dump_rg}\" in dump file \"{dump_file}\"")
 
-        data = ['', '']
-        for i in range(0, 2):
-            if a[i][0] == 'x':              # it is pure register name
-                data[i] = dump_data[a[i]]
+            # check
+            if dump_rg != assr_rg:
+                continue
 
-            elif a[i] in reg_names.keys():  # it is a abi form register name
-                data[i] = dump_data[reg_names[a[i]]]
-
-            else:                           # its a value
-                data[i] = a[i]
-      
-
-        if op == 'eq' and data[0] != data[1]:
-            print(Fore.RED+"ASSERTION FAILED! : "+Style.RESET_ALL)
-            print("Expected: "+ str(assr[1]) +" = "+ str(assr[2]))
-            print("Got:      "+ str(assr[1]) +" = "+ str(data[0]))
-            return False
+            if assr_op == 'eq' and assr_val != dump_data[dump_rg]:
+                print(Fore.RED+"ASSERTION FAILED! : "+Style.RESET_ALL)
+                print("Expected: "+ str(assr_rg) +" = "+ str(assr_val))
+                print("Got:      "+ str(dump_rg) +" = "+ str(dump_data[dump_rg]))
+                return False
     
+    print(Fore.GREEN+"PASSED! "+Style.RESET_ALL)
     return True
 
 
