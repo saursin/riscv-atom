@@ -31,7 +31,7 @@ SECTIONS
 
     /* ==== RAM ==== */
     /* The .data section contains static variables which have an initial value at boot. */
-    .data :
+    /* .data :
     {
         _sdata = .;
         *(.data*)
@@ -39,7 +39,7 @@ SECTIONS
 
         . = ALIGN(4);
         _edata = .;
-    } > ROM /*> ram AT >rom*/
+    } > RAM > ram AT >rom */
 
     /* .bss section which is used for uninitialized data
     .bss (NOLOAD) :

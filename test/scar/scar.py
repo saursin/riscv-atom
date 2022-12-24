@@ -18,7 +18,7 @@ CFLAGS = ['-march=rv32i', '-mabi=ilp32', '-nostartfiles']
 LDFLAGS = ['-T', linker_script_path]
 
 EXEC = 'atomsim'
-EXEC_FLAGS = ['--ebreak-dump', '--maxitr', '10000', '--trace-file', work_dir+'/trace.vcd', '--dump-file', work_dir+'/dump.txt', '-v']
+EXEC_FLAGS = ['--ebreak-dump', '--maxitr', '1000', '--trace-file', work_dir+'/trace.vcd', '--dump-file', work_dir+'/dump.txt', '-v']
 
 
 ###############################################################################################
@@ -172,13 +172,11 @@ def verify(test):
         l = l.strip().split(' ')
         dump_data[l[0]] = l[1]
     
-    print(dump_data)
-
     # process & check assertions
     assertions = fcontents[assert_block_start+1:len(fcontents)]
 
-
-    for assr in assertions:
+    passed = [False]*len(assertions)
+    for k, assr in enumerate(assertions):
         # Parse assertions one-by-one
         if assr.strip() == "":
             continue
@@ -207,13 +205,17 @@ def verify(test):
                 continue
 
             if assr_op == 'eq' and assr_val != dump_data[dump_rg]:
-                print(Fore.RED+"ASSERTION FAILED! : "+Style.RESET_ALL)
-                print("Expected: "+ str(assr_rg) +" = "+ str(assr_val))
-                print("Got:      "+ str(dump_rg) +" = "+ str(dump_data[dump_rg]))
-                return False
+                print(Fore.RED+"Assertion Failed: "+Style.RESET_ALL+f"(expected {assr_val}, got: {dump_data[dump_rg]})")
+                passed[k] = False
+            else:
+                passed[k] = True
     
-    print(Fore.GREEN+"PASSED! "+Style.RESET_ALL)
-    return True
+    if False in passed:
+        print(Fore.RED+"Some Assertions Failed"+Style.RESET_ALL)
+        return False
+    else:
+        print(Fore.GREEN+"All Assertions Passed! "+Style.RESET_ALL)
+        return True
 
 
 
