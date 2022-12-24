@@ -116,12 +116,7 @@ void Backend_atomsim::refresh_state()
 
     // Get Regs
     for (int i = 0; i < 32; i++)
-    {
-        if (i == 0)
-            simstate_->state_.rf[i] = 0;
-        else
-            simstate_->state_.rf[i] = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->rf->regs[i - 1];
-    }
+        simstate_->state_.rf[i] = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->rf->regs[i];
 
     // Get Signals
     simstate_->signals_.jump_decision = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->__PVT__jump_decision;
