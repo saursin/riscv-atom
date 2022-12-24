@@ -7,6 +7,8 @@
 ///////////////////////////////////////////////////////////////////
 `default_nettype none
 
+`define RV_ZICSR
+
 module AtomBones
 (
     input   wire    clk_i,
@@ -28,11 +30,14 @@ module AtomBones
     input   wire            dmem_ack_i      // DMEM Ack signal
 );
 
+    reg [31:0] reset_vector = 32'h0001_0000;
+
     // Core
     AtomRV atom_core
     (
         .clk_i          (clk_i),   
-        .rst_i          (rst_i),   
+        .rst_i          (rst_i),
+        .reset_vector_i (reset_vector),
         .imem_addr_o    (imem_addr_o),   
         .imem_data_i    (imem_data_i),   
         .imem_valid_o   (imem_valid_o),   
