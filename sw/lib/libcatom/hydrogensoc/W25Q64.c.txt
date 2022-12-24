@@ -1,5 +1,5 @@
 #include <gpio.h>
-#include <spi.h>
+#include <spi_bitbang.h>
 #include <time.h>
 #include <stdint.h>
 #include <stdbool.h>

@@ -41,9 +41,7 @@
     #define MEM_RAM_SIZE    64*1024*1024    // 64 MB
 
     // ---------- UART ------------
-    #define UART_D_REG_ADDR 0x08000000
-    #define UART_S_REG_ADDR 0x08000001
-    #define UART_CD_REG_ADDR 0x08000004
+    #define UART_ADDR 0x40000000
 
     // ------ CLOCK FREQUENCY --------
     #define CLK_FREQ 12000000

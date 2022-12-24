@@ -2,9 +2,6 @@
 #include "mmio.h"
 #include "gpio.h"
 
-// compile only for Hydrogensoc
-#ifdef GPIO
-
 // GPIO Register Offsets
 #define GPIO_REG_DAT 0x00
 #define GPIO_REG_TSC 0x04
@@ -65,5 +62,3 @@ gpio_direction_t gpio_getmode(int pin)
     uint32_t pin_dir = REG32(GPIO_ADDR, GPIO_REG_TSC);
     return bitcheck(pin_dir, pin) ? INPUT : OUTPUT;
 }
-
-#endif
