@@ -24,7 +24,7 @@ RTL_DIR := ../rtl
 BUILD_DIR := build
 
 # This should point to verilator include directory
-VERILATOR_INCLUDE_PATH := /tools/vlsi/verilator/share/verilator/include
+VERILATOR_INCLUDE_PATH := /usr/share/verilator/include/
 
 OBJ_DIR := $(BUILD_DIR)/obj
 VERILATED_DIR := $(BUILD_DIR)/verilated
