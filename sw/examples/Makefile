@@ -112,7 +112,7 @@ ifeq ($(__check_soctarget),true)
     endif
 
     ifeq ($(boot), true)
-        LINKERSCRIPT:= ../bootloader/link_app.lds
+        LINKERSCRIPT:= ../flashboot/link_app.lds
     endif
 
 endif

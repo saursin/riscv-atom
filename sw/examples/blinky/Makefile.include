@@ -1,3 +1,2 @@
 src_files = blinky.c
 executable = blinky.elf
-CFLAGS+= -DATOMSIM

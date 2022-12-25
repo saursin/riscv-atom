@@ -30,4 +30,5 @@ int main()
 
     printf("\n\nFirst %d terms of Fibonacci Series (Using Recursion):\n", no_of_terms);
     printFibonacci(no_of_terms);
+    return 0;
 }

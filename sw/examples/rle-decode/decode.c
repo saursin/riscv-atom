@@ -36,4 +36,6 @@ int main()
     };
 
     decode(code, 270);
+    
+    return 0;
 }

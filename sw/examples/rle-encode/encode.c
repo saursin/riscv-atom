@@ -47,4 +47,6 @@ int main()
 
     serial_init(UART_BAUD_115200);
     encode(logo, 1030);
+
+    return 0;
 }
