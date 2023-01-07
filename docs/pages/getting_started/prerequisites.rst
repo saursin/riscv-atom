@@ -31,12 +31,7 @@ GNU C/C++ compilers and Make and other essential build tools are conveniently pa
 
 Install Verilator
 ==================
-Verilator will be used By Atomsim to *Verilate* Verilog RTL into C++.
-
-.. code-block:: bash
-
-  $ sudo apt install verilator
-
+Verilator will be used By Atomsim to *Verilate* Verilog RTL into C++. We recommend installing latest stable verilator version using `git quick install method <https://veripool.org/guide/latest/install.html>`_
 
 Install GTK Wave
 ==================

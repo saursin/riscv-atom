@@ -23,9 +23,6 @@ include ../common.mk
 RTL_DIR := ../rtl
 BUILD_DIR := build
 
-# This should point to verilator include directory
-VERILATOR_INCLUDE_PATH := /usr/share/verilator/include/
-
 OBJ_DIR := $(BUILD_DIR)/obj
 VERILATED_DIR := $(BUILD_DIR)/verilated
 BIN_DIR := $(BUILD_DIR)/bin
@@ -36,7 +33,7 @@ RUN_DIR := run
 # make directories during makefile-parse
 $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR) $(RUN_DIR))
 
-
+include ../config.mk
 ####################################################
 # Verilog Configs
 
@@ -147,8 +144,8 @@ DEPS_ := $(patsubst %.cpp, %.Td, $(SRCS))			# change .cpp -> .Td
 DEPS__ := $(notdir $(DEPS_))						# extract filename, discard full path
 DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 
-# Append verilator objects	(verilated.o & verilated_vcd_c.o)
-OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o		
+# Append verilator objects	(verilated.o, verilated_vcd_c.o, verilated_threads.o)
+OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o	$(OBJ_DIR)/verilated_threads.o
 
 LDFLAGS += -L build/verilated
 LDLIBS += -l:V$(VTOPMODULE)__ALL.a
