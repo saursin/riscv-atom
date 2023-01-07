@@ -15,12 +15,14 @@
 #include "build/verilated/VHydrogenSoC_AtomRV.h"
 #include "build/verilated/VHydrogenSoC_RegisterFile.h"
 
-//#include "build/verilated/VHydrogenSoC_DualPortRAM_wb__Af_Mz1.h"
-// #include "build/verilated/VHydrogenSoC_DualPortRAM_wb__pi1.h"
-// #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"
-// #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi2.h"
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ae.h"
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz1.h"
+
+#if __has_include ("build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz1.h")
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz1.h"  // Newer verilator version (~5.002)
+#else
+#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"     // Older verilator version (~3.916)
+#endif
+
 #include "build/verilated/VHydrogenSoC_UART.h"
 
 #ifdef DBG
