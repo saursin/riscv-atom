@@ -48,10 +48,21 @@ parameter W = 2**LEVELS;
 // pad input to even power of two
 wire [W-1:0] input_padded = {{W-WIDTH{1'b0}}, input_unencoded};
 
+/* verilator lint_off UNUSEDSIGNAL */
 wire [W/2-1:0] stage_valid[LEVELS-1:0];
+/* verilator lint_on UNUSEDSIGNAL */
+
+/* verilator lint_off UNDRIVEN */
 wire [W/2-1:0] final_stage_valid[LEVELS-1:0];
+/* verilator lint_on UNDRIVEN */
+
+/* verilator lint_off UNUSEDSIGNAL */
 wire [W/2-1:0] stage_enc[LEVELS-1:0];
+/* verilator lint_on UNUSEDSIGNAL */
+
+/* verilator lint_off UNDRIVEN */
 wire [W/2-1:0] final_stage_enc[LEVELS-1:0];
+/* verilator lint_on UNDRIVEN */
 
 
 generate
