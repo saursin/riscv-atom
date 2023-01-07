@@ -16,6 +16,9 @@ ex ?= None
 # Compile for simulation          (may be overridden)
 sim ?= false
 
+# Compile for use with bootloader (may be overridden)
+boot ?= false
+
 # Vuart for make run example      (may be overridden)
 vuart ?= None
 
