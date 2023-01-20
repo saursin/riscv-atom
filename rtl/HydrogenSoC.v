@@ -71,6 +71,7 @@ module HydrogenSoC(
     wire wb_clk_i = clk_i;
     wire wb_rst_i = rst_i;
 
+    `ifdef SOC_FRONTPORT
     // ******************* FrontPort *********************
     // FrontPort Signals
     wire    [31:0]  fp_wb_adr_o     = 32'h00000000;
@@ -81,6 +82,7 @@ module HydrogenSoC(
     wire            fp_wb_stb_o     = 1'b0;
     wire            fp_wb_ack_i;    `UNUSED_VAR(fp_wb_ack_i)
     wire            fp_wb_cyc_o     = 1'b0;
+    `endif
 
     // ********************* Core *********************
     
@@ -142,7 +144,11 @@ module HydrogenSoC(
     reg             arb_wb_ack_i;
     wire            arb_wb_cyc_o;
 
+    `ifdef SOC_FRONTPORT
     arbiter3_wb #(
+    `else
+    arbiter2_wb #(
+    `endif
         .DATA_WIDTH (32),
         .ADDR_WIDTH (32),
         .SELECT_WIDTH (4)
@@ -170,6 +176,7 @@ module HydrogenSoC(
         .wbm1_ack_o     (core_dport_wb_ack_i),
         .wbm1_cyc_i     (core_dport_wb_cyc_o),
 
+        `ifdef SOC_FRONTPORT
         // Wishbone master 2 input
         .wbm2_adr_i     (fp_wb_adr_o),
         .wbm2_dat_i     (fp_wb_dat_o),
@@ -179,6 +186,7 @@ module HydrogenSoC(
         .wbm2_stb_i     (fp_wb_stb_o),
         .wbm2_ack_o     (fp_wb_ack_i),
         .wbm2_cyc_i     (fp_wb_cyc_o),
+        `endif
 
         // Wishbone slave output
         .wbs_adr_o      (arb_wb_adr_o),
