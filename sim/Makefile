@@ -104,6 +104,7 @@ ifeq ($(soctarget), hydrogensoc)
 
     # arbiter
     VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter2_wb.v
     VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter3_wb.v
     VSRCS += $(RTL_DIR)/uncore/wishbone/priority_encoder.v
 
