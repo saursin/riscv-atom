@@ -8,23 +8,53 @@
 `ifndef __HYDROGENSOC_CONFIG_VH__
 `define __HYDROGENSOC_CONFIG_VH__
 
-// Reset address
+
+////////////////////////////// SoC Config Macros //////////////////////////////
+/*
+    Reset address for SOC. Upon Reset, PC jumps to the defined address
+*/
 `define SOC_RESET_ADDRESS   32'h0001_0000
 
-// Enable E ext.
+/*
+    If defined, adds a front port to the SoC which can master the System bus. 
+    The frontport has the highest priority among all the ports. User can connect 
+    external master devices to the frontport.
+*/
+`define SOC_FRONTPORT
+
+
+/*
+    If defined, enables the RVE extenstion which disables the upper 16 registers 
+    in the register file.
+*/
 // `define RV_E
 
-// Enable ZICSR ext.
+
+/*
+    If defined, enables the RISC-V Zicsr extension which adds support for CSR 
+    registers. It adds a CSR Unit to the Core which implements CSR registers 
+    like CYCLEL/H.
+*/
 `define RV_ZICSR
 
-// Enable C extenstion
+
+/*
+    If defined, enables the RISC-V Compressed extension which adds support for 16-bit 
+    compressed instructions. It adds a decoder which decodes the 16 bit instructions 
+    to 32 bit equivalents and a aligner to word-align Instruction fetches.
+*/
 // `define RV_C
 
 
-`define NGPIO 16    // Number of GPIO Pins to implement
+/*
+    Define number of GPIO Pins to implement
+*/
+`define NGPIO 16
 
 
-/////////////// Memory Map ///////////////
+
+
+////////////////////////////// SoC Memory Map //////////////////////////////
 // Macros used by Wishbone interconnect
 // see: <link to memory map description>
 

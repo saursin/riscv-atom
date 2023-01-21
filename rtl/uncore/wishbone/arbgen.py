@@ -63,8 +63,8 @@ THE SOFTWARE.
 */
 
 // Language: Verilog 2001
-
-`timescale 1 ns / 1 ps
+`default_nettype none
+`include "../../common/Utils.vh"
 
 /*
  * Wishbone {{n}} port arbiter
@@ -75,7 +75,7 @@ module {{name}} #
     parameter ADDR_WIDTH = 32,                    // width of address bus in bits
     parameter SELECT_WIDTH = (DATA_WIDTH/8),      // width of word select bus (1, 2, 4, or 8)
     parameter ARB_TYPE_ROUND_ROBIN = 0,           // select round robin arbitration
-    parameter ARB_LSB_HIGH_PRIORITY = 1           // LSB priority selection
+    parameter ARB_LSB_HIGH_PRIORITY = 0           // LSB priority selection
 )
 (
     input  wire                    clk,
@@ -92,8 +92,6 @@ module {{name}} #
     input  wire [SELECT_WIDTH-1:0] wbm{{p}}_sel_i,    // SEL_I() select input
     input  wire                    wbm{{p}}_stb_i,    // STB_I strobe input
     output wire                    wbm{{p}}_ack_o,    // ACK_O acknowledge output
-    output wire                    wbm{{p}}_err_o,    // ERR_O error output
-    output wire                    wbm{{p}}_rty_o,    // RTY_O retry output
     input  wire                    wbm{{p}}_cyc_i,    // CYC_I cycle input
 {%- endfor %}
 
@@ -107,8 +105,6 @@ module {{name}} #
     output wire [SELECT_WIDTH-1:0] wbs_sel_o,     // SEL_O() select output
     output wire                    wbs_stb_o,     // STB_O strobe output
     input  wire                    wbs_ack_i,     // ACK_I acknowledge input
-    input  wire                    wbs_err_i,     // ERR_I error input
-    input  wire                    wbs_rty_i,     // RTY_I retry input
     output wire                    wbs_cyc_o      // CYC_O cycle output
 );
 
@@ -117,6 +113,8 @@ wire [{{n-1}}:0] grant;
 {% for p in ports %}
 assign request[{{p}}] = wbm{{p}}_cyc_i;
 {%- endfor %}
+
+wire grant_valid;
 {% for p in ports %}
 wire wbm{{p}}_sel = grant[{{p}}] & grant_valid;
 {%- endfor %}
@@ -125,8 +123,6 @@ wire wbm{{p}}_sel = grant[{{p}}] & grant_valid;
 // master {{p}}
 assign wbm{{p}}_dat_o = wbs_dat_i;
 assign wbm{{p}}_ack_o = wbs_ack_i & wbm{{p}}_sel;
-assign wbm{{p}}_err_o = wbs_err_i & wbm{{p}}_sel;
-assign wbm{{p}}_rty_o = wbs_rty_i & wbm{{p}}_sel;
 {%- endfor %}
 
 // slave
@@ -148,6 +144,8 @@ assign wbs_stb_o = {% for p in ports %}wbm{{p}}_sel ? wbm{{p}}_stb_i :
 assign wbs_cyc_o = {% for p in ports %}wbm{{p}}_sel ? 1'b1 :
                    {% endfor %}1'b0;
 
+wire [{{w-1}}:0] grant_encoded; `UNUSED_VAR(grant_encoded)
+
 // arbiter instance
 arbiter #(
     .PORTS({{n}}),
@@ -160,10 +158,10 @@ arb_inst (
     .clk(clk),
     .rst(rst),
     .request(request),
-    .acknowledge(),
+    .acknowledge({{n}}'d0),
     .grant(grant),
     .grant_valid(grant_valid),
-    .grant_encoded()
+    .grant_encoded(grant_encoded)
 );
 
 endmodule

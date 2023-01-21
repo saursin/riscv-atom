@@ -44,9 +44,10 @@ char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, 
 	if(cfg->auto_cs)
 		gpio_write(cfg->cs_pin, LOW);
 
-    for(unsigned int i=0; i<len; i++)
+    for(unsigned int i=0; i<len; i++) {
         *send_buf++ = spi_transfer(cfg, *recv_buf++);
-    
+	}
+	
 	if(cfg->auto_cs)
 		gpio_write(cfg->cs_pin, HIGH);
 		

@@ -1,6 +1,8 @@
 #include "string.h"
 
-int strncmp(char *s1,char *s2,int len)
+#define NULL_CHAR '\0'
+
+int strncmp(char *s1, char *s2, int len)
 {
     while(--len && *s1 && *s2 && (*s1==*s2)) s1++, s2++;
     
@@ -23,13 +25,13 @@ size_t strlen(char *s1)
     return len;
 }
 
-char * strcpy(char *dest, const char *src)
+char * strcpy(char *dest, char *src)
 {
     return memcpy(dest, src, strlen(src) + 1);
 }
 
 
-char *strtok(char *str,char *dptr)
+char *strtok(char *str, char *dptr)
 {
     static char *nxt = NULL;
 
@@ -44,9 +46,9 @@ char *strtok(char *str,char *dptr)
 
     while(*tmp)
     {
-        if(strncmp(tmp,dptr,dlen)==0)
+        if(strncmp(tmp, dptr, dlen)==0)
         {
-            *tmp=NUL;
+            *tmp=NULL_CHAR;
             nxt = tmp+1;
             return ret;
         }
@@ -59,7 +61,7 @@ char *strtok(char *str,char *dptr)
 
 // memory manipulation
 
-char *memcpy(char *dptr, char *sptr,int len)
+char *memcpy(char *dptr, char *sptr, int len)
 {
     char *ret = dptr;
     while(len--) 

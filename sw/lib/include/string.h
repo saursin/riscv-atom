@@ -3,8 +3,6 @@
 
 #include "stddef.h"
 
-#define NUL '\0'
-
 /**
  * @brief Compares the string pointed to, by str1 to the string 
  * pointed to by str2 at most the first n bytes of str1 and str2.
@@ -43,7 +41,7 @@ size_t strlen(char *s1);
  * @param dptr delimiter
  * @return char* 
  */
-char *strtok(char *str,char *dptr);
+char *strtok(char *str, char *dptr);
 
 /**
  * @brief Copy string
@@ -52,7 +50,7 @@ char *strtok(char *str,char *dptr);
  * @param src source ptr
  * @return char* destination ptr
  */
-char * strcpy (char *dest, const char *src);
+char * strcpy (char *dest, char *src);
 
 
 // memory manipulation
@@ -65,7 +63,7 @@ char * strcpy (char *dest, const char *src);
  * @param len length of block (in bytes)
  * @return char* dptr
  */
-char *memcpy(char *dptr, char *sptr,int len);
+char *memcpy(char *dptr, char *sptr, int len);
 
 
 /**
