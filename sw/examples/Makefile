@@ -173,25 +173,25 @@ endif
 
 .PHONY: help
 help:										## Show help
-	@echo "*** Makefile for compiling & running examples ***"
-	@echo "Usage:"
-	@echo "	$$ make soctarget=<SOCTARGET> ex=<EXAMPLE> [TARGET]"
-	@echo ""
-	@echo "TARGETs:"
+	@printf "*** Makefile for compiling & running examples ***\n"
+	@printf "Usage:"
+	@printf "	$$ make soctarget=<SOCTARGET> ex=<EXAMPLE> [TARGET]\n"
+	@printf "\n"
+	@printf "TARGETs:\n"
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n", $$1, $$2}'
-	@echo ""
-	@echo "SOCTARGETs:"
+	@printf "\n"
+	@printf "SOCTARGETs:\n"
 	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" atombones ""
 	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" hydrogensoc ""
-	@echo ""
-	@echo "EXAMPLEs (auto-detected):"
-	@echo "	$(patsubst %/,%,${EXAMPLE_DIRS})"
-	@echo ""
-	@echo "Note:"
-	@echo " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables"
-	@echo "	help, all, clean-all"
-	@echo " - To save objdump,, set the \"objdump\" variable to \"true\" in the CLI."
-	@echo " - To save run using vuart, set the vuart variable to the path of the simport"
+	@printf "\n"
+	@printf "EXAMPLEs (auto-detected):\n"
+	@printf "	$(patsubst %/,%,${EXAMPLE_DIRS})\n"
+	@printf "\n"
+	@printf "Note:\n"
+	@printf " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables\n"
+	@printf "	help, all, clean-all\n"
+	@printf " - To save objdump,, set the \"objdump\" variable to \"true\" in the CLI.\n"
+	@printf " - To save run using vuart, set the vuart variable to the path of the simport\n"
     
 
 
@@ -214,7 +214,7 @@ endif
 
 
 run: $(ex)/$(executable)					## Run example
-	@echo "${COLOR_CYAN}Running \"${ex}\" example ${COLOR_NC}"
+	@printf "${COLOR_CYAN}Running \"${ex}\" example ${COLOR_NC}\n"
 	atomsim $(ATOMSIM_ARGS) $^
 
 
@@ -224,7 +224,7 @@ objdump: $(ex)/$(executable)				## Dump disassembly
 
 .PHONY: clean
 clean:										## Clean executable
-	@echo "${COLOR_CYAN}Cleaning \"${ex}\" example binaries ${COLOR_NC}"
+	@printf "${COLOR_CYAN}Cleaning \"${ex}\" example binaries ${COLOR_NC}\n"
 	rm -f $(ex)/$(executable) $(ex)/*.o $(ex)/*.map $(ex)/*.objdump
 
 
@@ -233,7 +233,7 @@ all:										## Build all examples
 
 
 run-all:									## Build & run all examples
-	@$(patsubst %/, echo "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}"; make -s ex=% run;,${EXAMPLE_DIRS})
+	@$(patsubst %/, printf "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}\n"; make -s ex=% run;,${EXAMPLE_DIRS})
 
 
 .PHONY: clean-all
