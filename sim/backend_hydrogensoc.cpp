@@ -13,7 +13,12 @@
 #include "build/verilated/VHydrogenSoC_HydrogenSoC.h"
 #include "build/verilated/VHydrogenSoC_AtomRV_wb.h"
 #include "build/verilated/VHydrogenSoC_AtomRV.h"
+
+#if __has_include ("build/verilated/VHydrogenSoC_RegisterFile.h")
 #include "build/verilated/VHydrogenSoC_RegisterFile.h"
+#else
+#include "build/verilated/VHydrogenSoC_RegisterFile__N10.h"      // In case RV_E is enabled
+#endif
 
 #include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ae.h"
 
