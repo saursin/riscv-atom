@@ -6,6 +6,9 @@
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
 `include "../common/Utils.vh"
+`include  "CSR_defs.vh"
+
+`define isdefined(x) `ifdef x 1'b1 `else 1'b0 `endif 
 
 module CSR_Unit#
 (
@@ -62,6 +65,51 @@ module CSR_Unit#
             csr_cycle <= csr_cycle + 1'b1;
     end
 
+    // MISA
+    wire [31:0]  csr_misa = {
+        2'b01,              // XLEN = 32
+        4'd0,               // padding
+        1'b0,               // bit-25    Z Reserved
+        1'b0,               // bit-24    Y Reserved
+        1'b0,               // bit-23    X Non-standard extensions present
+        1'b0,               // bit-22    W Reserved
+        1'b0,               // bit-21    V Tentatively reserved for Vector extension
+        1'b0,               // bit-20    U User mode implemented
+        1'b0,               // bit-19    T Reserved
+        1'b0,               // bit-18    S Supervisor mode implemented
+        1'b0,               // bit-17    R Reserved
+        1'b0,               // bit-16    Q Quad-precision floating-point extension
+        1'b0,               // bit-15    P Tentatively reserved for Packed-SIMD extension
+        1'b0,               // bit-14    O Reserved
+        1'b0,               // bit-13    N Tentatively reserved for User-Level Interrupts extension
+        `isdefined(RV_M),   // bit-12    M Integer Multiply/Divide extension
+        1'b0,               // bit-11    L Reserved
+        1'b0,               // bit-10    K Reserved
+        1'b0,               // bit-9     J Tentatively reserved for Dynamically Translated Languages extension
+        1'b1,               // bit-8     I RV32I/64I/128I base ISA
+        1'b0,               // bit-7     H Hypervisor extension
+        1'b0,               // bit-6     G Reserved
+        `isdefined(RV_F),   // bit-5     F Single-precision floating-point extension
+        `isdefined(RV_E),   // bit-4     E RV32E base ISA
+        `isdefined(RV_D),   // bit-3     D Double-precision floating-point extension
+        `isdefined(RV_C),   // bit-2     C Compressed extension
+        1'b0,               // bit-1     B Tentatively reserved for Bit-Manipulation extension
+        `isdefined(RV_A)    // bit-0     A Atomic extension
+    };
+
+    // MSTATUS & MSTATUSH
+    reg [31:0] csr_mstatus;
+    reg [31:0] csr_mstatush;
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mstatus <= 32'h00000000;
+            csr_mstatush <= 32'h00000000;
+        end
+        else if(we_i && (addr_i == `CSR_mstatus))
+            csr_mstatus <= write_value;
+        else if(we_i && (addr_i == `CSR_mstatush))
+            csr_mstatus <= write_value;
+    end
 
     ////////////////////////////////////////////////////////////
     // CSR Selection
@@ -74,13 +122,17 @@ module CSR_Unit#
         read_value = 0;
         
         case(addr_i)
-            12'hf11: read_value = VEND_ID;
-            12'hf12: read_value = ARCH_ID;
-            12'hf13: read_value = IMPL_ID;
-            12'hf14: read_value = HART_ID;
+            `CSR_cycle:     read_value = csr_cycle[31:0];  // cycle
+            `CSR_cycleh:    read_value = csr_cycle[63:32]; // cycleh
 
-            12'hc00: read_value = csr_cycle[31:0];  // cycle
-            12'hc80: read_value = csr_cycle[63:32]; // cycleh
+            `CSR_mvendorid: read_value = VEND_ID;
+            `CSR_marchid:   read_value = ARCH_ID;
+            `CSR_mimpid:    read_value = IMPL_ID;
+            `CSR_mhartid:   read_value = HART_ID;
+
+            `CSR_misa:      read_value = csr_misa;
+            `CSR_mstatus:   read_value = csr_mstatus;
+            `CSR_mstatush:  read_value = csr_mstatush;
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;
