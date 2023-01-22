@@ -97,6 +97,20 @@ module CSR_Unit#
         `isdefined(RV_A)    // bit-0     A Atomic extension
     };
 
+    // MSTATUS & MSTATUSH
+    reg [31:0] csr_mstatus;
+    reg [31:0] csr_mstatush;
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mstatus <= 32'h00000000;
+            csr_mstatush <= 32'h00000000;
+        end
+        else if(we_i && (addr_i == `CSR_mstatus))
+            csr_mstatus <= write_value;
+        else if(we_i && (addr_i == `CSR_mstatush))
+            csr_mstatus <= write_value;
+    end
+
     ////////////////////////////////////////////////////////////
     // CSR Selection
 
@@ -117,6 +131,8 @@ module CSR_Unit#
             `CSR_mhartid:   read_value = HART_ID;
 
             `CSR_misa:      read_value = csr_misa;
+            `CSR_mstatus:   read_value = csr_mstatus;
+            `CSR_mstatush:  read_value = csr_mstatush;
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;
