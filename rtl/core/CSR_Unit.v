@@ -33,12 +33,7 @@ module CSR_Unit#
 
     // ouput signals to pipeline
 );
-    `UNUSED_VAR(we_i)
-
-    // Generate Data to be written
     reg  [31:0] write_value;    // Value to be written onto a CSR register
-    `UNUSED_VAR(write_value)
-
     reg  [31:0] read_value;     // Value of selected CSR register
 
     always @(*) /* COMBINATIONAL */ begin
@@ -98,19 +93,79 @@ module CSR_Unit#
     };
 
     // MSTATUS & MSTATUSH
-    reg [31:0] csr_mstatus;
-    reg [31:0] csr_mstatush;
+    reg         csr_mstatus_mie;    // Machine global interrupt Enable
+
+    wire [31:0] csr_mstatus_readval = {28'd0 , csr_mstatus_mie, 3'd0};
+    wire [31:0] csr_mstatush_readval = 32'd0;
+
     always @(posedge clk_i) begin
         if(rst_i) begin
-            csr_mstatus <= 32'h00000000;
-            csr_mstatush <= 32'h00000000;
+            csr_mstatus_mie <= 0;
         end
-        else if(we_i && (addr_i == `CSR_mstatus))
-            csr_mstatus <= write_value;
-        else if(we_i && (addr_i == `CSR_mstatush))
-            csr_mstatus <= write_value;
+        else if(we_i && (addr_i == `CSR_mstatus)) begin
+            csr_mstatus_mie <= write_value[3];
+        end
+        else if(we_i && (addr_i == `CSR_mstatush)) begin
+            // ...
+        end
     end
 
+    // MTVEC
+    reg [31:2]  csr_mtvec_base;     // Base address
+    reg [1:0]   csr_mtvec_mode;     // Mode (Direct/Vectored)
+
+    wire [31:0] csr_mtvec_readval = {csr_mtvec_base, csr_mtvec_mode};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mtvec_base <= 0;
+            csr_mtvec_mode <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mtvec)) begin
+            csr_mtvec_base <= write_value[31:2];
+            csr_mtvec_mode <= write_value[1:0];
+        end
+    end
+
+    // MIE
+    reg         csr_mie_meie;    // Machine external interrupt Enable
+    reg         csr_mie_mtie;    // Machine timer interrupt Enable
+    reg         csr_mie_msie;    // Machine software interrupt Enable
+    
+    wire [31:0] csr_mie_readval = {20'd0, csr_mie_meie, 3'd0, csr_mie_mtie, 3'd0, csr_mie_msie, 3'd0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mie_meie <= 0;
+            csr_mie_mtie <= 0;
+            csr_mie_msie <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mie)) begin
+            csr_mie_meie <= write_value[11];
+            csr_mie_mtie <= write_value[7];
+            csr_mie_msie <= write_value[3];
+        end
+    end
+
+    // MIP
+    reg         csr_mip_meip;    // Machine external interrupt Pending
+    reg         csr_mip_mtip;    // Machine timer interrupt Pending
+    reg         csr_mip_msip;    // Machine software interrupt Pending
+    
+    wire [31:0] csr_mip_readval = {20'd0, csr_mip_meip, 3'd0, csr_mip_mtip, 3'd0, csr_mip_msip, 3'd0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mip_meip <= 0;
+            csr_mip_mtip <= 0;
+            csr_mip_msip <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mie)) begin
+            csr_mip_meip <= write_value[11];
+            csr_mip_mtip <= write_value[7];
+            csr_mip_msip <= write_value[3];
+        end
+    end
     ////////////////////////////////////////////////////////////
     // CSR Selection
 
@@ -131,8 +186,11 @@ module CSR_Unit#
             `CSR_mhartid:   read_value = HART_ID;
 
             `CSR_misa:      read_value = csr_misa;
-            `CSR_mstatus:   read_value = csr_mstatus;
-            `CSR_mstatush:  read_value = csr_mstatush;
+            `CSR_mstatus:   read_value = csr_mstatus_readval;
+            `CSR_mstatush:  read_value = csr_mstatush_readval;
+            `CSR_mtvec:     read_value = csr_mtvec_readval;
+            `CSR_mie:       read_value = csr_mie_readval;
+            `CSR_mip:       read_value = csr_mip_readval;
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;
