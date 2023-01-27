@@ -21,6 +21,12 @@ module CSR_Unit#
     input   wire    clk_i,
     input   wire    rst_i,
 
+    // input signals from pipeline
+    input   wire    instr_retired_i,
+
+    // ouput signals to pipeline
+
+
     // Signals for Reading from / Writing to CSRs
     input   wire [11:0]     addr_i,
     input   wire [31:0]     data_i,
@@ -28,10 +34,6 @@ module CSR_Unit#
     input   wire            we_i,
 
     output  wire [31:0]     data_o
-
-    // input signals from pipeline
-
-    // ouput signals to pipeline
 );
     reg  [31:0] write_value;    // Value to be written onto a CSR register
     reg  [31:0] read_value;     // Value of selected CSR register
@@ -58,6 +60,14 @@ module CSR_Unit#
             csr_cycle <= 64'd0;
         else
             csr_cycle <= csr_cycle + 1'b1;
+    end
+
+    reg [63:0]  csr_instret = 64'd0;
+    always @(posedge clk_i) begin
+        if(rst_i)
+            csr_instret <= 64'd0;
+        else if (instr_retired_i)
+            csr_instret <= csr_instret + 1'b1;
     end
 
     // MISA
@@ -177,8 +187,10 @@ module CSR_Unit#
         read_value = 0;
         
         case(addr_i)
-            `CSR_cycle:     read_value = csr_cycle[31:0];  // cycle
-            `CSR_cycleh:    read_value = csr_cycle[63:32]; // cycleh
+            `CSR_cycle:     read_value = csr_cycle[31:0];
+            `CSR_cycleh:    read_value = csr_cycle[63:32];
+            `CSR_instret:   read_value = csr_instret[31:0];
+            `CSR_instreth:  read_value = csr_instret[63:32];
 
             `CSR_mvendorid: read_value = VEND_ID;
             `CSR_marchid:   read_value = ARCH_ID;

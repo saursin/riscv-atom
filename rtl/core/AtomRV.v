@@ -407,6 +407,8 @@ module AtomRV # (
         // Global signals
         .clk_i   (clk_i),
         .rst_i   (rst_i),
+        
+        .instr_retired_i(!stall_stage1),
 
         // Signals for Reading from / Writing to CSRs
         .addr_i (csru_addr_i),
