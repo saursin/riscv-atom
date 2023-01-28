@@ -36,6 +36,8 @@ module CSR_Unit#
     output  wire [31:0]     data_o
 );
     reg  [31:0] write_value;    // Value to be written onto a CSR register
+    `UNUSED_VAR(write_value)
+
     reg  [31:0] read_value;     // Value of selected CSR register
 
     always @(*) /* COMBINATIONAL */ begin
@@ -120,6 +122,7 @@ module CSR_Unit#
         end
     end
 
+    `ifdef EN_EXCEPT
     // MTVEC
     reg [31:2]  csr_mtvec_base;     // Base address
     reg [1:0]   csr_mtvec_mode;     // Mode (Direct/Vectored)
@@ -176,6 +179,21 @@ module CSR_Unit#
             csr_mip_msip <= write_value[3];
         end
     end
+
+    // MEPC
+    reg     [31:1]  csr_mepc;
+    wire    [31:0]  csr_mepc_readval = {csr_mepc, 1'b0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mepc <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mepc)) begin
+            csr_mepc <= write_value[31:1];
+        end
+    end
+    `endif 
+
     ////////////////////////////////////////////////////////////
     // CSR Selection
 
@@ -200,9 +218,14 @@ module CSR_Unit#
             `CSR_misa:      read_value = csr_misa;
             `CSR_mstatus:   read_value = csr_mstatus_readval;
             `CSR_mstatush:  read_value = csr_mstatush_readval;
+            
+            `ifdef EN_EXCEPT
             `CSR_mtvec:     read_value = csr_mtvec_readval;
             `CSR_mie:       read_value = csr_mie_readval;
             `CSR_mip:       read_value = csr_mip_readval;
+            `CSR_mepc:      read_value = csr_mepc_readval;
+            `endif
+
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;
