@@ -9,6 +9,8 @@ module Decode
 (
     input   wire    [31:0]  instr_i,
 
+    output  reg             illegal_instr_o,
+
     output  wire    [4:0]   rd_sel_o,
     output  wire    [4:0]   rs1_sel_o,
     output  wire    [4:0]   rs2_sel_o,
@@ -76,6 +78,7 @@ module Decode
 
     always @(*) begin
         // DEFAULT VALUES
+        illegal_instr_o = 1'b0;
         jump_en_o = 1'b0;
         comparison_type_o = `CMP_FUNC_UN;
         rf_we_o = 1'b0;
@@ -456,7 +459,7 @@ module Decode
                 `ifdef RV_ZICSR
                 csru_we_o = 0;
                 `endif
-
+                illegal_instr_o = 1'b1;
                 `ifdef verilator
                     if(opcode != 7'b1110011) // EBREAK
                         $display("!Warning: Unimplemented Opcode: %b", opcode);

@@ -138,6 +138,20 @@ module AtomRV # (
     end
 
     ////////////////////////////////////////////////////////////////////
+    // Excepion Logic
+
+    // Exception signals
+    wire    except_instr_addr_misaligned = |ProgramCounter[1:0];
+    wire    except_illegal_instr;
+    wire    except_load_addr_misaligned = dmem_valid_o & !dmem_we_o & |dmem_addr_o[1:0];
+    wire    except_store_addr_misaligned = dmem_valid_o & dmem_we_o & |dmem_addr_o[1:0];
+
+    `UNUSED_VAR(except_instr_addr_misaligned)
+    `UNUSED_VAR(except_illegal_instr)
+    `UNUSED_VAR(except_load_addr_misaligned)
+    `UNUSED_VAR(except_store_addr_misaligned)
+    
+    ////////////////////////////////////////////////////////////////////
     //  STAGE 1 - FETCH
     ////////////////////////////////////////////////////////////////////
     assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
@@ -255,6 +269,8 @@ module AtomRV # (
     Decode decode
     (
         .instr_i            (InstructionRegister),
+
+        .illegal_instr_o    (except_illegal_instr),
         
         .rd_sel_o           (d_rd_sel),
         .rs1_sel_o          (d_rs1_sel),
