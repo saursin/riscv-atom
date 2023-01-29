@@ -54,7 +54,7 @@ module CSR_Unit#
     ////////////////////////////////////////////////////////////
     // CSR Registers
 
-    // CYCLE (Read-Only)
+    //===== MCYCLE & MCYCLEH ================================================
     reg [63:0]  csr_cycle = 64'd0;
 
     always @(posedge clk_i) begin
@@ -64,6 +64,8 @@ module CSR_Unit#
             csr_cycle <= csr_cycle + 1'b1;
     end
 
+
+    //===== INSTRET & INSTRETH ==============================================
     reg [63:0]  csr_instret = 64'd0;
     always @(posedge clk_i) begin
         if(rst_i)
@@ -72,7 +74,8 @@ module CSR_Unit#
             csr_instret <= csr_instret + 1'b1;
     end
 
-    // MISA
+
+    //===== MISA ============================================================
     wire [31:0]  csr_misa = {
         2'b01,              // XLEN = 32
         4'd0,               // padding
@@ -104,7 +107,9 @@ module CSR_Unit#
         `isdefined(RV_A)    // bit-0     A Atomic extension
     };
 
-    // MSTATUS & MSTATUSH
+
+    `ifdef EN_EXCEPT
+    //===== MSTATUS & MSTATUSH ==============================================
     reg         csr_mstatus_mie;    // Machine global interrupt Enable
 
     wire [31:0] csr_mstatus_readval = {28'd0 , csr_mstatus_mie, 3'd0};
@@ -122,8 +127,9 @@ module CSR_Unit#
         end
     end
 
-    `ifdef EN_EXCEPT
-    // MTVEC
+
+
+    //===== MTVEC ===========================================================
     reg [31:2]  csr_mtvec_base;     // Base address
     reg [1:0]   csr_mtvec_mode;     // Mode (Direct/Vectored)
 
@@ -140,7 +146,8 @@ module CSR_Unit#
         end
     end
 
-    // MIE
+    
+    //===== MIE =============================================================
     reg         csr_mie_meie;    // Machine external interrupt Enable
     reg         csr_mie_mtie;    // Machine timer interrupt Enable
     reg         csr_mie_msie;    // Machine software interrupt Enable
@@ -160,7 +167,8 @@ module CSR_Unit#
         end
     end
 
-    // MIP
+
+    //===== MIP =============================================================
     reg         csr_mip_meip;    // Machine external interrupt Pending
     reg         csr_mip_mtip;    // Machine timer interrupt Pending
     reg         csr_mip_msip;    // Machine software interrupt Pending
@@ -180,8 +188,9 @@ module CSR_Unit#
         end
     end
 
-    // MEPC
-    reg     [31:1]  csr_mepc;
+
+    //===== MEPC ============================================================
+    reg     [31:1]  csr_mepc;       // Machine exception program counter
     wire    [31:0]  csr_mepc_readval = {csr_mepc, 1'b0};
     
     always @(posedge clk_i) begin
@@ -192,7 +201,20 @@ module CSR_Unit#
             csr_mepc <= write_value[31:1];
         end
     end
-    `endif 
+
+    //===== MCAUSE ==========================================================
+    reg             csr_mcause_intr;
+    reg     [3:0]   csr_mcause_cause;    // Note: Actual size as per spec is 31 bits
+
+    wire    [31:0]  csr_mcause_readval = {csr_mcause_intr, 27'd0, csr_mcause_cause};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mcause_intr <= 0;
+            csr_mcause_cause <= 0;
+        end
+    end
+    `endif // EN_EXCEPT
 
     ////////////////////////////////////////////////////////////
     // CSR Selection
@@ -224,7 +246,8 @@ module CSR_Unit#
             `CSR_mie:       read_value = csr_mie_readval;
             `CSR_mip:       read_value = csr_mip_readval;
             `CSR_mepc:      read_value = csr_mepc_readval;
-            `endif
+            `CSR_mcause:    read_value = csr_mcause_readval;
+            `endif // EN_EXCEPT
 
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
