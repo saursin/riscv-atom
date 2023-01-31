@@ -42,9 +42,9 @@ module CSR_Unit#
 
     always @(*) /* COMBINATIONAL */ begin
         case(op_i[1:0])
-            2'b00: write_value = data_i;                   // CSRRW
-            2'b01: write_value = data_i | read_value;      // CSRRS
-            2'b10: write_value = ~(data_i) & read_value;   // CSRRC
+            2'b01: write_value = data_i;                   // CSRRW
+            2'b10: write_value = data_i | read_value;      // CSRRS
+            2'b11: write_value = ~(data_i) & read_value;   // CSRRC
 
             default:
             write_value = read_value;
