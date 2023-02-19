@@ -39,4 +39,8 @@
 `define ASSERT(cond, msg) \
     assert(cond) else $error msg
 
+// Inline Ifdef
+`define INLINE_IFDEF(macro, text, elsetext) `ifdef macro text `else elsetext `endif
+`define INLINE_IFNDEF(macro, text, elsetext) `ifndef macro text `else elsetext `endif
+
 `endif // __UTILS_H__

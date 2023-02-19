@@ -11,7 +11,7 @@
 //      RISCV core. It is based on RV32I ISA
 ///////////////////////////////////////////////////////////////////
 `include "Defs.vh"
-// `include "Utils.vh"
+`include "Utils.vh"
 
 `default_nettype none
 
@@ -47,6 +47,13 @@ module AtomRV # (
     // Dmem handshaking signals
     output  wire            dmem_valid_o,   // DMEM Valid signal
     input   wire            dmem_ack_i      // DMEM Ack signal
+
+    `ifdef EN_EXCEPT
+    // Interrupt Signals
+    ,
+    input   wire            irq_i,
+    input   wire            timer_int_i
+    `endif // EN_EXCEPT
 );
     /*
         ///////////// Protocol specification //////////////
@@ -119,7 +126,7 @@ module AtomRV # (
             execute therefore a bubble is introduced. 
             - 
     */
-    wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1);
+    wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1) `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, );
 
 
     reg ignore_imem_handshake = 0;
@@ -128,7 +135,7 @@ module AtomRV # (
             ignore_imem_handshake <= 0;
         else begin
             case(ignore_imem_handshake)
-                0:  if(jump_decision)
+                0:  if(jump_decision `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, ))
                         ignore_imem_handshake <= 1;
 
                 1:  if(raw_imem_handshake)
@@ -139,18 +146,19 @@ module AtomRV # (
 
     ////////////////////////////////////////////////////////////////////
     // Excepion Logic
+    wire    except_illegal_instr;
 
+    `ifdef EN_EXCEPT
     // Exception signals
     wire    except_instr_addr_misaligned = |ProgramCounter[1:0];
-    wire    except_illegal_instr;
     wire    except_load_addr_misaligned = dmem_valid_o & !dmem_we_o & |dmem_addr_o[1:0];
     wire    except_store_addr_misaligned = dmem_valid_o & dmem_we_o & |dmem_addr_o[1:0];
 
-    `UNUSED_VAR(except_instr_addr_misaligned)
+    wire [31:0]     csru_trap_jump_addr_o;
+    wire            csru_trap_caught_o;
+    `else
     `UNUSED_VAR(except_illegal_instr)
-    `UNUSED_VAR(except_load_addr_misaligned)
-    `UNUSED_VAR(except_store_addr_misaligned)
-    
+    `endif // EN_EXCEPT
     ////////////////////////////////////////////////////////////////////
     //  STAGE 1 - FETCH
     ////////////////////////////////////////////////////////////////////
@@ -165,6 +173,12 @@ module AtomRV # (
         if(rst_i)
             ProgramCounter <= reset_vector_i;
 
+        `ifdef EN_EXCEPT
+        else if(csru_trap_caught_o) begin
+            ProgramCounter <= csru_trap_jump_addr_o;
+        end
+        `endif // EN_EXCEPT
+        
         else if(jump_decision)
             ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
 
@@ -425,6 +439,19 @@ module AtomRV # (
         .rst_i   (rst_i),
         
         .instr_retired_i(!stall_stage1),
+
+        `ifdef EN_EXCEPT
+        .except_instr_addr_misaligned_i (except_instr_addr_misaligned),
+        .except_illegal_instr_i         (except_illegal_instr),
+        .except_load_addr_misaligned_i  (except_load_addr_misaligned),
+        .except_store_addr_misaligned_i (except_store_addr_misaligned),
+        .intrpt_external_i              (irq_i),
+        .intrpt_timer_i                 (timer_int_i),            
+        .intrpt_soft_i                  (1'b0),     // Triggered by ECALls (Not implemented)
+        .except_pc_i                    (ProgramCounter_Old[31:1]),
+        .trap_jump_addr_o               (csru_trap_jump_addr_o),
+        .trap_caught_o                  (csru_trap_caught_o),
+        `endif // EN_EXCEPT
 
         // Signals for Reading from / Writing to CSRs
         .addr_i (csru_addr_i),

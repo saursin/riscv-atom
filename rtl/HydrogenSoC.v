@@ -131,6 +131,12 @@ module HydrogenSoC(
         .dport_wb_stb_o  (core_dport_wb_stb_o),
         .dport_wb_ack_i  (core_dport_wb_ack_i),
         .dport_wb_cyc_o  (core_dport_wb_cyc_o)
+
+        `ifdef EN_EXCEPT
+        ,
+        .irq_i          (gpio_io[0]),       // FIXME: For testing
+        .timer_int_i    (gpio_io[1])        // FIXME: For testing
+        `endif // EN_EXCEPT
     );
 
 

@@ -24,8 +24,22 @@ module CSR_Unit#
     // input signals from pipeline
     input   wire    instr_retired_i,
 
-    // ouput signals to pipeline
+`ifdef EN_EXCEPT
+    input   wire            except_instr_addr_misaligned_i,
+    input   wire            except_illegal_instr_i,
+    input   wire            except_load_addr_misaligned_i,
+    input   wire            except_store_addr_misaligned_i,
+    input   wire            intrpt_external_i,
+    input   wire            intrpt_timer_i, 
+    input   wire            intrpt_soft_i,
+    input   wire [31:1]     except_pc_i,
+`endif // EN_EXCEPT
 
+    // ouput signals to pipeline
+`ifdef EN_EXCEPT
+    output  wire [31:0]     trap_jump_addr_o,
+    output  wire            trap_caught_o,
+`endif // EN_EXCEPT
 
     // Signals for Reading from / Writing to CSRs
     input   wire [11:0]     addr_i,
@@ -36,7 +50,10 @@ module CSR_Unit#
     output  wire [31:0]     data_o
 );
     reg  [31:0] write_value;    // Value to be written onto a CSR register
+    `ifndef EN_EXCEPT
     `UNUSED_VAR(write_value)
+    `UNUSED_VAR(we_i)
+    `endif // EN_EXCEPT
 
     reg  [31:0] read_value;     // Value of selected CSR register
 
@@ -51,6 +68,41 @@ module CSR_Unit#
         endcase
     end
 
+    ////////////////////////////////////////////////////////////
+    // TRAP Logic
+    `ifdef EN_EXCEPT
+
+    // Cause Generator
+    reg [3:0]       except_cause;
+
+    always @(*) /* COMB */ begin
+        except_cause    = 0;
+
+        if(except_illegal_instr_i)                  except_cause = 'd2;
+        else if(except_instr_addr_misaligned_i)     except_cause = 'd0;
+        else if(except_load_addr_misaligned_i)      except_cause = 'd4;
+        else if(except_store_addr_misaligned_i)     except_cause = 'd6;
+    end
+
+    // Trap Gates
+    wire exception_caught = csr_mstatus_mie & (except_illegal_instr_i | except_instr_addr_misaligned_i 
+                            | except_load_addr_misaligned_i | except_store_addr_misaligned_i);
+    
+
+    wire    intrpt_external = csr_mstatus_mie & csr_mie_meie & intrpt_external_i; 
+    wire    intrpt_timer    = csr_mstatus_mie & csr_mie_mtie & intrpt_timer_i; 
+    wire    intrpt_soft     = csr_mstatus_mie & csr_mie_msie & intrpt_soft_i;
+
+    wire    intrpt_caught = (intrpt_external | intrpt_timer | intrpt_soft);
+
+    assign  trap_caught_o = exception_caught | intrpt_caught;
+
+    // Trap jump address generation
+    assign trap_jump_addr_o = (csr_mtvec_mode == 2'b00) ? {csr_mtvec_base, 2'b00}:
+                                ((csr_mtvec_mode == 2'b01) ? {csr_mtvec_base, 2'b00} + (4 * except_cause): 32'hxxxx_xxxx);
+
+
+    `endif // EN_EXCEPT
     ////////////////////////////////////////////////////////////
     // CSR Registers
 
@@ -181,10 +233,16 @@ module CSR_Unit#
             csr_mip_mtip <= 0;
             csr_mip_msip <= 0;
         end
-        else if(we_i && (addr_i == `CSR_mie)) begin
-            csr_mip_meip <= write_value[11];
-            csr_mip_mtip <= write_value[7];
-            csr_mip_msip <= write_value[3];
+        else begin
+            if (intrpt_external)    csr_mip_meip <= 1'b1;
+            if (intrpt_timer)       csr_mip_mtip <= 1'b1;
+            if (intrpt_soft)        csr_mip_mtip <= 1'b1;
+            
+            if(we_i && (addr_i == `CSR_mip)) begin
+                csr_mip_meip <= write_value[11];
+                csr_mip_mtip <= write_value[7];
+                csr_mip_msip <= write_value[3];
+            end
         end
     end
 
@@ -196,6 +254,9 @@ module CSR_Unit#
     always @(posedge clk_i) begin
         if(rst_i) begin
             csr_mepc <= 0;
+        end
+        else if(trap_caught_o) begin
+            csr_mepc <= except_pc_i;
         end
         else if(we_i && (addr_i == `CSR_mepc)) begin
             csr_mepc <= write_value[31:1];
@@ -212,6 +273,10 @@ module CSR_Unit#
         if(rst_i) begin
             csr_mcause_intr <= 0;
             csr_mcause_cause <= 0;
+        end
+        else if(trap_caught_o) begin
+            csr_mcause_intr <= intrpt_caught ? 1'b1: 1'b0; 
+            csr_mcause_cause <= except_cause;
         end
     end
     `endif // EN_EXCEPT
@@ -238,10 +303,10 @@ module CSR_Unit#
             `CSR_mhartid:   read_value = HART_ID;
 
             `CSR_misa:      read_value = csr_misa;
-            `CSR_mstatus:   read_value = csr_mstatus_readval;
-            `CSR_mstatush:  read_value = csr_mstatush_readval;
-            
+
             `ifdef EN_EXCEPT
+            `CSR_mstatus:   read_value = csr_mstatus_readval;
+            `CSR_mstatush:  read_value = csr_mstatush_readval;            
             `CSR_mtvec:     read_value = csr_mtvec_readval;
             `CSR_mie:       read_value = csr_mie_readval;
             `CSR_mip:       read_value = csr_mip_readval;
