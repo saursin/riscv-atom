@@ -76,8 +76,13 @@ module Decode
     assign imm_o = getExtImm;
 
 
+    reg [63:0] instr_scope; // just for simulation, will be optimised away in synth
+    `UNUSED_VAR(instr_scope)
+
+
     always @(*) begin
         // DEFAULT VALUES
+        instr_scope = "???";
         illegal_instr_o = 1'b0;
         jump_en_o = 1'b0;
         comparison_type_o = `CMP_FUNC_UN;
@@ -101,6 +106,7 @@ module Decode
             /* LUI   */ 
             17'b???????_???_0110111: 
             begin
+                instr_scope = "LUI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd0;
                 imm_format = `RV_IMM_TYPE_U;
@@ -109,6 +115,7 @@ module Decode
             /* AUIPC */ 
             17'b???????_???_0010111: 
             begin
+                instr_scope = "AUIPC";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b1;
@@ -120,6 +127,7 @@ module Decode
             /* JAL   */ 
             17'b???????_???_1101111: 
             begin
+                instr_scope = "JAL";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_UN;
                 rf_we_o = 1'b1;
@@ -133,6 +141,7 @@ module Decode
             /* JALR  */ 
             17'b???????_000_1100111: 
             begin
+                instr_scope = "JALR";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_UN;
                 rf_we_o = 1'b1;
@@ -145,6 +154,7 @@ module Decode
 
             /* BEQ   */ 
             17'b???????_000_1100011: begin
+                instr_scope = "BEQ";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_EQ;
                 a_op_sel_o = 1'b1;
@@ -157,6 +167,7 @@ module Decode
             /* BNE   */ 
             17'b???????_001_1100011: 
             begin
+                instr_scope = "BNE";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_NQ;
                 a_op_sel_o = 1'b1;
@@ -169,6 +180,7 @@ module Decode
             /* BLT   */ 
             17'b???????_100_1100011:
             begin
+                instr_scope = "BLT";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_LT;
                 a_op_sel_o = 1'b1;
@@ -181,6 +193,7 @@ module Decode
             /* BGE   */ 
             17'b???????_101_1100011: 
             begin
+                instr_scope = "BGE";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_GE;
                 a_op_sel_o = 1'b1;
@@ -193,6 +206,7 @@ module Decode
             /* BLTU  */ 
             17'b???????_110_1100011: 
             begin
+                instr_scope = "BLTU";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_LTU;
                 a_op_sel_o = 1'b1;
@@ -205,6 +219,7 @@ module Decode
             /* BGEU  */ 
             17'b???????_111_1100011: 
             begin
+                instr_scope = "BGEU";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_GEU;
                 a_op_sel_o = 1'b1;
@@ -217,6 +232,18 @@ module Decode
             /* LB, LH, LW, LBU, LHU */ 
             17'b???????_???_0000011: 
             begin
+                case(func3)
+                    3'b000: instr_scope = "LB"; 
+                    3'b001: instr_scope = "LH"; 
+                    3'b010: instr_scope = "LW"; 
+                    3'b100: instr_scope = "LBU";
+                    3'b101: instr_scope = "LHU";
+                    default: begin
+                        instr_scope = "LOAD?";
+                        illegal_instr_o = 1'b1;
+                    end
+                endcase
+                
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd4;
                 a_op_sel_o = 1'b0;
@@ -230,6 +257,16 @@ module Decode
             /* SB, SH, SW */ 
             17'b???????_???_0100011: 
             begin
+                case(func3)
+                    3'b000: instr_scope = "SB"; 
+                    3'b001: instr_scope = "SH"; 
+                    3'b010: instr_scope = "SW"; 
+                    default: begin
+                        instr_scope = "STORE?";
+                        illegal_instr_o = 1'b1;
+                    end
+                endcase
+
                 a_op_sel_o = 1'b0;
                 b_op_sel_o = 1'b1;
                 alu_op_sel_o = `ALU_FUNC_ADD;
@@ -241,6 +278,7 @@ module Decode
             /* ADDI  */
             17'b???????_000_0010011: 
             begin
+                instr_scope = (instr_i == 32'h00000013)? "NOP" : "ADDI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -252,6 +290,7 @@ module Decode
             /* SLTI  */
             17'b???????_010_0010011: 
             begin
+                instr_scope = "SLTI";
                 comparison_type_o = `CMP_FUNC_LT;
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd3;
@@ -262,6 +301,7 @@ module Decode
             /* SLTIU */ 
             17'b???????_011_0010011: 
             begin
+                instr_scope = "SLTIU";
                 comparison_type_o = `CMP_FUNC_LTU;
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd3;
@@ -272,6 +312,7 @@ module Decode
             /* XORI  */ 
             17'b???????_100_0010011: 
             begin
+                instr_scope = "XORI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -283,6 +324,7 @@ module Decode
             /* ORI   */
             17'b???????_110_0010011: 
             begin
+                instr_scope = "ORI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -294,6 +336,7 @@ module Decode
             /* ANDI  */
             17'b???????_111_0010011: 
             begin
+                instr_scope = "ANDI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -305,6 +348,7 @@ module Decode
             /* SLLI  */
             17'b0000000_001_0010011: 
             begin
+                instr_scope = "SLLI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -316,6 +360,7 @@ module Decode
             /* SRLI  */
             17'b0000000_101_0010011: 
             begin
+                instr_scope = "SRLI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -327,6 +372,7 @@ module Decode
             /* SRAI  */
             17'b0100000_101_0010011: 
             begin
+                instr_scope = "SRAI";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -338,6 +384,7 @@ module Decode
             /* ADD   */ 
             17'b0000000_000_0110011: 
             begin
+                instr_scope = "ADD";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -348,6 +395,7 @@ module Decode
             /* SUB   */
             17'b0100000_000_0110011:
             begin
+                instr_scope = "SUB";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -358,6 +406,7 @@ module Decode
             /* SLL   */ 
             17'b0000000_001_0110011:
             begin
+                instr_scope = "SLL";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -368,6 +417,7 @@ module Decode
             /* SLT */ 
             17'b0000000_010_0110011:
             begin
+                instr_scope = "SLT";
                 comparison_type_o = `CMP_FUNC_LT;
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd3;
@@ -378,6 +428,7 @@ module Decode
             /* SLTU  */ 
             17'b0000000_011_0110011:
             begin
+                instr_scope = "SLTU";
                 comparison_type_o = `CMP_FUNC_LTU;
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd3;
@@ -387,6 +438,7 @@ module Decode
             /* XOR   */ 
             17'b0000000_100_0110011:
             begin
+                instr_scope = "XOR";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -397,6 +449,7 @@ module Decode
             /* SRL   */ 
             17'b0000000_101_0110011: 
             begin
+                instr_scope = "SRL";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -407,6 +460,7 @@ module Decode
             /* SRA   */
             17'b0100000_101_0110011:
             begin
+                instr_scope = "SRA";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -415,7 +469,9 @@ module Decode
             end
 
             /* OR    */ 
-            17'b0000000_110_0110011:begin
+            17'b0000000_110_0110011:
+            begin
+                instr_scope = "OR";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -426,6 +482,7 @@ module Decode
             /* AND   */ 
             17'b0000000_111_0110011: 
             begin
+                instr_scope = "AND";
                 rf_we_o = 1'b1;
                 rf_din_sel_o = 3'd2;
                 a_op_sel_o = 1'b0;
@@ -433,18 +490,52 @@ module Decode
                 alu_op_sel_o = `ALU_FUNC_AND;
             end
 
-            /////////////////////////////////////////////////////////////////////////
-            `ifdef RV_ZICSR
-            /* CSR Instructions */
-            17'b???????_???_1110011:begin
-                rf_we_o = (rd_sel_o!=0);   // CSR Reads should not take place if rs1 == x0
-                rf_din_sel_o = 3'd5;
-                csru_we_o = 1;
-                imm_format = `RV_IMM_TYPE_I;
+            /* OPCODE: SYSTEM */
+            17'b???????_???_1110011:
+            begin
+                if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b00000000000) /* ECALL */ begin
+                    instr_scope = "ECALL";
+                    illegal_instr_o = 1'b1; // Not supported
+                end
+                else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b00000000001) /* EBREAK */ begin
+                    instr_scope = "EBREAK";
+                    illegal_instr_o = 1'b1; // Not supported
+                end
+                else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00010 && func7 == 7'b0011000) /* MRET */ begin
+                    instr_scope = "MRET";
+                    illegal_instr_o = 1'b1; // Not supported
+                end
+                else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00101 && func7 == 7'b0001000) /* WFI */ begin
+                    instr_scope = "WFI";
+                    illegal_instr_o = 1'b1; // Not supported
+                end
+                else begin
+                    `ifdef RV_ZICSR
+                        /* CSR Instructions */
+                        case(func3)
+                            3'b001: instr_scope = "CSRRW";
+                            3'b010: instr_scope = "CSRRS";
+                            3'b011: instr_scope = "CSRRC";
+                            3'b101: instr_scope = "CSRRWI";
+                            3'b110: instr_scope = "CSRRSI";
+                            3'b111: instr_scope = "CSRRCI";
+                            default: begin
+                                instr_scope = "CSR?";
+                                illegal_instr_o = 1'b1;
+                            end
+                        endcase
+                        rf_we_o = (rd_sel_o!=0);   // CSR Reads should not take place if rs1 == x0
+                        rf_din_sel_o = 3'd5;
+                        csru_we_o = 1;
+                        imm_format = `RV_IMM_TYPE_I;
+                    `else
+                        illegal_instr_o = 1'b1;
+                    `endif // RV_ZICSR
+                end
             end
-            `endif
 
             default: begin
+                instr_scope = "???";
                 jump_en_o = 0;
                 comparison_type_o = `CMP_FUNC_UN;
                 rf_we_o = 0;
@@ -459,10 +550,11 @@ module Decode
                 `ifdef RV_ZICSR
                 csru_we_o = 0;
                 `endif
+
                 illegal_instr_o = 1'b1;
+                
                 `ifdef verilator
-                    if(opcode != 7'b1110011) // EBREAK
-                        $display("!Warning: Unimplemented Opcode: %b", opcode);
+                    $display("!Warning: Unimplemented Opcode: %b", opcode);
                 `endif
             end            
 
