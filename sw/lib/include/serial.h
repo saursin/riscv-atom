@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "platform.h"
 
 // Register Offsets
 #define UART_REG_RBR 0x00
