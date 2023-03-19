@@ -9,6 +9,12 @@
 
 #define EOF (-1)
 
+// Bases to be used with putint
+#define BIN 2
+#define OCT 8
+#define DEC 10
+#define HEX 16
+
 
 /**
  * @brief Reads a character from stdin
@@ -17,12 +23,14 @@
  */
 int getchar(void);
 
+
 /**
  * @brief Writes a character to stdout.
  * 
  * @param chr character
  */
 void putchar(char chr);
+
 
 /**
  * @brief reads a line from stdin and stores it into the string pointed to by str
@@ -48,21 +56,11 @@ void puts(char *ptr);
 /**
  * @brief Writes an integer (signed) to stdout
  * 
- * @param n number
+ * @param n integer
+ * @param ndigits number of digits to display (use 0 for auto ndigits)
  * @param base base
- * @param uppercase upprtcase flag
  */
-void putint(long long n, int base, bool upprcase);
-
-
-/**
- * @brief Sends a hexadecimal value to std out
- * 
- * @param val integer value
- * @param digits no of digits to print
- * @param uppercase uppercase flag
- */
-void puthex(unsigned int val, int digits, bool uppercase);
+void putint(int64_t n, unsigned ndigits, unsigned base);
 
 
 /**
@@ -72,7 +70,16 @@ void puthex(unsigned int val, int digits, bool uppercase);
  * @param ... values for placeholders
  * @return int 
  */
-int printf(char *fmt,...);
+int printf(char *fmt, ...);
 
+
+/**
+ * @brief Prints buffer in hex
+ * 
+ * @param buf pointer to buffer
+ * @param len length of buffer
+ * @param base_addr base address of buffer
+ */
+void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr);
 
 #endif // __STDIO_H__
