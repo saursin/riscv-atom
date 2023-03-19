@@ -1,0 +1,69 @@
+name: libcatom
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  VERILATOR_PREBUILT_FILEID: 1rXszcRib7oryDU2sMhZpPxMn5Ev3RbxG
+  VERILATOR_INSTALL_PATH: /opt/verilator
+  RVTOOLCHAIN_PREBUILT_FILEID: 1kSxCHqrfe7jrk32N3W_e1YbHj97-EsaN
+  RVTOOLCHAIN_INSTALL_PATH: /opt/riscv
+
+jobs:
+  Build:
+    name: libcatom
+    runs-on: ubuntu-20.04
+    
+    steps:
+      - name: Checkout RISCV-Atom Repo
+        uses: actions/checkout@v3
+        with:
+          path: riscv-atom
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  
+    
+      - name: Install Prerequisites
+        run: |
+          pip install gdown
+          sudo apt-get install ccache
+
+      - name: Install Verilator
+        run: |
+          gdown ${VERILATOR_PREBUILT_FILEID} -O verilator.tar.gz
+          sudo mkdir -p ${VERILATOR_INSTALL_PATH}
+          sudo tar -xvf verilator.tar.gz -C ${VERILATOR_INSTALL_PATH}
+
+      - name: Install riscv-gnu-toolchain (64-bit, multilib)
+        run: |
+          gdown ${RVTOOLCHAIN_PREBUILT_FILEID} -O rv64_mutilib.tar.gz
+          sudo mkdir -p ${RVTOOLCHAIN_INSTALL_PATH}
+          sudo tar -xvf rv64_mutilib.tar.gz -C ${RVTOOLCHAIN_INSTALL_PATH}
+
+      - name: Setup Environment
+        working-directory: riscv-atom
+        run: |
+          echo "${VERILATOR_INSTALL_PATH}/bin" >> $GITHUB_PATH
+          echo "${RVTOOLCHAIN_INSTALL_PATH}/bin" >> $GITHUB_PATH
+          echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
+          echo "VERILATOR_INCLUDE_PATH:=${VERILATOR_INSTALL_PATH}/share/verilator/include" >> config.mk
+
+      - name: Build Atomsim - atombones
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=atombones clean lib
+
+      - name: Build AtomSim - hydrogensoc
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=hydrogensoc clean lib

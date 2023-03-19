@@ -2,7 +2,7 @@
 
 # RISCV-Atom
 
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![atomsim-atombones](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-atombones.yml) [![atomsim-hydrogensoc](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml/badge.svg)](https://github.com/saurabhsingh99100/riscv-atom/actions/workflows/atomsim-hydrogensoc.yml) [![Documentation Status](https://readthedocs.org/projects/riscv-atom/badge/?version=latest)](https://riscv-atom.readthedocs.io/en/latest/?badge=latest)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![atomsim](https://github.com/saursin/riscv-atom/actions/workflows/atomsim.yml/badge.svg)](https://github.com/saursin/riscv-atom/actions/workflows/atomsim.yml) [![libcatom](https://github.com/saursin/riscv-atom/actions/workflows/libcatom.yml/badge.svg)](https://github.com/saursin/riscv-atom/actions/workflows/libcatom.yml) [![Documentation Status](https://readthedocs.org/projects/riscv-atom/badge/?version=latest)](https://riscv-atom.readthedocs.io/en/latest/?badge=latest)
 
 
 RISC-V Atom is an open-source soft-core processor platform targeted for FPGAs. It is complete hardware prototyping and software development environment based around **Atom**, which is a 32-bit embedded-class processor based on the [RISC-V](https://riscv.org/) Instruction Set Architecture (ISA). 
