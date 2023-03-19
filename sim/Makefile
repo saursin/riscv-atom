@@ -149,7 +149,7 @@ DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o	$(OBJ_DIR)/verilated_threads.o
 
 LDFLAGS += -L build/verilated
-LDLIBS += -l:V$(VTOPMODULE)__ALL.a
+LDLIBS += -l:V$(VTOPMODULE)__ALL.a -lpthread
 
 
 # Append DPI objects & add DPI flags 	(if DPI is defined)
