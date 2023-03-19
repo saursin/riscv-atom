@@ -34,6 +34,11 @@ module Decode
     output  wire    [2:0]   csru_op_sel_o,
     output  reg             csru_we_o
     `endif
+
+    `ifdef EN_EXCEPT
+    ,
+    output  reg             trap_ret_o
+    `endif
 );
 
     // Decode fields
@@ -100,6 +105,10 @@ module Decode
         csru_we_o = 0;
         `endif
 
+        `ifdef EN_EXCEPT
+        trap_ret_o = 1'b0;
+        `endif
+
 
         casez({func7, func3, opcode})
             
@@ -141,7 +150,7 @@ module Decode
             /* JALR  */ 
             17'b???????_000_1100111: 
             begin
-                instr_scope = "JALR";
+                instr_scope = (rd_sel_o == 0 && rs1_sel_o == 1 && imm_o == 0) ? "RET" : "JALR";
                 jump_en_o = 1'b1;
                 comparison_type_o = `CMP_FUNC_UN;
                 rf_we_o = 1'b1;
@@ -503,7 +512,14 @@ module Decode
                 end
                 else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00010 && func7 == 7'b0011000) /* MRET */ begin
                     instr_scope = "MRET";
+                    `ifdef EN_EXCEPT
+                    jump_en_o = 1'b1;
+                    comparison_type_o = `CMP_FUNC_UN;
+                    trap_ret_o = 1'b1;
+                    `else
                     illegal_instr_o = 1'b1; // Not supported
+                    `endif
+
                 end
                 else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00101 && func7 == 7'b0001000) /* WFI */ begin
                     instr_scope = "WFI";
@@ -551,10 +567,16 @@ module Decode
                 csru_we_o = 0;
                 `endif
 
+                `ifdef EN_EXCEPT
+                trap_ret_o = 0;
+                `endif // EN_EXCEPT
+
                 illegal_instr_o = 1'b1;
                 
                 `ifdef verilator
+                `ifndef EN_EXCEPT
                     $display("!Warning: Unimplemented Opcode: %b", opcode);
+                `endif
                 `endif
             end            
 

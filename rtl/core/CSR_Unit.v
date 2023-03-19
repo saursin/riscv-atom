@@ -39,6 +39,7 @@ module CSR_Unit#
 `ifdef EN_EXCEPT
     output  wire [31:0]     trap_jump_addr_o,
     output  wire            trap_caught_o,
+    output  wire [31:1]     trap_epc_o,
 `endif // EN_EXCEPT
 
     // Signals for Reading from / Writing to CSRs
@@ -262,6 +263,7 @@ module CSR_Unit#
             csr_mepc <= write_value[31:1];
         end
     end
+    assign trap_epc_o = csr_mepc;
 
     //===== MCAUSE ==========================================================
     reg             csr_mcause_intr;

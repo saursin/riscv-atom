@@ -78,7 +78,16 @@ module AtomRV # (
         - Slave responds by setting the ack signal.
     */
 
-    wire jump_decision = d_jump_en & comparison_result; // final jump decision signal
+
+    /*
+        Jump decision:
+        final jump decision signal, determines whether the jump will be taken
+        sources of jump:
+            - software (JAL/JALR)
+            - hw (traps)
+    */
+    wire jump_decision = (d_jump_en & comparison_result) `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, ); 
+
 
     ////////////////////////////////////////////////////////////////////
     // PIPELINE CONTROL
@@ -126,7 +135,7 @@ module AtomRV # (
             execute therefore a bubble is introduced. 
             - 
     */
-    wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1) `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, );
+    wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1);
 
 
     reg ignore_imem_handshake = 0;
@@ -135,7 +144,7 @@ module AtomRV # (
             ignore_imem_handshake <= 0;
         else begin
             case(ignore_imem_handshake)
-                0:  if(jump_decision `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, ))
+                0:  if(jump_decision)
                         ignore_imem_handshake <= 1;
 
                 1:  if(raw_imem_handshake)
@@ -156,6 +165,7 @@ module AtomRV # (
 
     wire [31:0]     csru_trap_jump_addr_o;
     wire            csru_trap_caught_o;
+    wire [31:1]     csru_trap_epc_o;
     `else
     `UNUSED_VAR(except_illegal_instr)
     `endif // EN_EXCEPT
@@ -179,8 +189,16 @@ module AtomRV # (
         end
         `endif // EN_EXCEPT
         
-        else if(jump_decision)
-            ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
+        else if(jump_decision) begin
+            `ifdef EN_EXCEPT
+            if(csru_trap_caught_o)
+                ProgramCounter <= csru_trap_jump_addr_o;
+            else if(d_trap_ret)
+                ProgramCounter <= {csru_trap_epc_o, 1'b0};
+            else
+            `endif // EN_EXCEPT
+                ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
+        end
 
         else if (!stall_stage1) begin
             ProgramCounter <= pc_plus_four;
@@ -279,6 +297,10 @@ module AtomRV # (
     wire            d_csru_we;
     `endif
 
+    `ifdef EN_EXCEPT
+    wire            d_trap_ret;
+    `endif // EN_EXCEPT
+
 
     Decode decode
     (
@@ -309,6 +331,11 @@ module AtomRV # (
         .csru_op_sel_o      (d_csru_op_sel),
         .csru_we_o          (d_csru_we)
         `endif
+
+        `ifdef EN_EXCEPT
+        ,
+        .trap_ret_o         (d_trap_ret)
+        `endif // EN_EXCEPT
     );
 
 
@@ -451,6 +478,7 @@ module AtomRV # (
         .except_pc_i                    (ProgramCounter_Old[31:1]),
         .trap_jump_addr_o               (csru_trap_jump_addr_o),
         .trap_caught_o                  (csru_trap_caught_o),
+        .trap_epc_o                     (csru_trap_epc_o),  
         `endif // EN_EXCEPT
 
         // Signals for Reading from / Writing to CSRs
