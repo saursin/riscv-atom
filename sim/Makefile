@@ -216,6 +216,11 @@ $(DEPDIR)/%.Td: ;
 ####################################################
 # Cleanup & Util Recepies
 
+.PHONY: preprocess_verilog              #t Preprocess verilog and dump output into a single verilog file
+preprocess_verilog: $(VTOPMODULE_FILE) $(VSRCS)
+	$(VC) $(VFLAGS) -E $^ > verilog_dump.v
+
+
 .PHONY: clean
 clean:									#t Clean build files
 	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/* $(VERILATED_DIR)/* $(DEPDIR)/*
