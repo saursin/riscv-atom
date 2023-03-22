@@ -131,6 +131,12 @@ module HydrogenSoC(
         .dport_wb_stb_o  (core_dport_wb_stb_o),
         .dport_wb_ack_i  (core_dport_wb_ack_i),
         .dport_wb_cyc_o  (core_dport_wb_cyc_o)
+
+        `ifdef EN_EXCEPT
+        ,
+        .irq_i          (gpio_io[0]),       // FIXME: For testing
+        .timer_int_i    (gpio_io[1])        // FIXME: For testing
+        `endif // EN_EXCEPT
     );
 
 
@@ -335,11 +341,7 @@ module HydrogenSoC(
 
             else begin
                 selected_device = Device_None;
-
-                `ifdef verilator
-                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", arb_wb_adr_o);
-                    $finish();
-                `endif
+                `debug($display("RTL-ERROR: Unknown Device Selected: 0x%x", arb_wb_adr_o);)
             end
         end
         else begin

@@ -100,93 +100,83 @@ void puts(char *ptr)
 }
 
 
-void putint(long long n, int base, bool uppercase)
+void putint(int64_t n, unsigned ndigits, unsigned base)
 {
-    // If number is smaller than 0, put a - sign
-        // and change number to positive
-        if (base == 10 && n < 0) {
-            putchar('-');
-            n = -n;
-        }
-    
-        // Remove the last digit and recur
-        switch(base)
-        {
-            case 2:     if (n/2)
-                            putint(n/2, base, uppercase);
-                        break;
-
-            case 8:     if (n/8)
-                            putint(n/8, base, uppercase);
-                        break;
-
-            case 10:    if (n/10)
-                            putint(n/10, base, uppercase);
-                        break;
-
-            case 16:    if (n/16)
-                            putint(n/16, base, uppercase);
-                        break;
-        }
-        
-        // Print the last digit
-        switch(base)
-        {
-            case 2:     putchar(n%2 + '0');
-                        break;
-
-            case 8:     putchar(n%8 + '0');
-                        break;
-
-            case 10:    putchar(n%10 + '0');
-                        break;
-
-            case 16:    if(n%16 > 9)
-                            putchar((n%16)-10 + (uppercase ? 'A' : 'a'));
-                        else
-                            putchar(n%16 + '0');
-                        break;
-        }
-}
-
-
-void puthex(unsigned int val, int digits, bool uppercase)
-{
-	for (int i = (4*digits)-4; i >= 0; i -= 4)
-    {
-        if(uppercase)
-            putchar("0123456789ABCDEF"[(val >> i) % 16]);
-        else
-            putchar("0123456789abcdef"[(val >> i) % 16]);
+    if(base < 2 || base > 16) {
+        puts("\nERROR (stdio::putint): Unsupported Base\n");
+        return;
     }
+
+    if(ndigits > 32)
+    {
+        puts("\nERROR (stdio::putint): ndigits too large\n");
+        return;
+    }
+   
+    if(base == 10 && n < 0) {
+        putchar('-');
+        n = -n;
+    }
+
+    unsigned required_ndigits=1;
+    for(int32_t i=n; i/=base; required_ndigits++)
+    ;
+
+    if(required_ndigits>ndigits)
+        ndigits=required_ndigits;
+
+    char symbols[] = 
+    #ifdef HEX_UPPERCASE
+        "0123456789ABCDEF";
+    #else
+        "0123456789abcdef";
+    #endif
+
+    char buf[ndigits+1];
+    int loc = ndigits;
+    buf[loc--] = '\0';
+
+    for(; loc >= 0; loc--) {
+        if(loc < (ndigits-required_ndigits)) {
+            buf[loc] = '0';
+            continue;
+        }
+        buf[loc] = symbols[n % base];
+        n /= base;
+    }
+    puts(buf);
 }
 
 
-int printf(char *fmt,...)
+int printf(char *fmt, ...)
 {
     va_list ap;
-
     for(va_start(ap, fmt);*fmt;fmt++)
     {
         if(*fmt=='%')
         {
             fmt++;
+            int ndigits=0;
+            for(ndigits=0; *fmt >= '0' && *fmt <= '9'; fmt++) {
+                ndigits = (*fmt-'0') + (ndigits<<3)+(ndigits<<1); // val = val*10 + digit
+            }
+
             switch(*fmt)
             {
                 case 'b':
                     // binary
-                    putint(va_arg(ap, long int), 2, false);
+                    putint(va_arg(ap, int32_t), ndigits, BIN);
                     break;
                 
                 case 'o':
                     // Octal
-                    putint(va_arg(ap, long int), 8, false);
+                    putint(va_arg(ap, int32_t), ndigits, OCT);
                     break;
 
                 case 'd':
                 case 'i':
                     // Signed decimal number
-                    putint(va_arg(ap, long int), 10, false);
+                    putint(va_arg(ap, int32_t), ndigits, DEC);
                     break;
                 
                 case 'l':
@@ -196,7 +186,7 @@ int printf(char *fmt,...)
                         if(*(++fmt) == 'd')
                         {
                             // Signed decimal number (long long)
-                            putint(va_arg(ap, long long), 10, false);
+                            putint(va_arg(ap, long long), ndigits, DEC);
                             break;
                         }
                         else
@@ -213,20 +203,17 @@ int printf(char *fmt,...)
                         putchar(*fmt);
                         break;
                     }
-               
-                case 'x':
-                    // unsigned hexadecimal (lowercase)
-                    putint(va_arg(ap, long int), 16, false);
                     break;
 
+                case 'x':
                 case 'X':
-                    // unsigned hexadecimal (uppercase)
-                    putint(va_arg(ap, long int), 16, true);
+                    // unsigned hexadecimal (lowercase)
+                    putint(va_arg(ap, int32_t), ndigits, HEX);
                     break;
                 
                 case 'p':
                     // Pointer address
-                    puts("0x"); puthex(va_arg(ap, unsigned int), 8, false);
+                    puts("0x"); putint(va_arg(ap, uint32_t), 8, HEX);
                     break;
 
                 case 'c':
@@ -247,9 +234,9 @@ int printf(char *fmt,...)
     }
 
     va_end(ap);
-
     return 0;
 }
+
 
 void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
 {
@@ -259,11 +246,11 @@ void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
     for (unsigned i=0; i<len; i++) {
         // print address at the start of the line
         if(i%(wpl*bpw) == 0) {
-            puthex(base_addr+i, 8, false); puts(": ");
+            putint(base_addr+i, 8, HEX); puts(": ");
         }
         
         // print byte
-        puthex(0xff & buf[i], 2, false); putchar(' ');
+        putint(0xff & buf[i], 2, HEX);  putchar(' ');
         
         // extra space at word boundry
         if(i%bpw == bpw-1)
@@ -272,5 +259,4 @@ void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
         if(i%(wpl*bpw) == (wpl*bpw-1)) // end of line 
             putchar('\n');
     }
-    putchar('\n');
 }

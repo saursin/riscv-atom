@@ -20,7 +20,7 @@ void myprint(int num, int digits)
             putchar(' ');
         else
         {
-            putint(arr[i], 10, false);
+            putint(arr[i], 0, DEC);
             flag = 1;
         }
     }

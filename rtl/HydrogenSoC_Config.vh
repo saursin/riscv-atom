@@ -47,6 +47,15 @@
 
 
 /*
+    If defined enables exceptions and interrupts
+*/
+// Depends on:
+// - RV_ZICSR
+
+`define EN_EXCEPT
+
+
+/*
     Define number of GPIO Pins to implement
 */
 `define NGPIO 16

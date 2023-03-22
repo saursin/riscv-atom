@@ -33,9 +33,12 @@ module AtomRV_wb
     output  reg     [3:0]   dport_wb_sel_o,  
     input   wire            dport_wb_ack_i
 
-    // === IRQ Interface ===
-    //input   wire    [31:0]  irq,
-    //output  reg     [31:0]  eoi
+    `ifdef EN_EXCEPT
+    // Interrupt Signals
+    ,
+    input   wire            irq_i,
+    input   wire            timer_int_i
+    `endif // EN_EXCEPT
 );
     /////////////////////////////////////////////////////////////////
     wire    [31:0]  imem_addr_o;    // IMEM Address
@@ -66,7 +69,6 @@ module AtomRV_wb
 
         .imem_addr_o    (imem_addr_o),
         .imem_data_i    (imem_data_i),
-
         .imem_valid_o   (imem_valid_o),
         .imem_ack_i     (imem_ack_i),
 
@@ -74,12 +76,16 @@ module AtomRV_wb
         .dmem_addr_o    (dmem_addr_o),
         .dmem_data_i    (dmem_data_i),
         .dmem_data_o    (dmem_data_o),
-
         .dmem_sel_o     (dmem_sel_o),
         .dmem_we_o      (dmem_we_o),
-
         .dmem_valid_o   (dmem_valid_o),
         .dmem_ack_i     (dmem_ack_i) 
+
+        `ifdef EN_EXCEPT
+        ,
+        .irq_i          (irq_i),
+        .timer_int_i    (timer_int_i)
+        `endif // EN_EXCEPT
     );
     
 
@@ -174,34 +180,4 @@ module AtomRV_wb
             endcase
         end
     end
-
-
-
-    // // output  reg     [31:0]  wb_ibus_adr_o,
-    // // input   wire    [31:0]  wb_ibus_dat_i,
-
-    // // output  reg             wb_ibus_cyc_o,
-    // // output  reg             wb_ibus_stb_o,
-    // // input   wire            wb_ibus_ack_i,
-    
-
-    // // assign wb_ibus_adr_o = imem_addr_o;
-    // // assign imem_data_i = wb_ibus_dat_i;
-    // // assign wb_ibus_stb_o = imem_valid_o;
-    // // assign imem_ack_i = wb_ibus_ack_i;
-
-
-    // ////////////////////////////////////////////////////////////
-    // /// DBUS Wishbone Logic
-    // assign dport_wb_adr_o   = dmem_addr_o;
-    // assign dmem_data_i      = dport_wb_dat_i;
-    // assign dport_wb_dat_o   = dmem_data_o;
-
-    // assign dport_wb_sel_o   = dmem_sel_o;
-    // assign dport_wb_we_o    = dmem_we_o;
-
-    // assign dport_wb_stb_o   = dmem_valid_o;
-    // assign dmem_ack_i       = dport_wb_ack_i;
-
-    // assign dport_wb_cyc_o   = dport_wb_stb_o;
 endmodule

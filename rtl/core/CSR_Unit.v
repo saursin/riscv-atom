@@ -21,6 +21,27 @@ module CSR_Unit#
     input   wire    clk_i,
     input   wire    rst_i,
 
+    // input signals from pipeline
+    input   wire    instr_retired_i,
+
+`ifdef EN_EXCEPT
+    input   wire            except_instr_addr_misaligned_i,
+    input   wire            except_illegal_instr_i,
+    input   wire            except_load_addr_misaligned_i,
+    input   wire            except_store_addr_misaligned_i,
+    input   wire            intrpt_external_i,
+    input   wire            intrpt_timer_i, 
+    input   wire            intrpt_soft_i,
+    input   wire [31:1]     except_pc_i,
+`endif // EN_EXCEPT
+
+    // ouput signals to pipeline
+`ifdef EN_EXCEPT
+    output  wire [31:0]     trap_jump_addr_o,
+    output  wire            trap_caught_o,
+    output  wire [31:1]     trap_epc_o,
+`endif // EN_EXCEPT
+
     // Signals for Reading from / Writing to CSRs
     input   wire [11:0]     addr_i,
     input   wire [31:0]     data_i,
@@ -28,24 +49,20 @@ module CSR_Unit#
     input   wire            we_i,
 
     output  wire [31:0]     data_o
-
-    // input signals from pipeline
-
-    // ouput signals to pipeline
 );
-    `UNUSED_VAR(we_i)
-
-    // Generate Data to be written
     reg  [31:0] write_value;    // Value to be written onto a CSR register
+    `ifndef EN_EXCEPT
     `UNUSED_VAR(write_value)
+    `UNUSED_VAR(we_i)
+    `endif // EN_EXCEPT
 
     reg  [31:0] read_value;     // Value of selected CSR register
 
     always @(*) /* COMBINATIONAL */ begin
         case(op_i[1:0])
-            2'b00: write_value = data_i;                   // CSRRW
-            2'b01: write_value = data_i & read_value;      // CSRRS
-            2'b10: write_value = ~(data_i & read_value);   // CSRRC
+            2'b01: write_value = data_i;                   // CSRRW
+            2'b10: write_value = data_i | read_value;      // CSRRS
+            2'b11: write_value = ~(data_i) & read_value;   // CSRRC
 
             default:
             write_value = read_value;
@@ -53,9 +70,44 @@ module CSR_Unit#
     end
 
     ////////////////////////////////////////////////////////////
+    // TRAP Logic
+    `ifdef EN_EXCEPT
+
+    // Cause Generator
+    reg [3:0]       except_cause;
+
+    always @(*) /* COMB */ begin
+        except_cause    = 0;
+
+        if(except_illegal_instr_i)                  except_cause = 'd2;
+        else if(except_instr_addr_misaligned_i)     except_cause = 'd0;
+        else if(except_load_addr_misaligned_i)      except_cause = 'd4;
+        else if(except_store_addr_misaligned_i)     except_cause = 'd6;
+    end
+
+    // Trap Gates
+    wire exception_caught = csr_mstatus_mie & (except_illegal_instr_i | except_instr_addr_misaligned_i 
+                            | except_load_addr_misaligned_i | except_store_addr_misaligned_i);
+    
+
+    wire    intrpt_external = csr_mstatus_mie & csr_mie_meie & intrpt_external_i; 
+    wire    intrpt_timer    = csr_mstatus_mie & csr_mie_mtie & intrpt_timer_i; 
+    wire    intrpt_soft     = csr_mstatus_mie & csr_mie_msie & intrpt_soft_i;
+
+    wire    intrpt_caught = (intrpt_external | intrpt_timer | intrpt_soft);
+
+    assign  trap_caught_o = exception_caught | intrpt_caught;
+
+    // Trap jump address generation
+    assign trap_jump_addr_o = (csr_mtvec_mode == 2'b00) ? {csr_mtvec_base, 2'b00}:
+                                ((csr_mtvec_mode == 2'b01) ? {csr_mtvec_base, 2'b00} + (4 * except_cause): 32'hxxxx_xxxx);
+
+
+    `endif // EN_EXCEPT
+    ////////////////////////////////////////////////////////////
     // CSR Registers
 
-    // CYCLE (Read-Only)
+    //===== MCYCLE & MCYCLEH ================================================
     reg [63:0]  csr_cycle = 64'd0;
 
     always @(posedge clk_i) begin
@@ -65,7 +117,18 @@ module CSR_Unit#
             csr_cycle <= csr_cycle + 1'b1;
     end
 
-    // MISA
+
+    //===== INSTRET & INSTRETH ==============================================
+    reg [63:0]  csr_instret = 64'd0;
+    always @(posedge clk_i) begin
+        if(rst_i)
+            csr_instret <= 64'd0;
+        else if (instr_retired_i)
+            csr_instret <= csr_instret + 1'b1;
+    end
+
+
+    //===== MISA ============================================================
     wire [31:0]  csr_misa = {
         2'b01,              // XLEN = 32
         4'd0,               // padding
@@ -97,19 +160,128 @@ module CSR_Unit#
         `isdefined(RV_A)    // bit-0     A Atomic extension
     };
 
-    // MSTATUS & MSTATUSH
-    reg [31:0] csr_mstatus;
-    reg [31:0] csr_mstatush;
+
+    `ifdef EN_EXCEPT
+    //===== MSTATUS & MSTATUSH ==============================================
+    reg         csr_mstatus_mie;    // Machine global interrupt Enable
+
+    wire [31:0] csr_mstatus_readval = {28'd0 , csr_mstatus_mie, 3'd0};
+    wire [31:0] csr_mstatush_readval = 32'd0;
+
     always @(posedge clk_i) begin
         if(rst_i) begin
-            csr_mstatus <= 32'h00000000;
-            csr_mstatush <= 32'h00000000;
+            csr_mstatus_mie <= 0;
         end
-        else if(we_i && (addr_i == `CSR_mstatus))
-            csr_mstatus <= write_value;
-        else if(we_i && (addr_i == `CSR_mstatush))
-            csr_mstatus <= write_value;
+        else if(we_i && (addr_i == `CSR_mstatus)) begin
+            csr_mstatus_mie <= write_value[3];
+        end
+        else if(we_i && (addr_i == `CSR_mstatush)) begin
+            // ...
+        end
     end
+
+
+
+    //===== MTVEC ===========================================================
+    reg [31:2]  csr_mtvec_base;     // Base address
+    reg [1:0]   csr_mtvec_mode;     // Mode (Direct/Vectored)
+
+    wire [31:0] csr_mtvec_readval = {csr_mtvec_base, csr_mtvec_mode};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mtvec_base <= 0;
+            csr_mtvec_mode <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mtvec)) begin
+            csr_mtvec_base <= write_value[31:2];
+            csr_mtvec_mode <= write_value[1:0];
+        end
+    end
+
+    
+    //===== MIE =============================================================
+    reg         csr_mie_meie;    // Machine external interrupt Enable
+    reg         csr_mie_mtie;    // Machine timer interrupt Enable
+    reg         csr_mie_msie;    // Machine software interrupt Enable
+    
+    wire [31:0] csr_mie_readval = {20'd0, csr_mie_meie, 3'd0, csr_mie_mtie, 3'd0, csr_mie_msie, 3'd0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mie_meie <= 0;
+            csr_mie_mtie <= 0;
+            csr_mie_msie <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_mie)) begin
+            csr_mie_meie <= write_value[11];
+            csr_mie_mtie <= write_value[7];
+            csr_mie_msie <= write_value[3];
+        end
+    end
+
+
+    //===== MIP =============================================================
+    reg         csr_mip_meip;    // Machine external interrupt Pending
+    reg         csr_mip_mtip;    // Machine timer interrupt Pending
+    reg         csr_mip_msip;    // Machine software interrupt Pending
+    
+    wire [31:0] csr_mip_readval = {20'd0, csr_mip_meip, 3'd0, csr_mip_mtip, 3'd0, csr_mip_msip, 3'd0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mip_meip <= 0;
+            csr_mip_mtip <= 0;
+            csr_mip_msip <= 0;
+        end
+        else begin
+            if (intrpt_external)    csr_mip_meip <= 1'b1;
+            if (intrpt_timer)       csr_mip_mtip <= 1'b1;
+            if (intrpt_soft)        csr_mip_mtip <= 1'b1;
+            
+            if(we_i && (addr_i == `CSR_mip)) begin
+                csr_mip_meip <= write_value[11];
+                csr_mip_mtip <= write_value[7];
+                csr_mip_msip <= write_value[3];
+            end
+        end
+    end
+
+
+    //===== MEPC ============================================================
+    reg     [31:1]  csr_mepc;       // Machine exception program counter
+    wire    [31:0]  csr_mepc_readval = {csr_mepc, 1'b0};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mepc <= 0;
+        end
+        else if(trap_caught_o) begin
+            csr_mepc <= except_pc_i;
+        end
+        else if(we_i && (addr_i == `CSR_mepc)) begin
+            csr_mepc <= write_value[31:1];
+        end
+    end
+    assign trap_epc_o = csr_mepc;
+
+    //===== MCAUSE ==========================================================
+    reg             csr_mcause_intr;
+    reg     [3:0]   csr_mcause_cause;    // Note: Actual size as per spec is 31 bits
+
+    wire    [31:0]  csr_mcause_readval = {csr_mcause_intr, 27'd0, csr_mcause_cause};
+    
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_mcause_intr <= 0;
+            csr_mcause_cause <= 0;
+        end
+        else if(trap_caught_o) begin
+            csr_mcause_intr <= intrpt_caught ? 1'b1: 1'b0; 
+            csr_mcause_cause <= except_cause;
+        end
+    end
+    `endif // EN_EXCEPT
 
     ////////////////////////////////////////////////////////////
     // CSR Selection
@@ -122,8 +294,10 @@ module CSR_Unit#
         read_value = 0;
         
         case(addr_i)
-            `CSR_cycle:     read_value = csr_cycle[31:0];  // cycle
-            `CSR_cycleh:    read_value = csr_cycle[63:32]; // cycleh
+            `CSR_cycle:     read_value = csr_cycle[31:0];
+            `CSR_cycleh:    read_value = csr_cycle[63:32];
+            `CSR_instret:   read_value = csr_instret[31:0];
+            `CSR_instreth:  read_value = csr_instret[63:32];
 
             `CSR_mvendorid: read_value = VEND_ID;
             `CSR_marchid:   read_value = ARCH_ID;
@@ -131,8 +305,17 @@ module CSR_Unit#
             `CSR_mhartid:   read_value = HART_ID;
 
             `CSR_misa:      read_value = csr_misa;
-            `CSR_mstatus:   read_value = csr_mstatus;
-            `CSR_mstatush:  read_value = csr_mstatush;
+
+            `ifdef EN_EXCEPT
+            `CSR_mstatus:   read_value = csr_mstatus_readval;
+            `CSR_mstatush:  read_value = csr_mstatush_readval;            
+            `CSR_mtvec:     read_value = csr_mtvec_readval;
+            `CSR_mie:       read_value = csr_mie_readval;
+            `CSR_mip:       read_value = csr_mip_readval;
+            `CSR_mepc:      read_value = csr_mepc_readval;
+            `CSR_mcause:    read_value = csr_mcause_readval;
+            `endif // EN_EXCEPT
+
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);
                 read_value = 32'hxxxx_xxxx;

@@ -9,9 +9,7 @@ void main()
     int i=0;
     for(i=0; i<10; i++)
     {   
-        putchar('\t');
-        putint(rand(), 10, false);
-        putchar('\n');
+        printf("\t%d\n", rand());
     }
 
     srand(0x50505);
@@ -19,9 +17,7 @@ void main()
 
     for(i=0; i<10; i++)
     {   
-        putchar('\t');
-        putint(rand(), 10, false);
-        putchar('\n');
+        printf("\t%d\n", rand());
     }
 
     return;

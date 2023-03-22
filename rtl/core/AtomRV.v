@@ -11,9 +11,17 @@
 //      RISCV core. It is based on RV32I ISA
 ///////////////////////////////////////////////////////////////////
 `include "Defs.vh"
-// `include "Utils.vh"
+`include "Utils.vh"
 
 `default_nettype none
+
+`ifdef EN_EXCEPT
+`ifndef RV_ZICSR
+`error "Exception support requires CSR registers"
+`endif
+`endif
+
+
 
 module AtomRV # (   
     parameter [31:0]    VEND_ID     = 32'h0000_0000,
@@ -47,6 +55,13 @@ module AtomRV # (
     // Dmem handshaking signals
     output  wire            dmem_valid_o,   // DMEM Valid signal
     input   wire            dmem_ack_i      // DMEM Ack signal
+
+    `ifdef EN_EXCEPT
+    // Interrupt Signals
+    ,
+    input   wire            irq_i,
+    input   wire            timer_int_i
+    `endif // EN_EXCEPT
 );
     /*
         ///////////// Protocol specification //////////////
@@ -71,7 +86,16 @@ module AtomRV # (
         - Slave responds by setting the ack signal.
     */
 
-    wire jump_decision = d_jump_en & comparison_result; // final jump decision signal
+
+    /*
+        Jump decision:
+        final jump decision signal, determines whether the jump will be taken
+        sources of jump:
+            - software (JAL/JALR)
+            - hw (traps)
+    */
+    wire jump_decision = (d_jump_en & comparison_result) `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, ); 
+
 
     ////////////////////////////////////////////////////////////////////
     // PIPELINE CONTROL
@@ -138,6 +162,22 @@ module AtomRV # (
     end
 
     ////////////////////////////////////////////////////////////////////
+    // Excepion Logic
+    wire    except_illegal_instr;
+
+    `ifdef EN_EXCEPT
+    // Exception signals
+    wire    except_instr_addr_misaligned = |ProgramCounter[1:0];
+    wire    except_load_addr_misaligned = dmem_valid_o & !dmem_we_o & |dmem_addr_o[1:0];
+    wire    except_store_addr_misaligned = dmem_valid_o & dmem_we_o & |dmem_addr_o[1:0];
+
+    wire [31:0]     csru_trap_jump_addr_o;
+    wire            csru_trap_caught_o;
+    wire [31:1]     csru_trap_epc_o;
+    `else
+    `UNUSED_VAR(except_illegal_instr)
+    `endif // EN_EXCEPT
+    ////////////////////////////////////////////////////////////////////
     //  STAGE 1 - FETCH
     ////////////////////////////////////////////////////////////////////
     assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
@@ -151,8 +191,22 @@ module AtomRV # (
         if(rst_i)
             ProgramCounter <= reset_vector_i;
 
-        else if(jump_decision)
-            ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
+        `ifdef EN_EXCEPT
+        else if(csru_trap_caught_o) begin
+            ProgramCounter <= csru_trap_jump_addr_o;
+        end
+        `endif // EN_EXCEPT
+        
+        else if(jump_decision) begin
+            `ifdef EN_EXCEPT
+            if(csru_trap_caught_o)
+                ProgramCounter <= csru_trap_jump_addr_o;
+            else if(d_trap_ret)
+                ProgramCounter <= {csru_trap_epc_o, 1'b0};
+            else
+            `endif // EN_EXCEPT
+                ProgramCounter <= {alu_out[31:1], 1'b0};    // Only jump to 16 bit aligned addresses, also JALR enforces this
+        end
 
         else if (!stall_stage1) begin
             ProgramCounter <= pc_plus_four;
@@ -251,10 +305,16 @@ module AtomRV # (
     wire            d_csru_we;
     `endif
 
+    `ifdef EN_EXCEPT
+    wire            d_trap_ret;
+    `endif // EN_EXCEPT
+
 
     Decode decode
     (
         .instr_i            (InstructionRegister),
+
+        .illegal_instr_o    (except_illegal_instr),
         
         .rd_sel_o           (d_rd_sel),
         .rs1_sel_o          (d_rs1_sel),
@@ -279,6 +339,11 @@ module AtomRV # (
         .csru_op_sel_o      (d_csru_op_sel),
         .csru_we_o          (d_csru_we)
         `endif
+
+        `ifdef EN_EXCEPT
+        ,
+        .trap_ret_o         (d_trap_ret)
+        `endif // EN_EXCEPT
     );
 
 
@@ -407,6 +472,22 @@ module AtomRV # (
         // Global signals
         .clk_i   (clk_i),
         .rst_i   (rst_i),
+        
+        .instr_retired_i(!stall_stage1),
+
+        `ifdef EN_EXCEPT
+        .except_instr_addr_misaligned_i (except_instr_addr_misaligned),
+        .except_illegal_instr_i         (except_illegal_instr),
+        .except_load_addr_misaligned_i  (except_load_addr_misaligned),
+        .except_store_addr_misaligned_i (except_store_addr_misaligned),
+        .intrpt_external_i              (irq_i),
+        .intrpt_timer_i                 (timer_int_i),            
+        .intrpt_soft_i                  (1'b0),     // Triggered by ECALls (Not implemented)
+        .except_pc_i                    (ProgramCounter_Old[31:1]),
+        .trap_jump_addr_o               (csru_trap_jump_addr_o),
+        .trap_caught_o                  (csru_trap_caught_o),
+        .trap_epc_o                     (csru_trap_epc_o),  
+        `endif // EN_EXCEPT
 
         // Signals for Reading from / Writing to CSRs
         .addr_i (csru_addr_i),
