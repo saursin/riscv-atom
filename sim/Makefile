@@ -88,7 +88,7 @@ endif
 # -------------------- AtomBones --------------------
 ifeq ($(soctarget), atombones)
     VTOPMODULE := AtomBones
-    VTOPMODULE_FILE := $(RTL_DIR)/$(VTOPMODULE).v
+    VTOPMODULE_FILE := $(RTL_DIR)/soc/atombones/$(VTOPMODULE).v
     SIM_BACKEND_FILE := backend_atombones.cpp
     CFLAGS += -DTARGET_HEADER='"backend_atombones.hpp"'
 
@@ -97,7 +97,7 @@ else
 ifeq ($(soctarget), hydrogensoc)
 
     VTOPMODULE := HydrogenSoC
-    VTOPMODULE_FILE := $(RTL_DIR)/$(VTOPMODULE).v
+    VTOPMODULE_FILE := $(RTL_DIR)/soc/hydrogensoc/$(VTOPMODULE).v
 
     # core wrapper
     VSRCS += $(RTL_DIR)/core/AtomRV_wb.v 

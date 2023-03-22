@@ -232,10 +232,9 @@ proc add_source_files {} {
    puts "$myScript: Adding sources to project..."
 
    # include Config file as a global header (used for setting SoC-Params)
-   xfile add "../../../rtl/HydrogenSoC_Config.vh" -include_global
-   
-   
-   xfile add "../../../rtl/HydrogenSoC.v"
+   xfile add "../../../rtl/soc/hydrogensoc/HydrogenSoC_Config.vh" -include_global
+      
+   xfile add "../../../rtl/soc/hydrogensoc/HydrogenSoC.v"
    xfile add "../../../rtl/core/Alu.v"
    xfile add "../../../rtl/core/AtomRV.v"
    xfile add "../../../rtl/core/AtomRV_wb.v"
