@@ -18,7 +18,7 @@ void common_trap_handler(uint32_t mcause, context_frame_t *frame)
     uint32_t cause = mcause & ~(1U << 31);
     if(bitcheck(mcause, 31))
     {
-        char intr_cause_str [12][30] = {
+        char intr_cause_str [12][40] = {
             "Reserved",
             "Supervisor software interrupt",
             "Reserved",
@@ -38,7 +38,7 @@ void common_trap_handler(uint32_t mcause, context_frame_t *frame)
     }
     else    // Exception
     {
-        char exception_str [16][30] = {
+        char exception_str [16][40] = {
             "Instruction address misaligned",
             "Instruction access fault",
             "Illegal instruction",
