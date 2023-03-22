@@ -572,13 +572,8 @@ module Decode
                 `endif // EN_EXCEPT
 
                 illegal_instr_o = 1'b1;
-                
-                `ifdef verilator
-                `ifndef EN_EXCEPT
-                    $display("!Warning: Unimplemented Opcode: %b", opcode);
-                `endif
-                `endif
-            end            
+                `debug($display("RTL-ERROR: Illegal Instruction (insn: %x, Opcode: %b)", instr_i, opcode);)
+            end
 
         endcase
     end

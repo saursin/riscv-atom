@@ -15,6 +15,14 @@
 
 `default_nettype none
 
+`ifdef EN_EXCEPT
+`ifndef RV_ZICSR
+`error "Exception support requires CSR registers"
+`endif
+`endif
+
+
+
 module AtomRV # (   
     parameter [31:0]    VEND_ID     = 32'h0000_0000,
     parameter [31:0]    ARCH_ID     = 32'h0000_0000,

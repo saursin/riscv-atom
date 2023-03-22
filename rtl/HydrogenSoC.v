@@ -341,11 +341,7 @@ module HydrogenSoC(
 
             else begin
                 selected_device = Device_None;
-
-                `ifdef verilator
-                    $display("RTL-ERROR: Unknown Device Selected: 0x%x\nHaulting simulation...", arb_wb_adr_o);
-                    $finish();
-                `endif
+                `debug($display("RTL-ERROR: Unknown Device Selected: 0x%x", arb_wb_adr_o);)
             end
         end
         else begin

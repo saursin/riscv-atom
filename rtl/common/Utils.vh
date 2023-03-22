@@ -7,6 +7,12 @@
 `endif
 `endif
 
+`ifdef DEBUG
+`define debug(x) x
+`else
+`define debug(x)
+`endif
+
 /////////////////////////////////////////////////////////////
 // Function-like utility macros
 
