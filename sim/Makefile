@@ -214,12 +214,15 @@ $(DEPDIR)/%.Td: ;
 
 
 ####################################################
-# Cleanup & Util Recepies
+# Util & Cleanup Recepies
 
-.PHONY: preprocess_verilog              #t Preprocess verilog and dump output into a single verilog file
-preprocess_verilog: $(VTOPMODULE_FILE) $(VSRCS)
-	$(VC) $(VFLAGS) -E $^ > verilog_dump.v
+.PHONY: preprocess_verilog
+preprocess_verilog: $(VTOPMODULE_FILE) $(VSRCS)     #t Preprocess verilog and dump output into a single verilog file
+	$(VC) $(VFLAGS) -E $^ > $(soctarget)_dump.v
 
+.PHONY: lint_verilog
+lint_verilog: $(VTOPMODULE_FILE) $(VSRCS)           #t Lint-check verilog code
+	$(VC) $(VFLAGS) --lint-only $^
 
 .PHONY: clean
 clean:									#t Clean build files
