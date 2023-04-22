@@ -112,29 +112,29 @@ Backend_atomsim::~Backend_atomsim()
 void Backend_atomsim::service_mem_req()
 {    
     // Clear all ack signals
-    tb->m_core->imem_ack_i = 0;
-    tb->m_core->dmem_ack_i = 0;
+    tb->m_core->iport_ack_i = 0;
+    tb->m_core->dport_ack_i = 0;
 
     // ===== Imem Port Reads =====
-    uint32_t iaddr = tb->m_core->imem_addr_o & 0xfffffffc;
-    if(tb->m_core->imem_valid_o == 1)
+    uint32_t iaddr = tb->m_core->iport_addr_o & 0xfffffffc;
+    if(tb->m_core->iport_valid_o == 1)
     {   
         Word_alias i_w;
         mem_["imem"]->fetch(iaddr, i_w.byte, 4);
-        tb->m_core->imem_data_i = i_w.word;
-        tb->m_core->imem_ack_i = 1;
+        tb->m_core->iport_data_i = i_w.word;
+        tb->m_core->iport_ack_i = 1;
     }
 
     // ===== Dmem Port Reads/Writes =====
-    uint32_t daddr = tb->m_core->dmem_addr_o & 0xfffffffc;
-    if(tb->m_core->dmem_valid_o)
+    uint32_t daddr = tb->m_core->dport_addr_o & 0xfffffffc;
+    if(tb->m_core->dport_valid_o)
     {
-        if(tb->m_core->dmem_we_o)	// *** Writes ***
+        if(tb->m_core->dport_we_o)	// *** Writes ***
         {
-            Word_alias data_w = {.word = (uint32_t)tb->m_core->dmem_data_o};
+            Word_alias data_w = {.word = (uint32_t)tb->m_core->dport_data_o};
             if(daddr == UART_ADDR)  // Handle Writes to UART
             {
-                if(tb->m_core->dmem_sel_o & 0b0001)
+                if(tb->m_core->dport_sel_o & 0b0001)
                 {
                     if(using_vuart_)
                         vuart_->send(data_w.byte[0]);   // Redirect to Virtual UART
@@ -145,13 +145,13 @@ void Backend_atomsim::service_mem_req()
             }
             else                    // Handle Writes
             {
-                if(tb->m_core->dmem_sel_o & 0b0001) 
+                if(tb->m_core->dport_sel_o & 0b0001) 
                     this->store(daddr, &data_w.byte[0], 1);
-                if(tb->m_core->dmem_sel_o & 0b0010) 
+                if(tb->m_core->dport_sel_o & 0b0010) 
                     this->store(daddr+1, &data_w.byte[1], 1);
-                if(tb->m_core->dmem_sel_o & 0b0100) 
+                if(tb->m_core->dport_sel_o & 0b0100) 
                     this->store(daddr+2, &data_w.byte[2], 1);
-                if(tb->m_core->dmem_sel_o & 0b1000) 
+                if(tb->m_core->dport_sel_o & 0b1000) 
                     this->store(daddr+3, &data_w.byte[3], 1);
             }
         }
@@ -170,9 +170,9 @@ void Backend_atomsim::service_mem_req()
                 
                 this->fetch(daddr, data_w.byte, 4);
             }
-            tb->m_core->dmem_data_i = data_w.word;
+            tb->m_core->dport_data_i = data_w.word;
         }
-        tb->m_core->dmem_ack_i = 1;
+        tb->m_core->dport_ack_i = 1;
     }
 }
 

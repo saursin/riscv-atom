@@ -41,22 +41,22 @@ module AtomRV_wb
     `endif // EN_EXCEPT
 );
     /////////////////////////////////////////////////////////////////
-    wire    [31:0]  imem_addr_o;    // IMEM Address
-    wire    [31:0]  imem_data_i;    // IMEM data
+    wire    [31:0]  iport_addr_o;    // IMEM Address
+    wire    [31:0]  iport_data_i;    // IMEM data
 
-    wire            imem_valid_o;   // IMEM valid
-    wire            imem_ack_i;     // IMEM Acknowledge
+    wire            iport_valid_o;   // IMEM valid
+    wire            iport_ack_i;     // IMEM Acknowledge
     
 
-    wire    [31:0]  dmem_addr_o;    // DMEM address
-    wire    [31:0]  dmem_data_i;    // DMEM data in
-    wire    [31:0]  dmem_data_o;    // DMEM data out
+    wire    [31:0]  dport_addr_o;    // DMEM address
+    wire    [31:0]  dport_data_i;    // DMEM data in
+    wire    [31:0]  dport_data_o;    // DMEM data out
 
-    wire    [3:0]   dmem_sel_o;     // DMEM Access width
-    wire            dmem_we_o;      // DMEM Access width
+    wire    [3:0]   dport_sel_o;     // DMEM Access width
+    wire            dport_we_o;      // DMEM Access width
 
-    wire            dmem_valid_o;   // DMEM Access width
-    wire            dmem_ack_i;     // DMEM WriteEnable
+    wire            dport_valid_o;   // DMEM Access width
+    wire            dport_ack_i;     // DMEM WriteEnable
 
     
     // Atom Core
@@ -67,19 +67,19 @@ module AtomRV_wb
 
         .reset_vector_i (reset_vector_i),
 
-        .imem_addr_o    (imem_addr_o),
-        .imem_data_i    (imem_data_i),
-        .imem_valid_o   (imem_valid_o),
-        .imem_ack_i     (imem_ack_i),
+        .iport_addr_o    (iport_addr_o),
+        .iport_data_i    (iport_data_i),
+        .iport_valid_o   (iport_valid_o),
+        .iport_ack_i     (iport_ack_i),
 
 
-        .dmem_addr_o    (dmem_addr_o),
-        .dmem_data_i    (dmem_data_i),
-        .dmem_data_o    (dmem_data_o),
-        .dmem_sel_o     (dmem_sel_o),
-        .dmem_we_o      (dmem_we_o),
-        .dmem_valid_o   (dmem_valid_o),
-        .dmem_ack_i     (dmem_ack_i) 
+        .dport_addr_o    (dport_addr_o),
+        .dport_data_i    (dport_data_i),
+        .dport_data_o    (dport_data_o),
+        .dport_sel_o     (dport_sel_o),
+        .dport_we_o      (dport_we_o),
+        .dport_valid_o   (dport_valid_o),
+        .dport_ack_i     (dport_ack_i) 
 
         `ifdef EN_EXCEPT
         ,
@@ -94,8 +94,8 @@ module AtomRV_wb
 
     ////////////////////////////////////////////////////////////
     /// IPORT Wishbone Logic
-    assign imem_ack_i = iport_wb_ack_i;
-    assign imem_data_i = iport_wb_dat_i;
+    assign iport_ack_i = iport_wb_ack_i;
+    assign iport_data_i = iport_wb_dat_i;
 
     reg iport_state = WBIDLE;
 
@@ -109,8 +109,8 @@ module AtomRV_wb
         else begin
             case(iport_state)
                 WBIDLE: begin
-                    if(imem_valid_o) begin
-                        iport_wb_adr_o <= imem_addr_o;
+                    if(iport_valid_o) begin
+                        iport_wb_adr_o <= iport_addr_o;
                         iport_wb_cyc_o <= 1'b1;
                         iport_wb_stb_o <= 1'b1;
                         iport_state <= WBACTIV;
@@ -135,8 +135,8 @@ module AtomRV_wb
 
     ////////////////////////////////////////////////////////////
     /// DPORT Wishbone Logic
-    assign dmem_ack_i = dport_wb_ack_i;
-    assign dmem_data_i = dport_wb_dat_i;
+    assign dport_ack_i = dport_wb_ack_i;
+    assign dport_data_i = dport_wb_dat_i;
 
     reg dport_state = WBIDLE;
 
@@ -153,11 +153,11 @@ module AtomRV_wb
         else begin
             case(dport_state)
                 WBIDLE: begin
-                    if(dmem_valid_o) begin
-                        dport_wb_adr_o <= dmem_addr_o;
-                        dport_wb_dat_o <= dmem_data_o;
-                        dport_wb_we_o <= dmem_we_o;
-                        dport_wb_sel_o <= dmem_sel_o;
+                    if(dport_valid_o) begin
+                        dport_wb_adr_o <= dport_addr_o;
+                        dport_wb_dat_o <= dport_data_o;
+                        dport_wb_we_o <= dport_we_o;
+                        dport_wb_sel_o <= dport_sel_o;
                         dport_wb_cyc_o <= 1'b1;
                         dport_wb_stb_o <= 1'b1;
                         dport_state <= WBACTIV;
