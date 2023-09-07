@@ -5,7 +5,7 @@
 //      a single atom core with memories and communication modules.
 ///////////////////////////////////////////////////////////////////
 `include "HydrogenSoC_Config.vh"
-`include "common/Utils.vh"
+`include "Utils.vh"
 
 `ifdef verilator
     // Macros for Verilator
@@ -18,6 +18,10 @@
     // Macros for Xilinx ISE
     `define __ROM_INIT_FILE__ "rom.hex"
 `endif
+`endif
+
+`ifndef __ROM_INIT_FILE__
+`define __ROM_INIT_FILE__ ""
 `endif
 
 `default_nettype none
