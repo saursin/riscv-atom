@@ -23,6 +23,7 @@
 
 // User headers
 #include "Exception.hpp"
+#include <cstdint>
 
 namespace mn {
     namespace CppLinuxSerial {
