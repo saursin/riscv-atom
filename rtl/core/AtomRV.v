@@ -24,37 +24,31 @@
 
 
 module AtomRV # (   
-    parameter [31:0]    VEND_ID     = 32'h0000_0000,
-    parameter [31:0]    ARCH_ID     = 32'h0000_0000,
-    parameter [31:0]    IMPL_ID     = 32'h0000_0000,
-    parameter [31:0]    HART_ID     = 32'h0000_0000
+    parameter [31:0]    VEND_ID     = 32'h0000_0000,            // Vendor ID
+    parameter [31:0]    ARCH_ID     = 32'h0000_0000,            // Architecture ID
+    parameter [31:0]    IMPL_ID     = 32'h0000_0000,            // Implementation ID
+    parameter [31:0]    HART_ID     = 32'h0000_0000             // Hart ID
 )
 (
-    // ========== General ==========
     input   wire            clk_i,          // clock
     input   wire            rst_i,          // reset
 
-    input   wire    [31:0]  reset_vector_i,
+    // ===== IPort =====
+    output  wire    [31:0]  iport_addr_o,    // IPort Address
+    input   wire    [31:0]  iport_data_i,    // IPort data
+    output  wire            iport_valid_o,   // IPort Valid signal
+    input   wire            iport_ack_i,     // IPort Acknowledge signal
 
-    // ========== IMEM Port ==========
-    output  wire    [31:0]  imem_addr_o,    // IMEM Address
-    input   wire    [31:0]  imem_data_i,    // IMEM data
+    // ===== DPort =====
+    output  wire    [31:0]  dport_addr_o,    // DPort address
+    input   wire    [31:0]  dport_data_i,    // DPort data in
+    output  reg     [31:0]  dport_data_o,    // DPort data out
+    output  reg      [3:0]  dport_sel_o,     // DPort Select
+    output  wire            dport_we_o,      // DPort Strobe
+    output  wire            dport_valid_o,   // DPort Valid signal
+    input   wire            dport_ack_i,     // DPort Ack signal
 
-    // Imem handshaking signals
-    output  wire            imem_valid_o,   // IMEM Valid signal
-    input   wire            imem_ack_i,     // IMEM Acknowledge signal
-
-
-    // ========== DMEM Port ==========
-    output  wire    [31:0]  dmem_addr_o,    // DMEM address
-    input   wire    [31:0]  dmem_data_i,    // DMEM data in
-    output  reg     [31:0]  dmem_data_o,    // DMEM data out
-    output  reg      [3:0]  dmem_sel_o,     // DMEM Select
-    output  wire            dmem_we_o,      // DMEM Strobe
-
-    // Dmem handshaking signals
-    output  wire            dmem_valid_o,   // DMEM Valid signal
-    input   wire            dmem_ack_i      // DMEM Ack signal
+    input   wire    [31:0]  reset_vector_i
 
     `ifdef EN_EXCEPT
     // Interrupt Signals
@@ -107,10 +101,10 @@ module AtomRV # (
         currently executing instruction happens to be a load-store instruction, but since currrent 
         instruction is a jump, there is no memory request made anyways.
     */
-    wire raw_imem_handshake = (imem_valid_o && imem_ack_i);
+    wire raw_imem_handshake = (iport_valid_o && iport_ack_i);
 
     wire imem_handshake = raw_imem_handshake && !ignore_imem_handshake;
-    wire dmem_handshake = (dmem_valid_o && dmem_ack_i);
+    wire dmem_handshake = (dport_valid_o && dport_ack_i);
 
     /*
         Definition of stall:
@@ -124,7 +118,7 @@ module AtomRV # (
     /*
         Stall Stage2 in case it has made a memory request and the result has't arrived yet.
     */
-    wire waiting_for_dbus_response = (!dmem_handshake && dmem_valid_o);
+    wire waiting_for_dbus_response = (!dmem_handshake && dport_valid_o);
     wire stall_stage2 = waiting_for_dbus_response;
 
     /*
@@ -133,7 +127,7 @@ module AtomRV # (
             - Stage2 is stalled, since the instruction in stage1 cant popogate to stage2. Therefore until
             the stage2 is stalled, instruction in stage1 is kept held.
     */
-    wire waiting_for_ibus_response = (!imem_handshake && imem_valid_o);
+    wire waiting_for_ibus_response = (!imem_handshake && iport_valid_o);
     wire stall_stage1 = waiting_for_ibus_response || stall_stage2;
 
     /*
@@ -168,8 +162,8 @@ module AtomRV # (
     `ifdef EN_EXCEPT
     // Exception signals
     wire    except_instr_addr_misaligned = |ProgramCounter[1:0];
-    wire    except_load_addr_misaligned = dmem_valid_o & !dmem_we_o & |dmem_addr_o[1:0];
-    wire    except_store_addr_misaligned = dmem_valid_o & dmem_we_o & |dmem_addr_o[1:0];
+    wire    except_load_addr_misaligned = dport_valid_o & !dport_we_o & |dport_addr_o[1:0];
+    wire    except_store_addr_misaligned = dport_valid_o & dport_we_o & |dport_addr_o[1:0];
 
     wire [31:0]     csru_trap_jump_addr_o;
     wire            csru_trap_caught_o;
@@ -180,7 +174,7 @@ module AtomRV # (
     ////////////////////////////////////////////////////////////////////
     //  STAGE 1 - FETCH
     ////////////////////////////////////////////////////////////////////
-    assign imem_valid_o = !rst_i;  // Always valid (Except on Reset condition)
+    assign iport_valid_o = !rst_i;  // Always valid (Except on Reset condition)
     /*
         Program Counter
     */
@@ -214,7 +208,7 @@ module AtomRV # (
     end
 
     // Connect pc to imem address input
-    assign imem_addr_o = ProgramCounter;
+    assign iport_addr_o = ProgramCounter;
 
 
     `ifdef DPI_LOGGER
@@ -268,7 +262,7 @@ module AtomRV # (
                 InstructionRegister <= `RV_INSTR_NOP;
                 
             else if(!stall_stage1)
-                InstructionRegister <= imem_data_i;
+                InstructionRegister <= iport_data_i;
         end
     end
 
@@ -503,11 +497,11 @@ module AtomRV # (
         DATA MEMORY ACCESS
     */
     wire [31:0] dmem_address = alu_out;
-    wire [31:0] dmem_data_out = rf_rs2;
+    wire [31:0] dport_data_out = rf_rs2;
 
-    assign dmem_addr_o = {dmem_address[31:2], {2{1'b0}}}; // word aligned accesses
-    assign dmem_valid_o = d_mem_load_store;
-    assign dmem_we_o = d_mem_we;// & !stall_stage2; IMPORTANT
+    assign dport_addr_o = {dmem_address[31:2], {2{1'b0}}}; // word aligned accesses
+    assign dport_valid_o = d_mem_load_store;
+    assign dport_we_o = d_mem_we;// & !stall_stage2; IMPORTANT
 
     /////////////////////////////////
     // READ
@@ -522,22 +516,22 @@ module AtomRV # (
         case(d_mem_access_width[1:0])
             2'b00:  begin   // Load Byte
                         case(dmem_address[1:0])
-                            2'b00:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[7]}},  dmem_data_i[7:0]};
-                            2'b01:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[15]}}, dmem_data_i[15:8]};
-                            2'b10:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[23]}}, dmem_data_i[23:16]};
-                            2'b11:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dmem_data_i[31]}}, dmem_data_i[31:24]};
+                            2'b00:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dport_data_i[7]}},  dport_data_i[7:0]};
+                            2'b01:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dport_data_i[15]}}, dport_data_i[15:8]};
+                            2'b10:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dport_data_i[23]}}, dport_data_i[23:16]};
+                            2'b11:  memload = {{24{d_mem_access_width[2] ? 1'b0 : dport_data_i[31]}}, dport_data_i[31:24]};
                         endcase
                     end
 
             2'b01:  begin   // Load Half Word
                         case(dmem_address[1])
-                            1'b0:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dmem_data_i[15]}}, dmem_data_i[15:0]};
-                            1'b1:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dmem_data_i[31]}}, dmem_data_i[31:16]};
+                            1'b0:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dport_data_i[15]}}, dport_data_i[15:0]};
+                            1'b1:  memload = {{16{d_mem_access_width[2] ? 1'b0 : dport_data_i[31]}}, dport_data_i[31:16]};
                         endcase
                     end
             
             2'b10:  begin   // Load Word
-                        memload = dmem_data_i;
+                        memload = dport_data_i;
                     end
 
             default: memload = 32'h00000000;
@@ -553,27 +547,27 @@ module AtomRV # (
             case(d_mem_access_width[1:0])
                 2'b00:  begin // Store byte
                             case(dmem_address[1:0])
-                                2'b00:  dmem_sel_o = 4'b0001;
-                                2'b01:  dmem_sel_o = 4'b0010;
-                                2'b10:  dmem_sel_o = 4'b0100;
-                                2'b11:  dmem_sel_o = 4'b1000;
+                                2'b00:  dport_sel_o = 4'b0001;
+                                2'b01:  dport_sel_o = 4'b0010;
+                                2'b10:  dport_sel_o = 4'b0100;
+                                2'b11:  dport_sel_o = 4'b1000;
                             endcase
                         end
                 
                 2'b01:  begin // Store Half Word
                             case(dmem_address[1])
-                                1'b0:  dmem_sel_o = 4'b0011;
-                                1'b1:  dmem_sel_o = 4'b1100;
+                                1'b0:  dport_sel_o = 4'b0011;
+                                1'b1:  dport_sel_o = 4'b1100;
                             endcase
                         end
 
-                2'b10: dmem_sel_o = 4'b1111;   // Store Word
+                2'b10: dport_sel_o = 4'b1111;   // Store Word
 
-                default: dmem_sel_o = 4'b1111;
+                default: dport_sel_o = 4'b1111;
             endcase
         end
         else
-            dmem_sel_o = 4'b1111;   // Load (Byte/HWord/Word)
+            dport_sel_o = 4'b1111;   // Load (Byte/HWord/Word)
     end
 
 
@@ -583,27 +577,27 @@ module AtomRV # (
             case(d_mem_access_width[1:0])
                 2'b00:  begin // Store byte
                             case(dmem_address[1:0])
-                                2'b00:  dmem_data_o = { {24{1'b0}}, dmem_data_out[7:0] };
-                                2'b01:  dmem_data_o = { {16{1'b0}}, dmem_data_out[7:0], {8{1'b0}} };
-                                2'b10:  dmem_data_o = { {8{1'b0}} , dmem_data_out[7:0], {16{1'b0}} };
-                                2'b11:  dmem_data_o = { dmem_data_out[7:0], {24{1'b0}} };
+                                2'b00:  dport_data_o = { {24{1'b0}}, dport_data_out[7:0] };
+                                2'b01:  dport_data_o = { {16{1'b0}}, dport_data_out[7:0], {8{1'b0}} };
+                                2'b10:  dport_data_o = { {8{1'b0}} , dport_data_out[7:0], {16{1'b0}} };
+                                2'b11:  dport_data_o = { dport_data_out[7:0], {24{1'b0}} };
                             endcase
                         end
                 
                 2'b01:  begin // Store Half Word
                             case(dmem_address[1])
-                                1'b0:  dmem_data_o = { {16{1'b0}}, dmem_data_out[15:0] };
-                                1'b1:  dmem_data_o = { dmem_data_out[15:0], {16{1'b0}} };
+                                1'b0:  dport_data_o = { {16{1'b0}}, dport_data_out[15:0] };
+                                1'b1:  dport_data_o = { dport_data_out[15:0], {16{1'b0}} };
                             endcase
                         end
 
-                2'b10: dmem_data_o = dmem_data_out;   // Store Word
+                2'b10: dport_data_o = dport_data_out;   // Store Word
 
-                default: dmem_data_o = dmem_data_out;
+                default: dport_data_o = dport_data_out;
             endcase
         end
         else
-            dmem_data_o = 32'h00000000;   // Load (Byte/HWord/Word)
+            dport_data_o = 32'h00000000;   // Load (Byte/HWord/Word)
     end
 
 endmodule

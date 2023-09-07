@@ -89,6 +89,10 @@ clean-sim:							## Clean atomsim build files
 	make $(MKFLAGS) -C $(sim_dir)  soctarget=$(soctarget) clean
 
 
+.PHONY: test
+test:								## Test the build using banner example
+	cd sw/examples && make ex=banner sim=true clean compile run
+
 # ======== SCAR ========
 .PHONY: scar     			
 scar: $(bin_dir)/$(sim_executable)	## Verify target using scar
