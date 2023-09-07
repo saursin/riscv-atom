@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////
 
 `default_nettype none
-`include "../../common/Utils.vh"
+`include "Utils.vh"
 
 module GPIO #(
     parameter N = 16                // Number of Pins

@@ -38,6 +38,9 @@
 set myProject "spartan6-mini"
 set myScript "spartan6-mini.tcl"
 
+set RTLDir "../../../rtl"
+set incDirs "$RTLDir/common|$RTLDir/rtl/core"
+
 # 
 # Main (top-level) routines
 # 
@@ -224,6 +227,8 @@ proc set_project_props {} {
 proc add_source_files {} {
 
    global myScript
+   global RTLDir
+   global incDirs
 
    if { ! [ open_project ] } {
       return false
@@ -231,25 +236,34 @@ proc add_source_files {} {
 
    puts "$myScript: Adding sources to project..."
 
+   # include dirs
+   project set "Verilog Include Directories" "$incDirs" -process "Synthesize - XST"
+   
    # include Config file as a global header (used for setting SoC-Params)
-   xfile add "../../../rtl/soc/hydrogensoc/HydrogenSoC_Config.vh" -include_global
-      
-   xfile add "../../../rtl/soc/hydrogensoc/HydrogenSoC.v"
-   xfile add "../../../rtl/core/Alu.v"
-   xfile add "../../../rtl/core/AtomRV.v"
-   xfile add "../../../rtl/core/AtomRV_wb.v"
-   xfile add "../../../rtl/core/CSR_Unit.v"
-   xfile add "../../../rtl/core/Decode.v"
-   xfile add "../../../rtl/core/RegisterFile.v"
-   xfile add "../../../rtl/tb/HydrogenSoC_tb.v"
-   xfile add "../../../rtl/uncore/gpio/GPIO.v"
-   xfile add "../../../rtl/uncore/gpio/IOBuf.v"
-   xfile add "../../../rtl/uncore/mem/SinglePortRAM_wb.v"
-   xfile add "../../../rtl/uncore/uart/UART.v"
-   xfile add "../../../rtl/uncore/uart/UART_core.v"
-   xfile add "../../../rtl/uncore/wishbone/arbiter.v"
-   xfile add "../../../rtl/uncore/wishbone/arbiter3_wb.v"
-   xfile add "../../../rtl/uncore/wishbone/priority_encoder.v"
+   xfile add "$RTLDir/soc/hydrogensoc/HydrogenSoC_Config.vh" -include_global
+
+   # SoC
+   xfile add "$RTLDir/soc/hydrogensoc/HydrogenSoC.v"
+   
+   # Core
+   xfile add "$RTLDir/core/Alu.v"
+   xfile add "$RTLDir/core/CSR_Unit.v"
+   xfile add "$RTLDir/core/Decode.v"
+   xfile add "$RTLDir/core/RegisterFile.v"
+   xfile add "$RTLDir/core/AtomRV.v"
+   xfile add "$RTLDir/core/AtomRV_wb.v"
+
+   # Uncore
+   xfile add "$RTLDir/uncore/gpio/GPIO.v"
+   xfile add "$RTLDir/uncore/gpio/IOBuf.v"
+   xfile add "$RTLDir/uncore/mem/SinglePortRAM_wb.v"
+   xfile add "$RTLDir/uncore/uart/UART.v"
+   xfile add "$RTLDir/uncore/uart/UART_core.v"
+   xfile add "$RTLDir/uncore/wishbone/arbiter.v"
+   xfile add "$RTLDir/uncore/wishbone/arbiter3_wb.v"
+   xfile add "$RTLDir/uncore/wishbone/priority_encoder.v"
+   
+   # Constraints
    xfile add "HydrogenSoC.ucf"
 
    # Set the Top Module as well...
@@ -291,6 +305,7 @@ proc create_libraries {} {
 proc set_process_props {} {
 
    global myScript
+   global incDirs
 
    if { ! [ open_project ] } {
       return false
@@ -459,9 +474,9 @@ proc set_process_props {} {
    project set "Use Synchronous Reset" "Auto" -process "Synthesize - XST"
    project set "Use Synchronous Set" "Auto" -process "Synthesize - XST"
    project set "Use Synthesis Constraints File" "true" -process "Synthesize - XST"
-   project set "Verilog Include Directories" "" -process "Synthesize - XST"
+   project set "Verilog Include Directories" "$incDirs" -process "Synthesize - XST"
    project set "Verilog Macros" "" -process "Synthesize - XST"
-   project set "Work Directory" "/home/saursin/work/work/riscv/riscv-atom/synth/xilinx/spartan6-mini/xst" -process "Synthesize - XST"
+   project set "Work Directory" "xst" -process "Synthesize - XST"
    project set "Write Timing Constraints" "false" -process "Synthesize - XST"
    project set "Other XST Command Line Options" "" -process "Synthesize - XST"
    project set "Timing Mode" "Performance Evaluation" -process "Map"

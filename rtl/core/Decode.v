@@ -4,7 +4,10 @@
 //  Description : Instruction Decoder for RISCV atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+
+`include "Utils.vh"
 `include "Defs.vh"
+
 module Decode
 (
     input   wire    [31:0]  instr_i,

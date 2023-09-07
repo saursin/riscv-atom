@@ -6,7 +6,7 @@
 //  Description : Parametrized register file for RISCV atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
-`include "../common/Utils.vh"
+`include "Utils.vh"
 module RegisterFile  #(
     parameter	REG_WIDTH = 32,     // Width of each register
     parameter	NUM_REGS =  32,     // Number of registers

@@ -5,7 +5,7 @@
 //      to read and write to the CSR registers
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
-`include "../common/Utils.vh"
+`include "Utils.vh"
 `include  "CSR_defs.vh"
 
 `define isdefined(x) `ifdef x 1'b1 `else 1'b0 `endif 
