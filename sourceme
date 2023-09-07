@@ -1,16 +1,34 @@
-## RISCV-ATOM Environment Variabes
+########## RISCV-ATOM Environment Setup ##########
 
-# export RVATOM variable (get dir containing this sourceme file)
+# Uncomment if using environment modules
+# module load verilator/5.006
+# module load riscv64-multilib-gcc
+# module load openfpgaloader
+
+echo "> Setting environment variables..."
+
+# RVATOM variable: points to root of riscv-atom directory (get dir containing this sourceme file)
 export RVATOM=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
 
+# VERILATOR_PATH: points to verilator installation
+if command -v "verilator" &>/dev/null; then
+    # get verilator path
+    VLP=$(dirname $(dirname `which verilator`))
+    echo "Found Verilator at: $VLP"
+	export VERILATOR_PATH=$VLP
+else
+    echo "ERROR: Verilator not found; please install verilator"
+fi
+
 # export RVATOM_LIB variable
-export RVATOM_LIB="$RVATOM/sw/lib"
+# export RVATOM_LIB="$RVATOM/sw/lib"
 
 # add atomsim to path ($RVATOM/sim/build/bin)
-export PATH="$RVATOM/sim/build/bin:$PATH"
+# export PATH="$RVATOM/sim/build/bin:$PATH"
 
 # add elfdump to path ($RVATOM/tools/elfdump/bin)
-export PATH="$RVATOM/tools/elfdump/bin:$PATH"
+# export PATH="$RVATOM/tools/elfdump/bin:$PATH"
 
 # add $RVATOM/scripts to path
-export PATH="$RVATOM/scripts:$PATH"
+# export PATH="$RVATOM/scripts:$PATH"
+

@@ -33,7 +33,6 @@ RUN_DIR := run
 # make directories during makefile-parse
 $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR) $(RUN_DIR))
 
-include ../config.mk
 ####################################################
 # Verilog Configs
 
@@ -43,8 +42,9 @@ VFLAGS += -I$(RTL_DIR) -I$(RTL_DIR)/common -I$(RTL_DIR)/core
 VFLAGS += --Mdir $(VERILATED_DIR)
 
 # check verilator include directory
+VERILATOR_INCLUDE_PATH=$(VERILATOR_PATH)/share/verilator/include
 ifeq ("$(wildcard $(VERILATOR_INCLUDE_PATH)/verilated_vcd_c.cpp)","")
-$(error Verilator include path invalid; Set correct Verilator include path in sim/Makefile)
+    $(error Verilator include path invalid)
 endif
 
 # Core files
@@ -214,12 +214,15 @@ $(DEPDIR)/%.Td: ;
 
 
 ####################################################
-# Cleanup & Util Recepies
+# Util & Cleanup Recepies
 
-.PHONY: preprocess_verilog              #t Preprocess verilog and dump output into a single verilog file
-preprocess_verilog: $(VTOPMODULE_FILE) $(VSRCS)
-	$(VC) $(VFLAGS) -E $^ > verilog_dump.v
+.PHONY: preprocess_verilog
+preprocess_verilog: $(VTOPMODULE_FILE) $(VSRCS)     #t Preprocess verilog and dump output into a single verilog file
+	$(VC) $(VFLAGS) -E $^ > $(soctarget)_dump.v
 
+.PHONY: lint_verilog
+lint_verilog: $(VTOPMODULE_FILE) $(VSRCS)           #t Lint-check verilog code
+	$(VC) $(VFLAGS) --lint-only $^
 
 .PHONY: clean
 clean:									#t Clean build files
