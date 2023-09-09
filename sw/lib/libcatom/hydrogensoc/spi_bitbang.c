@@ -4,7 +4,7 @@
 
 #define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
 
-void spi_init(struct SPI_Config * cfg)
+void spib_init(struct SPIB_Config * cfg)
 {
     // Set PinModes
     gpio_setmode(cfg->cs_pin, OUTPUT);
@@ -19,7 +19,7 @@ void spi_init(struct SPI_Config * cfg)
 }
 
 
-char spi_transfer(struct SPI_Config * cfg, char b)
+char spib_transfer(struct SPIB_Config * cfg, char b)
 {
 	char r = 0;
 	for(int i=7; i>=0; i--)
@@ -39,13 +39,13 @@ char spi_transfer(struct SPI_Config * cfg, char b)
 }
 
 
-char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, unsigned int len)
+char *spib_transfer_buf(struct SPIB_Config * cfg, char *send_buf, char *recv_buf, unsigned int len)
 {
 	if(cfg->auto_cs)
 		gpio_write(cfg->cs_pin, LOW);
 
     for(unsigned int i=0; i<len; i++) {
-        *send_buf++ = spi_transfer(cfg, *recv_buf++);
+        *send_buf++ = spib_transfer(cfg, *recv_buf++);
 	}
 	
 	if(cfg->auto_cs)
@@ -55,13 +55,13 @@ char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, 
 }
 
 
-void spi_start(struct SPI_Config * cfg)
+void spib_start(struct SPIB_Config * cfg)
 {
 	gpio_write(cfg->cs_pin, LOW);
 }
 
 
-void spi_end(struct SPI_Config * cfg)
+void spib_end(struct SPIB_Config * cfg)
 {
 	gpio_write(cfg->cs_pin, HIGH);
 }

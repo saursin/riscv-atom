@@ -2,7 +2,7 @@
 #define __SPI_BITBANG_H__
 #include <stdint.h>
 
-struct SPI_Config {
+struct SPIB_Config {
     uint8_t cs_pin;
     uint8_t sck_pin;
     uint8_t mosi_pin;
@@ -11,7 +11,7 @@ struct SPI_Config {
 };
 
 
-#define SPI_Config_default { \
+#define SPIB_Config_default { \
     .cs_pin = 12,    \
     .sck_pin = 15,   \
     .mosi_pin = 13,  \
@@ -22,7 +22,7 @@ struct SPI_Config {
 /**
  * @brief Initialize SPI
  */
-void spi_init(struct SPI_Config * cfg);
+void spib_init(struct SPIB_Config * cfg);
 
 
 /**
@@ -30,7 +30,7 @@ void spi_init(struct SPI_Config * cfg);
  * @param cfg config struct
  * @param b byte to be transferred
  */
-char spi_transfer(struct SPI_Config * cfg, char b);
+char spib_transfer(struct SPIB_Config * cfg, char b);
 
 
 /**
@@ -41,20 +41,20 @@ char spi_transfer(struct SPI_Config * cfg, char b);
  * @param len lenth of send buffer
  * @return char 
  */
-char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, unsigned int len);
+char *spib_transfer_buf(struct SPIB_Config * cfg, char *send_buf, char *recv_buf, unsigned int len);
 
 
 /**
  * @brief Starts SPI transaction by deasserting CS pin
  * @param cfg config struct
  */
-void spi_start(struct SPI_Config * cfg);
+void spib_start(struct SPIB_Config * cfg);
 
 
 /**
  * @brief Finishes SPI transaction by re-asserting CS pin
  * @param cfg config struct
  */
-void spi_end(struct SPI_Config * cfg);
+void spib_end(struct SPIB_Config * cfg);
 
 #endif //__SPI_BITBANG_H__
