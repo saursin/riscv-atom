@@ -1,45 +1,95 @@
-# SPI
+# Wishbone SPI
+SPI IP with Wishbone B-4 Interface.
+
+## Parameters
+* **NCS**: Number of hardware chip select lines
+
+## Register MAP
+
+| **Offset** | **Name** | **Description**
+|------------|----------|----------------------------
+| 0x00       | SCKDIV   | SCK Divisor register
+| 0x04       | SCTRL    | SPI Control register
+| 0x08       | TDATA    | Transmit data register
+| 0x0c       | RDATA    | Recieve data register
+| 0x10       | CSCTRL   | Chip Select Control Register
+| 0x14       | DCTRL    | Delay Control register
 
 
-```
-1. (0x00)   SCKDIV:     SCK Divisor register
-    [31:0]      RW  0x3     Divisor
+## Register Definitions
 
-2. (0x04)   SCKMODE:    SCK Mode Register
-    [31:2]      -   -       Reserved
-    [1]         RW  0x0     Polarity    b0 = inactive state of SCK is LOW,
-                                        b1 = inactive state of SCK is high
-    [0]         RW  0x0     Phase       b0 = data sampled on leading edge, shifted on trailing edge
-                                        b1 = data shifted on leading edge, sampled on trailing edge
+### (0x00)  SCKDIV: SCK Divisor register
 
-3. (0x08)   SPICTRL:    SPI Control Register
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31:0]    | RW         | 0x3        | DIVISOR  | SCK Divisor
+|           |            |            |          |
 
+**Formula to calculate Divisor**: `Divisor = f_ratio - 1` where `f_ratio = sys_clk_freq / baud_rate`.
 
-4. (0x0c)   CSREG:      CHIP Select Register
-    [31:NCS]    -   -       Reserved
-    [NCS-1:0]   RW  0x0     CS Pin to be toggled
+### (0x04)  SCTRL: Status & Control Register
 
-5. (0x10)   CSCTRL:     CHIP Select Control Register
-    [31:0]      RW  0x0     Reserved
-    [1:0]       RW  0x0     Chip Select Mode:   b0 = AUTO deassert/assert in every frame
-                                                b1 = HOLD keep CS asserted after 1st frame, deassert when CSCTRL re-written
-                                                b2 = DISABLE hw control of CS pin
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31]      | RO         | 0x0        | BUSY     | SPI Busy
+| [30:3]    | -          | -          | -        | Reserved
+| [3]       | RW         | 0x0        | LOOP     | Loopback Enable
+| [2]       | RW         | 0x0        | END      | Endineness
+| [1]       | RW         | 0x0        | PHA      | Phase
+| [1]       | RW         | 0x0        | POL      | Polarity
+| [0]       | RW         | 0x0        | EN       | SPI Enable
+|           |            |            |          |
 
-6. (0x14)   DCTRL:      Delay Control Register
-    [31:24]     -   -       Reserved
-    [23:16]     RW  0x1     Interframe delay
-    [15:8]      RW  0x1     SCK-CS Delay
-    [7:0]       RW  0x1     CS-SCK Delay
+- END
+    - 0 = MSB first
+    - 1 = LSB First
 
-7.  (0x18)  FMT:        Format Register
-    [31:20]     -   -       Reserved
-    [18:16]     RW  0x8     Bits per frame
-    [2]         RW  0x0     Endineness          b0 = MSB first
-                                                b1 = LSB First
-    [1:0]       RW  0x0     Protocol            b0 = single
-                                                b1 = dual
-                                                b2 = quad
-    
-    
+- POL
+    - 0 = inactive state of SCK is LOW,
+    - 1 = inactive state of SCK is high
 
-```
+- PHA:
+    - 0 = data sampled on leading edge, shifted on trailing edge
+    - 1 = data shifted on leading edge, sampled on trailing edge
+
+### (0x04)  TDATA: Transmit Data Register
+
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31:8]    | -          | -          | -        | Reserved
+| [7:0]     | RW         | 0x0        | DATA     | Transmit Data
+
+### (0x04)  RDATA: Recieve Data Register
+
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31:8]    | -          | -          | -        | Reserved
+| [7:0]     | RW         | 0x0        | DATA     | Recieve Data
+
+### (0x04)  CSCTRL: CS Control Register
+
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31:24]   | RW         | -          | ACS      | Active Chip Select
+| [23:2]    | -          | -          | -        | Reserved
+| [1:0]     | RW         | 0x0        | CSMODE   | CS Mode
+
+- CSMODE
+    - 2b00: AUTO: Auto Assertion and Dessartion of CS before/after every packet
+    - 2b01: Reserved
+    - 2b10: Reserved
+    - 2b11: DISABLE: Disable hardware control of CS pin
+
+- ACS: (one-hot encoded)
+    - when CSMODE == AUTO, Selects which CS to assert/deassart
+    - when CSMODE == DISABLE, writing 1 to a bit asserts corresponding CS.
+
+### (0x04)  DCTRL: Delay Control Register
+
+| **Range** | **Access** | **RstVal** | **Name** | **Description**
+|-----------|------------|------------|----------|-----------------
+| [31:16]   | -          | -          | -        | Reserved
+| [15:8]    | RW         | 0x1        | PRCSHD   | Pre CS High Delay
+| [7:0]     | RW         | 0x1        | POCSLD   | Post CS Low Delay
+
+Delay values are in terms of number of SCK cycles. i.e. POCSLD == 2 means after CS has been deasserted, there will be a delay equal to 2 sck cycles before starting transaction.
