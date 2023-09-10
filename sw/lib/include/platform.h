@@ -1,6 +1,5 @@
 #ifndef __PLATFORM_H__
 #define __PLATFORM_H__
-#include "stddef.h"
 
 // ============== Target Independent Definitions ==============
 
@@ -14,6 +13,8 @@
 
 // ============== Target Specific Definitions ==============
 #ifdef TARGET_HYDROGENSOC
+    // #define EXCEPTION
+
     #define MEM_ROM_BEGIN   0x00010000
     #define MEM_ROM_SIZE    32*1024        // 32 KB
 
@@ -28,6 +29,10 @@
     #define GPIO_PINCOUNT 32
     #define GPIO_SETWIDTH 16
     #define GPIO_ADDR 0x40002000
+
+    // ---------- SPI ------------
+    #define SPI
+    #define SPI_ADDR 0x40003000
 
     // ------ CLOCK FREQUENCY --------
     #define CLK_FREQ 12000000
