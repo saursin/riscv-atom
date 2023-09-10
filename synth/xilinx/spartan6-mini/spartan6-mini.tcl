@@ -259,6 +259,8 @@ proc add_source_files {} {
    xfile add "$RTLDir/uncore/mem/SinglePortRAM_wb.v"
    xfile add "$RTLDir/uncore/uart/UART.v"
    xfile add "$RTLDir/uncore/uart/UART_core.v"
+   xfile add "$RTLDir/uncore/spi/SPI_core.v"
+   xfile add "$RTLDir/uncore/spi/SPI_wb.v"
    xfile add "$RTLDir/uncore/wishbone/arbiter.v"
    xfile add "$RTLDir/uncore/wishbone/arbiter3_wb.v"
    xfile add "$RTLDir/uncore/wishbone/priority_encoder.v"

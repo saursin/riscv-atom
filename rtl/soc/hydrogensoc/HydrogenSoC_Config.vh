@@ -58,9 +58,9 @@
 /*
     Define number of GPIO Pins to implement
 */
-`define NGPIO 16
+`define NGPIO 32
 
-
+`define NSPI_CS 1
 
 
 ////////////////////////////// SoC Memory Map //////////////////////////////
@@ -82,6 +82,10 @@
 // GPIO
 `define GPIO_ADDR       32'h4000_2000
 `define GPIO_SIZE       12              // 12 bytes (3 words)
+
+// SPI
+`define SPI_ADDR        32'h4000_3000
+`define SPI_SIZE        32              // 32 bytes (8 words)
 
 
 `endif // __HYDROGENSOC_CONFIG_VH__

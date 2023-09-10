@@ -38,6 +38,12 @@ module HydrogenSoC(
     input   wire        uart_usb_rx_i,
     output  wire        uart_usb_tx_o,
 
+    // SPI
+    input   wire                spi_miso_i,
+    output  wire                spi_mosi_o,
+    output  wire                spi_sck_o,
+    output  wire [`NSPI_CS-1:0] spi_cs_o,
+
     input   wire        uart_io_rx_i,
     output  wire        uart_io_tx_o,
 
@@ -307,6 +313,30 @@ module HydrogenSoC(
     );
 
     ////////////////////////////////////////////////////
+    // SPI
+    wire    [31:0]  spi_wb_dat_o;
+    reg             spi_wb_stb_i;
+    wire            spi_wb_ack_o;
+
+    SPI_wb #(
+        .NCS(`NSPI_CS)
+    ) spi (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
+        .wb_adr_i   (arb_wb_adr_o[4:2]),
+        .wb_dat_o   (spi_wb_dat_o),
+        .wb_dat_i   (arb_wb_dat_o),
+        .wb_we_i    (arb_wb_we_o),
+        .wb_sel_i   (arb_wb_sel_o),
+        .wb_stb_i   (spi_wb_stb_i),
+        .wb_ack_o   (spi_wb_ack_o),
+        .sck_o      (spi_sck_o),
+        .miso_i     (spi_miso_i),
+        .mosi_o     (spi_mosi_o),
+        .cs_o       (spi_cs_o)
+);
+
+    ////////////////////////////////////////////////////
     // Wishbone Interconnect Logic
 
     // Devices
@@ -315,6 +345,7 @@ module HydrogenSoC(
     localparam Device_RAM       = 4'd2;
     localparam Device_UART      = 4'd3;
     localparam Device_GPIO      = 4'd4;
+    localparam Device_SPI       = 4'd5;
 
     /*
         === Device selection ===
@@ -343,6 +374,9 @@ module HydrogenSoC(
             else if (arb_wb_adr_o >= `GPIO_ADDR && arb_wb_adr_o < `GPIO_ADDR+`GPIO_SIZE)
                 selected_device = Device_GPIO;
 
+            else if (arb_wb_adr_o >= `SPI_ADDR && arb_wb_adr_o < `SPI_ADDR+`SPI_SIZE)
+                selected_device = Device_SPI;
+
             else begin
                 selected_device = Device_None;
                 `debug($display("RTL-ERROR: Unknown Device Selected: 0x%x", arb_wb_adr_o);)
@@ -364,6 +398,7 @@ module HydrogenSoC(
             Device_RAM:         arb_wb_dat_i = ram_wb_dat_o;
             Device_UART:        arb_wb_dat_i = uart_wb_dat_o;
             Device_GPIO:        arb_wb_dat_i = gpio_wb_dat_o;
+            Device_SPI:         arb_wb_dat_i = spi_wb_dat_o;
 
             default: begin
                 arb_wb_dat_i = 32'h00000000;
@@ -384,12 +419,14 @@ module HydrogenSoC(
           ram_wb_stb_i      = 1'b0;
           uart_wb_stb_i     = 1'b0;
           gpio_wb_stb_i     = 1'b0;
+          spi_wb_stb_i      = 1'b0;
                      
         case(selected_device)
             Device_ROM:         rom_wb_stb_i        = arb_wb_stb_o;
             Device_RAM:         ram_wb_stb_i        = arb_wb_stb_o;
             Device_UART:        uart_wb_stb_i       = arb_wb_stb_o;
             Device_GPIO:        gpio_wb_stb_i       = arb_wb_stb_o;
+            Device_SPI:         spi_wb_stb_i        = arb_wb_stb_o;
 
             default: begin
                 rom_wb_stb_i        = 1'b0;
@@ -397,6 +434,7 @@ module HydrogenSoC(
                 uart_wb_stb_i       = 1'b0;
                 gpio_wb_stb_i       = 1'b0;
                 gpio_wb_stb_i       = 1'b0;
+                spi_wb_stb_i        = 1'b0;
             end
         endcase
     end
@@ -412,6 +450,7 @@ module HydrogenSoC(
             Device_RAM:         arb_wb_ack_i = ram_wb_ack_o;
             Device_UART:        arb_wb_ack_i = uart_wb_ack_o;
             Device_GPIO:        arb_wb_ack_i = gpio_wb_ack_o;
+            Device_SPI:         arb_wb_ack_i = spi_wb_ack_o;
             default:
                 arb_wb_ack_i = 1'b0;
         endcase

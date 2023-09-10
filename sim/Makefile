@@ -115,7 +115,8 @@ ifeq ($(soctarget), hydrogensoc)
     VSRCS += $(RTL_DIR)/uncore/mem/SinglePortRAM_wb.v
     VSRCS += $(RTL_DIR)/uncore/uart/UART.v
     VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
-
+    VSRCS += $(RTL_DIR)/uncore/spi/SPI_wb.v
+    VSRCS += $(RTL_DIR)/uncore/spi/SPI_core.v
     VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
 
     # cpp
