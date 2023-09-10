@@ -93,3 +93,11 @@ SPI IP with Wishbone B-4 Interface.
 | [7:0]     | RW         | 0x1        | POCSLD   | Post CS Low Delay
 
 Delay values are in terms of number of SCK cycles. i.e. POCSLD == 2 means after CS has been deasserted, there will be a delay equal to 2 sck cycles before starting transaction.
+
+## Logic Utilization
+Yosys was used to analyze Logic utilization for Xilinx 7 series FPGAs
+
+| **Design**    | **LUTS** |
+|---------------|----------|
+| SPI_core      | 322      |
+| SPI_wb        | 530      |
