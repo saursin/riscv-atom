@@ -55,7 +55,7 @@ _exit:
 
 
 .macro PROLOGUE
-	addi	sp, sp, -96	/* - size(context_frame) * 4 */
+	addi	sp, sp, -96		# - size(context_frame) * 4
 	sw	t6, 68(sp)
 	sw	t5, 64(sp)
 	sw	t4, 60(sp)
@@ -99,21 +99,21 @@ _exit:
 	lw	t4, 60(sp)
 	lw	t5, 64(sp)
 	lw	t6, 68(sp)
-	addi	sp, sp, 96	/* size(context_frame) * 4 */
+	addi	sp, sp, 96		# size(context_frame) * 4
 .endm
 
 
-.p2align 2			/* Needs 4Byte Alignment, refer mtvec reg */
+.p2align 2					# Needs 4Byte Alignment, refer mtvec reg
 trap_handler_base:
 	PROLOGUE
 	csrr	a0, mcause
     sw	    a0, 72(sp)
 	mv	    a1, sp
-	jal		common_trap_handler   // call exception handler in C
+	jal		common_trap_handler	# call exception handler in C
 	EPILOGUE
 	mret
 
 
-# .weak common_trap_handler // Can be overridden
-# common_trap_handler:
-#     ret
+.weak common_trap_handler 		# Can be overridden
+common_trap_handler:
+    ret

@@ -3,6 +3,8 @@
 #include "csr.h"
 #include "mmio.h"
 
+#ifdef EXCPETION
+
 typedef struct context_frame
 {
 	uint32_t mepc, mstatus, ra, t0,
@@ -71,3 +73,5 @@ void common_trap_handler(uint32_t mcause, context_frame_t *frame)
     }
     putchar('\n');
 }
+
+#endif // EXCEPTION
