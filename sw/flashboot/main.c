@@ -4,6 +4,7 @@
 #include "serial.h"
 #include "time.h"
 #include "mmio.h"
+#include "spi.h"
 
 //--------------------- Settings -----------------------------
 // Address offset at which image resides
@@ -23,8 +24,8 @@
 
 // Clear screen at start of bootloader
 #define CLS_AT_START
-//------------------------------------------------------------
 
+//------------------------------------------------------------
 #define STRINGIFY(s) #s
 #define EXPAND_AND_STRINGIFY(s) STRINGIFY(s)
 
@@ -39,9 +40,8 @@ extern uint32_t __approm_size;
 
 typedef void (*fnc_ptr)(void);
 
-
-#ifdef ENABLE_UART
 //********************** Tiny STDIO **********************
+#ifdef ENABLE_UART
 void putchar(char c)
 {
     if(c == '\n')
@@ -56,53 +56,7 @@ void puts(char *ptr)
 }
 #endif
 
-
-//********************** Bitbang SPI **********************
-// Get kth bit of number x
-#define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
-
-// Timing
-struct SPI_Config {
-    uint8_t cs_pin;
-    uint8_t sck_pin;
-    uint8_t miso_pin;
-    uint8_t mosi_pin;
-};
-
-void spi_init(struct SPI_Config * cfg)
-{
-    // Set PinModes
-    gpio_setmode(cfg->cs_pin, OUTPUT);
-    gpio_setmode(cfg->sck_pin, OUTPUT);
-	gpio_setmode(cfg->mosi_pin, OUTPUT);
-	gpio_setmode(cfg->miso_pin, INPUT);
-
-    // Write init states
-    gpio_write(cfg->cs_pin, HIGH);
-    gpio_write(cfg->sck_pin, LOW);
-	gpio_write(cfg->mosi_pin, LOW);
-}
-
-char spi_transfer(struct SPI_Config * cfg, char b)
-{
-	char r = 0;
-	for(int i=7; i>=0; i--)
-	{        
-        // Falling edge of clock : shift out new data on MOSI
-        gpio_write(cfg->sck_pin, LOW);
-		gpio_write(cfg->mosi_pin, _spi_bitget(b, i) ? HIGH : LOW);
-
-        // read available data on MISO
-		r = ((r << 1) | gpio_read(cfg->miso_pin));
-
-        // Rising edge of clock
-		gpio_write(cfg->sck_pin, HIGH);
-	}
-	return r;
-}
-
-
-//********************** LED **********************
+// ********************** LED **********************
 void led_blink(int pin, int count, int delay)
 {
     for(int i=0; i<count; i++) 
@@ -114,36 +68,52 @@ void led_blink(int pin, int count, int delay)
     }
 }
 
-
 //********************** FLASH **********************
 #define FLASH_CMD_READ 0x03
+#define SPI_REG_SCKDIV_OFFSET   0x00
+#define SPI_REG_SCTRL_OFFSET    0x04
+#define SPI_REG_TDATA_OFFSET    0x08
+#define SPI_REG_RDATA_OFFSET    0x0c
+#define SPI_REG_CSCTRL_OFFSET   0x10
+#define SPI_REG_DCTRL_OFFSET    0x14
 
-uint8_t *flash_read(struct SPI_Config * cfg, uint8_t *buf, uint32_t addr, uint32_t len)
+void flash_copy(uint8_t *buf, uint32_t addr, uint32_t len)
 {
-	uint8_t *rval = buf;
+    struct SPI_Config cfg = {
+        .base_addr = SPI_ADDR,
+        .enable = true,
+        .pha = false,
+        .pol = false,
+        .lsb_first = false,
+        .baudrate = 1000000,
+        .device_num = 0,
+        .cs_mode = CSMODE_DISABLE,
+        .post_cs_low_delay = 1,
+        .pre_cs_high_delay = 1,
+        .loopback_enable=false
+    };
+    spi_init(&cfg);
 
-    // Deassert CS (Start Txn)
-	gpio_write(cfg->cs_pin, LOW);
+    // select
+    REG32(cfg.base_addr, SPI_REG_CSCTRL_OFFSET) = bitset(REG32(cfg.base_addr, SPI_REG_CSCTRL_OFFSET), 24+cfg.device_num);
+    spi_transfer(&cfg, FLASH_CMD_READ);
+    spi_transfer(&cfg, addr >> 16);
+	spi_transfer(&cfg, addr >> 8);
+	spi_transfer(&cfg, addr);
 
-    // Send CMD
-    spi_transfer(cfg, FLASH_CMD_READ);
+    while(len--) {
+        REG8(cfg.base_addr, SPI_REG_TDATA_OFFSET) = 0x0;
+        while(REG32(SPI_ADDR, SPI_REG_SCTRL_OFFSET) >> 31)
+            asm volatile("");
+        *(buf++) = REG8(cfg.base_addr, SPI_REG_RDATA_OFFSET);
+    }
 
-    // Send Addr
-    spi_transfer(cfg, addr >> 16);
-	spi_transfer(cfg, addr >> 8);
-	spi_transfer(cfg, addr);
-
-    // Get Data
-    for(uint32_t i=0; i<len; i++)
-		*(buf++) = spi_transfer(cfg, 0x00);
-	
-    // Assert CS (Finish Txn)
-    gpio_write(cfg->cs_pin, HIGH);
-	return rval;
+    // deselect
+    REG32(cfg.base_addr, SPI_REG_CSCTRL_OFFSET) = bitclear(REG32(cfg.base_addr, SPI_REG_CSCTRL_OFFSET), 24+cfg.device_num);
+    cfg.cs_mode = CSMODE_AUTO;
+    spi_init(&cfg);
 }
 
-
-//***************************************************
 int main()
 {
     // ********** Initialize **********
@@ -151,22 +121,6 @@ int main()
     const int led_pin = 0;
     gpio_setmode(led_pin, OUTPUT);
     led_blink(led_pin, START_LED_FLASHES, 50);      // Blink LED START_LED_FLASHES times (signal entering of bootloader)
-
-    // Initialize SPI
-    /* struct SPI_Config spi_cfg = {    // doesn't work
-        .cs_pin = 4,
-        .sck_pin = 7,
-        .mosi_pin = 5,
-        .miso_pin = 6
-    }; */
-
-    struct SPI_Config spi_cfg;
-    spi_cfg.cs_pin = 12;
-    spi_cfg.sck_pin = 15;
-    spi_cfg.mosi_pin = 13;
-    spi_cfg.miso_pin = 14;
-
-    spi_init(&spi_cfg);
 
     #ifdef ENABLE_UART
     // Initialize UART
@@ -183,27 +137,23 @@ int main()
     #ifdef CLS_AT_START
     D(putchar(0x1b); putchar('c');)  // clear screen
     #endif
-    D(puts("********** FlashBoot **********\n");)
-
+    D(puts("***** FlashBoot *****\n");)
 
     // ********** Read & Copy **********
-    D(puts("Reading from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) " - ");)
-    flash_read(&spi_cfg, (uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
-    D(puts("Done!\n");)
-
+    D(puts("Copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET));)
+    flash_copy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
 
     // ********** Jump to user application **********
-    led_blink(led_pin, END_LED_FLASHES, 50);                     // Blink single (signal jump to user code)
-    D(puts("Jumping to user application\n------------------------------\n"););
+    led_blink(led_pin, END_LED_FLASHES, 50);        // Blink single (signal jump to user code)
+       
+    D(puts("Jumping to user code\n");)
+    D(puts("---------------------\n");)
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
     app_main();
 
-
     // ** UNREACHABLE **
-    gpio_setmode(led_pin, OUTPUT);
-    while(1){
-        gpio_write(led_pin, HIGH);
-        D(puts("FLASHBOOT_ERR: UNREACHABLE\n");)
-        sleep_ms(100);
+    D(puts("Err: unreachable\n");)
+    while(1) {
+        asm volatile("");
     }
 }
