@@ -23,6 +23,8 @@ hydrogensoc/HydrogenSoC.v
 ../uncore/mem/SinglePortRAM_wb.v
 ../uncore/uart/UART.v
 ../uncore/uart/UART_core.v
+../uncore/spi/SPI_wb.v
+../uncore/spi/SPI_core.v
 
 // Core
 ../core/AtomRV.v
