@@ -184,9 +184,9 @@ $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VTOPMODULE_FILE) $(VSRCS)
 	make -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk
 
 
-# Generic rule to compile Cpp Files in .
+# Generic rule to compile Cpp Files in . (prerequisite: complete verilate step first)
 $(OBJ_DIR)/%.o: %.cpp
-$(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td
+$(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 	@printf "$(CLR_CY)> Compiling   %-35s <-  %s$(CLR_NC)\n" $@ $<
 	$(COMPILE_CPP_MACRO) $<
 
