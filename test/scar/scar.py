@@ -58,6 +58,20 @@ reg_names = {
 	"t6"    : "x31"
 }
 
+def convert_abiname_to_archname(name):
+    if name in ['pc', 'ir']:
+        pass
+    elif name in reg_names.keys():
+        name = reg_names[name]
+    elif name[0] == 'x':
+        if int(name[1:]) >= 0 and int(name[1:]) < 32:
+            pass
+        else:
+            return None
+    else:
+        return None
+    return name
+
 
 def search():
     # get all tests
@@ -170,13 +184,17 @@ def verify(test):
             continue
 
         l = l.strip().split(' ')
+        l[0] = convert_abiname_to_archname(l[0])
+        if l[0] is None:
+            print('Err: invalid register in dumpfile:', l[0])
+            return None
         dump_data[l[0]] = l[1]
     
     # process & check assertions
     assertions = fcontents[assert_block_start+1:len(fcontents)]
 
-    passed = [False]*len(assertions)
-    for k, assr in enumerate(assertions):
+    passed = []
+    for assr in assertions:
         # Parse assertions one-by-one
         if assr.strip() == "":
             continue
@@ -188,30 +206,25 @@ def verify(test):
         assr_rg = assr[1]
         assr_val = assr[2]
         
-        for dump_rg in dump_data.keys():
-            # convert dumpfile regname if needed
-            if dump_rg[0] == 'x':       # pure name
-                pass
-            else:
-                if dump_rg in ['pc', 'ir']:
-                    pass
-                elif dump_rg in reg_names.keys():
-                    dump_rg = reg_names[dump_rg] # convert to pure name if abi name    
-                else:
-                    print(f"Error parsing reg name \"{dump_rg}\" in dump file \"{dump_file}\"")
+        assr_rg = convert_abiname_to_archname(assr_rg)
+        if assr_rg is None:
+            print('Err: invalid register in assertion: ', assr_rg)
+            return None
 
+        for dump_rg in dump_data.keys():
             # check
             if dump_rg != assr_rg:
                 continue
 
             if assr_op == 'eq' and assr_val != dump_data[dump_rg]:
-                print(Fore.RED+"Assertion Failed: "+Style.RESET_ALL+f"(expected {assr_val}, got: {dump_data[dump_rg]})")
-                passed[k] = False
+                print(Fore.RED+"Assertion Failed: "+Style.RESET_ALL+f"({dump_rg}: expected {assr_val}, got: {dump_data[dump_rg]})")
+                passed.append(False)
             else:
-                passed[k] = True
+                passed.append(True)
     
     if False in passed:
         print(Fore.RED+"Some Assertions Failed"+Style.RESET_ALL)
+        print(passed)
         return False
     else:
         print(Fore.GREEN+"All Assertions Passed! "+Style.RESET_ALL)

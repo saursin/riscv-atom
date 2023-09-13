@@ -39,7 +39,7 @@ _start:
     ebreak
 
 
-.data
+
 var1:   .word 0x12345678
 var2:   .word 0x00002020
 var3:   .word 0xf3232532

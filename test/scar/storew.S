@@ -1,7 +1,7 @@
 .global _start
 _start:
 
-li t0, 0x00001000   # Load register t0 with an address
+la t0, _sdata   # Load register t0 with an address
 
 li t1, 0x9B7A7971   # Load register t1 with a 4-Byte (1 word) value
 li t2, 0x4523521d   # Load register t1 with a 4-Byte (1 word) value
