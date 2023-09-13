@@ -1,0 +1,60 @@
+name: scar
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  VERILATOR_PREBUILT_FILEID: 1rXszcRib7oryDU2sMhZpPxMn5Ev3RbxG
+  VERILATOR_INSTALL_PATH: /opt/verilator
+
+jobs:
+  Build:
+    name: scar
+    runs-on: ubuntu-20.04
+    
+    steps:
+      - name: Checkout RISCV-Atom Repo
+        uses: actions/checkout@v3
+        with:
+          path: riscv-atom
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  
+    
+      - name: Install Prerequisites
+        run: |
+          pip install gdown
+          sudo apt-get install ccache
+
+      - name: Install Verilator
+        run: |
+          gdown ${VERILATOR_PREBUILT_FILEID}
+          sudo mkdir -p ${VERILATOR_INSTALL_PATH}
+          sudo tar -xvf verilator_5p006.tar.gz -C ${VERILATOR_INSTALL_PATH}
+
+      - name: Setup Environment
+        working-directory: riscv-atom
+        run: |
+          echo "${VERILATOR_INSTALL_PATH}/bin" >> $GITHUB_PATH
+          echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
+          echo "VERILATOR_INCLUDE_PATH:=${VERILATOR_INSTALL_PATH}/share/verilator/include" >> config.mk
+
+      - name: Build Atomsim & Verify - atombones
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=atombones clean sim scar
+
+      - name: Build AtomSim & Verify - hydrogensoc
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=hydrogensoc clean sim scar
