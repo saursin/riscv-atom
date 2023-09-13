@@ -31,7 +31,7 @@ jobs:
     
       - name: Install Prerequisites
         run: |
-          pip install gdown
+          pip install gdown colorama
           sudo apt-get install ccache
 
       - name: Install Verilator
