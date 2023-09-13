@@ -4,6 +4,7 @@ $(shell mkdir -p work)
 
 default: clean verify
 
+.PHONY: verify
 verify:
 	$(PY) scar.py
 

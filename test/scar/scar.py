@@ -1,7 +1,7 @@
 #########################################
 #  RISCV - Atom verification framework  #
 #########################################
-import os
+import os, sys
 import subprocess
 import glob
 from colorama import Fore, Back, Style
@@ -94,7 +94,7 @@ def compile(tests, save_objdump=False):
 
         if (dump.returncode != 0):
             print(Fore.RED+"EXITING due to compile error!"+Style.RESET_ALL)
-            exit()
+            sys.exit(1)
 
         # get objdumpdump
         if save_objdump:
@@ -152,7 +152,7 @@ def verify(test):
         f.close()
     except:
         print("Unable to open file :" + test)
-        exit()
+        sys.exit(1)
 
     # find start of assert block
     assert_block_start = -1
@@ -296,19 +296,20 @@ if __name__ == "__main__":
     count = 1
     for t in tests:
         print(str(count)+").\t"+t, end="")
-
         print(" "*(30-len(t)), end="- ")
-
         if t in passed_tests:
             print(Fore.GREEN+"Passed"+Style.RESET_ALL)
         elif t in ignored_tests:
             print(Fore.YELLOW+"Ignored"+Style.RESET_ALL)
         else:
             print(Fore.RED+"Failed"+Style.RESET_ALL)
-        
         count=count+1
 
     
     print(Fore.GREEN+"\nPassed tests  : " + str(len(passed_tests)) + '/' + str(len(tests))+ Style.RESET_ALL)
     print(Fore.YELLOW+"Ignored tests : " + str(len(ignored_tests)) + '/' + str(len(tests))+ Style.RESET_ALL)
     print(Fore.RED+"Failed tests  : " + str(len(failed_tests)) + '/' +str(len(tests))+ Style.RESET_ALL)
+
+    if len(failed_tests) > 0:
+        sys.exit(1)
+    
