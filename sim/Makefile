@@ -67,7 +67,7 @@ INCLUDES := -I . -I include/
 INCLUDES += -I $(VERILATED_DIR) -I $(VERILATOR_INCLUDE_PATH) -I $(VERILATOR_INCLUDE_PATH)/vltstd
 
 EXE := $(BIN_DIR)/atomsim
-SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp
+SRCS := main.cpp atomsim.cpp simstate.cpp vuart.cpp interactive.cpp
 SRCS += memory.cpp util.cpp
 
 # Compile Macro

@@ -189,10 +189,7 @@ void Backend_atomsim::refresh_state()
     // Get Regs
     for(int i=0; i<32; i++)
     {
-        if(i==0)
-            simstate_->state_.rf[i] = 0;
-        else
-            simstate_->state_.rf[i] = tb->m_core->AtomBones->atom_core->rf->regs[i-1];
+        simstate_->state_.rf[i] = tb->m_core->AtomBones->atom_core->rf->regs[i];
     }
 
     // Get Signals
@@ -314,24 +311,7 @@ int Backend_atomsim::tick()
         // ============ REGISTER FILE DUMP (For SCAR) ==============
         if(sim_->sim_config_.dump_on_ebreak_flag)
         {
-            std::vector<std::string> fcontents;
-            
-            for(int i=0; i<34; i++)
-            {
-                char temp [50];
-                unsigned int tmpval;
-
-                switch(i-2)
-                {
-                    case -2: tmpval = simstate_->state_.pc_e; sprintf(temp, "pc 0x%08x", tmpval); break;
-                    case -1: tmpval = simstate_->state_.ins_e; sprintf(temp, "ir 0x%08x", tmpval); break;
-                    default: tmpval = simstate_->state_.rf[i-2]; sprintf(temp, "x%d 0x%08x",i-2, tmpval); break;
-                }
-                fcontents.push_back(std::string(temp));
-            }
-
-
-            fWrite(fcontents, sim_->sim_config_.dump_file);
+            simstate_->dump_simstate(sim_->sim_config_.dump_file);
         }
         
         // ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============

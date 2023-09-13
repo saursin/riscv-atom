@@ -190,34 +190,9 @@ int Backend_atomsim::tick()
     if (tb->m_core->HydrogenSoC->atom_wb_core->atom_core->InstructionRegister == RV_INSTR_EBREAK) // can't rely on stimstate.state.ins_e cuz that's only updated conditionally
     {
         // ============ REGISTER FILE DUMP (For SCAR) ==============
-        if (sim_->sim_config_.dump_on_ebreak_flag)
+        if(sim_->sim_config_.dump_on_ebreak_flag)
         {
-            std::vector<std::string> fcontents;
-
-            for (int i = 0; i < 34; i++)
-            {
-                char temp[50];
-                unsigned int tmpval;
-
-                switch (i - 2)
-                {
-                case -2:
-                    tmpval = simstate_->state_.pc_e;
-                    sprintf(temp, "pc 0x%08x", tmpval);
-                    break;
-                case -1:
-                    tmpval = simstate_->state_.ins_e;
-                    sprintf(temp, "ir 0x%08x", tmpval);
-                    break;
-                default:
-                    tmpval = simstate_->state_.rf[i - 2];
-                    sprintf(temp, "x%d 0x%08x", i - 2, tmpval);
-                    break;
-                }
-                fcontents.push_back(std::string(temp));
-            }
-
-            fWrite(fcontents, sim_->sim_config_.dump_file);
+            simstate_->dump_simstate(sim_->sim_config_.dump_file);
         }
 
         // ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============

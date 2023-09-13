@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <string>
 
 /**
  * @brief Struct to hold CPU state
@@ -47,4 +48,10 @@ public:
      * @brief CPU signal values
      */
     struct CPUSignals signals_;
+
+    /**
+     * @brief Dump simstate into a file
+     * @param filename
+    */
+    void dump_simstate(std::string filename);
 };
