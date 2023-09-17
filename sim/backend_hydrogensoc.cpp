@@ -9,26 +9,7 @@
 #include "except.hpp"
 // #include "util.hpp"
 
-#include "build/verilated/VHydrogenSoC.h"
-#include "build/verilated/VHydrogenSoC_HydrogenSoC.h"
-#include "build/verilated/VHydrogenSoC_AtomRV_wb.h"
-#include "build/verilated/VHydrogenSoC_AtomRV.h"
-
-#if __has_include ("build/verilated/VHydrogenSoC_RegisterFile.h")
-#include "build/verilated/VHydrogenSoC_RegisterFile.h"
-#else
-#include "build/verilated/VHydrogenSoC_RegisterFile__N10.h"      // In case RV_E is enabled
-#endif
-
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Ae.h"
-
-#if __has_include ("build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz1.h")
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__Af_Mz1.h"  // Newer verilator version (~5.002)
-#else
-#include "build/verilated/VHydrogenSoC_SinglePortRAM_wb__pi1.h"     // Older verilator version (~3.916)
-#endif
-
-#include "build/verilated/VHydrogenSoC_UART.h"
+#include "build/verilated/VHydrogenSoC_headers.h"
 
 #ifdef DBG
 #define D(x) x
@@ -42,11 +23,13 @@
 
 // ROM
 #define ROM_ADDR 0x00010000
-#define ROM_SIZE 0x00008000 // 32 KB
+#define ROM_SIZE 8192   // 8 KB
 
 // RAM
 #define RAM_ADDR 0x20000000
-#define RAM_SIZE 0x00004000 // 16 KB
+#define RAM_SIZE 49152  // 48 KB
+
+#define BBUART_FRATIO 3
 
 Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim, &(sim->simstate_)),
                                                                         config_(config),
@@ -76,7 +59,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     this->refresh_state();
 
     // ====== Initialize Communication ========
-    bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_usb_tx_o, (bool *)&tb->m_core->uart_usb_rx_i, 3);
+    bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_usb_tx_o, (bool *)&tb->m_core->uart_usb_rx_i, BBUART_FRATIO);
 
     // create a new vuart object
     if (using_vuart_)
@@ -92,7 +75,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     else
     {
         if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
-            std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-tx)" << std::endl;
+            std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-rx)" << std::endl;
     }
 
     if (sim_->sim_config_.verbose_flag)

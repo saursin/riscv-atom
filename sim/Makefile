@@ -103,15 +103,16 @@ ifeq ($(soctarget), hydrogensoc)
     VSRCS += $(RTL_DIR)/core/AtomRV_wb.v 
 
     # arbiter
-    VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter.v
-    VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter2_wb.v
-    VSRCS += $(RTL_DIR)/uncore/wishbone/arbiter3_wb.v
-    VSRCS += $(RTL_DIR)/uncore/wishbone/priority_encoder.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Arbiter.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Arbiter2_wb.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Arbiter3_wb.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Crossbar5_wb.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Priority_encoder.v
 
     # periphs
     VSRCS += $(RTL_DIR)/uncore/gpio/IOBuf.v
     VSRCS += $(RTL_DIR)/uncore/gpio/GPIO.v
-    VSRCS += $(RTL_DIR)/uncore/mem/DualPortRAM_wb.v
+    VSRCS += $(RTL_DIR)/uncore/mem/SinglePortROM_wb.v
     VSRCS += $(RTL_DIR)/uncore/mem/SinglePortRAM_wb.v
     VSRCS += $(RTL_DIR)/uncore/uart/UART.v
     VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
@@ -183,6 +184,11 @@ $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VTOPMODULE_FILE) $(VSRCS)
 	@printf "$(CLR_CY)> Generating shared object$(CLR_NC)\n"
 	make -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk
 
+	@printf "$(CLR_CY)> Generating combined header$(CLR_NC)\n"
+	printf "#ifndef __V$(VTOPMODULE)_headers__\n" > $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	printf "#define __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	find $(VERILATED_DIR) -type f -name "*.h" -exec echo '#include "{}"' \; >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	printf "#endif // __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
 
 # Generic rule to compile Cpp Files in . (prerequisite: complete verilate step first)
 $(OBJ_DIR)/%.o: %.cpp

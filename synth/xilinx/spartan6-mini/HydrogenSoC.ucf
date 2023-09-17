@@ -19,7 +19,7 @@
 #
 ####################################################################
 # ========================== DIP Switches ==========================
-NET "uart_mux_sel" LOC = P80 | IOSTANDARD = LVCMOS33;
+NET "uart_mux_sel_i" LOC = P80 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_2 LOC = P81 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_3 LOC = P82 | IOSTANDARD = LVCMOS33;
 #NET DIP_SW_4 LOC = P83 | IOSTANDARD = LVCMOS33;
@@ -68,8 +68,8 @@ NET "spi_sck_o"     LOC = P70 | IOSTANDARD = LVCMOS33;    # SCK
 # ========================== User I/O - J1 ==========================
 NET "uart_io_tx_o" LOC = P22 |IOSTANDARD = LVCMOS33;
 NET "uart_io_rx_i" LOC = P21 |IOSTANDARD = LVCMOS33;
-NET "uart_tx_test_point_o" LOC = P24 |IOSTANDARD = LVCMOS33;
-NET "uart_rx_test_point_o" LOC = P23 |IOSTANDARD = LVCMOS33;
+# NET "uart_tx_test_point_o" LOC = P24 |IOSTANDARD = LVCMOS33;
+# NET "uart_rx_test_point_o" LOC = P23 |IOSTANDARD = LVCMOS33;
 
 # NET spi_miso_i LOC = P27 | IOSTANDARD = LVCMOS33;
 # NET spi_mosi_o LOC = P26 | IOSTANDARD = LVCMOS33;

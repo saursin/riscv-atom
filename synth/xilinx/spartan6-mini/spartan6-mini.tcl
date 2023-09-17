@@ -256,14 +256,16 @@ proc add_source_files {} {
    # Uncore
    xfile add "$RTLDir/uncore/gpio/GPIO.v"
    xfile add "$RTLDir/uncore/gpio/IOBuf.v"
+   xfile add "$RTLDir/uncore/mem/SinglePortROM_wb.v"
    xfile add "$RTLDir/uncore/mem/SinglePortRAM_wb.v"
    xfile add "$RTLDir/uncore/uart/UART.v"
    xfile add "$RTLDir/uncore/uart/UART_core.v"
    xfile add "$RTLDir/uncore/spi/SPI_core.v"
    xfile add "$RTLDir/uncore/spi/SPI_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/arbiter.v"
-   xfile add "$RTLDir/uncore/wishbone/arbiter3_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/priority_encoder.v"
+   xfile add "$RTLDir/uncore/wishbone/Arbiter.v"
+   xfile add "$RTLDir/uncore/wishbone/Arbiter3_wb.v"
+   xfile add "$RTLDir/uncore/wishbone/Crossbar5_wb.v"
+   xfile add "$RTLDir/uncore/wishbone/Priority_encoder.v"
    
    # Constraints
    xfile add "HydrogenSoC.ucf"

@@ -28,7 +28,7 @@ THE SOFTWARE.
 /*
  * Arbiter module
  */
-module arbiter #
+module Arbiter #
 (
     parameter PORTS = 4,
     // select round robin arbitration
@@ -64,7 +64,7 @@ wire request_valid;
 wire [$clog2(PORTS)-1:0] request_index;
 wire [PORTS-1:0] request_mask;
 
-priority_encoder #(
+Priority_encoder #(
     .WIDTH(PORTS),
     .LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
 )
@@ -81,7 +81,7 @@ wire masked_request_valid;
 wire [$clog2(PORTS)-1:0] masked_request_index;
 wire [PORTS-1:0] masked_request_mask;
 
-priority_encoder #(
+Priority_encoder #(
     .WIDTH(PORTS),
     .LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
 )

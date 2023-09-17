@@ -25,7 +25,7 @@ def main():
 
 def generate(ports=2, name=None, output=None):
     if name is None:
-        name = "wb_arbiter_{0}".format(ports)
+        name = "Arbiter{0}_wb".format(ports)
 
     if output is None:
         output = name + ".v"
@@ -147,7 +147,7 @@ assign wbs_cyc_o = {% for p in ports %}wbm{{p}}_sel ? 1'b1 :
 wire [{{w-1}}:0] grant_encoded; `UNUSED_VAR(grant_encoded)
 
 // arbiter instance
-arbiter #(
+Arbiter #(
     .PORTS({{n}}),
     .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
     .ARB_BLOCK(1),

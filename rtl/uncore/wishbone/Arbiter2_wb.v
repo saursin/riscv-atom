@@ -29,7 +29,7 @@ THE SOFTWARE.
 /*
  * Wishbone 2 port arbiter
  */
-module arbiter2_wb #
+module Arbiter2_wb #
 (
     parameter DATA_WIDTH = 32,                    // width of data bus in bits (8, 16, 32, or 64)
     parameter ADDR_WIDTH = 32,                    // width of address bus in bits
@@ -125,7 +125,7 @@ assign wbs_cyc_o = wbm0_sel ? 1'b1 :
 wire [0:0] grant_encoded; `UNUSED_VAR(grant_encoded)
 
 // arbiter instance
-arbiter #(
+Arbiter #(
     .PORTS(2),
     .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
     .ARB_BLOCK(1),

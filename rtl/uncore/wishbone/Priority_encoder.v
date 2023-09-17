@@ -29,7 +29,7 @@ THE SOFTWARE.
 /*
  * Priority encoder module
  */
-module priority_encoder #
+module Priority_encoder #
 (
     parameter WIDTH = 4,
     // LSB priority selection
