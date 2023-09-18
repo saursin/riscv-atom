@@ -7,11 +7,15 @@
 #include "spi.h"
 
 //--------------------- Settings -----------------------------
+#define BOOTLED_PIN 0
+#define BOOTMODE_PIN0 8
+#define BOOTMODE_PIN1 9
+
 // Address offset at which image resides
 #define FLASH_IMG_OFFSET    0x000c0000
 
 // Size of Image
-#define FLASH_IMG_SIZE      28 * 1024   // 28 KB
+#define FLASH_IMG_SIZE      32 * 1024       // 32 KB
 
 // Enable/Disable UART
 #define ENABLE_UART
@@ -23,7 +27,7 @@
 #define END_LED_FLASHES   1
 
 // Clear screen at start of bootloader
-#define CLS_AT_START
+// #define CLS_AT_START
 
 //------------------------------------------------------------
 #define STRINGIFY(s) #s
@@ -114,13 +118,14 @@ void flash_copy(uint8_t *buf, uint32_t addr, uint32_t len)
     spi_init(&cfg);
 }
 
+
 int main()
 {
     // ********** Initialize **********
-    // Initialize status led gpio pin
-    const int led_pin = 0;
-    gpio_setmode(led_pin, OUTPUT);
-    led_blink(led_pin, START_LED_FLASHES, 50);      // Blink LED START_LED_FLASHES times (signal entering of bootloader)
+    // Initialize GPIO
+    gpio_setmode(BOOTLED_PIN, OUTPUT);     
+    gpio_setmode(BOOTMODE_PIN0, INPUT);
+    gpio_setmode(BOOTMODE_PIN1, INPUT);
 
     #ifdef ENABLE_UART
     // Initialize UART
@@ -133,26 +138,54 @@ int main()
     REG32(UART_ADDR, UART_REG_RBR);
     #endif
 
+    // Blink LED START_LED_FLASHES times (signal entering of bootloader)
+    led_blink(BOOTLED_PIN, START_LED_FLASHES, 50);
+
     // Print header
     #ifdef CLS_AT_START
     D(putchar(0x1b); putchar('c');)  // clear screen
+    #else
+    D(putchar('\n');)
     #endif
-    D(puts("***** FlashBoot *****\n");)
 
-    // ********** Read & Copy **********
-    D(puts("Copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET));)
-    flash_copy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+    D(puts("***** RISC-V Atom Bootloader *****\n");)
 
-    // ********** Jump to user application **********
-    led_blink(led_pin, END_LED_FLASHES, 50);        // Blink single (signal jump to user code)
-       
-    D(puts("Jumping to user code\n");)
-    D(puts("---------------------\n");)
+    // get bootmode
+    uint8_t bootmode = (uint8_t)gpio_read(BOOTMODE_PIN0)
+                        | (((uint8_t)gpio_read(BOOTMODE_PIN1)) << 1);
+    
+    /**
+     * Bootmode: 
+     *  0b00: flashboot
+     *  0b01: jump to ram
+     *  default: infinite loop
+    */
+    if (bootmode == 0b00) {
+        // Bootmode: flash boot
+        D(puts("flashboot: Copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) "\n");)
+        // copy from flash
+        flash_copy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+    } else if (bootmode == 0b01) {
+        // Bootmode: jump to ram
+    } else { 
+        // Bootmode: Infinite loop
+        while(1){
+            asm volatile("");
+        }
+    }
+
+    D(puts("Jumping to ram\n" "----------------------------------\n");)
+
+    // Blink single (signal jump to user code)
+    led_blink(BOOTLED_PIN, END_LED_FLASHES, 50);
+
+    // Jump
     fnc_ptr app_main = (fnc_ptr)(&__approm_start);
     app_main();
 
     // ** UNREACHABLE **
     D(puts("Err: unreachable\n");)
+    gpio_write(BOOTLED_PIN, HIGH);
     while(1) {
         asm volatile("");
     }

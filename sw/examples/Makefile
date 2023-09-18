@@ -213,13 +213,20 @@ ifeq ($(bin), true)
 endif
 
 
+.PHONY: run
 run: $(ex)/$(executable)					## Run example
 	@printf "${COLOR_CYAN}Running \"${ex}\" example ${COLOR_NC}\n"
 	atomsim $(ATOMSIM_ARGS) $^
 
 
+.PHONY: objdump
 objdump: $(ex)/$(executable)				## Dump disassembly
 	riscv64-unknown-elf-objdump -htd $^ > $^.objdump
+
+
+.PHONY: prog
+prog: $(ex)/$(executable).bin               ## Program fpga flash
+	prog_firmware.sh $^
 
 
 .PHONY: clean

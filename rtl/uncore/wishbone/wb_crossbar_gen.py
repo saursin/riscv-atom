@@ -186,15 +186,15 @@ module {{name}} #(
                  
     // Error signal
     wire select_error = (selected_device == DEVICE_NONE);
-    always begin
+    always @(*) begin
         if (select_error) begin 
             `debug($display("XBAR-SEL-ERR: Unknown Device Selected: 0x%x", wbs_adr_i);) 
         end
     end
     
-    assign wbs_err_o = select_error
+    assign wbs_err_o = wbs_cyc_i & (select_error
                         {%- for p in nslaves %}
-                        | wbm{{p}}_err_i{%- if p == lastslave%};{%- endif %}
+                        | wbm{{p}}_err_i{%- if p == lastslave%});{%- endif %}
                         {%- endfor %}
 endmodule
 

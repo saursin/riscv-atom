@@ -12,16 +12,20 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    BOOTROM (rx) : ORIGIN = 0x00010000, LENGTH = 3K
-    BOOTRAM (rwx): ORIGIN = 0x00010c00, LENGTH = 1K
-
-    APPROM  (rx) : ORIGIN = 0x00011000, LENGTH = 28K
-    APPRAM  (rwx): ORIGIN = 0x20000000, LENGTH = 16K
+    BOOT_ROM (rx): ORIGIN = 0x00010000, LENGTH = 4K
+    CODE_RAM (rx): ORIGIN = 0x20000000, LENGTH = 32K
+    DATA_RAM (rw): ORIGIN = 0x20008000, LENGTH = 16K
 }
+
+__bootrom_start = ORIGIN(BOOT_ROM);
+__bootrom_size  = LENGTH(BOOT_ROM);
+__approm_start  = ORIGIN(CODE_RAM);
+__approm_size   = LENGTH(CODE_RAM);
+
 
 SECTIONS
 {
-    /* ==== ROM ==== */
+    /* ==== CODE RAM ==== */
     .text : 
     { 
         /*  ----- Initialization Code ----- */
@@ -41,11 +45,10 @@ SECTIONS
         . = ALIGN(4);
          _etext = .;
 
-    } > APPROM
+    } > BOOT_ROM
 
 
-
-    /* ==== RAM ==== */
+    /* ==== DATA RAM ==== */
     /* The .data section contains static variables which have an initial value at boot. */
     .data :
     {           
@@ -66,7 +69,7 @@ SECTIONS
         . = ALIGN(4);
         _edata = .;
     
-    } > APPRAM AT> APPROM
+    } > DATA_RAM AT> BOOT_ROM
     
 
     /* ----- Uninitialized Data ----- */
@@ -80,10 +83,10 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;
     
-    } > APPRAM AT> APPROM
+    } > DATA_RAM AT> BOOT_ROM
 
     _end = .;
 }
 
 PROVIDE(_start_heap = _ebss);
-PROVIDE(_stack_pointer  = ORIGIN(APPRAM) + LENGTH(APPRAM));
+PROVIDE(_stack_pointer  = ORIGIN(DATA_RAM) + LENGTH(DATA_RAM));

@@ -224,16 +224,16 @@ module Crossbar5_wb #(
                  
     // Error signal
     wire select_error = (selected_device == DEVICE_NONE);
-    always begin
+    always @(*) begin
         if (select_error) begin 
             `debug($display("XBAR-SEL-ERR: Unknown Device Selected: 0x%x", wbs_adr_i);) 
         end
     end
     
-    assign wbs_err_o = select_error
+    assign wbs_err_o = wbs_cyc_i & (select_error
                         | wbm0_err_i
                         | wbm1_err_i
                         | wbm2_err_i
                         | wbm3_err_i
-                        | wbm4_err_i;
+                        | wbm4_err_i);
 endmodule

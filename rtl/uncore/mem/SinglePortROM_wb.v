@@ -35,8 +35,8 @@ module SinglePortROM_wb #(
 
     // Set Ack_o
     always @(posedge wb_clk_i) begin
-        if(wb_rst_i)
-            wb_ack_o <= 0;
+        if (wb_rst_i)
+            wb_ack_o <= 1'b0;
         else
             wb_ack_o <= wb_stb_i & !wb_ack_o;
     end

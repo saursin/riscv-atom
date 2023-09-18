@@ -12,13 +12,13 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    ROM (rx) : ORIGIN = 0x00010000, LENGTH = 32K
-    RAM (rwx): ORIGIN = 0x20000000, LENGTH = 16K
+    CODE_RAM (rx): ORIGIN = 0x20000000, LENGTH = 32K
+    DATA_RAM (rw): ORIGIN = 0x20008000, LENGTH = 16K
 }
 
 SECTIONS
 {
-    /* ==== ROM ==== */
+    /* ==== CODE RAM ==== */
     .text : 
     { 
         /*  ----- Initialization Code ----- */
@@ -38,11 +38,10 @@ SECTIONS
         . = ALIGN(4);
          _etext = .;
 
-    } > ROM
+    } > CODE_RAM
 
 
-
-    /* ==== RAM ==== */
+    /* ==== DATA RAM ==== */
     /* The .data section contains static variables which have an initial value at boot. */
     .data :
     {           
@@ -63,7 +62,7 @@ SECTIONS
         . = ALIGN(4);
         _edata = .;
     
-    } > RAM AT> ROM
+    } > DATA_RAM AT> CODE_RAM
     
 
     /* ----- Uninitialized Data ----- */
@@ -77,10 +76,10 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;
     
-    } > RAM AT> ROM
+    } > DATA_RAM AT> CODE_RAM
 
     _end = .;
 }
 
 PROVIDE(_start_heap = _ebss);
-PROVIDE(_stack_pointer  = ORIGIN(RAM) + LENGTH(RAM));
+PROVIDE(_stack_pointer  = ORIGIN(DATA_RAM) + LENGTH(DATA_RAM));

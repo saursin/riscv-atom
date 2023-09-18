@@ -18,6 +18,7 @@ _start:
     # ===== Call main =====
     jal main
 
+
 _exit:
     ebreak  # Exit simulation
     j _exit

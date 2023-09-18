@@ -1,5 +1,6 @@
 #include "platform.h"
 #include <stdio.h>
+#include <csr.h>
 
 char * banner = 
 "\n"
@@ -27,12 +28,22 @@ char * banner =
 " /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
 "/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
 
+void get_isa(char * buf){
+    uint32_t misa = CSR_read(CSR_MISA);
+    char misa_fmt[] = ""
+    for(int i=0; i<32; i++) {
+
+    }
+}
+
 int main()
 {
     serial_init(UART_BAUD_115200);
     puts(banner);
-    printf("ROM size: %d\tbytes\t(%d KB)\n", MEM_ROM_SIZE, MEM_ROM_SIZE/1024);
-    printf("RAM size: %d\tbytes\t(%d KB)\n", MEM_RAM_SIZE, MEM_RAM_SIZE/1024);
-    puts("exiting...\n");
+    printf("CPU      : RISC-V Atom @ %d Hz\n", CLK_FREQ);
+    puts("Arch     : RV32I - little endian\n");
+    printf("CODE RAM : 0x%8x (%d bytes)\n", MEM_ROM_ADDR, MEM_ROM_SIZE);
+    printf("DATA RAM : 0x%8x (%d bytes)\n", MEM_RAM_ADDR, MEM_RAM_SIZE);
+    puts("Exiting...\n");
     return 0;
 }
