@@ -28,14 +28,6 @@ char * banner =
 " /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
 "/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
 
-void get_isa(char * buf){
-    uint32_t misa = CSR_read(CSR_MISA);
-    char misa_fmt[] = ""
-    for(int i=0; i<32; i++) {
-
-    }
-}
-
 int main()
 {
     serial_init(UART_BAUD_115200);
