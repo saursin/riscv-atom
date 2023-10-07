@@ -8,15 +8,8 @@
 #include "except.hpp"
 // #include "util.hpp"
 
-#include "build/verilated/VAtomBones.h"
-#include "build/verilated/VAtomBones_AtomBones.h"
-#include "build/verilated/VAtomBones_AtomRV.h"
+#include "build/verilated/VAtomBones_headers.h"
 
-#if __has_include ("build/verilated/VAtomBones_RegisterFile.h")
-#include "build/verilated/VAtomBones_RegisterFile.h"
-#else
-#include "build/verilated/VAtomBones_RegisterFile__N10.h"      // In case RV_E is enabled
-#endif
 #include "elfio/elfio.hpp"
 
 #define UART_ADDR 0x40000000
