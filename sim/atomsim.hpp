@@ -139,7 +139,7 @@ private:
     int cmd_str(const std::vector<std::string>&);
     int cmd_mem(const std::vector<std::string>&);
     int cmd_dumpmem(const std::vector<std::string>&);
-
+    int cmd_load(const std::vector<std::string>&);
     
 };
 

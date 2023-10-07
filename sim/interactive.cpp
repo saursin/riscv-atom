@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <math.h>
 #include <map>
 
@@ -179,6 +180,7 @@ int Atomsim::run_interactive_mode()
                     funcs["str"]        = &Atomsim::cmd_str;
     funcs["m"] =    funcs["mem"]        = &Atomsim::cmd_mem;
                     funcs["dumpmem"]    = &Atomsim::cmd_dumpmem;
+                    funcs["load"]       = &Atomsim::cmd_load;
   
     static std::string prev_cmd;
     static std::vector<std::string> prev_args;
@@ -274,6 +276,9 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "                                        addr: start address\n"
     "                                        bytes: number of bytes\n"
     "                                        file: file path (default: " DEFAULT_DUMPMEM_PATH ")\n"
+    "     load <file> <addr>            : Load contents of binary file into memory\n"
+    "                                        fike: file path\n"
+    "                                        addr: load address\n"
     "\n" 
     "Note:\n"
     "  - <> are used for compulsory and [] for optional arguments.\n"
@@ -514,3 +519,34 @@ int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
     return ATOMSIM_RCODE_OK;
 }
 
+
+int Atomsim::cmd_load(const std::vector<std::string> &args)
+{
+    if(args.size() < 1)
+        throw Atomsim_exception("expected filename as 1st argument\n");
+    if(args.size() < 2)
+        throw Atomsim_exception("expected address as 2nd argument\n");
+    
+    std::string file_path = args[0];
+    uint32_t addr = _parse_num(args[1]);
+
+    // read file
+    std::ifstream file(file_path.c_str(), std::ios::binary);
+    if (!file.is_open()) {
+        throw Atomsim_exception("Unable to open file " + file_path);
+    }
+
+    // Get the file size
+    file.seekg(0, std::ios_base::end);
+    uint32_t file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    // Read the file into the buffer & close
+    uint8_t buffer [file_size];
+    file.read(reinterpret_cast<char*>(buffer), file_size);
+    file.close();
+
+    // write to memory
+    backend_.store(addr, buffer, file_size);
+    return ATOMSIM_RCODE_OK;
+}
