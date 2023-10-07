@@ -261,54 +261,73 @@ int Backend_atomsim::tick()
     return 0;
 }
 
-// void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
-// {
-//     if((start_addr >= IMEM_ADDR) && (start_addr < IMEM_ADDR+IMEM_SIZE))  // fetch from imem
-//     {
-//         if(!(start_addr+buf_sz-1 < IMEM_ADDR+IMEM_SIZE))
-//             throw Atomsim_exception("can't fetch; bufsize too large for mem");
+void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz) {
+    if (start_addr >= ROM_ADDR && start_addr < (ROM_ADDR + ROM_SIZE)) 
+    {
+        if(!(start_addr + buf_sz - 1 < ROM_ADDR + ROM_SIZE))
+            throw Atomsim_exception("can't fetch; bufsize too large for mem");
 
-//         // fetch
+        // Copy mem to buf
+        for(unsigned buf_indx = 0; buf_indx < buf_sz; buf_indx++){
+            uint32_t mem_addr = start_addr + buf_indx;
+            uint32_t mem_indx = (mem_addr-ROM_ADDR) / 4;
+            uint32_t line_offset = 8 * ((mem_addr-ROM_ADDR) % 4);
+            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] >> line_offset);
+        }
+    }
+    else if (start_addr >= RAM_ADDR && start_addr < (RAM_ADDR + RAM_SIZE)) 
+    {
+        if(!(start_addr + buf_sz - 1 < RAM_ADDR + RAM_SIZE))
+            throw Atomsim_exception("can't fetch; bufsize too large for mem");
 
-//     }
-//     else if((start_addr >= DMEM_ADDR) && (start_addr < DMEM_ADDR+DMEM_SIZE))  // fetch from dmem
-//     {
-//         if(!(start_addr+buf_sz-1 < DMEM_ADDR+DMEM_SIZE))
-//             throw Atomsim_exception("can't fetch; bufsize too large for mem");
+        // Copy mem to buf
+        for(unsigned buf_indx = 0; buf_indx < buf_sz; buf_indx++){
+            uint32_t mem_addr = start_addr + buf_indx;
+            uint32_t mem_indx = (mem_addr-RAM_ADDR) / 4;
+            uint32_t line_offset = 8 * ((mem_addr-RAM_ADDR) % 4);
+            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC->ram->mem[mem_indx] >> line_offset);
+        }
+    }
+    else {
+        char hx[10];
+        sprintf(hx, "%08x", start_addr);
+        throw Atomsim_exception("memory fetch failed: no mem block at given address (0x"+std::string(hx)+")");
+    }
+}
 
-//         // fetch
-//         for(uint32_t addr = start_addr; addr < start_addr+buf_sz; addr+=4)
-//         {
-//             uint32_t index = addr - DMEM_ADDR;
-//             uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->dmem->mem[index/4];
-//             // now store this intop the buf
-//         }
-//     }
-//     else
-//     {
-//         throw Atomsim_exception("memory fetch failed: no mem block at given address");
-//     }
-// }
+void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
+{
+    if (start_addr >= ROM_ADDR && start_addr < (ROM_ADDR + ROM_SIZE)) 
+    {
+        if(!(start_addr + buf_sz - 1 < ROM_ADDR + ROM_SIZE))
+            throw Atomsim_exception("can't store; bufsize too large for mem");
+        
+        // Copy mem to buf
+        for(unsigned buf_indx = 0; buf_indx < buf_sz; buf_indx++){
+            uint32_t mem_addr = start_addr + buf_indx;
+            uint32_t mem_indx = (mem_addr-ROM_ADDR) / 4;
+            uint32_t line_offset = 8 * ((mem_addr-ROM_ADDR) % 4);
+            tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] = (tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] & ~(0xff << line_offset)) 
+                                                            | (((uint32_t) buf[buf_indx]) << line_offset);
+        }
+    }
+    else if (start_addr >= RAM_ADDR && start_addr < (RAM_ADDR + RAM_SIZE)) 
+    {
+        if(!(start_addr + buf_sz - 1 < RAM_ADDR + RAM_SIZE))
+            throw Atomsim_exception("can't store; bufsize too large for mem");
 
-// void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz)     // TODO: Use these
-// {
-//     bool success = false;
-//     for (auto mem_block: mem_)  // search for mem blk
-//     {
-//         std::shared_ptr<Memory> m = mem_block.second;
-//         if(m->addr_in_range(start_addr))
-//         {
-//             if(!m->block_in_range(start_addr, buf_sz))
-//                 throw Atomsim_exception("cant store; bufsize too large for mem");
-
-//             m->store(start_addr, buf, buf_sz);
-//             success = true;
-//             break;  // exit search loop
-//         }
-//     }
-
-//     if (!success)
-//     {
-//         throw Atomsim_exception("memory store failed: no mem block at given address");
-//     }
-// }
+        // Copy mem to buf
+        for(unsigned buf_indx = 0; buf_indx < buf_sz; buf_indx++){
+            uint32_t mem_addr = start_addr + buf_indx;
+            uint32_t mem_indx = (mem_addr-RAM_ADDR) / 4;
+            uint32_t line_offset = 8 * ((mem_addr-RAM_ADDR) % 4);
+            tb->m_core->HydrogenSoC->ram->mem[mem_indx] = (tb->m_core->HydrogenSoC->ram->mem[mem_indx] & ~(0xff << line_offset)) 
+                                                        | (((uint32_t) buf[buf_indx]) << line_offset);
+        }
+    }
+    else {
+        char hx[10];
+        sprintf(hx, "%08x", start_addr);
+        throw Atomsim_exception("memory store failed: no mem block at given address (0x"+std::string(hx)+")");
+    }
+}
