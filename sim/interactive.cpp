@@ -111,51 +111,46 @@ long long _parse_num(std::string s)
  * @param buf mem buffer
  * @param bufsz buffer size
  * @param base_addr base address of buffer
- * @param word_view 
- * @param ascii_view 
+ * @param enable_ascii enable ascii view 
  */
-void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool word_view=true, bool ascii_view=true)
-{
-    const unsigned BYTES_PER_WORD = 4;
+void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool enable_ascii=true) {
+    const unsigned bytes_per_word = 4;
+    const unsigned words_per_line = 4;
 
-    // Process every byte in the data.
-    for(unsigned i=0; i<bufsz; i++)
-    {
-        if (i % BYTES_PER_WORD == 0)
-        {
-            // Print address
-            printf("0x%08x:", i+base_addr);
-        }
-               
-        // Now the hex code for the specific character.
-        printf(" %02x", ((unsigned char*)buf)[i]);
+    for (int i = 0; i < bufsz; i += bytes_per_word * words_per_line) {
+        // Print address
+        printf("0x%08X: ", base_addr+i);
 
-
-        if(i % BYTES_PER_WORD == BYTES_PER_WORD-1)
-        {
-            if(word_view)
-            {
-                uint32_t word = 0;
-                word = word | (((uint32_t) buf[i]) << 24);
-                word = word | (((uint32_t) buf[i-1]) << 16);
-                word = word | (((uint32_t) buf[i-2]) << 8);
-                word = word | (((uint32_t) buf[i-3]));
-                printf(" | %08x", word);
+        // Print words in a line
+        for (int j = 0; j < words_per_line; j++) {
+            
+            // print bytes in a word
+            for (int k = 0; k < bytes_per_word; k++) {
+                if (i + j * bytes_per_word + k < bufsz) {
+                    printf("%02X", buf[i + j * bytes_per_word + k] & 0xFF);
+                } else {
+                    printf("  ");
+                }
+                if (k < bytes_per_word - 1) {
+                    printf(" ");
+                }
             }
-
-            if(ascii_view)
-            {
-                printf(" | ");
-                printf("%c", (buf[i] < 0x20) || (buf[i-3] > 0x7e) ? '.' : buf[i]);
-                printf("%c", (buf[i] < 0x20) || (buf[i-2] > 0x7e) ? '.' : buf[i]);
-                printf("%c", (buf[i] < 0x20) || (buf[i-1] > 0x7e) ? '.' : buf[i]);
-                printf("%c", (buf[i] < 0x20) || (buf[i] > 0x7e) ? '.' : buf[i]);
-            }
-
-            printf("\n");
+            printf("  ");
         }
+
+        // print ascii view
+        if (enable_ascii) {
+            printf(" | ");
+            for (int j = 0; j < words_per_line; j++) {
+                for (int k = 0; k < bytes_per_word; k++) {
+                    char c = (i + j * bytes_per_word + k < bufsz) ? buf[i + j * bytes_per_word + k] : ' ';
+                    printf("%c", (c >= 32 && c <= 126) ? c : '.');
+                }
+                printf(" ");
+            }
+        }
+        printf("\n");
     }
-    printf("\n");
 }
 
 int Atomsim::run_interactive_mode()
@@ -444,7 +439,6 @@ int Atomsim::cmd_mem(const std::vector<std::string> &args)
     {
         long long addr;
         long long size = 4;
-        bool wordview = false;
         bool asciiview = false;
 
         // parse base address
@@ -463,9 +457,7 @@ int Atomsim::cmd_mem(const std::vector<std::string> &args)
 
         for(unsigned i=2; i<args.size(); i++)
         {
-            if (args[i] == "-w")
-                wordview = true;
-            else if (args[i] == "-a")
+            if (args[i] == "-a")
                 asciiview = true;
             else
                 throw Atomsim_exception("invlid arg \""+args[i]+"\"\n");
@@ -474,7 +466,7 @@ int Atomsim::cmd_mem(const std::vector<std::string> &args)
         uint8_t buf [size];
         backend_.fetch(addr, buf, size);
 
-        _hexdump(buf, size, addr, wordview, asciiview);
+        _hexdump(buf, size, addr, asciiview);
     }
     else
         throw Atomsim_exception("too many arguments for \"mem\" command\n");
@@ -512,7 +504,7 @@ int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
     
     FILE * tmp = stdout;    // preserve the original stdout
     stdout = fptr; // redirect stdout file
-    _hexdump(buf, size, addr, true, true);
+    _hexdump(buf, size, addr, true);
     stdout = tmp; // restore stdout
     fclose(fptr);
     
@@ -545,6 +537,8 @@ int Atomsim::cmd_load(const std::vector<std::string> &args)
     uint8_t buffer [file_size];
     file.read(reinterpret_cast<char*>(buffer), file_size);
     file.close();
+
+    printf("Loading %d bytes from \"%s\" @ 0x%08x\n", file_size, file_path.c_str(), addr);
 
     // write to memory
     backend_.store(addr, buffer, file_size);
