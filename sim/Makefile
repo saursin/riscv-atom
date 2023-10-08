@@ -38,6 +38,7 @@ $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR) $(RUN_DIR))
 
 VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --relative-includes		# Fixme: Simplify this macro name
+# VFLAGS := -D__ROM_INIT_FILE__
 VFLAGS += -I$(RTL_DIR) -I$(RTL_DIR)/common -I$(RTL_DIR)/core
 VFLAGS += --Mdir $(VERILATED_DIR)
 
@@ -61,7 +62,7 @@ VSRCS += $(RTL_DIR)/core/CSR_Unit.v
 CC := g++
 CFLAGS :=  -std=c++11 -faligned-new -Wall -Wextra #-pedantic
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
-LDFLAGS := -lCppLinuxSerial
+LDFLAGS := -lCppLinuxSerial -lreadline
 LDLIBS := -L include/CppLinuxSerial/
 INCLUDES := -I . -I include/
 INCLUDES += -I $(VERILATED_DIR) -I $(VERILATOR_INCLUDE_PATH) -I $(VERILATOR_INCLUDE_PATH)/vltstd
