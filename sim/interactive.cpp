@@ -170,6 +170,7 @@ int Atomsim::run_interactive_mode()
     funcs["v"] =    funcs["verbose"]    = &Atomsim::cmd_verbose;
                     funcs["trace"]      = &Atomsim::cmd_trace;
 
+                    funcs["reset"]      = &Atomsim::cmd_reset; 
     funcs["s"] =    funcs["step"]       = &Atomsim::cmd_step;
     funcs["r"] =    funcs["run"]        = &Atomsim::cmd_run;
     funcs["w"] =    funcs["while"]      = &Atomsim::cmd_while;
@@ -266,6 +267,7 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "            <off>               Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
+    "     reset                      : Reset\n"
     "  s, step [cycles]              : Step for specified cycles (default: 1)\n"
     "  r, run                        : Run until finished (press ctrl+c to return\n" 
     "                                  to console)\n"
@@ -377,6 +379,12 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
     return ATOMSIM_RCODE_OK;
 }
 
+int Atomsim::cmd_reset(const std::vector<std::string> &args)
+{
+    std::cout << "Resetting..." << std::endl;
+    backend_.reset();
+    return ATOMSIM_RCODE_OK;
+}
 
 int Atomsim::cmd_step(const std::vector<std::string> &args)
 {
@@ -412,9 +420,22 @@ int Atomsim::cmd_run(const std::vector<std::string> &/*args*/)
 }
 
 
-int Atomsim::cmd_while(const std::vector<std::string> &/*args*/)
+int Atomsim::cmd_while(const std::vector<std::string> &args)
 {
-    std::cout << "command not implemented" << std::endl;
+    if(args.size() == 0)   // step 1
+    {
+        throw Atomsim_exception("too few/many args\n");
+    }
+    else if(args.size() == 1)  // step n
+    {
+        uint32_t break_addr = _parse_num(args[0]);
+        
+        while(simstate_.state_.pc_e != break_addr)
+            this->step();
+    }
+    else
+        throw Atomsim_exception("too few/many args\n");
+    
     return ATOMSIM_RCODE_OK;
 }
 

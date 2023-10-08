@@ -59,11 +59,7 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
        
 
     // Initialize CPU state by resetting
-    this->reset();
-    tb->m_core->eval();
-    
-    // get initial signal values
-    this->refresh_state();
+    reset();
 
     // ====== Initialize Communication ========
 

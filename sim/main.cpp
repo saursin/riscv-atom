@@ -172,7 +172,11 @@ int main(int argc, char ** argv)
 
 	// Print banner
 	if(!sim_config.no_banner_flag)
-		printf("%s %s\n", ATOMSIM_BANNER, ATOMSIM_VERSION);
+		std::cout << ATOMSIM_BANNER << " " << ATOMSIM_VERSION << std::endl;
+	
+	// Print soctarget
+	if (sim_config.verbose_flag)
+		std::cout << "soctarget: " << ATOMSIM_TARGETNAME << std::endl;
 	
 	int exitcode=0;
 	try

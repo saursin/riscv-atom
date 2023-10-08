@@ -129,6 +129,10 @@ template <class VTarget>
 void Backend<VTarget>::reset()
 {
     tb->reset();
+    // tb->m_core->eval();
+
+    // Update simstate
+    refresh_state();
 }
 
 template <class VTarget>

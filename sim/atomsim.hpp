@@ -129,6 +129,7 @@ private:
     int cmd_trace(const std::vector<std::string>&);
     
     // Control Commands
+    int cmd_reset(const std::vector<std::string>&);
     int cmd_step(const std::vector<std::string>&);
     int cmd_run(const std::vector<std::string>&);
     int cmd_rst(const std::vector<std::string>&);

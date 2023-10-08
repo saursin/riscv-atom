@@ -8,9 +8,6 @@ Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     sim_config_(sim_config),
     backend_(this, bk_config)  // create backend
 {   
-    if (sim_config_.verbose_flag)
-		std::cout << "AtomSim [" << backend_.get_target_name() << "]" << std::endl;
-
     // get input file disassembly   
     disassembly_ = getDisassembly(sim_config_.ifile);
     

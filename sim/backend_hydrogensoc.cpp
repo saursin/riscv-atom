@@ -52,11 +52,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
 
     // ====== Initialize ========
     // Initialize CPU state by resetting
-    this->reset();
-    tb->m_core->eval();
-
-    // get initial signal values
-    this->refresh_state();
+    reset();
 
     // ====== Initialize Communication ========
     bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_usb_tx_o, (bool *)&tb->m_core->uart_usb_rx_i, BBUART_FRATIO);
