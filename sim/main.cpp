@@ -16,6 +16,12 @@
 // define atomsim version
 #define ATOMSIM_VERSION "v2.2"
 
+#define ATOMSIM_BANNER \
+"   ___  __             _____     \n" 		\
+"  / _ |/ /____  __ _  / __(_)_ _ \n" 		\
+" / __ / __/ _ \\/  ' \\_\\ \\/ /  ' \\\n" 	\
+"/_/ |_\\__/\\___/_/_/_/___/_/_/_/_/ "
+
 // Global Variables
 // (use extern in other files)
 
@@ -66,6 +72,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		("version", "Show version information")
 		("soctarget", "Show current AtomSim SoC target")
 		("no-color", "Don't show colored output", cxxopts::value<bool>(sim_config.no_color_flag)->default_value(default_sim_config.no_color_flag?"true":"false"))
+		("no-banner", "Don't show banner", cxxopts::value<bool>(sim_config.no_banner_flag)->default_value(default_sim_config.no_banner_flag?"true":"false"))
 		("i,input", "Specify an input file", cxxopts::value<std::string>(sim_config.ifile))
 		;
 		
@@ -162,6 +169,10 @@ int main(int argc, char ** argv)
 	
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, sim_config, backend_config);
+
+	// Print banner
+	if(!sim_config.no_banner_flag)
+		printf("%s %s\n", ATOMSIM_BANNER, ATOMSIM_VERSION);
 	
 	int exitcode=0;
 	try

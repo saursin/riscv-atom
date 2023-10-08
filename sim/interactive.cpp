@@ -241,7 +241,8 @@ int Atomsim::run_interactive_mode()
         }
         else
         {
-            std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
+            if(cmd != "")
+                std::cout << "Unknown command \"" << cmd << "\"" << std::endl;
         }
     }
     

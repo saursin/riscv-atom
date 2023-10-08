@@ -28,6 +28,8 @@ struct Atomsim_config
     bool trace_flag         = false;    // enable tracing
     bool dump_on_ebreak_flag= false;    // Dump registers at ebreak (Used by SCAR)
     bool no_color_flag      = false;    // Disable colored output
+    bool no_banner_flag     = false;    // Disable banner flag
+
 
     // input file
     std::string ifile       = "";
