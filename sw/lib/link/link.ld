@@ -5,7 +5,7 @@
     @See : https://interrupt.memfault.com/blog/how-to-write-linker-scripts-for-firmware
     @See : https://github.com/pulp-platform/pulp-riscv-gnu-toolchain/blob/master/riscv.ld
 */
-
+OUTPUT_FORMAT("elf32-littleriscv")
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 
@@ -70,6 +70,8 @@ SECTIONS
     /* .bss section which is used for uninitialized data */
     .bss (NOLOAD) :
     {   _sbss = .;
+        *(.sbss)
+        *(.sbss.*)
         *(.bss)
         *(.bss.*)
         *(COMMON)
