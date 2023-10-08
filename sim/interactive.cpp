@@ -10,9 +10,14 @@
 #include <math.h>
 #include <map>
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #define DEBUG_PRINT_T2B
 #define DEFAULT_DUMPMEM_PATH "memdump.txt"
 #define DEFAULT_TRACEFILE_PATH "trace.vcd"
+#define ATOMSIM_PROMPT "atomsim> "
+
 
 void Atomsim::display_dbg_screen()
 {
@@ -183,9 +188,17 @@ int Atomsim::run_interactive_mode()
     while(!backend_.done())
     {
         // get input
-        std::string input;
-        std::cout << ": ";
-        getline(std::cin, input);
+        char* raw_input = readline(ATOMSIM_PROMPT);
+
+        // Handle Ctrl+D (EOF)
+        if (!raw_input) {
+            std::cout << std::endl;
+            return ATOMSIM_RCODE_EXIT_SIM;
+        }
+
+        // convert to std::string
+        std::string input(raw_input);
+        free(raw_input);
         
         // parse input
         std::string cmd;
@@ -203,6 +216,11 @@ int Atomsim::run_interactive_mode()
         // prev <= current
         prev_cmd = cmd;
         prev_args = args;
+
+        // Add to history
+        if(input!=""){
+            add_history(input.c_str());
+        }
 
         // execute
         if (funcs.count(cmd)) // check if command exists
@@ -355,9 +373,6 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
         else
             throw Atomsim_exception("1st arg can be only be \"on\"/\"off\"");
     }
-
-
-
     return ATOMSIM_RCODE_OK;
 }
 
