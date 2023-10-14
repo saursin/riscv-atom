@@ -67,6 +67,10 @@ LDLIBS := -L include/CppLinuxSerial/
 INCLUDES := -I . -I include/
 INCLUDES += -I $(VERILATED_DIR) -I $(VERILATOR_INCLUDE_PATH) -I $(VERILATOR_INCLUDE_PATH)/vltstd
 
+ifeq ($(DEBUG), 1)
+CFLAGS += -g -O0
+endif
+
 EXE := $(BIN_DIR)/atomsim
 SRCS := main.cpp atomsim.cpp simstate.cpp vuart.cpp interactive.cpp
 SRCS += memory.cpp util.cpp

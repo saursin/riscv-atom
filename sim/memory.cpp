@@ -147,3 +147,50 @@ unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_s
     }
     return (unsigned int) reader.get_entry();
 }
+
+
+void init_from_bin(Memory * m, std::string filepath) {
+    if(!m) {
+        throw Atomsim_exception("Can't initialize memory; mem pointer == null");
+    }
+
+    std::vector<char> fcontents = fReadBin(filepath);
+
+    printf("Loading %ld bytes at 0x%08x from %s\n", fcontents.size(), m->get_base_addr(), filepath.c_str());
+    m->store(m->get_base_addr(), (uint8_t*)fcontents.data(), fcontents.size());
+}
+
+
+void init_from_hex(Memory * m, std::string filepath) {
+    if(!m) {
+        throw Atomsim_exception("Can't initialize memory; mem pointer == null");
+    }
+
+    std::vector<std::string> fcontents = fRead(filepath);
+    uint32_t addr = m->get_base_addr(); 
+
+    printf("Loading %ld bytes at 0x%08x from %s\n", fcontents.size(), addr, filepath.c_str());
+
+    // parse
+    for(unsigned l=0; l<fcontents.size(); l++) {
+        std::string line = strip(fcontents[l]);
+        if (line.length() != 8)
+            throw Atomsim_exception("file:"+filepath+":"+std::to_string(l+1)+" Invalid hex format");
+        
+        Word_alias wa;
+        wa.word = std::stoul(line, nullptr, 16);
+        m->store(addr, wa.byte, 4);
+        addr += 4;
+    }
+}
+
+
+void init_from_imgfile(Memory * m, std::string filepath) {
+    std::string ext = filepath.substr(filepath.length()-4, 4);
+    if(ext == ".hex")
+        init_from_hex(m, filepath);
+    else if (ext == ".bin")
+        init_from_bin(m, filepath);
+    else
+        throw Atomsim_exception("invalid image-file format: "+filepath);
+}

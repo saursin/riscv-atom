@@ -94,6 +94,15 @@ size_t tokenize(const std::string &txt, std::vector<std::string> &strs, char ch)
 // File I/O
 
 /**
+ * @brief Resolves environment variable in path specified using ${VAR} syntax
+ * 
+ * @param path input path
+ * @return std::string resolved oath
+ */
+std::string resolve_envvar_in_path(std::string path);
+
+
+/**
  * @brief reads a binary file
  * 
  * @param memfile filepath

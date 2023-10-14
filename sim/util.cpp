@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
+#include "except.hpp"
 
 // declared in main.cpp
 extern bool NO_COLOR_OUTPUT;
@@ -80,15 +82,37 @@ size_t tokenize(const std::string &txt, std::vector<std::string> &strs, char ch)
     return strs.size();
 }
 
+std::string resolve_envvar_in_path(std::string path) {
+    std::string resolvedpath = path;
+    size_t startpos = resolvedpath.find("${");
 
-std::vector<char> fReadBin(std::string memfile)
+    while(startpos != std::string::npos) {
+        size_t endpos = resolvedpath.find("}", startpos);
+        if (endpos == std::string::npos) {
+            throw Atomsim_exception("Malformed Path, can't resolve environment vars");
+        }
+
+        std::string var = resolvedpath.substr(startpos+2, endpos-startpos-2);
+        const char * varval = getenv(var.c_str());
+
+        if (varval == nullptr) {
+            throw Atomsim_exception("Can't resolve envvar: " + var);
+        }
+
+        resolvedpath.replace(startpos, endpos-startpos+1, varval);
+        startpos = resolvedpath.find("${", startpos + 1);
+    }
+    return resolvedpath;
+}
+
+std::vector<char> fReadBin(std::string filepath)
 {        
     std::vector<char> fcontents;
-    std::ifstream f (memfile, std::ios::out | std::ios::binary);
+    std::ifstream f (filepath, std::ios::out | std::ios::binary);
     
     if(!f)
     {
-        throw "file access failed";
+        throw Atomsim_exception("file access failed: "+filepath);
     }
     try
     {
@@ -101,7 +125,7 @@ std::vector<char> fReadBin(std::string memfile)
     }
     catch(...)
     {
-        throw "file reading failed!";
+        throw Atomsim_exception("file reading failed: "+filepath);
     }
     f.close();
     return fcontents;
@@ -116,7 +140,7 @@ std::vector<std::string> fRead (std::string filepath)
     // input file stream
     std::ifstream fin(filepath.c_str());
     if(!fin){
-        throw "file access failed";
+        throw Atomsim_exception("file access failed: "+filepath);
     }
 
     // reading file line by line and appending into the vector of strings
@@ -137,7 +161,7 @@ void fWrite (std::vector<std::string> data, std::string filepath)
     std::ofstream File(filepath);
     if(!File)
     {
-        throw "file writing failed";
+        throw Atomsim_exception("file writing failed: " + filepath);
     }
     for(unsigned int i=0; i<data.size(); i++)
     {

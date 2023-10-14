@@ -86,8 +86,9 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		("u,enable-uart-dump", "Enable dumping UART data (from soc) to stdout", cxxopts::value<bool>(backend_config.enable_uart_dump)->default_value(default_backend_config.enable_uart_dump?"true":"false"))
 		
 		#ifdef TARGET_ATOMBONES
-		("imemsize", "Specify size of instruction memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.imem_size_kb)->default_value(std::to_string(default_backend_config.imem_size_kb)))
-		("dmemsize", "Specify size of data memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.dmem_size_kb)->default_value(std::to_string(default_backend_config.dmem_size_kb)))
+		("bootrom-size", "Specify size of bootrom to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.bootrom_size_kb)->default_value(std::to_string(default_backend_config.bootrom_size_kb)))
+		("bootrom-image", "Specify bootrom hex image", cxxopts::value<std::string>(backend_config.bootrom_img)->default_value(default_backend_config.bootrom_img))
+		("ram-size", "Specify size of RAM memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.ram_size_kb)->default_value(std::to_string(default_backend_config.ram_size_kb)))
 		#endif
 		;
 

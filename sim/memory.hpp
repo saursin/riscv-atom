@@ -151,3 +151,30 @@ private:
  * @return unsigned entry point
  */
 unsigned init_from_elf(Memory * m, std::string filepath, std::vector<int> flag_signatures);
+
+
+/**
+ * @brief Initialize a memory from an bin file
+ * 
+ * @param m memory ptr
+ * @param filepath elf file path
+ */
+void init_from_bin(Memory * m, std::string filepath);
+
+
+/**
+ * @brief Initialize a memory from an hex file
+ * 
+ * @param m memory ptr
+ * @param filepath elf file path
+ */
+void init_from_hex(Memory * m, std::string filepath);
+
+
+/**
+ * @brief Initialize a memory from bin/hex file
+ * 
+ * @param m memory ptr
+ * @param filepath bin/hex filepath
+ */
+void init_from_imgfile(Memory * m, std::string filepath);

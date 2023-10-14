@@ -6,7 +6,7 @@
 #include "memory.hpp"
 #include "vuart.hpp"
 #include "except.hpp"
-// #include "util.hpp"
+#include "util.hpp"
 
 #include "build/verilated/VAtomBones_headers.h"
 
@@ -28,8 +28,8 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     // Constuct Memory objects
     try
     {
-        mem_["imem"] = std::shared_ptr<Memory> (new Memory(config_.imem_size_kb * 1024, config_.imem_offset, true));
-        mem_["dmem"] = std::shared_ptr<Memory> (new Memory(config_.dmem_size_kb * 1024, config_.dmem_offset, false));
+        mem_["bootrom"] = std::shared_ptr<Memory> (new Memory(config_.bootrom_size_kb * 1024, config_.bootrom_offset, true));
+        mem_["ram"] = std::shared_ptr<Memory> (new Memory(config_.ram_size_kb * 1024, config_.ram_offset, false));
     }
     catch(const std::exception& e)
     {
@@ -39,23 +39,17 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     
     // ====== Initialize ========
     // Initialize memory
-    // load text section
-    try
-    {
-        if(sim_->sim_config_.verbose_flag) 
-            std::cout << "Initializing imem:" << std::endl;
-        mem_["imem"]->set_write_protect(false);
-        init_from_elf(mem_["imem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
-        mem_["imem"]->set_write_protect(true);
 
-        if(sim_->sim_config_.verbose_flag) 
-            std::cout << "Initializing dmem:" << std::endl;
-        init_from_elf(mem_["dmem"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    if(sim_->sim_config_.verbose_flag) 
+        std::cout << "Initializing bootrom" << std::endl;
+    
+    mem_["bootrom"]->set_write_protect(false);
+    init_from_imgfile(mem_["bootrom"].get(), resolve_envvar_in_path(config_.bootrom_img));
+    mem_["bootrom"]->set_write_protect(true);
+
+    if(sim_->sim_config_.verbose_flag) 
+        std::cout << "Initializing ram:" << std::endl;
+    init_from_elf(mem_["ram"].get(), sim_->sim_config_.ifile, std::vector<int>{5, 6});
        
 
     // Initialize CPU state by resetting
@@ -109,7 +103,7 @@ void Backend_atomsim::service_mem_req()
     if(tb->m_core->iport_valid_o == 1)
     {   
         Word_alias i_w;
-        mem_["imem"]->fetch(iaddr, i_w.byte, 4);
+        this->fetch(iaddr, i_w.byte, 4);
         tb->m_core->iport_data_i = i_w.word;
         tb->m_core->iport_ack_i = 1;
     }
@@ -359,7 +353,7 @@ int Backend_atomsim::tick()
             for(uint32_t addr=begin_signature_at; addr<end_signature_at; addr+=4)
             {
                 Word_alias w;
-                mem_["dmem"]->fetch(addr, w.byte, 4);
+                this->fetch(addr, w.byte, 4);
 
                 char temp [50];
                 sprintf(temp, "%08x", w.word);

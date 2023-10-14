@@ -8,16 +8,19 @@
 #define ATOMSIM_TARGETNAME  "atombones"
 #define TARGET_ATOMBONES
 
+#define DEFAULT_BOOTROM_IMAGE "${RVATOM}/sw/bootloader/bootloader.hex"
+
 class Memory;
 class Vuart;
 
 struct Backend_config
 {
-    uint32_t imem_offset    = 0x00010000;
-    uint32_t imem_size_kb   = (64*1024);    // default: 64 MB
+    uint32_t bootrom_offset     = 0x00010000;
+    uint32_t bootrom_size_kb    = 8;            // default: 8 KB
+    std::string bootrom_img     = DEFAULT_BOOTROM_IMAGE;
     
-    uint32_t dmem_offset    = 0x20000000;
-    uint32_t dmem_size_kb   = (64*1024);    // default: 64 MB
+    uint32_t ram_offset         = 0x20000000;
+    uint32_t ram_size_kb        = (80*1024);    // default: 80 MB
 
     std::string vuart_portname  = "";
     uint32_t vuart_baudrate     = 115200;
