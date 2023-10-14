@@ -12,9 +12,17 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
+    BOOT_ROM (rx):  ORIGIN = 0x00010000, LENGTH = 8K
+
     CODE_RAM (rx):  ORIGIN = 0x20000000, LENGTH = 40K
     DATA_RAM (rwx): ORIGIN = 0x2000a000, LENGTH = 8K
 }
+
+__bootrom_start = ORIGIN(BOOT_ROM);
+__bootrom_size  = LENGTH(BOOT_ROM);
+__approm_start  = ORIGIN(CODE_RAM);
+__approm_size   = LENGTH(CODE_RAM);
+
 
 SECTIONS
 {
@@ -38,7 +46,7 @@ SECTIONS
         . = ALIGN(4);
          _etext = .;
 
-    } > CODE_RAM
+    } > BOOT_ROM
 
 
     /* ==== DATA RAM ==== */
@@ -62,7 +70,7 @@ SECTIONS
         . = ALIGN(4);
         _edata = .;
     
-    } > DATA_RAM AT> CODE_RAM
+    } > DATA_RAM AT> BOOT_ROM
     
 
     /* ----- Uninitialized Data ----- */
@@ -78,7 +86,7 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;
     
-    } > DATA_RAM AT> CODE_RAM
+    } > DATA_RAM AT> BOOT_ROM
 
     _end = .;
 }
