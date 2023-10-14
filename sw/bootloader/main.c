@@ -3,10 +3,10 @@
 #include "stdio.h"
 
 // Enable Prints through UART
-#define ENABLE_UART
+// #define ENABLE_UART
 
 // Clear screen at start of bootloader
-#define CLS_AT_START
+// #define CLS_AT_START
 
 #ifdef ENABLE_UART
     #define P(x) x
@@ -30,7 +30,7 @@ int main() {
     #else
     P(putchar('\n');)
     #endif
-    P(puts("***** RISC-V Atom Bootloader *****\n");)
+    P(puts("*** RISC-V Atom Bootloader ***\n");)
 
 
     // ********** Platform specific initialization **********
@@ -39,6 +39,8 @@ int main() {
         P(puts("boot-panic: platform initialization failed\n");)
         goto panic;
     }
+
+    P(puts("Jumping to target..\n------------------------------\n");)
 
     // Jump
     fnc_ptr app_main = (fnc_ptr) jump_addr;

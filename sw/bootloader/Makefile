@@ -3,6 +3,7 @@ EXEC:= bootloader
 RVPREFIX:= riscv64-unknown-elf
 
 CFLAGS:= -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os
+CFLAGS+= -DENABLE_UART
 CFLAGS+= -I $(RVATOM_LIB)/include
 LFLAGS:= -L $(RVATOM_LIB)/ -T $(RVATOM_LIB)/link/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
 
