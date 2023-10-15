@@ -28,10 +28,8 @@ VERILATED_DIR := $(BUILD_DIR)/verilated
 BIN_DIR := $(BUILD_DIR)/bin
 DEPDIR := $(BUILD_DIR)/.depend
 
-RUN_DIR := run
-
 # make directories during makefile-parse
-$(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR) $(RUN_DIR))
+$(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR))
 
 ####################################################
 # Verilog Configs
