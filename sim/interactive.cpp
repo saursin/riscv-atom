@@ -122,15 +122,15 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool e
     const unsigned bytes_per_word = 4;
     const unsigned words_per_line = 4;
 
-    for (int i = 0; i < bufsz; i += bytes_per_word * words_per_line) {
+    for (size_t i = 0; i < bufsz; i += bytes_per_word * words_per_line) {
         // Print address
-        printf("0x%08X: ", base_addr+i);
+        printf("0x%08lx: ", base_addr+i);
 
         // Print words in a line
-        for (int j = 0; j < words_per_line; j++) {
+        for (unsigned j = 0; j < words_per_line; j++) {
             
             // print bytes in a word
-            for (int k = 0; k < bytes_per_word; k++) {
+            for (unsigned k = 0; k < bytes_per_word; k++) {
                 if (i + j * bytes_per_word + k < bufsz) {
                     printf("%02X", buf[i + j * bytes_per_word + k] & 0xFF);
                 } else {
@@ -146,8 +146,8 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool e
         // print ascii view
         if (enable_ascii) {
             printf(" | ");
-            for (int j = 0; j < words_per_line; j++) {
-                for (int k = 0; k < bytes_per_word; k++) {
+            for (unsigned j = 0; j < words_per_line; j++) {
+                for (unsigned k = 0; k < bytes_per_word; k++) {
                     char c = (i + j * bytes_per_word + k < bufsz) ? buf[i + j * bytes_per_word + k] : ' ';
                     printf("%c", (c >= 32 && c <= 126) ? c : '.');
                 }
@@ -293,7 +293,7 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "                                        bytes: number of bytes\n"
     "                                        file: file path (default: " DEFAULT_DUMPMEM_PATH ")\n"
     "     load <file> <addr>            : Load contents of binary file into memory\n"
-    "                                        fike: file path\n"
+    "                                        file: file path\n"
     "                                        addr: load address\n"
     "\n" 
     "Note:\n"
@@ -379,7 +379,7 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
     return ATOMSIM_RCODE_OK;
 }
 
-int Atomsim::cmd_reset(const std::vector<std::string> &args)
+int Atomsim::cmd_reset(const std::vector<std::string> &/*args*/)
 {
     std::cout << "Resetting..." << std::endl;
     backend_.reset();
@@ -537,7 +537,7 @@ int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
     FILE * fptr = fopen(fpath.c_str(), "w");
     
     if(!fptr)
-        throw Atomsim_exception("cant open/create filen\n");
+        throw Atomsim_exception("can't open/create file\n");
     
     FILE * tmp = stdout;    // preserve the original stdout
     stdout = fptr; // redirect stdout file
@@ -559,25 +559,11 @@ int Atomsim::cmd_load(const std::vector<std::string> &args)
     std::string file_path = args[0];
     uint32_t addr = _parse_num(args[1]);
 
-    // read file
-    std::ifstream file(file_path.c_str(), std::ios::binary);
-    if (!file.is_open()) {
-        throw Atomsim_exception("Unable to open file " + file_path);
-    }
-
-    // Get the file size
-    file.seekg(0, std::ios_base::end);
-    uint32_t file_size = file.tellg();
-    file.seekg(0, std::ios::beg);
+    std::vector<char> fcontents = fReadBin(file_path);
     
-    // Read the file into the buffer & close
-    uint8_t buffer [file_size];
-    file.read(reinterpret_cast<char*>(buffer), file_size);
-    file.close();
-
-    printf("Loading %d bytes from \"%s\" @ 0x%08x\n", file_size, file_path.c_str(), addr);
+    printf("Loading %ld bytes from \"%s\" @ 0x%08x\n", fcontents.size(), file_path.c_str(), addr);
 
     // write to memory
-    backend_.store(addr, buffer, file_size);
+    backend_.store(addr, (uint8_t*)fcontents.data(), fcontents.size());
     return ATOMSIM_RCODE_OK;
 }
