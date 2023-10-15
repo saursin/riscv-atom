@@ -38,7 +38,6 @@ $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR) $(RUN_DIR))
 
 VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --relative-includes		# Fixme: Simplify this macro name
-# VFLAGS := -D__ROM_INIT_FILE__
 VFLAGS += -I$(RTL_DIR) -I$(RTL_DIR)/common -I$(RTL_DIR)/core
 VFLAGS += --Mdir $(VERILATED_DIR)
 
@@ -123,7 +122,7 @@ ifeq ($(soctarget), hydrogensoc)
     VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
     VSRCS += $(RTL_DIR)/uncore/spi/SPI_wb.v
     VSRCS += $(RTL_DIR)/uncore/spi/SPI_core.v
-    VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sim/$(RUN_DIR)/rom.hex"'
+    VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sw/bootloader/bootloader.hex"'
 
     # cpp
     SRCS += bitbang_uart.cpp

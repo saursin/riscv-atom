@@ -35,26 +35,38 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
                                                                         config_(config),
                                                                         using_vuart_(config.vuart_portname != "")
 {
-    // generate image files by converting ELF file to memory image files
+    // generate image file by converting ELF file
     char *varval = getenv("RVATOM");
     if (!varval)
         throw Atomsim_exception("cant find $RVATOM env variable");
     std::string rvatom(varval);
 
-    std::string cmd_output = GetStdoutFromCommand("python3 " + rvatom + "/scripts/convelf.py -t elf -j " + rvatom + "/hydrogensoc.json --keep-temp " + sim_->sim_config_.ifile, true);
-    if (cmd_output.length() > 0)
-    {
+    std::string tmp_bin_file = ".atomsim_ram_img.bin";
+    std::string cmd_output = GetStdoutFromCommand("python3 " + rvatom + "/scripts/convelf.py -t elf -m=ram:"+std::to_string(RAM_ADDR)+":"+std::to_string(RAM_SIZE)+":b:"+tmp_bin_file+" "+sim_->sim_config_.ifile, true);
+    if (cmd_output.length() > 0) {
         throw Atomsim_exception(cmd_output);
+    }
+    
+    std::vector<char> imgcontents = fReadBin(tmp_bin_file);
+
+    std::string cmd_output1 = GetStdoutFromCommand("rm -f "+tmp_bin_file, true);
+    if (cmd_output1.length() > 0) {
+        throw Atomsim_exception(cmd_output1);
     }
 
     // Construct Testbench object
     tb = new Testbench<VHydrogenSoC>();
 
     // ====== Initialize ========
+    // init ram
+    if(sim_->sim_config_.verbose_flag) 
+        std::cout << "Initializing ram" << std::endl;
+    store(RAM_ADDR, (uint8_t*)imgcontents.data(), imgcontents.size());
+
     // Initialize CPU state by resetting
     reset();
 
-    // ====== Initialize Communication ========
+    // ====== Initialize BBUart ========
     bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_usb_tx_o, (bool *)&tb->m_core->uart_usb_rx_i, BBUART_FRATIO);
 
     // create a new vuart object
@@ -71,11 +83,14 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     else
     {
         if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
-            std::cout << "Relaying uart-rx to stdout (Note: This mode does not support uart-rx)" << std::endl;
+            std::cout << "Relaying uart-tx to stdout (Note: This mode does not support uart-rx)" << std::endl;
     }
 
     if (sim_->sim_config_.verbose_flag)
         std::cout << "Initialization complete!\n";
+    
+    if(config_.enable_uart_dump)
+        std::cout << "--------8<--------8<--------8<--------8<--------" << std::endl;
 }
 
 Backend_atomsim::~Backend_atomsim()

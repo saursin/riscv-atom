@@ -76,6 +76,9 @@ Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
 
     if (sim_->sim_config_.verbose_flag)
         std::cout << "Initialization complete!\n";
+    
+    if(config_.enable_uart_dump)
+        std::cout << "--------8<--------8<--------8<--------8<--------" << std::endl;
 }
 
 
