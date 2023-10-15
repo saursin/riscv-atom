@@ -1,9 +1,6 @@
 ##################################################
 # ******** Makefile for Building libcatom ********
 
-
-
-
 include ../../common.mk
 ##################################################
 soctarget?=None
@@ -14,6 +11,8 @@ soctarget?=None
 # NOTE: use `-Wl,--gc-sections` while linking with 
 # user application to enable gcc garbage collection
 OPT = true
+
+DEBUG ?= 1
 
 ##################################################
 # targets for which we don't need soctarget to be defined
@@ -56,6 +55,10 @@ OBJ_DIR = obj
 
 ifeq ($(OPT), true)	# For optimized code
 	CFLAGS+= -fdata-sections -ffunction-sections
+endif
+
+ifeq ($(DEBUG), 1)
+CFLAGS += -g -O0
 endif
 
 # Common sources

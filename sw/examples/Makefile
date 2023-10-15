@@ -82,7 +82,7 @@ endif
 
 RVPREFIX := riscv64-unknown-elf
 CFLAGS := -Wall
-CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os
+CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os -g
 CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 
 LINKERSCRIPT := None
@@ -104,7 +104,7 @@ ifeq ($(__check_soctarget),true)
     # check for validity of soctarget & select compile script
     ifeq ($(soctarget),atombones)
         CFLAGS += -DTARGET_ATOMBONES
-        LINKERSCRIPT:= $(RVATOM_LIB)/link/link.ld
+        LINKERSCRIPT:= $(RVATOM_LIB)/link/link_atombones.ld
     else
     ifeq ($(soctarget),hydrogensoc)
         CFLAGS += -DTARGET_HYDROGENSOC
@@ -204,7 +204,7 @@ $(ex)/$(executable): $(SRC_FILES)
 	cd $(ex) && $(RVPREFIX)-gcc $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
 ifeq ($(objdump), true)
-	$(RVPREFIX)-objdump -htd $@ > $@.objdump
+	$(RVPREFIX)-objdump -Shtd $@ > $@.objdump
 endif
 
 ifeq ($(bin), true)

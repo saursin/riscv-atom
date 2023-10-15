@@ -28,11 +28,12 @@ include common.mk
 soctarget ?= atombones
 
 # Directories
-sim_dir  	:= sim
-scar_dir 	:= test/scar
-elfdump_dir := tools/elfdump
-lib_dir		:= sw/lib
-doxy_dir	:= sim/docs
+sim_dir  		:= sim
+scar_dir 		:= test/scar
+elfdump_dir 	:= tools/elfdump
+bootloader_dir 	:= sw/bootloader
+lib_dir			:= sw/lib
+doxy_dir		:= sim/docs
 
 # Flags to the makefiles
 MKFLAGS := -s
@@ -46,12 +47,13 @@ endif
 # Recepies
 #======================================================================
 
-default: sim lib   					## Build sim, elfdump, and libs
+default: sim lib boot  				## Build sim, elfdump, and libs
 	@printf "\n$(CLR_GR)==============================\n"
 	@printf "       Build Succesful!\n"
 	@printf "==============================$(CLR_NC)\n"
 	@printf " - atomsim [$(soctarget)]\n"
 	@printf " - software libraries\n"
+	@printf " - bootloader [$(soctarget)]\n"
 
 all : doxy-pdf default				## Build default with docs
 	@printf " - doxygen-docs in latex, html & pdf\n"
@@ -92,6 +94,20 @@ clean-sim:							## Clean atomsim build files
 .PHONY: test
 test:								## Test the build using banner example
 	cd sw/examples && make ex=banner sim=true clean compile run
+
+
+# ======== Bootloader ========
+.PHONY : boot
+boot:                       		## Build bootloader for given target [default: atombones]
+	@printf "$(CLR_GR)>> Building bootloader [soctarget:$(soctarget)] $(CLR_NC)\n"
+	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget)
+
+
+.PHONY: clean-boot
+clean-boot:							## Clean bootloader build files
+	@printf "$(CLR_GR)>> Cleaning bootloader build files $(CLR_NC)\n"
+	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
+
 
 # ======== SCAR ========
 .PHONY: scar     			
@@ -156,4 +172,4 @@ clean: clean-sim clean-lib					## Alias for clean-sim, clean-lib
 
 
 .PHONY: clean-all					
-clean-all: clean-sim clean-scar clean-elfdump clean-lib clean-doxy  ## Clean all build files
+clean-all: clean-sim clean-boot clean-scar clean-elfdump clean-lib clean-doxy  ## Clean all build files
