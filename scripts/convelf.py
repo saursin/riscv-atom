@@ -45,7 +45,7 @@ def hexSplit(infile: str, map: dict):
 
     # create empty files
     for k in mapkeys:
-        with open(map[k][3], 'w') as fp:
+        with open(map[k][3], 'wb' if map[k][2] == 'b' else 'w') as fp:
             pass
     
     # create a dummy file handle 
@@ -91,7 +91,7 @@ def hexSplit(infile: str, map: dict):
                             ofile.close()
                         
                         # open file for writing
-                        ofile = open(map[k][3], 'w')
+                        ofile = open(map[k][3], 'wb' if map[k][2] == 'b' else 'w')
             
             if not addr_is_in_range:
                 if not ofile.closed:
@@ -99,8 +99,13 @@ def hexSplit(infile: str, map: dict):
                 Log("Addr out of bounds: {:0>8x}".format(currAddr), typ='e')
                     
             # write line
-            ofile.write(line[i])
-            ofile.write('\n')
+            if ofile.mode == 'wb':
+                byts = bytes.fromhex(line[i])
+                byts = byts[::-1] # reverse
+                ofile.write(byts)
+            else:
+                ofile.write(line[i])
+                ofile.write('\n')
 
             # increment current address
             currAddr+=4
@@ -116,13 +121,19 @@ def printConsumption(map: dict):
     """
     print("----- Consumption Report -----")
     for k in map.keys():
-        size = map[k][1]
-        f = open(map[k][3], 'r')
+        section_size = map[k][1]
+        filetype = map[k][2]
+        file = map[k][3]
+        
         consumed=0
-        for line in enumerate(f):
-            consumed+=4
-        f.close()
-        print("{}: {: >8} out of {: >8} bytes consumed ({:.2f} %)".format(k, consumed, size, consumed*100/size))
+        if filetype == 'h':
+            f = open(file, 'r')
+            for line in enumerate(f):
+                consumed+=4
+            f.close()
+        else:
+            consumed = os.path.getsize(file)
+        print("{}: {: >8} out of {: >8} bytes consumed ({:.2f} %)".format(k, consumed, section_size, consumed*100/section_size))
 
 
 def parse_num(s: str) -> int:
