@@ -15,11 +15,16 @@
 #ifdef TARGET_HYDROGENSOC
     // #define EXCEPTION
 
-    #define MEM_ROM_ADDR    0x20000000
-    #define MEM_ROM_SIZE    32*1024        // 32 KB
+    extern int __coderam_start;
+    extern int __coderam_size;
+    extern int __dataram_start;
+    extern int __dataram_size;
 
-    #define MEM_RAM_ADDR    0x20008000
-    #define MEM_RAM_SIZE    16*1024        // 16 KB
+    #define CODERAM_BASE    &__coderam_start
+    #define CODERAM_SIZE    &__coderam_size
+
+    #define DATARAM_BASE    &__dataram_start
+    #define DATARAM_SIZE    &__dataram_size
 
     // ---------- UART ------------
     #define UART_ADDR 0x40000000
@@ -39,11 +44,17 @@
 
 #else
 #ifdef TARGET_ATOMBONES
-    #define MEM_ROM_BEGIN   0x00000000
-    #define MEM_ROM_SIZE    64*1024*1024    // 64 MB
+    extern int __coderam_start;
+    extern int __coderam_size;
+    extern int __dataram_start;
+    extern int __dataram_size;
 
-    #define MEM_RAM_BEGIN   0x04000000
-    #define MEM_RAM_SIZE    64*1024*1024    // 64 MB
+    #define CODERAM_BASE    &__coderam_start
+    #define CODERAM_SIZE    &__coderam_size
+
+    #define DATARAM_BASE    &__dataram_start
+    #define DATARAM_SIZE    &__dataram_size
+
 
     // ---------- UART ------------
     #define UART_ADDR 0x40000000

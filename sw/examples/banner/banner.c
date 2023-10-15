@@ -34,8 +34,8 @@ int main()
     puts(banner);
     printf("CPU      : RISC-V Atom @ %d Hz\n", CLK_FREQ);
     puts("Arch     : RV32I - little endian\n");
-    printf("CODE RAM : 0x%8x (%d bytes)\n", MEM_ROM_ADDR, MEM_ROM_SIZE);
-    printf("DATA RAM : 0x%8x (%d bytes)\n", MEM_RAM_ADDR, MEM_RAM_SIZE);
+    printf("CODE RAM : 0x%8x (%d bytes)\n", CODERAM_BASE, CODERAM_SIZE);
+    printf("DATA RAM : 0x%8x (%d bytes)\n", DATARAM_BASE, DATARAM_SIZE);
     puts("Exiting...\n");
     return 0;
 }

@@ -16,6 +16,11 @@ MEMORY
     DATA_RAM (rwx): ORIGIN = 0x24000000, LENGTH = 16M
 }
 
+__coderam_start = ORIGIN(CODE_RAM);
+__coderam_size  = LENGTH(CODE_RAM);
+__dataram_start = ORIGIN(DATA_RAM);
+__dataram_size  = LENGTH(DATA_RAM);
+
 SECTIONS
 {
     /* ==== CODE RAM ==== */
