@@ -41,11 +41,18 @@ jobs:
           gdown ${VERILATOR_PREBUILT_FILEID}
           sudo mkdir -p ${VERILATOR_INSTALL_PATH}
           sudo tar -xvf verilator_5p006.tar.gz -C ${VERILATOR_INSTALL_PATH}
+      
+      - name: Install riscv-gnu-toolchain (64-bit, multilib)
+        run: |
+          gdown ${RVTOOLCHAIN_PREBUILT_FILEID} -O rv64_mutilib.tar.gz
+          sudo mkdir -p ${RVTOOLCHAIN_INSTALL_PATH}
+          sudo tar -xvf rv64_mutilib.tar.gz -C ${RVTOOLCHAIN_INSTALL_PATH}
 
       - name: Setup Environment
         working-directory: riscv-atom
         run: |
           echo "${VERILATOR_INSTALL_PATH}/bin" >> $GITHUB_PATH
+          echo "${RVTOOLCHAIN_INSTALL_PATH}/bin" >> $GITHUB_PATH
           echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
 
       - name: Build Atomsim - atombones
