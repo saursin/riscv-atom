@@ -52,8 +52,20 @@ jobs:
           source sourceme
           make soctarget=atombones clean sim
 
+      - name: Run Atomsim - atombones
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=atombones test
+      
       - name: Build AtomSim - hydrogensoc
         working-directory: riscv-atom
         run: |
           source sourceme
           make soctarget=hydrogensoc clean sim
+
+      - name: Run AtomSim - hydrogensoc
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=hydrogensoc test

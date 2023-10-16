@@ -59,10 +59,10 @@ jobs:
         working-directory: riscv-atom
         run: |
           source sourceme
-          make soctarget=atombones clean lib
+          make soctarget=atombones clean-lib lib
 
       - name: Build AtomSim - hydrogensoc
         working-directory: riscv-atom
         run: |
           source sourceme
-          make soctarget=hydrogensoc clean lib
+          make soctarget=hydrogensoc clean-lib lib

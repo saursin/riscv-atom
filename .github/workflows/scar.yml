@@ -59,10 +59,10 @@ jobs:
         working-directory: riscv-atom
         run: |
           source sourceme
-          make soctarget=atombones clean sim scar
+          make soctarget=atombones clean clean-scar scar
 
       - name: Build AtomSim & Verify - hydrogensoc
         working-directory: riscv-atom
         run: |
           source sourceme
-          make soctarget=hydrogensoc clean sim scar
+          make soctarget=hydrogensoc clean clean-scar scar
