@@ -80,7 +80,7 @@ help : Makefile						## Show help message
 
 # ======== AtomSim ========
 .PHONY : sim
-sim:                       			## Build atomsim for given target [default: atombones]
+sim: boot                      		## Build atomsim for given target [default: atombones]
 	@printf "$(CLR_GR)>> Building Atomsim [soctarget:$(soctarget)] $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=1
 
@@ -92,13 +92,13 @@ clean-sim:							## Clean atomsim build files
 
 
 .PHONY: test
-test:								## Test the build using banner example
+test: sim lib						## Test the build using banner example
 	cd sw/examples && make ex=banner sim=true clean compile run
 
 
 # ======== Bootloader ========
 .PHONY : boot
-boot:                       		## Build bootloader for given target [default: atombones]
+boot: lib                     		## Build bootloader for given target [default: atombones]
 	@printf "$(CLR_GR)>> Building bootloader [soctarget:$(soctarget)] $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget)
 
@@ -111,7 +111,7 @@ clean-boot:							## Clean bootloader build files
 
 # ======== SCAR ========
 .PHONY: scar     			
-scar: $(bin_dir)/$(sim_executable)	## Verify target using scar
+scar: sim 		 					## Verify target using scar
 	@printf "$(CLR_GR)>> Running SCAR $(CLR_NC)\n"
 	make $(MKFLAGS) -C $(scar_dir)
 
