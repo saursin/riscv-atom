@@ -100,7 +100,7 @@ test: sim lib						## Test the build using banner example
 .PHONY : boot
 boot: lib                     		## Build bootloader for given target [default: atombones]
 	@printf "$(CLR_GR)>> Building bootloader [soctarget:$(soctarget)] $(CLR_NC)\n"
-	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget)
+	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=true
 
 
 .PHONY: clean-boot

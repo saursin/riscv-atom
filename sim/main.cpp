@@ -90,6 +90,10 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		("bootrom-image", "Specify bootrom hex image", cxxopts::value<std::string>(backend_config.bootrom_img)->default_value(default_backend_config.bootrom_img))
 		("ram-size", "Specify size of RAM memory to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.ram_size_kb)->default_value(std::to_string(default_backend_config.ram_size_kb)))
 		#endif
+
+		#ifdef TARGET_HYDROGENSOC
+		("bootmode", "Specify bootmode signal", cxxopts::value<int>(backend_config.bootmode)->default_value(std::to_string(default_backend_config.bootmode)))
+		#endif
 		;
 
 		options.add_options("Debug")

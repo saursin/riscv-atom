@@ -42,12 +42,17 @@ extern uint32_t __approm_size;
  */
 void led_blink(int pin, int count, int time_period)
 {
+    int halfperiod = time_period >> 1;
+    #ifdef SIM
+    halfperiod = 0;
+    #endif
+
     for(int i=0; i<count; i++) 
     {
         gpio_write(pin, HIGH);
-        sleep_ms(time_period >> 1);
+        sleep_ms(halfperiod);
         gpio_write(pin, LOW);
-        sleep_ms(time_period >> 1);
+        sleep_ms(halfperiod);
     }
 }
 
@@ -67,8 +72,15 @@ void * platform_init() {
     led_blink(BOOTLED_PIN, START_LED_FLASHES, 50);
 
     // get bootmode
-    uint8_t bootmode = (uint8_t)gpio_read(BOOTMODE_PIN0)
-                        | (((uint8_t)gpio_read(BOOTMODE_PIN1)) << 1);
+    uint8_t pin0_val = (uint8_t)gpio_read(BOOTMODE_PIN0);
+    uint8_t pin1_val = (uint8_t)gpio_read(BOOTMODE_PIN1);
+    uint8_t bootmode = pin0_val | pin1_val << 1;
+
+    // Print Bootmode
+    P(putchar('0'+pin0_val);)
+    P(putchar('0'+pin1_val);)
+    P(putchar(':');)
+
     /**
      * Bootmode: 
      *  0b00: flashboot

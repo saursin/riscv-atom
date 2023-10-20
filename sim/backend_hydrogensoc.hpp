@@ -16,6 +16,7 @@ struct Backend_config
     std::string vuart_portname  = "";
     uint32_t vuart_baudrate     = 115200;
     bool enable_uart_dump       = false;
+    int bootmode                = 1;    // Jump to RAM
 };
 
 

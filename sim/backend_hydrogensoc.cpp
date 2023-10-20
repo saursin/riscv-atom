@@ -31,6 +31,8 @@
 
 #define BBUART_FRATIO 3
 
+#define BOOTMODE_PIN_OFFSET 8
+
 Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim, &(sim->simstate_)),
                                                                         config_(config),
                                                                         using_vuart_(config.vuart_portname != "")
@@ -160,6 +162,9 @@ int Backend_atomsim::tick()
     {
         return 1;
     }
+
+    // Force the bootmode switch value
+    tb->m_core->gpio_io = (0b11 & config_.bootmode) << BOOTMODE_PIN_OFFSET;
 
     // perform uart transaction (if any)
     UART();
