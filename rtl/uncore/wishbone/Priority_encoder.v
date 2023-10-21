@@ -31,7 +31,7 @@ THE SOFTWARE.
  */
 module Priority_encoder #
 (
-    parameter WIDTH = 4,
+    parameter WIDTH = 2,
     // LSB priority selection
     parameter LSB_HIGH_PRIORITY = 0
 )
@@ -80,18 +80,23 @@ generate
         end
     end
 
-    // compress down to single valid bit and encoded bus
-    for (l = 1; l < LEVELS; l = l + 1) begin : loop_levels
-        for (n = 0; n < W/(2*2**l); n = n + 1) begin : loop_compress
-            assign final_stage_valid[l][n] = |stage_valid[l-1][n*2+1:n*2];
-            if (LSB_HIGH_PRIORITY) begin
-                // bit 0 is highest priority
-                assign final_stage_enc[l][(n+1)*(l+1)-1:n*(l+1)] = stage_valid[l-1][n*2+0] ? {1'b0, stage_enc[l-1][(n*2+1)*l-1:(n*2+0)*l]} : {1'b1, stage_enc[l-1][(n*2+2)*l-1:(n*2+1)*l]};
-            end else begin
-                // bit 0 is lowest priority
-                assign final_stage_enc[l][(n+1)*(l+1)-1:n*(l+1)] = stage_valid[l-1][n*2+1] ? {1'b1, stage_enc[l-1][(n*2+2)*l-1:(n*2+1)*l]} : {1'b0, stage_enc[l-1][(n*2+1)*l-1:(n*2+0)*l]};
+    if(LEVELS > 1) begin
+        // compress down to single valid bit and encoded bus
+        for (l = 1; l < LEVELS; l = l + 1) begin : loop_levels
+            for (n = 0; n < W/(2*2**l); n = n + 1) begin : loop_compress
+                assign final_stage_valid[l][n] = |stage_valid[l-1][n*2+1:n*2];
+                if (LSB_HIGH_PRIORITY) begin
+                    // bit 0 is highest priority
+                    assign final_stage_enc[l][(n+1)*(l+1)-1:n*(l+1)] = stage_valid[l-1][n*2+0] ? {1'b0, stage_enc[l-1][(n*2+1)*l-1:(n*2+0)*l]} : {1'b1, stage_enc[l-1][(n*2+2)*l-1:(n*2+1)*l]};
+                end else begin
+                    // bit 0 is lowest priority
+                    assign final_stage_enc[l][(n+1)*(l+1)-1:n*(l+1)] = stage_valid[l-1][n*2+1] ? {1'b1, stage_enc[l-1][(n*2+2)*l-1:(n*2+1)*l]} : {1'b0, stage_enc[l-1][(n*2+1)*l-1:(n*2+0)*l]};
+                end
             end
         end
+    end else begin
+        assign final_stage_valid[0][0] = stage_valid[0][0];
+        assign final_stage_enc[0][0] = LSB_HIGH_PRIORITY ? ~stage_enc[0][0] : stage_enc[0][0];
     end
 endgenerate
 
