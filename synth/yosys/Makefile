@@ -1,6 +1,15 @@
-SCRIPT := synth.tcl
-REPORT := synth_report.txt
-LOG := synth.log
+include ../../common.mk
+
+TIMESTAMP=$(shell date +"%m-%d-%Y_%H-%M-%S")
+COMMITHASH=$(shell git rev-parse --short HEAD)
+REPORT_FILE := synth_$(COMMITHASH)_$(TIMESTAMP).rpt
+LOG_FILE := synth_$(COMMITHASH)_$(TIMESTAMP).log
+
+
+TCL_SCRIPT ?= synth_xilinx.tcl
+TCL_ARGS := ../../rtl/soc/hydrogensoc.F $(REPORT_FILE)
+
+
 
 default: synth
 
@@ -14,13 +23,18 @@ help : Makefile		## show help
 	
 
 .PHONY: synth
-synth:		## synthesize
-	@echo "Running Synthesis..."
-	yosys -c $(SCRIPT) > $(LOG) 2>&1
-	@echo "Generated log: 		$(LOG)"
-	@echo "Generated report: 	$(REPORT)"
+synth:				## synthesize
+	@echo ">> Getting rom hex image.."
+	make -C $(RVATOM)/sw/bootloader soctarget=hydrogensoc
+	cp $(RVATOM)/sw/bootloader/bootloader.hex rom.hex
+
+	@echo ">> Running Synthesis.."
+	yosys -p 'tcl $(TCL_SCRIPT) $(TCL_ARGS)' 2>&1 > $(LOG_FILE)
+
+	@echo "Log: 	$(LOG_FILE)"
+	@echo "Report: 	$(REPORT_FILE)"
 
 
 .PHONY: clean
 clean:				## clean logs and reports
-	rm -f *.log *.txt
+	rm -f *.log *.rpt *.hex
