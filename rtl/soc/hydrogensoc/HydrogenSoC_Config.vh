@@ -20,7 +20,7 @@
     The frontport has the highest priority among all the ports. User can connect 
     external master devices to the frontport.
 */
-`define SOC_FRONTPORT
+// `define SOC_FRONTPORT
 
 
 /*
