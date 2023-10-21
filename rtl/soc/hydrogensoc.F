@@ -11,15 +11,17 @@
 hydrogensoc/HydrogenSoC.v
 
 // Arbiter
-../uncore/wishbone/arbiter.v
-../uncore/wishbone/arbiter2_wb.v
-../uncore/wishbone/arbiter3_wb.v
-../uncore/wishbone/priority_encoder.v
+../uncore/wishbone/Arbiter.v
+../uncore/wishbone/Arbiter2_wb.v
+../uncore/wishbone/Arbiter3_wb.v
+../uncore/wishbone/Crossbar5_wb.v
+../uncore/wishbone/Priority_encoder.v
 
 // Periphs
 ../uncore/gpio/IOBuf.v
 ../uncore/gpio/GPIO.v
 ../uncore/mem/DualPortRAM_wb.v
+../uncore/mem/SinglePortROM_wb.v
 ../uncore/mem/SinglePortRAM_wb.v
 ../uncore/uart/UART.v
 ../uncore/uart/UART_core.v
@@ -27,8 +29,8 @@ hydrogensoc/HydrogenSoC.v
 ../uncore/spi/SPI_core.v
 
 // Core
-../core/AtomRV.v
 ../core/AtomRV_wb.v
+../core/AtomRV.v
 ../core/Alu.v
 ../core/CSR_Unit.v
 ../core/Decode.v
