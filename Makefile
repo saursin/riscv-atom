@@ -168,7 +168,7 @@ clean-doxy:							## Clean build files for Atomsim docs
 
 # ======== clean ========
 .PHONY: clean						
-clean: clean-sim clean-lib					## Alias for clean-sim, clean-lib
+clean: clean-sim clean-boot clean-lib					## Alias for clean-sim, clean-lib
 
 
 .PHONY: clean-all					

@@ -263,6 +263,7 @@ proc add_source_files {} {
    xfile add "$RTLDir/uncore/spi/SPI_core.v"
    xfile add "$RTLDir/uncore/spi/SPI_wb.v"
    xfile add "$RTLDir/uncore/wishbone/Arbiter.v"
+   xfile add "$RTLDir/uncore/wishbone/Arbiter2_wb.v"
    xfile add "$RTLDir/uncore/wishbone/Arbiter3_wb.v"
    xfile add "$RTLDir/uncore/wishbone/Crossbar5_wb.v"
    xfile add "$RTLDir/uncore/wishbone/Priority_encoder.v"
