@@ -152,32 +152,11 @@ module {{name}} #(
         endcase
     end
 
-    /*
-        === Stb muxing ===
-        In order to initiate a transaction, the master must set the cyc & stb signal of the 
-        device with which it wants to communicate. Setting stb & cyc signals of appropriate 
-        device depending on the selected device is handled by the interconnect 
-        logic.
-    */
-    always @(*) begin /* COMBINATORIAL */
-        // Defaults
-        {%- for p in nslaves %}
-        wbm{{p}}_stb_o = 1'b0;
-        {%- endfor %}
-        
-        case(selected_device)
-            {%- for p in nslaves %}
-            DEVICE_{{p}}: wbm{{p}}_stb_o = wbs_stb_i;
-            {%- endfor %}
-            
-            default: begin
-                {%- for p in nslaves %}
-                wbm{{p}}_stb_o = 1'b0;
-                {%- endfor %}
-            end
-        endcase
-    end
-    
+    // Stb Out
+    {%- for p in nslaves %}
+    assign wbm{{p}}_stb_o = wbm{{p}}_cyc_o & wbs_stb_i;
+    {%- endfor %}
+                 
     // ACK Out
     assign wbs_ack_o = {%- for p in nslaves %}
                        {%- if p != 0 %} 

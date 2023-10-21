@@ -183,38 +183,13 @@ module Crossbar5_wb #(
         endcase
     end
 
-    /*
-        === Stb muxing ===
-        In order to initiate a transaction, the master must set the cyc & stb signal of the 
-        device with which it wants to communicate. Setting stb & cyc signals of appropriate 
-        device depending on the selected device is handled by the interconnect 
-        logic.
-    */
-    always @(*) begin /* COMBINATORIAL */
-        // Defaults
-        wbm0_stb_o = 1'b0;
-        wbm1_stb_o = 1'b0;
-        wbm2_stb_o = 1'b0;
-        wbm3_stb_o = 1'b0;
-        wbm4_stb_o = 1'b0;
-        
-        case(selected_device)
-            DEVICE_0: wbm0_stb_o = wbs_stb_i;
-            DEVICE_1: wbm1_stb_o = wbs_stb_i;
-            DEVICE_2: wbm2_stb_o = wbs_stb_i;
-            DEVICE_3: wbm3_stb_o = wbs_stb_i;
-            DEVICE_4: wbm4_stb_o = wbs_stb_i;
-            
-            default: begin
-                wbm0_stb_o = 1'b0;
-                wbm1_stb_o = 1'b0;
-                wbm2_stb_o = 1'b0;
-                wbm3_stb_o = 1'b0;
-                wbm4_stb_o = 1'b0;
-            end
-        endcase
-    end
-    
+    // Stb Out
+    assign wbm0_stb_o = wbm0_cyc_o & wbs_stb_i;
+    assign wbm1_stb_o = wbm1_cyc_o & wbs_stb_i;
+    assign wbm2_stb_o = wbm2_cyc_o & wbs_stb_i;
+    assign wbm3_stb_o = wbm3_cyc_o & wbs_stb_i;
+    assign wbm4_stb_o = wbm4_cyc_o & wbs_stb_i;
+                 
     // ACK Out
     assign wbs_ack_o = wbm0_ack_i 
                         | wbm1_ack_i 
