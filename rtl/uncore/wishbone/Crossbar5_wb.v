@@ -39,7 +39,7 @@ module Crossbar5_wb #(
     output wire                    wbm0_we_o,
     output wire [SELECT_WIDTH-1:0] wbm0_sel_o,
     output reg                     wbm0_cyc_o,
-    output reg                     wbm0_stb_o,
+    output wire                    wbm0_stb_o,
     input  wire                    wbm0_ack_i,
     input  wire                    wbm0_err_i,
     
@@ -50,7 +50,7 @@ module Crossbar5_wb #(
     output wire                    wbm1_we_o,
     output wire [SELECT_WIDTH-1:0] wbm1_sel_o,
     output reg                     wbm1_cyc_o,
-    output reg                     wbm1_stb_o,
+    output wire                    wbm1_stb_o,
     input  wire                    wbm1_ack_i,
     input  wire                    wbm1_err_i,
     
@@ -61,7 +61,7 @@ module Crossbar5_wb #(
     output wire                    wbm2_we_o,
     output wire [SELECT_WIDTH-1:0] wbm2_sel_o,
     output reg                     wbm2_cyc_o,
-    output reg                     wbm2_stb_o,
+    output wire                    wbm2_stb_o,
     input  wire                    wbm2_ack_i,
     input  wire                    wbm2_err_i,
     
@@ -72,7 +72,7 @@ module Crossbar5_wb #(
     output wire                    wbm3_we_o,
     output wire [SELECT_WIDTH-1:0] wbm3_sel_o,
     output reg                     wbm3_cyc_o,
-    output reg                     wbm3_stb_o,
+    output wire                    wbm3_stb_o,
     input  wire                    wbm3_ack_i,
     input  wire                    wbm3_err_i,
     
@@ -83,7 +83,7 @@ module Crossbar5_wb #(
     output wire                    wbm4_we_o,
     output wire [SELECT_WIDTH-1:0] wbm4_sel_o,
     output reg                     wbm4_cyc_o,
-    output reg                     wbm4_stb_o,
+    output wire                    wbm4_stb_o,
     input  wire                    wbm4_ack_i,
     input  wire                    wbm4_err_i
 );

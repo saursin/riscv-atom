@@ -75,7 +75,7 @@ module {{name}} #(
     output wire                    wbm{{p}}_we_o,
     output wire [SELECT_WIDTH-1:0] wbm{{p}}_sel_o,
     output reg                     wbm{{p}}_cyc_o,
-    output reg                     wbm{{p}}_stb_o,
+    output wire                    wbm{{p}}_stb_o,
     input  wire                    wbm{{p}}_ack_i,
     input  wire                    wbm{{p}}_err_i{%- if p != lastslave%},{%- endif %}
     {%- endfor %}
