@@ -199,7 +199,7 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 		command += "riscv64-unknown-elf-objdump -d ";
 	#endif
 	command+=filename;
-	
+
 	// Get command output
 	std::string output = GetStdoutFromCommand(command);
 	
@@ -209,24 +209,51 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 	std::map<uint32_t, DisassembledLine> dis;
 	
 	std::string line;
+    bool in_disassembly = false;
 	while(std::getline(s, line))
 	{        
-        if(strip(line).length() == 0)
+        line = strip(line);
+
+        // Skip blank lines
+        if(line.length() == 0)
             continue;
 
-        if(!(line.back() == ':' || line[0] != ' '))
-        {
-    
-            line = strip(line);
-            unsigned int colonAt = line.find(':');
-
-            uint32_t addr = std::stoi(strip(line.substr(0, colonAt)), 0, 16);
-            DisassembledLine d;
-            d.instr = (uint32_t)std::stol(strip(line.substr(colonAt+1, colonAt+15)), 0, 16);
-            d.disassembly = strip(line.substr(colonAt+16));
-
-            dis.insert({addr, d});
+        if(!in_disassembly) {
+            if(line.find("Disassembly of section") != std::string::npos)
+                in_disassembly = true;
+            continue;
         }
-	}
+
+        if(line == "...")
+            break;
+
+
+        // Tokenize
+        std::stringstream ss(line);
+        std::string tmp;
+        std::vector<std::string> tok;
+        while (ss >> tmp)
+            tok.push_back(tmp);
+
+        // Dism if tok 0's last char == ':'
+        if(tok[0].back() == ':')
+        {
+            // remove colon from 1st token
+            tok[0] = tok[0].substr(0, tok[0].length()-1);
+            uint32_t addr = std::stoul(tok[0], 0, 16);
+            uint32_t instrn = std::stoul(tok[1], 0, 16);
+            std::string dism = strip(line.substr(line.find(tok[2])));
+
+            DisassembledLine dl = {
+                .instr = instrn,
+                .disassembly = dism
+            };
+            dis.insert({addr, dl});   
+        }
+        else {
+            // Parse the rest
+            // printf("Unk[%s]\n", line.c_str());
+        }
+    }
 	return dis;
 }
