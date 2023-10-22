@@ -9,12 +9,34 @@
 // declared in main.cpp
 extern bool NO_COLOR_OUTPUT;
 
+static const std::map<ColorTag_t, char*> colormap = {
+    {S_BOLD,     (char*)"\033[1m"},  {SN_BOLD,    (char*)"\033[22m"},    // set/unset bold mode.
+    {S_DIM,      (char*)"\033[2m"},  {SN_DIM,     (char*)"\033[22m"},    // set/unset dim/faint mode.
+    {S_ITALIC,   (char*)"\033[3m"},  {NS_ITALIC,  (char*)"\033[23m"},    // set/unset italic mode.
+    {S_ULINE,    (char*)"\033[4m"},  {NS_ULINE,   (char*)"\033[24m"},    // set/unset underline mode.
+    {S_BLINK,    (char*)"\033[5m"},  {NS_BLINK,   (char*)"\033[25m"},    // set/unset blinking mode
+    {FG_BLACK,	 (char*)"\033[30m"}, {FG_BLACK,   (char*)"\033[40m"},
+    {FG_RED,	 (char*)"\033[31m"}, {FG_RED,     (char*)"\033[41m"},
+    {FG_GREEN,	 (char*)"\033[32m"}, {FG_GREEN,   (char*)"\033[42m"},
+    {FG_YELLOW,	 (char*)"\033[33m"}, {FG_YELLOW,  (char*)"\033[43m"},
+    {FG_BLUE,	 (char*)"\033[34m"}, {FG_BLUE,    (char*)"\033[44m"},
+    {FG_MAGENTA, (char*)"\033[35m"}, {FG_MAGENTA, (char*)"\033[45m"},
+    {FG_CYAN,	 (char*)"\033[36m"}, {FG_CYAN,    (char*)"\033[46m"},
+    {FG_WHITE,	 (char*)"\033[37m"}, {FG_WHITE,   (char*)"\033[47m"},
+    {FG_DEFAULT, (char*)"\033[39m"}, {FG_DEFAULT, (char*)"\033[49m"},
+    {FG_RESET,	 (char*)"\033[0m"},  {FG_RESET,   (char*)"\033[0m"},
+    {NULLSTR,    (char*)""}
+};
+
+char* ansicode(ColorTag_t tag) {
+    if(NO_COLOR_OUTPUT) return colormap.at(NULLSTR);
+    auto it = colormap.find(tag);
+    return (char*)it->second;
+}
+
 void throwError(std::string er_code, std::string message, bool Exit)
 {
-    if (NO_COLOR_OUTPUT)
-        std::cerr << "! ERROR ["<< er_code <<"]: " << message << std::endl;
-    else
-        std::cerr << COLOR_RED <<"! ERROR "<< COLOR_RESET <<"["<< er_code <<"]: " << message << std::endl;
+    std::cerr << ansicode(FG_RED) <<"! ERROR "<< ansicode(FG_RESET) <<"["<< er_code <<"]: " << message << std::endl;
     
     if(Exit) 
         exit(EXIT_FAILURE);
@@ -23,10 +45,7 @@ void throwError(std::string er_code, std::string message, bool Exit)
 
 void throwWarning(std::string wr_code, std::string message)
 {
-    if (NO_COLOR_OUTPUT)
-        std::cerr << "! WARNING [" << wr_code <<"]: " << message << std::endl;
-    else
-        std::cerr << COLOR_YELLOW <<"! WARNING " << COLOR_RESET << "[" << wr_code <<"]: " << message << std::endl;
+    std::cerr << ansicode(FG_YELLOW) <<"! WARNING " << ansicode(FG_RESET) << "[" << wr_code <<"]: " << message << std::endl;
 }
 
 
@@ -35,7 +54,7 @@ void throwSuccessMessage(std::string message, bool Exit)
     if (NO_COLOR_OUTPUT)
         std::cout << "SUCCESS : " << message <<std::endl;
     else
-        std::cout << COLOR_GREEN <<"SUCCESS " << COLOR_RESET << ": " << message <<std::endl;
+        std::cout << ansicode(FG_GREEN) <<"SUCCESS " << ansicode(FG_RESET) << ": " << message <<std::endl;
 
     if(Exit)
         exit(EXIT_SUCCESS);
@@ -211,12 +230,19 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 	std::string line;
     bool in_disassembly = false;
 	while(std::getline(s, line))
-	{        
+	{
         line = strip(line);
 
         // Skip blank lines
         if(line.length() == 0)
             continue;
+
+        // replace tabs with spaces
+        const int spacesPerTab = 2;
+        for(size_t pos = 0; (pos = line.find('\t', pos)) != std::string::npos; pos += spacesPerTab) {
+            // Replace each tab with spaces
+            line.replace(pos, 1, spacesPerTab, ' ');
+        }
 
         if(!in_disassembly) {
             if(line.find("Disassembly of section") != std::string::npos)

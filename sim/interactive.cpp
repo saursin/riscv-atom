@@ -20,36 +20,32 @@
 
 
 void Atomsim::display_dbg_screen()
-{
-    // calculate change in PC.    
+{   // calculate change in PC.    
     unsigned int pc_change = simstate_.state_.pc_f - simstate_.state_.pc_e;
 
+    // Check if it's a jump
     bool isJump = simstate_.signals_.jump_decision;
-    static bool wasJump = false;
+
+    // Fetch Values   
+    uint64_t tickcount = backend_.get_total_tick_count();
+
+    const int disam_width = 39;
+    std::string disam = (disassembly_[simstate_.state_.pc_e].instr == simstate_.state_.ins_e) ? disassembly_[simstate_.state_.pc_e].disassembly : "_";
+    if(disam.length() > disam_width) {
+        disam.resize(disam_width-3);
+        disam += " ..";
+    }
+    else if (disam.length()< disam_width)
+        disam.append(disam_width-disam.length(), ' ');
     
+    //////////////////////////////////////////////////////////////////////////////////////////
     // Print debug screen
-    std::cout << "-< " << backend_.get_total_tick_count() <<" >------------------------------------------------\n";
-    printf("F  pc : 0x%08x  (%+d) <%s> \n", simstate_.state_.pc_f , pc_change, (isJump ? "jump": " ")); 
-    
-    #define STYLE_BOLD         "\033[1m"
-    #define STYLE_NO_BOLD      "\033[22m"
 
-    #define STYLE_UNDERLINE    "\033[4m"
-    #define STYLE_NO_UNDERLINE "\033[24m"
-
-    printf("E  ");
-
-    printf(STYLE_BOLD);
-    printf("pc : 0x%08x   ir : 0x%08x\n", simstate_.state_.pc_e, simstate_.state_.ins_e);
-    printf(STYLE_NO_BOLD);
-    
-    std::cout << "[ " <<  ((this->disassembly_[ simstate_.state_.pc_e].instr==simstate_.state_.ins_e) ? this->disassembly_[simstate_.state_.pc_e].disassembly : "-" )<< " ]";
-
-    if(wasJump)
-        std::cout << " => nop (pipeline flush)";
-    
-    std::cout << "\n\n";
-    wasJump = isJump;
+    printf("┌─[%10ld]─────────────────────────────────────────────┐\n", tickcount);
+    printf("│ %sPC: 0x%08x%s%s    PC_f: 0x%08x     (%+10d%s)%s   │\n", ansicode(S_BOLD), simstate_.state_.pc_e, ansicode(SN_BOLD), 
+                                                    ansicode(S_DIM), simstate_.state_.pc_f, pc_change, (isJump ? ", J": "   "), ansicode(SN_DIM));
+    printf("│ IR: 0x%08x    %s%s%s│\n", simstate_.state_.ins_e, ansicode(FG_CYAN), disam.c_str(), ansicode(FG_RESET));
+    printf("└──────────────────────────────────────────────────────────┘\n");
 
     // Print Register File
     if(sim_config_.verbose_flag)
@@ -58,7 +54,7 @@ void Atomsim::display_dbg_screen()
         #ifndef DEBUG_PRINT_T2B
         for(int i=0; i<32; i++)	// print in left-right fashion
         {
-            printf("r%-2d: 0x%08x   ", i, simstate_.state_.rf[i]);
+            printf("r%-2d: 0x%08x    ", i, simstate_.state_.rf[i]);
             if(i%cols == cols-1)
                 printf("\n");
         }
@@ -67,7 +63,7 @@ void Atomsim::display_dbg_screen()
         {
             for(int j=0; j<cols; j++)
             {
-                printf(" %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
+                printf("  %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
             }
             printf("\n");
         }

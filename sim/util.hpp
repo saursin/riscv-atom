@@ -8,10 +8,35 @@
 //////////////////////////////////////////////////////////////////////////////
 // Color codes for output formatting
 
-const std::string  COLOR_RESET  =  "\033[0m";
-const std::string  COLOR_RED    =  "\033[31m";      
-const std::string  COLOR_GREEN  =  "\033[32m";      
-const std::string  COLOR_YELLOW =  "\033[33m";
+enum ColorTag_t {
+    // Styles
+    S_BOLD, SN_BOLD,
+    S_DIM, SN_DIM,
+    S_ITALIC, NS_ITALIC,
+    S_ULINE, NS_ULINE,
+    S_BLINK, NS_BLINK,
+
+    // Colors
+    FG_BLACK, BG_BLACK,
+    FG_RED, BG_RED,
+    FG_GREEN, BG_GREEN,
+    FG_YELLOW, BG_YELLOW,
+    FG_BLUE, BG_BLUE,
+    FG_MAGENTA, BG_MAGENTA,
+    FG_CYAN, BG_CYAN,
+    FG_WHITE, BG_WHITE,
+    FG_DEFAULT, BG_DEFAULT,
+    FG_RESET, BG_RESET,
+    NULLSTR
+};
+
+/**
+ * @brief Get ansi color code corresponding to a tag
+ * 
+ * @return std::string tag
+ */
+char* ansicode(ColorTag_t tag);
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Throwing messages (error, warning, success)

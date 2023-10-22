@@ -175,9 +175,12 @@ int main(int argc, char ** argv)
 	// Parse commandline arguments
 	parse_commandline_args(argc, argv, sim_config, backend_config);
 
+	// Disable colors if stdout is being piped
+	NO_COLOR_OUTPUT = !isatty(STDOUT_FILENO) || sim_config.no_color_flag;
+
 	// Print banner
 	if(!sim_config.no_banner_flag)
-		std::cout << ATOMSIM_BANNER << " " << ATOMSIM_VERSION << std::endl;
+		std::cout << ansicode(FG_YELLOW) << ATOMSIM_BANNER << ansicode(FG_RESET) << " " << ATOMSIM_VERSION << std::endl;
 	
 	// Print soctarget
 	if (sim_config.verbose_flag)
