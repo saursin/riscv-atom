@@ -154,9 +154,9 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool e
     }
 }
 
-int Atomsim::run_interactive_mode()
+Rcode Atomsim::run_interactive_mode()
 {
-    typedef int (Atomsim::*interactive_func)(const std::vector<std::string>&);
+    typedef Rcode (Atomsim::*interactive_func)(const std::vector<std::string>&);
     
     // construct look up table of functions
     std::map<std::string,interactive_func> funcs;
@@ -170,6 +170,9 @@ int Atomsim::run_interactive_mode()
     funcs["s"] =    funcs["step"]       = &Atomsim::cmd_step;
     funcs["r"] =    funcs["run"]        = &Atomsim::cmd_run;
     funcs["w"] =    funcs["while"]      = &Atomsim::cmd_while;
+    funcs["b"] =    funcs["break"]      = &Atomsim::cmd_break;
+    funcs["i"] =    funcs["info"]       = &Atomsim::cmd_info;
+
 
     funcs["x"] =    funcs["reg"]        = &Atomsim::cmd_reg;
                     funcs["*reg"]       = &Atomsim::cmd_dereference_reg;
@@ -190,7 +193,7 @@ int Atomsim::run_interactive_mode()
         // Handle Ctrl+D (EOF)
         if (!raw_input) {
             std::cout << std::endl;
-            return ATOMSIM_RCODE_EXIT_SIM;
+            return RC_EXIT;
         }
 
         // convert to std::string
@@ -225,10 +228,10 @@ int Atomsim::run_interactive_mode()
             try
             {
                 // Execute command
-                int rval = (this->*funcs[cmd])(args);
+                Rcode rval = (this->*funcs[cmd])(args);
 
-                // analyze rval
-                if(rval != ATOMSIM_RCODE_OK)
+                // If not RC_OK, caller needs to handle it and get back
+                if(rval != RC_OK)
                     return rval;
 
             } catch(std::exception &e)
@@ -245,28 +248,30 @@ int Atomsim::run_interactive_mode()
     
     // control reaches here only if backend is done
     CTRL_C_PRESSED = false;
-    return ATOMSIM_RCODE_EXIT_SIM;
+    return RC_EXIT;
 }
 
 
-int Atomsim::cmd_help(const std::vector<std::string>&)
+Rcode Atomsim::cmd_help(const std::vector<std::string>&)
 {
     std::cout << 
     // -------------------------------- 80 coloumns ---------------------------------|
     "AtomSim Command Help  \n"
     "====================  \n"
     "*** General Commands ***\n"
-    "  h, help                       : Show command help (this)\n"
-    "  q, quit                       : Quit atomsim\n"
-    "  v, verbose [\"on\"/\"off\"]       : set verbosity (toggle if ommitted)\n"
-    "      trace <on> [filepath]   : Enable VCD tracing. (default: " DEFAULT_TRACEFILE_PATH ")\n"
-    "            <off>               Disable VCD tracing\n"
+    "  h, help                      : Show command help (this)\n"
+    "  q, quit                      : Quit atomsim\n"
+    "  v, verbose [\"on\"/\"off\"]  : set verbosity (toggle if ommitted)\n"
+    "     trace <on> [filepath]     : Enable VCD tracing.\n"
+    "                                 (default: " DEFAULT_TRACEFILE_PATH ")\n"
+    "           <off>               : Disable VCD tracing\n"
     "\n"
     "*** Control commands ***\n"
     "     reset                      : Reset\n"
     "  s, step [cycles]              : Step for specified cycles (default: 1)\n"
     "  r, run                        : Run until finished (press ctrl+c to return\n" 
     "                                  to console)\n"
+    "  b, break [addr]               : Set breakpoint at given address\n"
     // "  w,  while reg [reg] [cond] [val]     : Run while value of [reg] [cond] [val] is true\n"
     // "            pc [cond] [val]               Run while value of PC [cond] [val] is true\n"
     // "            mem [cond] [hex addr] [val]   Run while value at address [hex addr] [cond] [val] is true\n"
@@ -278,16 +283,19 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     // "                                           (bytes): number of bytes to display\n"
     // "      pc                               : Display current program counter value\n"
     // "      str [addr]                   : Show NUL-terminated C string at [hex addr]\n"
-    "  m, mem <addr> [bytes] [flags]     : Show contents of memory at <addr>\n"
-    "                                        addr: start address\n"
-    "                                        bytes: number of bytes (default: 4)\n"
-    "                                        flags: \n"
-    "                                          -w : display word view\n"
-    "                                          -a : display ascii view\n"
-    "     dumpmem <addr> <bytes> <file>  : Dump contents of memory to a file\n"
-    "                                        addr: start address\n"
+    "  i, info [something]              : Show information about something\n"
+    "                                       b|break:    show all breakpoints\n"
+    "                                       r|regs:     show all registers\n"
+    // "                                       s|symbols:  show all symbols\n"
+    "  m, mem <addr> [bytes] [flags]    : Show contents of memory at <addr>\n"
+    "                                       addr: start address\n"
+    "                                       bytes: number of bytes (default: 4)\n"
+    "                                       flags: \n"
+    "                                           -a : display ascii view\n"
+    "     dumpmem <addr> <bytes> <file> : Dump contents of memory to a file\n"
+    "                                        addr:  start address\n"
     "                                        bytes: number of bytes\n"
-    "                                        file: file path (default: " DEFAULT_DUMPMEM_PATH ")\n"
+    "                                        file:  file path (default: " DEFAULT_DUMPMEM_PATH ")\n"
     "     load <file> <addr>            : Load contents of binary file into memory\n"
     "                                        file: file path\n"
     "                                        addr: load address\n"
@@ -299,17 +307,17 @@ int Atomsim::cmd_help(const std::vector<std::string>&)
     "  - numeric arguments can be given in decimal, hexadecimal (prefix with 0x) \n"
     "    or binary (prefix with 0b)\n"
     << std::flush;
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_quit(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_quit(const std::vector<std::string> &/*args*/)
 {
-    return ATOMSIM_RCODE_EXIT_SIM;
+    return RC_EXIT;
 }
 
 
-int Atomsim::cmd_verbose(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_verbose(const std::vector<std::string> &args)
 {
     if(args.size() == 0)   // argument omitted: toggle verbosity
     {
@@ -328,11 +336,11 @@ int Atomsim::cmd_verbose(const std::vector<std::string> &args)
     else
         throw Atomsim_exception("too few/many args\n verbose commands expect one argument (on/off)");
     
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_trace(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_trace(const std::vector<std::string> &args)
 {
     if (args.size() < 1)
         throw Atomsim_exception("trace command expects \"on\"/\"off\" as 1st argument");
@@ -343,7 +351,7 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
             if(sim_config_.trace_flag)
             {
                 std::cout << "Trace already enabled" << std::endl;
-                return ATOMSIM_RCODE_OK;
+                return RC_OK;
             }
             
             // enable trace
@@ -360,7 +368,7 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
             if(!sim_config_.trace_flag)
             {
                 std::cout << "Trace was not enabled" << std::endl;
-                return ATOMSIM_RCODE_OK;
+                return RC_OK;
             }
 
             // disable trace
@@ -372,51 +380,52 @@ int Atomsim::cmd_trace(const std::vector<std::string> &args)
         else
             throw Atomsim_exception("1st arg can be only be \"on\"/\"off\"");
     }
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
-int Atomsim::cmd_reset(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_reset(const std::vector<std::string> &/*args*/)
 {
     std::cout << "Resetting..." << std::endl;
     backend_.reset();
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
-int Atomsim::cmd_step(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_step(const std::vector<std::string> &args)
 {
     if(args.size() == 0)   // step 1
     {
-        this->step();
+        pending_steps = 1;
+        return RC_STEP;
     }
     else if(args.size() == 1)  // step n
     {
         long long cycles = _parse_num(args[0]);
         if (cycles < 0)
             throw Atomsim_exception("cycles out of bounds\n");
-        for(long long c = 0; c < cycles; c++)
-            this->step();
+        pending_steps = cycles;
+        return RC_STEP;
     }
     else
         throw Atomsim_exception("too few/many args\n");
     
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_run(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_run(const std::vector<std::string> &/*args*/)
 {
     // exit interactive mode & enter normal mode
-    return ATOMSIM_RCODE_EXIT;
-
-    // CTRL_C_PRESSED = false;
-    // while(!CTRL_C_PRESSED)
-    //     this->step();
-
-    // return ATOMSIM_RCODE_OK;
+    return RC_RUN;
 }
 
 
-int Atomsim::cmd_while(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_while(const std::vector<std::string> &args)
+{
+    std::cout << "command not implemented" << std::endl;
+    return RC_OK;
+}
+
+Rcode Atomsim::cmd_break(const std::vector<std::string> &args)
 {
     if(args.size() == 0)   // step 1
     {
@@ -424,47 +433,84 @@ int Atomsim::cmd_while(const std::vector<std::string> &args)
     }
     else if(args.size() == 1)  // step n
     {
-        uint32_t break_addr = _parse_num(args[0]);
-        
-        while(simstate_.state_.pc_e != break_addr)
-            this->step();
+        // find empty slot and set breakpoint
+        int i=0;
+        for(i=0; i<NUM_MAX_BREAKPOINTS; i++){
+            if(breakpoints_[i].active == false) {
+                breakpoints_[i].addr = _parse_num(args[0]);
+                breakpoints_[i].active = true;
+                break;
+            }
+        }
+        if(i == NUM_MAX_BREAKPOINTS)
+            Atomsim_exception("Cannot set breakpoint, max used\n");
+     
+        printf("Breakpoint %d at %s0x%08x%s\n", i, ansicode(FG_BLUE), breakpoints_[i].addr, ansicode(FG_RESET));
     }
     else
         throw Atomsim_exception("too few/many args\n");
     
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
+}
+
+Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
+{
+    if(args.size() == 0)   // step 1
+    {
+        throw Atomsim_exception("too few/many args\n");
+    }
+    else if(args.size() == 1)  // step n
+    {
+        if(args[0] == "b" || args[0] == "break") {
+            // show breakpoints
+            printf("Num  Address\n");
+            for(int i=0; i<NUM_MAX_BREAKPOINTS; i++){
+                if (breakpoints_[i].active) {
+                    printf("%3d  %s0x%08x%s\n", i, ansicode(FG_BLUE), breakpoints_[i].addr, ansicode(FG_RESET));
+                }
+            }
+        } else if (args[0] == "r" || args[0] == "regs") {
+            printf(" %s:    0x%08x\n", "pc         ", simstate_.state_.pc_e);
+            for(unsigned i=0; i<32; i++) {
+                printf(" %s:    0x%08x\n", reg_names_[i], simstate_.state_.rf[i]);
+            }
+        }
+    }
+    else
+        throw Atomsim_exception("too few/many args\n");
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_reg(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_reg(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_dereference_reg(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_dereference_reg(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_pc(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_pc(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_str(const std::vector<std::string> &/*args*/)
+Rcode Atomsim::cmd_str(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_mem(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_mem(const std::vector<std::string> &args)
 {
     if(args.size() == 0)
         throw Atomsim_exception("\"mem\" command expects address as 1st argument\n");
@@ -503,11 +549,11 @@ int Atomsim::cmd_mem(const std::vector<std::string> &args)
     }
     else
         throw Atomsim_exception("too many arguments for \"mem\" command\n");
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
 {
     if(args.size() < 1)
         throw Atomsim_exception("expected address as 1st argument\n");
@@ -541,11 +587,11 @@ int Atomsim::cmd_dumpmem(const std::vector<std::string> &args)
     stdout = tmp; // restore stdout
     fclose(fptr);
     
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }
 
 
-int Atomsim::cmd_load(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_load(const std::vector<std::string> &args)
 {
     if(args.size() < 1)
         throw Atomsim_exception("expected filename as 1st argument\n");
@@ -561,5 +607,5 @@ int Atomsim::cmd_load(const std::vector<std::string> &args)
 
     // write to memory
     backend_.store(addr, (uint8_t*)fcontents.data(), fcontents.size());
-    return ATOMSIM_RCODE_OK;
+    return RC_OK;
 }

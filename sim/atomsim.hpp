@@ -7,9 +7,11 @@
 #include TARGET_HEADER
 #include "simstate.hpp"
 
-#define ATOMSIM_RCODE_OK 0
-#define ATOMSIM_RCODE_EXIT 1
-#define ATOMSIM_RCODE_EXIT_SIM 2
+enum Rcode{
+    RC_NONE, RC_OK, RC_STEP, RC_RUN, RC_EXIT
+};
+
+#define NUM_MAX_BREAKPOINTS 16
 
 // forward declarations
 // class Backend_atomsim;
@@ -42,6 +44,10 @@ struct Atomsim_config
     bool print_info_topdown = true;
 };
 
+struct Breakpoint_t {
+    bool active = false;
+    uint32_t addr = 0;
+};
 
 class Atomsim
 {
@@ -70,7 +76,7 @@ public:
      * 
      * @returns int return code [if 2: exit sim]
      */
-    int run_interactive_mode();
+    Rcode run_interactive_mode();
         
 
 private:
@@ -99,6 +105,8 @@ private:
      */
     bool bkend_running_ = false;
 
+    bool in_debug_mode_ = false;
+
     /**
      * @brief Disassembly of input file
      */
@@ -117,32 +125,39 @@ private:
 
     friend class Backend_atomsim;
     
+    Breakpoint_t breakpoints_[NUM_MAX_BREAKPOINTS];
+
+    // used to provide cycles for step command
+    long long pending_steps = 0;
+
     // display debug screen
     void display_dbg_screen();
 
     // interactive Commands
 
     // General Commands
-    int cmd_help(const std::vector<std::string>&);
-    int cmd_quit(const std::vector<std::string>&);
-    int cmd_verbose(const std::vector<std::string>&);
-    int cmd_trace(const std::vector<std::string>&);
+    Rcode cmd_help(const std::vector<std::string>&);
+    Rcode cmd_quit(const std::vector<std::string>&);
+    Rcode cmd_verbose(const std::vector<std::string>&);
+    Rcode cmd_trace(const std::vector<std::string>&);
     
     // Control Commands
-    int cmd_reset(const std::vector<std::string>&);
-    int cmd_step(const std::vector<std::string>&);
-    int cmd_run(const std::vector<std::string>&);
-    int cmd_rst(const std::vector<std::string>&);
-    int cmd_while(const std::vector<std::string>&);
+    Rcode cmd_reset(const std::vector<std::string>&);
+    Rcode cmd_step(const std::vector<std::string>&);
+    Rcode cmd_run(const std::vector<std::string>&);
+    Rcode cmd_rst(const std::vector<std::string>&);
+    Rcode cmd_while(const std::vector<std::string>&);
+    Rcode cmd_break(const std::vector<std::string>&);
+    Rcode cmd_info(const std::vector<std::string>&);
 
     // Query Commands
-    int cmd_reg(const std::vector<std::string>&);
-    int cmd_dereference_reg(const std::vector<std::string>&);
-    int cmd_pc(const std::vector<std::string>&);
-    int cmd_str(const std::vector<std::string>&);
-    int cmd_mem(const std::vector<std::string>&);
-    int cmd_dumpmem(const std::vector<std::string>&);
-    int cmd_load(const std::vector<std::string>&);
+    Rcode cmd_reg(const std::vector<std::string>&);
+    Rcode cmd_dereference_reg(const std::vector<std::string>&);
+    Rcode cmd_pc(const std::vector<std::string>&);
+    Rcode cmd_str(const std::vector<std::string>&);
+    Rcode cmd_mem(const std::vector<std::string>&);
+    Rcode cmd_dumpmem(const std::vector<std::string>&);
+    Rcode cmd_load(const std::vector<std::string>&);
     
 };
 

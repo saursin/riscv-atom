@@ -19,8 +19,6 @@
 
 #include "elfio/elfio.hpp"
 
-#define RV_INSTR_EBREAK 0x100073
-
 // ROM
 #define ROM_ADDR 0x00010000
 #define ROM_SIZE 8192   // 8 KB
@@ -92,7 +90,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
         std::cout << "Initialization complete!\n";
     
     if(config_.enable_uart_dump)
-        std::cout << "--------8<--------8<--------8<--------8<--------" << std::endl;
+        std::cout << "----------8<-----------8<-----------8<-----------8<---------" << std::endl;
 }
 
 Backend_atomsim::~Backend_atomsim()
@@ -158,8 +156,8 @@ void Backend_atomsim::UART()
 
 int Backend_atomsim::tick()
 {
-    if (this->done())
-    {
+    // return if backend finished
+    if (this->done()) {
         return 1;
     }
 
@@ -171,108 +169,6 @@ int Backend_atomsim::tick()
 
     // Tick clock once
     tb->tick();
-
-    // Refresh Data
-    if (sim_->sim_config_.debug_flag || sim_->sim_config_.dump_on_ebreak_flag)
-    {
-        /* We need to refresh state data to print debug screen in debug mode and
-         * to keep track of instruction register being equal to ebreak, \
-         * in case dump_on_ebreak is set
-         */
-        refresh_state();
-    }
-
-    if (sim_->sim_config_.debug_flag)
-        sim_->display_dbg_screen();
-
-    // ===== Check Hault Condition =====
-    if (tb->m_core->HydrogenSoC->atom_wb_core->atom_core->InstructionRegister == RV_INSTR_EBREAK) // can't rely on stimstate.state.ins_e cuz that's only updated conditionally
-    {
-        // ============ REGISTER FILE DUMP (For SCAR) ==============
-        if(sim_->sim_config_.dump_on_ebreak_flag)
-        {
-            simstate_->dump_simstate(sim_->sim_config_.dump_file);
-        }
-
-        // ==========  MEM SIGNATURE DUMP (For RISC-V-Arch Tests) =============
-        if (sim_->sim_config_.signature_file.length() != 0)
-        {
-            // Get start and end address of signature
-            long int begin_signature_at = -1;
-            long int end_signature_at = -1;
-
-            ELFIO::elfio reader;
-
-            if (!reader.load(sim_->sim_config_.ifile))
-            {
-                throwError("SIG", "Can't find or process ELF file : " + sim_->sim_config_.ifile + "\n", true);
-            }
-
-            ELFIO::Elf_Half n = reader.sections.size();
-            for (ELFIO::Elf_Half i = 0; i < n; ++i) // For all sections
-            {
-                ELFIO::section *sec = reader.sections[i];
-                if (SHT_SYMTAB == sec->get_type() || SHT_DYNSYM == sec->get_type())
-                {
-                    ELFIO::symbol_section_accessor symbols(reader, sec);
-                    ELFIO::Elf_Xword sym_no = symbols.get_symbols_num();
-                    if (sym_no > 0)
-                    {
-                        for (ELFIO::Elf_Xword i = 0; i < sym_no; ++i)
-                        {
-                            std::string name;
-                            ELFIO::Elf64_Addr value = 0;
-                            ELFIO::Elf_Xword size = 0;
-                            unsigned char bind = 0;
-                            unsigned char type = 0;
-                            ELFIO::Elf_Half section = 0;
-                            unsigned char other = 0;
-                            symbols.get_symbol(i, name, value, size, bind, type,
-                                               section, other);
-
-                            if (name == "begin_signature")
-                                begin_signature_at = value;
-                            if (name == "end_signature")
-                                end_signature_at = value;
-                        }
-                    }
-                }
-            }
-
-            if (begin_signature_at == -1 || end_signature_at == -1)
-            {
-                throwError("SIG", "One or both of 'begin_signature' & 'end_signature' symbols missing from ELF symbol table: " + sim_->sim_config_.ifile + "\n", true);
-            }
-
-            //  dump data to signature file
-            std::vector<std::string> fcontents;
-            printf("Dumping signature region [0x%08lx-0x%08lx]\n", begin_signature_at, end_signature_at);
-
-            for (uint32_t addr = begin_signature_at; addr < end_signature_at; addr += 4)
-            {
-                uint32_t index = addr - RAM_ADDR;
-
-                if (!(index > 0 && index < RAM_SIZE - 4)) // check bounds
-                    throw Atomsim_exception("Signature out of bounds" + std::to_string(addr));
-
-                uint32_t value = (uint32_t)tb->m_core->HydrogenSoC->ram->mem[addr / 4];
-
-                char temp[50];
-                sprintf(temp, "%08x", value);
-                fcontents.push_back(temp);
-            }
-            fWrite(fcontents, sim_->sim_config_.signature_file);
-        }
-
-        if (sim_->sim_config_.verbose_flag)
-            std::cout << "Haulting @ tick " << tb->m_tickcount_total << std::endl;
-        return 1;
-    }
-    if (tb->m_tickcount_total > sim_->sim_config_.maxitr)
-    {
-        throwWarning("SIM0", "Simulation iterations exceeded maxitr(" + std::to_string(sim_->sim_config_.maxitr) + ")\n");
-        return 1;
-    }
 
     return 0;
 }
