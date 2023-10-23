@@ -40,6 +40,10 @@ void Atomsim::display_dbg_screen()
     
     //////////////////////////////////////////////////////////////////////////////////////////
     // Print debug screen
+    if(!sim_config_.verbose_flag){
+        printf("[%10ld] PC: 0x%08x, IR: 0x%08x, %s%s%s\n", tickcount, simstate_.state_.ins_e, simstate_.state_.ins_e, ansicode(FG_BLUE), disam.c_str(), ansicode(FG_RESET));
+        return;
+    }
 
     printf("┌─[%10ld]─────────────────────────────────────────────┐\n", tickcount);
     printf("│ %sPC: 0x%08x%s%s    PC_f: 0x%08x     (%+10d%s)%s   │\n", ansicode(S_BOLD), simstate_.state_.pc_e, ansicode(SN_BOLD), 
@@ -48,27 +52,25 @@ void Atomsim::display_dbg_screen()
     printf("└──────────────────────────────────────────────────────────┘\n");
 
     // Print Register File
-    if(sim_config_.verbose_flag)
+    int cols = 2; // no of columns per rows
+    #ifndef DEBUG_PRINT_T2B
+    for(int i=0; i<32; i++)	// print in left-right fashion
     {
-        int cols = 2; // no of columns per rows
-        #ifndef DEBUG_PRINT_T2B
-        for(int i=0; i<32; i++)	// print in left-right fashion
-        {
-            printf("r%-2d: 0x%08x    ", i, simstate_.state_.rf[i]);
-            if(i%cols == cols-1)
-                printf("\n");
-        }
-        #else
-        for(int i=0; i<32/cols; i++)	// print in topdown fashion
-        {
-            for(int j=0; j<cols; j++)
-            {
-                printf("  %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
-            }
+        printf("r%-2d: 0x%08x    ", i, simstate_.state_.rf[i]);
+        if(i%cols == cols-1)
             printf("\n");
-        }
-        #endif
     }
+    #else
+    for(int i=0; i<32/cols; i++)	// print in topdown fashion
+    {
+        for(int j=0; j<cols; j++)
+        {
+            printf("  %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
+        }
+        printf("\n");
+    }
+    #endif
+
 }
 
 
@@ -285,7 +287,7 @@ Rcode Atomsim::cmd_help(const std::vector<std::string>&)
     // "      str [addr]                   : Show NUL-terminated C string at [hex addr]\n"
     "  i, info [something]              : Show information about something\n"
     "                                       b|break:    show all breakpoints\n"
-    "                                       r|regs:     show all registers\n"
+    "                                       r|reg:      show all registers\n"
     // "                                       s|symbols:  show all symbols\n"
     "  m, mem <addr> [bytes] [flags]    : Show contents of memory at <addr>\n"
     "                                       addr: start address\n"
@@ -469,10 +471,10 @@ Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
                     printf("%3d  %s0x%08x%s\n", i, ansicode(FG_BLUE), breakpoints_[i].addr, ansicode(FG_RESET));
                 }
             }
-        } else if (args[0] == "r" || args[0] == "regs") {
+        } else if (args[0] == "r" || args[0] == "reg") {
             printf(" %s:    0x%08x\n", "pc         ", simstate_.state_.pc_e);
             for(unsigned i=0; i<32; i++) {
-                printf(" %s:    0x%08x\n", reg_names_[i], simstate_.state_.rf[i]);
+                printf(" %s:    0x%08x\n", reg_names_[i].c_str(), simstate_.state_.rf[i]);
             }
         }
     }
