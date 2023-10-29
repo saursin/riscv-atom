@@ -87,5 +87,9 @@
 `define SPI_ADDR        32'h4000_3000
 `define SPI_SIZE        32              // 32 bytes (8 words)
 
+// TIMER
+`define TIMER_ADDR      32'h4000_4000
+`define TIMER_SIZE      16              // 32 bytes (4 words)
+
 
 `endif // __HYDROGENSOC_CONFIG_VH__

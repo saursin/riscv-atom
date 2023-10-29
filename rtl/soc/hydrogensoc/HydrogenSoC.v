@@ -108,7 +108,7 @@ module HydrogenSoC(
         `ifdef EN_EXCEPT
         ,
         .irq_i          (1'b0),
-        .timer_int_i    (1'b0)
+        .timer_int_i    (timer_int_o)
         `endif // EN_EXCEPT
     );
 
@@ -182,7 +182,7 @@ module HydrogenSoC(
 
 
     // ******************** Crossbar ********************
-    Crossbar5_wb #(
+    Crossbar6_wb #(
         .DATA_WIDTH     (32),
         .ADDR_WIDTH     (32),
         .DEVICE0_ADDR   (`BOOTROM_ADDR),
@@ -194,7 +194,9 @@ module HydrogenSoC(
         .DEVICE3_ADDR   (`GPIO_ADDR),
         .DEVICE3_MASK   (`size_to_mask32(`GPIO_SIZE)),
         .DEVICE4_ADDR   (`SPI_ADDR),
-        .DEVICE4_MASK   (`size_to_mask32(`SPI_SIZE))
+        .DEVICE4_MASK   (`size_to_mask32(`SPI_SIZE)),
+        .DEVICE5_ADDR   (`TIMER_ADDR),
+        .DEVICE5_MASK   (`size_to_mask32(`TIMER_SIZE))
     ) xbar (
         .wbs_adr_i      (arb_wb_adr_o),
         .wbs_dat_i      (arb_wb_dat_o),
@@ -256,7 +258,17 @@ module HydrogenSoC(
         .wbm4_cyc_o     (spi_wb_cyc_i),
         .wbm4_stb_o     (spi_wb_stb_i),
         .wbm4_ack_i     (spi_wb_ack_o),
-        .wbm4_err_i     (1'b0)
+        .wbm4_err_i     (1'b0),
+
+        .wbm5_adr_o     (timer_wb_adr_i),
+        .wbm5_dat_i     (timer_wb_dat_o),
+        .wbm5_dat_o     (timer_wb_dat_i),
+        .wbm5_we_o      (timer_wb_we_i),
+        .wbm5_sel_o     (timer_wb_sel_i),
+        .wbm5_cyc_o     (timer_wb_cyc_i),
+        .wbm5_stb_o     (timer_wb_stb_i),
+        .wbm5_ack_i     (timer_wb_ack_o),
+        .wbm5_err_i     (1'b0)
     );
 
 
@@ -410,6 +422,34 @@ module HydrogenSoC(
         .miso_i     (spi_miso_i),
         .mosi_o     (spi_mosi_o),
         .cs_o       (spi_cs_o)
+    );
+
+    // ******************* TIMER *******************
+    /* verilator lint_off UNUSEDSIGNAL */
+    wire  [31:0]    timer_wb_adr_i;
+    /* verilator lint_on UNUSEDSIGNAL */
+    wire  [31:0]    timer_wb_dat_o;
+    wire  [31:0]    timer_wb_dat_i;
+    wire 		    timer_wb_we_i;
+    wire  [3:0]     timer_wb_sel_i;
+    wire            timer_wb_cyc_i;
+    wire            timer_wb_stb_i;
+    wire 		    timer_wb_ack_o;
+    wire            timer_int_o;
+
+    Timer_wb timer (
+        .wb_clk_i   (wb_clk_i),
+        .wb_rst_i   (wb_rst_i),
+
+        .wb_adr_i   (timer_wb_adr_i[3:2]),
+        .wb_dat_o   (timer_wb_dat_o),
+        .wb_dat_i   (timer_wb_dat_i),
+        .wb_we_i    (timer_wb_we_i),
+        .wb_sel_i   (timer_wb_sel_i),
+        .wb_stb_i   (timer_wb_stb_i & timer_wb_cyc_i),
+        .wb_ack_o   (timer_wb_ack_o),
+
+        .int_o      (timer_int_o)
 );
 
 
