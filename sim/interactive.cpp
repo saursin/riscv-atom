@@ -286,6 +286,7 @@ Rcode Atomsim::cmd_help(const std::vector<std::string>&)
     // "      pc                               : Display current program counter value\n"
     // "      str [addr]                   : Show NUL-terminated C string at [hex addr]\n"
     "  i, info [something]              : Show information about something\n"
+    "                                     Display dbg screen if no arg provided \n"
     "                                       b|break:    show all breakpoints\n"
     "                                       r|reg:      show all registers\n"
     // "                                       s|symbols:  show all symbols\n"
@@ -459,7 +460,7 @@ Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
 {
     if(args.size() == 0)   // step 1
     {
-        throw Atomsim_exception("too few/many args\n");
+        display_dbg_screen();
     }
     else if(args.size() == 1)  // step n
     {
