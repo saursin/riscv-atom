@@ -109,6 +109,7 @@ ifeq ($(soctarget), hydrogensoc)
     VSRCS += $(RTL_DIR)/uncore/wishbone/Arbiter2_wb.v
     VSRCS += $(RTL_DIR)/uncore/wishbone/Arbiter3_wb.v
     VSRCS += $(RTL_DIR)/uncore/wishbone/Crossbar5_wb.v
+    VSRCS += $(RTL_DIR)/uncore/wishbone/Crossbar6_wb.v
     VSRCS += $(RTL_DIR)/uncore/wishbone/Priority_encoder.v
 
     # periphs
@@ -120,6 +121,7 @@ ifeq ($(soctarget), hydrogensoc)
     VSRCS += $(RTL_DIR)/uncore/uart/UART_core.v
     VSRCS += $(RTL_DIR)/uncore/spi/SPI_wb.v
     VSRCS += $(RTL_DIR)/uncore/spi/SPI_core.v
+    VSRCS += $(RTL_DIR)/uncore/timer/Timer_wb.v
     VFLAGS += -D__ROM_INIT_FILE__='"$(RVATOM)/sw/bootloader/bootloader.hex"'
 
     # cpp
