@@ -69,41 +69,72 @@ module CSR_Unit#
         endcase
     end
 
+
+    `ifdef EN_EXCEPT
     ////////////////////////////////////////////////////////////
     // TRAP Logic
-    `ifdef EN_EXCEPT
+    /*
+        sources of interrupts:
+            - synchronous:
+                - exceptions:           gated with MSTATUS.MIE
+                - sw interrupts         gated with MSTATUS.MIE & MIE.MSIE
+            - asynchronous:
+                - timer interrupt       gated with MSTATUS.MIE & MIE.MTIE
+                - external interrupt    gated with MSTATUS.MIE & MIE.MEIE
 
-    // Cause Generator
-    reg [3:0]       except_cause;
-
-    always @(*) /* COMB */ begin
-        except_cause    = 0;
-
-        if(except_illegal_instr_i)                  except_cause = 'd2;
-        else if(except_instr_addr_misaligned_i)     except_cause = 'd0;
-        else if(except_load_addr_misaligned_i)      except_cause = 'd4;
-        else if(except_store_addr_misaligned_i)     except_cause = 'd6;
-    end
-
-    // Trap Gates
-    wire exception_caught = csr_mstatus_mie & (except_illegal_instr_i | except_instr_addr_misaligned_i 
-                            | except_load_addr_misaligned_i | except_store_addr_misaligned_i);
+        All asynchronous interrupt are passed through posedge edge detector since they cannot be 
+        cleared immediately, and level sensitivity will cause PC to jump to trap_jump_addr_o continously.
+    */
+    wire exception      = (csr_mstatus_mie & (except_illegal_instr_i | except_instr_addr_misaligned_i
+                            | except_load_addr_misaligned_i | except_store_addr_misaligned_i));
     
+    wire intrpt_ext_async   = csr_mstatus_mie & csr_mie_meie & intrpt_external_i; 
+    wire intrpt_timer_async = csr_mstatus_mie & csr_mie_mtie & intrpt_timer_i; 
+    wire intrpt_soft        = csr_mstatus_mie & csr_mie_msie & intrpt_soft_i;
 
-    wire    intrpt_external = csr_mstatus_mie & csr_mie_meie & intrpt_external_i; 
-    wire    intrpt_timer    = csr_mstatus_mie & csr_mie_mtie & intrpt_timer_i; 
-    wire    intrpt_soft     = csr_mstatus_mie & csr_mie_msie & intrpt_soft_i;
+    // Posedge Detector
+    reg intrpt_ext_async_r, intrpt_timer_async_r;
+    always @(posedge clk_i) begin
+        intrpt_ext_async_r      <= rst_i ? 0 : intrpt_ext_async;
+        intrpt_timer_async_r    <= rst_i ? 0 : intrpt_timer_async;
+    end
+    wire intrpt_ext     = (intrpt_ext_async & ~intrpt_ext_async_r);
+    wire intrpt_timer   = (intrpt_timer_async & ~intrpt_timer_async_r);
+   
+    assign trap_caught_o = exception | (intrpt_soft | intrpt_ext | intrpt_timer);
 
-    wire    intrpt_caught = (intrpt_external | intrpt_timer | intrpt_soft);
-
-    assign  trap_caught_o = exception_caught | intrpt_caught;
+    /* 
+        Trap Cause Generation (Based on priority) 
+        refer previlige_spec section 3.1.15
+    */
+    reg [3:0]       trap_cause;
+    always @(*) /* COMB */ begin
+        trap_cause    = 0;
+        if (exception) begin
+            // if(except_instr_breakpoint_i)            trap_cause = 'd3    // Instr Breakpoint
+            // if(except_instr_access_fault_i)          trap_cause = 'd1    // Instr Access fault
+            if(except_illegal_instr_i)                  trap_cause = 'd2;   // Illegal Instr
+            else if(except_instr_addr_misaligned_i)     trap_cause = 'd0;   // Instr Access misaligned
+            // else if(except_instr_ecall_i)            trap_cause = 'd11;
+            // else if(except_instr_ebreak_i)           trap_cause = 'd3;
+            else if(except_load_addr_misaligned_i)      trap_cause = 'd4;
+            else if(except_store_addr_misaligned_i)     trap_cause = 'd6;
+            // else if(except_load_access_fault_i)      trap_cause = 'd5;
+            // else if(except_store_access_fault_i)     trap_cause = 'd7;
+        end else /* interrupt */ begin
+            if(intrpt_soft)                             trap_cause = 'd3;   // Machine Sw interrupt
+            else if(intrpt_timer)                       trap_cause = 'd7;   // Machine Timer interrupt
+            else if(intrpt_ext)                         trap_cause = 'd11;  // Machine Ext interrupt
+        end
+    end
 
     // Trap jump address generation
     assign trap_jump_addr_o = (csr_mtvec_mode == 2'b00) ? {csr_mtvec_base, 2'b00}:
-                                ((csr_mtvec_mode == 2'b01) ? {csr_mtvec_base, 2'b00} + (4 * except_cause): 32'hxxxx_xxxx);
-
+                                ((csr_mtvec_mode == 2'b01) ? {csr_mtvec_base, 2'b00} + (4 * trap_cause): 32'hxxxx_xxxx);
 
     `endif // EN_EXCEPT
+
+
     ////////////////////////////////////////////////////////////
     // CSR Registers
 
@@ -181,7 +212,6 @@ module CSR_Unit#
     end
 
 
-
     //===== MTVEC ===========================================================
     reg [31:2]  csr_mtvec_base;     // Base address
     reg [1:0]   csr_mtvec_mode;     // Mode (Direct/Vectored)
@@ -235,9 +265,9 @@ module CSR_Unit#
             csr_mip_msip <= 0;
         end
         else begin
-            if (intrpt_external)    csr_mip_meip <= 1'b1;
-            if (intrpt_timer)       csr_mip_mtip <= 1'b1;
-            if (intrpt_soft)        csr_mip_mtip <= 1'b1;
+            if (intrpt_ext)     csr_mip_meip <= 1'b1;
+            if (intrpt_timer)   csr_mip_mtip <= 1'b1;
+            if (intrpt_soft)    csr_mip_msip <= 1'b1;
             
             if(we_i && (addr_i == `CSR_mip)) begin
                 csr_mip_meip <= write_value[11];
@@ -265,6 +295,7 @@ module CSR_Unit#
     end
     assign trap_epc_o = csr_mepc;
 
+
     //===== MCAUSE ==========================================================
     reg             csr_mcause_intr;
     reg     [3:0]   csr_mcause_cause;    // Note: Actual size as per spec is 31 bits
@@ -277,8 +308,8 @@ module CSR_Unit#
             csr_mcause_cause <= 0;
         end
         else if(trap_caught_o) begin
-            csr_mcause_intr <= intrpt_caught ? 1'b1: 1'b0; 
-            csr_mcause_cause <= except_cause;
+            csr_mcause_intr <= exception ? 1'b0: 1'b1; 
+            csr_mcause_cause <= trap_cause;
         end
     end
     `endif // EN_EXCEPT

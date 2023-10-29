@@ -28,8 +28,7 @@ module AtomRV # (
     parameter [31:0]    ARCH_ID     = 32'h0000_0000,            // Architecture ID
     parameter [31:0]    IMPL_ID     = 32'h0000_0000,            // Implementation ID
     parameter [31:0]    HART_ID     = 32'h0000_0000             // Hart ID
-)
-(
+)(
     input   wire            clk_i,          // clock
     input   wire            rst_i,          // reset
 
@@ -84,11 +83,9 @@ module AtomRV # (
     /*
         Jump decision:
         final jump decision signal, determines whether the jump will be taken
-        sources of jump:
-            - software (JAL/JALR)
-            - hw (traps)
+        sources of jump - instructions like jal/jalr or traps
     */
-    wire jump_decision = (d_jump_en & comparison_result) `INLINE_IFDEF(EN_EXCEPT, || csru_trap_caught_o, ); 
+    wire jump_decision = (d_jump_en & comparison_result) `INLINE_IFDEF(EN_EXCEPT, | csru_trap_caught_o, ); 
 
 
     ////////////////////////////////////////////////////////////////////
@@ -179,23 +176,16 @@ module AtomRV # (
         Program Counter
     */
     reg [31:0] ProgramCounter   /*verilator public*/;
-    wire [31:0] pc_plus_four = ProgramCounter + 32'd4;
+    wire [31:0] ProgramCounter_next = ProgramCounter + 32'd4;
 
     always @(posedge clk_i) begin 
         if(rst_i)
             ProgramCounter <= reset_vector_i;
-
-        `ifdef EN_EXCEPT
-        else if(csru_trap_caught_o) begin
-            ProgramCounter <= csru_trap_jump_addr_o;
-        end
-        `endif // EN_EXCEPT
-        
         else if(jump_decision) begin
             `ifdef EN_EXCEPT
-            if(csru_trap_caught_o)
+            if(csru_trap_caught_o)  // Exception, interrupts (sw, timer, ext)           
                 ProgramCounter <= csru_trap_jump_addr_o;
-            else if(d_trap_ret)
+            else if(d_trap_ret)     // Trap return instr
                 ProgramCounter <= {csru_trap_epc_o, 1'b0};
             else
             `endif // EN_EXCEPT
@@ -203,7 +193,7 @@ module AtomRV # (
         end
 
         else if (!stall_stage1) begin
-            ProgramCounter <= pc_plus_four;
+            ProgramCounter <= ProgramCounter_next;
         end
     end
 
@@ -246,7 +236,7 @@ module AtomRV # (
         if(rst_i)
             link_address <= 32'd0;
         else if(!stall_stage1)
-            link_address <= pc_plus_four;
+            link_address <= ProgramCounter_next;
     end
 
     /*
