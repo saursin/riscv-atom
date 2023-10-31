@@ -505,11 +505,11 @@ module Decode
             /* OPCODE: SYSTEM */
             17'b???????_???_1110011:
             begin
-                if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b00000000000) /* ECALL */ begin
+                if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b000000000000) /* ECALL */ begin
                     instr_scope = "ECALL";
                     illegal_instr_o = 1'b1; // Not supported
                 end
-                else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b00000000001) /* EBREAK */ begin
+                else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && instr_i[11:0] == 12'b000000000001) /* EBREAK */ begin
                     instr_scope = "EBREAK";
                     illegal_instr_o = 1'b1; // Not supported
                 end
