@@ -41,7 +41,7 @@ void Atomsim::display_dbg_screen()
     //////////////////////////////////////////////////////////////////////////////////////////
     // Print debug screen
     if(!sim_config_.verbose_flag){
-        printf("[%10ld] PC: 0x%08x, IR: 0x%08x, %s%s%s\n", tickcount, simstate_.state_.ins_e, simstate_.state_.ins_e, ansicode(FG_BLUE), disam.c_str(), ansicode(FG_RESET));
+        printf("[%10ld] PC: 0x%08x, IR: 0x%08x, %s%s%s\n", tickcount, simstate_.state_.pc_e, simstate_.state_.ins_e, ansicode(FG_BLUE), disam.c_str(), ansicode(FG_RESET));
         return;
     }
 
