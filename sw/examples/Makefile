@@ -14,22 +14,22 @@ soctarget ?= None
 ex ?= None
 
 # Compile for simulation          (may be overridden)
-sim ?= false
+sim ?= 0
 
 # Compile for use with bootloader (may be overridden)
-boot ?= false
+boot ?= 0
 
 # Vuart for make run example      (may be overridden)
 vuart ?= None
 
 # Save objdump while compiling    (may be overridden)
-objdump ?= true
+objdump ?= 1
 
 # Save binary while compiling     (may be overridden)
-bin ?= true
+bin ?= 1
 
 # Save map file while compiling   (may be overridden)
-map ?= true
+map ?= 1
 
 ########################################################################
 # Checks
@@ -81,8 +81,8 @@ endif
 
 
 RVPREFIX := riscv64-unknown-elf
-CFLAGS := -Wall
-CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os -g
+CFLAGS += -Wall
+CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -O0 -g
 CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 
 LINKERSCRIPT := None
@@ -114,7 +114,7 @@ ifeq ($(__check_soctarget),true)
     endif
     endif
 
-    ifeq ($(boot), true)
+    ifeq ($(boot), 1)
         LINKERSCRIPT:= ../flashboot/link_app.lds
     endif
 
@@ -150,18 +150,18 @@ EXAMPLE_DIRS = $(sort $(dir $(wildcard */)))
 SRC_FILES = $(patsubst %, $(ex)/%, $(src_files))
 
 # atomsim args
-ATOMSIM_ARGS = --maxitr=999999999 --enable-uart-dump
+ATOMSIM_ARGS = --maxitr=999999999 -uv
 
 # VUART setting
 ifneq ($(vuart), None)
     ATOMSIM_ARGS += --vuart=$(vuart)
 endif
 
-ifeq ($(map), true)
+ifeq ($(map), 1)
     LFLAGS += -Xlinker -Map $(executable).map
 endif
 
-ifeq ($(sim), true)
+ifeq ($(sim), 1)
     CFLAGS += -DSIM
 endif
 
@@ -190,7 +190,7 @@ help:										## Show help
 	@printf "Note:\n"
 	@printf " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables\n"
 	@printf "	help, all, clean-all\n"
-	@printf " - To save objdump,, set the \"objdump\" variable to \"true\" in the CLI.\n"
+	@printf " - To save objdump,, set the \"objdump\" variable to \"1\" in the CLI.\n"
 	@printf " - To save run using vuart, set the vuart variable to the path of the simport\n"
     
 
@@ -203,11 +203,11 @@ $(ex)/$(executable): $(SRC_FILES)
 	@printf "$(COLOR_CYAN)%-15s | Compiling   %-35s <-  %s$(COLOR_NC)\n" ${ex} $@ $<
 	cd $(ex) && $(RVPREFIX)-gcc $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 
-ifeq ($(objdump), true)
+ifeq ($(objdump), 1)
 	$(RVPREFIX)-objdump -Shtd $@ > $@.objdump
 endif
 
-ifeq ($(bin), true)
+ifeq ($(bin), 1)
 	$(RVPREFIX)-objcopy -O binary $@ $@.bin
 	@printf "Binary size: %s bytes\n" $$(stat --format=%s "$@.bin")
 endif
@@ -236,11 +236,11 @@ clean:										## Clean executable
 
 
 all:										## Build all examples
-	@$(patsubst %/, make -s ex=% compile;,${EXAMPLE_DIRS})
+	@$(patsubst %/, make -s ex=% sim=1 compile;,${EXAMPLE_DIRS})
 
 
 run-all:									## Build & run all examples
-	@$(patsubst %/, printf "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}\n"; make -s ex=% run;,${EXAMPLE_DIRS})
+	@$(patsubst %/, printf "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}\n"; make -s ex=% sim=1 run;,${EXAMPLE_DIRS})
 
 
 .PHONY: clean-all

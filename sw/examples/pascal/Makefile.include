@@ -1,2 +1,0 @@
-src_files = pascal.c
-executable = pascal.elf

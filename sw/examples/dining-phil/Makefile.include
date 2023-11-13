@@ -1,2 +1,0 @@
-src_files = dining-phil.c
-executable = dining-phil.elf

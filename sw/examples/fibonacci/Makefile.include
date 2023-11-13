@@ -1,2 +1,0 @@
-src_files = fibonacci.c
-executable = fibonacci.elf

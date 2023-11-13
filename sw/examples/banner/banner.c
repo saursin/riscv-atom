@@ -34,8 +34,9 @@ int main()
     puts(banner);
     printf("CPU      : RISC-V Atom @ %d Hz\n", CLK_FREQ);
     puts("Arch     : RV32I - little endian\n");
-    printf("CODE RAM : 0x%8x (%d bytes)\n", CODERAM_BASE, CODERAM_SIZE);
-    printf("DATA RAM : 0x%8x (%d bytes)\n", DATARAM_BASE, DATARAM_SIZE);
+    printf("CODE RAM : 0x%08x (%d bytes)\n", (unsigned)CODERAM_BASE, (unsigned)CODERAM_SIZE);
+    printf("DATA RAM : 0x%08x (%d bytes)\n", (unsigned)DATARAM_BASE, (unsigned)DATARAM_SIZE);
     puts("Exiting...\n");
+    asm volatile("ecall");
     return 0;
 }
