@@ -1,6 +1,8 @@
+#include <platform.h>
 #include <stdint.h>
-#include "platform.h"
-#include "stdio.h"
+#include <stdio.h>
+#include <utils.h>
+#include <serial.h>
 
 // Enable Prints through UART
 // #define ENABLE_UART
