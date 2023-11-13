@@ -11,7 +11,7 @@ Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     backend_(this, bk_config)  // create backend
 {   
     // get input file disassembly   
-    disassembly_ = getDisassembly(sim_config_.ifile);
+    getDisassembly(&disassembly_, sim_config_.ifile);
 
     // clear breakpoints
     for(int i=0; i<NUM_MAX_BREAKPOINTS; i++) {

@@ -176,7 +176,7 @@ struct DisassembledLine
 /**
  * @brief Get the Disassembly of input file using riscv objdump
  * 
+ * @param dis std::map<uint32_t, std::string> map of disassembly
  * @param filename input filename
- * @return std::map<uint32_t, std::string> map of disassembly
  */
-std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename);
+void getDisassembly(std::map<uint32_t, DisassembledLine> *dis, std::string filename);

@@ -209,7 +209,7 @@ std::string GetStdoutFromCommand(std::string cmd, bool get_output = true) {
 }
 
 
-std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
+void getDisassembly(std::map<uint32_t, DisassembledLine> *dis, std::string filename)
 {
 	std::string command = "";
 	#ifdef RV32_COMPILER
@@ -223,9 +223,6 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
 	std::string output = GetStdoutFromCommand(command);
 	
 	std::stringstream s(output);
-
-	// Parse command output
-	std::map<uint32_t, DisassembledLine> dis;
 	
 	std::string line;
     bool in_disassembly = false;
@@ -274,12 +271,15 @@ std::map<uint32_t, DisassembledLine> getDisassembly(std::string filename)
                 .instr = instrn,
                 .disassembly = dism
             };
-            dis.insert({addr, dl});   
+
+            // insert if not already present
+            if(dis->count(addr) == 0) {
+                dis->insert({addr, dl});
+            }
         }
         else {
             // Parse the rest
             // printf("Unk[%s]\n", line.c_str());
         }
     }
-	return dis;
 }
