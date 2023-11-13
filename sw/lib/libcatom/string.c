@@ -1,4 +1,4 @@
-#include "string.h"
+#include <string.h>
 
 #define NULL_CHAR '\0'
 

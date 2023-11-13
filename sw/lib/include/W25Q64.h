@@ -1,5 +1,4 @@
-#ifndef __W25Q64_H__
-#define __W25Q64_H__
+#pragma once
 #include <stdint.h>
 
 // CODES
@@ -135,6 +134,3 @@ bool  W25Q64_eraseAll(bool flagwait);
  * @return char* buffer to store bytes
  */
 uint8_t *W25Q64_read(uint8_t *buf, uint32_t len, uint32_t addr);
-
-
-#endif //__W25Q64_H__

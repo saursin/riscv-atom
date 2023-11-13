@@ -1,8 +1,7 @@
-#include "lcd.h"
-
-#include "platform.h"
-#include "gpio.h"
-#include "time.h"
+#include <lcd.h>
+#include <platform.h>
+#include <gpio.h>
+#include <time.h>
 
 // Default values
 static int lcd_pin_rs = 0;

@@ -1,5 +1,4 @@
-#ifndef __LIMITS_H__
-#define __LIMITS_H__
+#pragma once
 
 #define LONG_BIT 32
 #define LONG_MAX 0x7fffffffL
@@ -59,5 +58,3 @@
 
 /* Maximum multibyte length of a character across all locales */
 #define MB_LEN_MAX 4
-
-#endif // __LIMITS_H__

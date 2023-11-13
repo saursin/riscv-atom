@@ -1,85 +1,125 @@
-#ifndef __STDIO_H__
-#define __STDIO_H__
+#pragma once
 
-#include <stdbool.h>
-#include "serial.h"
+#include <platform.h>
+#include <file.h>
+#include <serial.h>
 
-// Send Carrige Return before Linefeed
-#define SEND_CR_BEFORE_LF
+#ifndef EOF
+    #define EOF (-1)
+#endif
 
-#define EOF (-1)
+#ifndef NULL
+    #define NULL ((void*)(0))
+#endif
 
-// Bases to be used with putint
-#define BIN 2
-#define OCT 8
-#define DEC 10
-#define HEX 16
+typedef Device_t FILE;
+
+// Standard file descriptors
+#define stdin		&stddev[DEV_STDIN]
+#define stdout		&stddev[DEV_STDOUT]
+#define stderr		&stddev[DEV_STDERR]
 
 
 /**
- * @brief Reads a character from stdin
+ * @brief Writes a char to file
  * 
- * @return int character
+ * @param c char
+ * @param f file
+ * @return int char
  */
-int getchar(void);
-
+int fputc(int c, FILE *f);
 
 /**
- * @brief Writes a character to stdout.
- * 
- * @param chr character
+ * @brief Prints a char to stdout
+ * @param c char
  */
-void putchar(char chr);
-
-
-/**
- * @brief reads a line from stdin and stores it into the string pointed to by str
- * 
- * @param str string pointer
- * @param bufsize max size of string object
- * @param echo if enabed, sends the recieved char to stdout
- * @param prompt print prompt before actual string
- * 
- * @return str string pointer
- */
-char *gets(char * str, int bufsize, bool echo, char * prompt);
-
+int putchar(char c);
 
 /**
- * @brief writes a string to stdout.
+ * @brief Write a string to file
  * 
- * @param ptr pointer to the string 
- */
-void puts(char *ptr);
-
-
-/**
- * @brief Writes an integer (signed) to stdout
- * 
- * @param n integer
- * @param ndigits number of digits to display (use 0 for auto ndigits)
- * @param base base
- */
-void putint(int64_t n, unsigned ndigits, unsigned base);
-
-
-/**
- * @brief Printf function
- * 
- * @param fmt format specifier string (with placeholders)
- * @param ... values for placeholders
+ * @param str string
+ * @param f file
  * @return int 
  */
-int printf(char *fmt, ...);
+int fputs(const char *str, FILE *f);
+
+/**
+ * @brief Write a string to stdout
+ * 
+ * @param str string
+ * @return int 
+ */
+int puts(const char *str);
+
+/**
+ * @brief Get next char from file, advance position
+ * 
+ * @param f 
+ * @return int 
+ */
+int fgetc(FILE *f);
+
+/**
+ * @brief Get a character from stdin
+ * @return int 
+ */
+int getchar();
+
+/**
+ * @brief Read a string from file until n chars are read or '\n' is read or EOF is read.
+ * 
+ * @param str string
+ * @param n max number of chars to read (including '\n')
+ * @param f file
+ * @return char* string
+ */
+char *fgets(char *str, int n, FILE *f);
+
+/**
+ * @brief Read a string from stdin till either the '\n' is read or EOF is read
+ * 
+ * @param str string
+ * @return char* string
+ */
+char * gets(char *str);
 
 
 /**
- * @brief Prints buffer in hex
+ * Supported Format specifiers for printf functions
+ * - %d, %i, %u, %x, %b(optional), %o
+ * - %p, %c, %s, %f(optional)
  * 
- * @param buf pointer to buffer
- * @param len length of buffer
- * @param base_addr base address of buffer
+ * - fmt specifiers can be used with 'l', 'll', 'z' prefix to 
+ *   parse the number as long, long long and size_t respectively.
+ * - fmt specifiers can include padding
  */
-void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr);
 
-#endif // __STDIO_H__
+/**
+ * @brief Writes formatted string to file
+ * @param file file
+ * @param fmt format string
+ * @return int number of chars written
+ */
+int	fprintf (FILE * file, const char * fmt, ...)
+        __attribute__((__format__ (__printf__, 2, 3)));
+
+/**
+ * @brief Writes formatted string to stdout
+ * @param fmt format string
+ * @return int number of chars written
+ */
+int	printf (const char * fmt, ...)
+        __attribute__((__format__ (__printf__, 1, 2)));
+
+
+// ========== Non Standard Functions ==========
+
+/**
+ * @brief Prints a char buffer in hexdump style
+ * 
+ * @param buf buffer
+ * @param len length of buffer
+ * @param base_addr base address
+ */
+void dumphexbuf(char *buf, unsigned len, unsigned base_addr);

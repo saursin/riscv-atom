@@ -1,6 +1,7 @@
-#include "platform.h"
-#include "mmio.h"
-#include "gpio.h"
+#include <platform.h>
+#include <mmio.h>
+#include <gpio.h>
+#include <utils.h>
 
 // GPIO Register Offsets
 #define GPIO_REG_DAT 0x00

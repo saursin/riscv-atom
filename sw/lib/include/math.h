@@ -1,5 +1,4 @@
-#ifndef __MATH_H__
-#define __MATH_H__
+#pragma once
 
 /**
  * @brief Computes square root of given number
@@ -47,5 +46,3 @@ int max(int x, int y);
  * @return float
  */
 float pow(float x, int y);
-
-#endif //__MATH_H__

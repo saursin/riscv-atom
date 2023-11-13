@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "csr.h"
-#include "time.h"
+#include <csr.h>
+#include <time.h>
 
 #define CLOCKS_PER_SEC CLK_FREQ
 

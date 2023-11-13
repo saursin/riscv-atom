@@ -1,4 +1,18 @@
-#include "stdlib.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+void exit(const int status) {
+    while(1) {
+        asm volatile("mv a0, %[retcode];" : : [retcode] "r" (status));
+        asm volatile("j _exit");
+    }
+}
+
+void abort() {
+    puts("Abort called...\n");
+    exit(EXIT_FAILURE);
+}
+
 
 int atoi(char *s1)
 {

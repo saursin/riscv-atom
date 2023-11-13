@@ -1,7 +1,5 @@
-#ifndef __STDLIB_H___
-#define __STDLIB_H___
-
-#include "stddef.h"
+#pragma once
+#include <stddef.h>
 
 // Define Exit codes
 #define EXIT_FAILURE 1
@@ -9,6 +7,18 @@
 
 // Define Rand Max
 #define RAND_MAX ((1U << 31) - 1)
+
+/**
+ * @brief Exit normally
+ * @param status exit status
+ */
+void exit(int status) __attribute__((noreturn));
+
+/**
+ * @brief Exit abnormally
+ * 
+ */
+void abort() __attribute__((noreturn));
 
 ///////////////////////////////////////////////////////////////////
 // Type Conversion 
@@ -88,4 +98,3 @@ void *malloc(size_t block_size);
  */
 void free(void* ptr);
 
-#endif //__STDLIB_H__

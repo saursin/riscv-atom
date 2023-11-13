@@ -1,6 +1,6 @@
 // #include <time.h>  // for sleep()
-#include "gpio.h"
-#include "spi_bitbang.h"
+#include <gpio.h>
+#include <spi_bitbang.h>
 
 #define _spi_bitget(x, k)  ((x & (0x1 << k))>0)
 

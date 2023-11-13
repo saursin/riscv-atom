@@ -1,6 +1,5 @@
-#ifndef __TIME_H__
-#define __TIME_H__
-#include "platform.h"
+#pragma once
+#include <platform.h>
 
 typedef unsigned long long int clock_t;
 
@@ -25,6 +24,3 @@ void sleep_ms(clock_t ms);
  * @param ms time (in us)
  */
 void sleep_us(clock_t ms);
-
-
-#endif //__TIME_H__

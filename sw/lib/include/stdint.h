@@ -1,7 +1,5 @@
-#ifndef __STDINT_H__
-#define __STDINT_H__
-
-#include "stddef.h"
+#pragma once
+#include <stddef.h>
 
 typedef char int8_t;
 typedef short int16_t;
@@ -18,5 +16,3 @@ typedef uint64_t uintmax_t;
 
 typedef unsigned long uintptr_t;
 typedef long intptr_t;
-
-#endif // __STDINT__H__

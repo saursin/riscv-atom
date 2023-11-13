@@ -1,7 +1,5 @@
-#ifndef __STRING_H__
-#define __STRING_H__
-
-#include "stddef.h"
+#pragma once
+#include <stddef.h>
 
 /**
  * @brief Compares the string pointed to, by str1 to the string 
@@ -75,5 +73,3 @@ char *memcpy(char *dptr, char *sptr, int len);
  * @return char* 
  */
 char *memset(char *dptr, int x, int len);
-
-#endif //__STRING_H__

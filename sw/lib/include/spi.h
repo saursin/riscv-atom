@@ -1,5 +1,5 @@
-#ifndef __SPI_H__
-#define __SPI_H__
+#pragma once
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -83,5 +83,3 @@ char spi_transfer(struct SPI_Config * cfg, char b);
  * @return char 
  */
 char *spi_transfer_buf(struct SPI_Config * cfg, char *send_buf, char *recv_buf, unsigned int len);
-
-#endif // __SPI_H__

@@ -1,5 +1,5 @@
-#include "math.h"
-#include "stdio.h"
+#include <stdio.h>
+#include <math.h>
 
 // see http://f.javier.io/rep/books/The%20Elements%20of%20Computing%20Systems.pdf [pg-293]
 int sqrt(int x)

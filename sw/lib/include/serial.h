@@ -1,37 +1,5 @@
-#ifndef __SERIAL_H__
-#define __SERIAL_H__
-
-#include <stdint.h>
+#pragma once 
 #include <stdbool.h>
-#include "platform.h"
-
-#include "platform.h"
-
-// Register Offsets
-#define UART_REG_RBR 0x00
-#define UART_REG_THR 0x00
-#define UART_REG_LCR 0x04
-#define UART_REG_LSR 0x08
-#define UART_REG_DIV 0x0c
-
-// THR
-#define UART_REG_THR_TXDA 0xff
-#define UART_REG_RBR_RXDA 0xff
-
-// LCR
-#define UART_REG_LCR_RXEN 0b00000001
-#define UART_REG_LCR_TXEN 0b00000010
-#define UART_REG_LCR_STPB 0b00000100
-#define UART_REG_LCR_PARB 0b00001000
-#define UART_REG_LCR_EPAR 0b00010000
-#define UART_REG_LCR_LPBK 0b10000000
-
-// LSR
-#define UART_REG_LCR_RVAL 0b00000001
-#define UART_REG_LCR_TEMT 0b00000010
-#define UART_REG_LCR_FERR 0b00000100
-#define UART_REG_LCR_PERR 0b00001000
-
 
 // Baud Rates
 #ifdef SIM
@@ -123,6 +91,3 @@ void serial_write(char c);
  * @return char 
  */
 char serial_read();
-
-
-#endif //__SERIAL_H__

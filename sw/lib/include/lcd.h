@@ -1,5 +1,4 @@
-#ifndef __LCD_H__
-#define __LCD_H__
+#pragma once
 
 // commands
 #define LCD_CLEARDISPLAY 0x01 //!< Clear display, set cursor position to zero
@@ -120,5 +119,3 @@ void lcd_scrollLeft(void);
  * @brief Scroll Display Right
  */
 void lcd_scrollRight(void);
-
-#endif //__LCD_H__

@@ -1,8 +1,5 @@
-#ifndef __GPIO_H__
-#define __GPIO_H__
-
+#pragma once
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef enum {
     LOW=0, 
@@ -73,5 +70,3 @@ void gpio_setmode(int pin, gpio_direction_t mode);
  * @return gpio_direction_t 
  */
 gpio_direction_t gpio_getmode(int pin);
-
-#endif // __GPIO_H__

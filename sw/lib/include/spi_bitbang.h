@@ -1,6 +1,6 @@
-#ifndef __SPI_BITBANG_H__
-#define __SPI_BITBANG_H__
+#pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 struct SPIB_Config {
     uint8_t cs_pin;
@@ -56,5 +56,3 @@ void spib_start(struct SPIB_Config * cfg);
  * @param cfg config struct
  */
 void spib_end(struct SPIB_Config * cfg);
-
-#endif //__SPI_BITBANG_H__

@@ -109,11 +109,10 @@ trap_handler_base:
 	csrr	a0, mcause
     sw	    a0, 72(sp)
 	mv	    a1, sp
-	jal		common_trap_handler	# call exception handler in C
+	jal		trap_handler	# call exception handler in C
 	EPILOGUE
 	mret
 
-
-.weak common_trap_handler 		# Can be overridden
-common_trap_handler:
-    ret
+# .weak trap_handler 			# Can be overridden
+# trap_handler:
+#     ret

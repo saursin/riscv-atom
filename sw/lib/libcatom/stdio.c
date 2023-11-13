@@ -1,77 +1,141 @@
-#include "stdio.h"
-#include "serial.h"
+#include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdbool.h>
 
-///////////////////////////////////////////////////////////////////
-// getchar & Putchar use Low-level Serial ports
-int getchar(void)
-{
-    return (int) serial_read();
+
+#define BACKSPACE 0x7f
+
+// Enable printf %b format specifier (non standard) 
+#define PRINTF_ENFMT_BIN
+
+// Enable printf %f format specifer
+// #define PRINTF_ENFMT_FLOAT
+
+// Enable printf %n format specifer
+#define PRINTF_ENFMT_N
+
+
+#define get_va_unum(_args, _lcount) \
+        ((_lcount >= 2) ?   va_arg(_args, unsigned long long) : \
+        ((_lcount == 1) ?   va_arg(_args, unsigned long) : \
+                            va_arg(_args, unsigned))) \
+
+#define get_va_num(_args, _lcount) \
+        ((_lcount >= 2) ?   va_arg(_args, long long) : \
+        ((_lcount == 1) ?   va_arg(_args, long) : \
+                            va_arg(_args, int))) \
+
+
+#define __char_is_num(x)    (((x) >= '0') && ((x) <= '9'))
+
+
+//////////////////////////////////////////////////////////////////////////
+// Helper Functions
+
+static int __fputc(FILE *f, const char ch){
+    if(ch == '\n' && (f == stdout  || f == stderr))
+        __fputc(f, '\r'); 
+    f->write((char*)&ch, 1);
+    return 1;
+}
+
+static int __fputs(FILE *f, const char * s){
+    int rv = 0;
+    while (*s){
+        rv += __fputc(f, *(s++));
+    }
+    return rv;
+}
+
+static int __fgetc(FILE *f){
+    char c;
+    f->read(&c, 1);
+    return c;
+}
+
+static int __fprint_ull(FILE *f, unsigned long long n, unsigned base, char padc, int padn) {
+    if(base < 2 || base > 16) {
+        // invalid inputs
+        return -1;
+    }
+
+    int ret = 0;
+    char buf[65];   // sufficient to store unsigned long long in base 2
+    int indx = 0;
+    do {
+        int rem = n % base;
+        n = n / base;
+        buf[indx++] = "0123456789abcdef"[rem];
+    } while(n > 0U);
+
+    // print padding
+    if(padn > 0){
+        while(indx < padn){
+            __fputc(f, padc);
+            ret++; padn--;
+        }
+    }
+
+    // print buffer
+    while(--indx >= 0){
+        __fputc(f, buf[indx]);
+        ret++;
+    }
+    return ret;
 }
 
 
-void putchar(char chr)
+//////////////////////////////////////////////////////////////////////////
+
+int fputc(int c, FILE* f)
 {
-    #ifdef SEND_CR_BEFORE_LF
-    // convert '\n' to "\r\n"
-    if(chr == '\n') 
-        serial_write('\r');
-    #endif
-    serial_write(chr);
+    __fputc(f, c);
+    return c;
 }
 
-///////////////////////////////////////////////////////////////////
-// Other Functions use getchar and putchar
+int putchar(char c) {
+    fputc(c, stdout);
+    return 1;
+}
 
-char *gets(char * str, int bufsize, bool echo, char * prompt)
+int fputs(const char *str, FILE *f)
+{
+    __fputs(f, str);
+    return 0;
+}
+
+int puts(const char *str){
+    fputs(str, stdout);
+    return 0;
+}
+
+int fgetc(FILE *f) {
+    return __fgetc(f);
+}
+
+int getchar(){
+    return fgetc(stdin);
+}
+
+char *fgets(char * str, int num, FILE *f)
 {
     char *ptr = str;
     char c;
 
-    while(--bufsize)
+    while(--num)
     {
         // read character
-        c = getchar();
+        c = __fgetc(f);
 
-        if (c==0x7f) // backspace
+        if (c==BACKSPACE) // backspace
         {
             if(str!=ptr)    // String is not empty
             {   
                 // Clear last character in string
                 *(--ptr) = 0;
-
-                if(echo)
-                {
-                    // Send carrige return
-                    putchar('\r');
-
-                    if(prompt!=NULL) 
-                        puts(prompt);
-
-                    // RePrint line with last character deleted
-                    char * i = str; 
-                    while(i!=ptr+1)
-                    {
-                        putchar(*(i++));
-                    }
-                    putchar(' ');   // erase last char
-                    
-                    // RePrint to move cursor to proper location
-                    
-                    // Send carrige return
-                    putchar('\r');
-                    if(prompt!=NULL) 
-                        puts(prompt);
-
-                    i = str;
-                    while(i!=ptr+1)
-                    {
-                        putchar(*(i++));
-                    }
-                }
             }
-            bufsize++;
+            num++;
         }
 
         else if(c=='\n' || c=='\r') // ENTER key
@@ -81,164 +145,176 @@ char *gets(char * str, int bufsize, bool echo, char * prompt)
         else
         {
             *(ptr++) = c;
-            if (echo)
-                putchar(c);
         }
 
     }
-    if(echo) 
-        putchar('\n'); // \n
+
     *(ptr) = '\0';
     return str;
 }
 
-
-void puts(char *ptr)
-{
-    while(*ptr) 
-        putchar(*ptr++);
+char * gets(char *str){
+    return fgets(str, __INT_MAX__, stdin);
 }
 
 
-void putint(int64_t n, unsigned ndigits, unsigned base)
-{
-    if(base < 2 || base > 16) {
-        puts("\nERROR (stdio::putint): Unsupported Base\n");
-        return;
-    }
+int vfprintf(FILE *f, const char * fmt, va_list args){
+    long long num_ll;
+    unsigned long long num_ull;
+    uintptr_t ptr;
 
-    if(ndigits > 32)
-    {
-        puts("\nERROR (stdio::putint): ndigits too large\n");
-        return;
-    }
-   
-    if(base == 10 && n < 0) {
-        putchar('-');
-        n = -n;
-    }
+    char padc;
+    int padn;
+    int lcount;
+    unsigned nwritten = 0;
 
-    unsigned required_ndigits=1;
-    for(int32_t i=n; i/=base; required_ndigits++)
-    ;
+    while (*fmt != '\0') {
+        lcount = 0;
 
-    if(required_ndigits>ndigits)
-        ndigits=required_ndigits;
+        if (*fmt == '%') {
+            fmt++; // skip over %
 
-    char symbols[] = 
-    #ifdef HEX_UPPERCASE
-        "0123456789ABCDEF";
-    #else
-        "0123456789abcdef";
-    #endif
-
-    char buf[ndigits+1];
-    int loc = ndigits;
-    buf[loc--] = '\0';
-
-    for(; loc >= 0; loc--) {
-        if(loc < (ndigits-required_ndigits)) {
-            buf[loc] = '0';
-            continue;
-        }
-        buf[loc] = symbols[n % base];
-        n /= base;
-    }
-    puts(buf);
-}
-
-
-int printf(char *fmt, ...)
-{
-    va_list ap;
-    for(va_start(ap, fmt);*fmt;fmt++)
-    {
-        if(*fmt=='%')
-        {
-            fmt++;
-            int ndigits=0;
-            for(ndigits=0; *fmt >= '0' && *fmt <= '9'; fmt++) {
-                ndigits = (*fmt-'0') + (ndigits<<3)+(ndigits<<1); // val = val*10 + digit
+            // check for padc & padn
+            padn = 0;
+            padc = ' ';
+            if (*fmt == '0') {
+                padc = '0';
+                fmt++;
+                while(1){
+                    if(!__char_is_num(*fmt))
+                        break;
+                    padn = (*fmt-'0') + (padn << 3) + (padn << 1);  // padn = padn*10 + digit
+                    fmt++;
+                }
             }
 
-            switch(*fmt)
-            {
-                case 'b':
-                    // binary
-                    putint(va_arg(ap, int32_t), ndigits, BIN);
-                    break;
-                
-                case 'o':
-                    // Octal
-                    putint(va_arg(ap, int32_t), ndigits, OCT);
-                    break;
-
-                case 'd':
+__vprintf_loop:
+            switch(*fmt) {
+                // int as decimal value
                 case 'i':
-                    // Signed decimal number
-                    putint(va_arg(ap, int32_t), ndigits, DEC);
+                case 'd':
+                    num_ll = get_va_num(args, lcount);
+                    if(num_ll < 0){
+                        __fputc(f, '-'); nwritten++;
+                        num_ull = (unsigned long long) -num_ll;
+                        padn--;
+                    } else {
+                        num_ull = (unsigned long long) num_ll;
+                    }
+                    nwritten += __fprint_ull(f, num_ull, 10, padc, padn);
                     break;
                 
-                case 'l':
-                    if(*(++fmt) == 'l')
-                    {
-                        // Signed decimal number (long long)
-                        if(*(++fmt) == 'd')
-                        {
-                            // Signed decimal number (long long)
-                            putint(va_arg(ap, long long), ndigits, DEC);
-                            break;
-                        }
-                        else
-                        {
-                            putchar('l');
-                            putchar(*fmt);
-                            break;
-                        }                        
-                        break;
-                    }
-                    else
-                    {
-                        putchar('l');
-                        putchar(*fmt);
-                        break;
-                    }
+                // unsigned int as decimal
+                case 'u':
+                    num_ull = get_va_unum(args, lcount);
+                    nwritten += __fprint_ull(f, num_ull, 10, padc, padn);
                     break;
-
+                
+                // unsigned int as hexadecimal
                 case 'x':
                 case 'X':
-                    // unsigned hexadecimal (lowercase)
-                    putint(va_arg(ap, int32_t), ndigits, HEX);
-                    break;
-                
-                case 'p':
-                    // Pointer address
-                    puts("0x"); putint(va_arg(ap, uint32_t), 8, HEX);
+                    num_ull = get_va_unum(args, lcount);
+                    nwritten += __fprint_ull(f, num_ull, 16, padc, padn);
                     break;
 
-                case 'c':
-                    // character
-                    putchar(va_arg(ap,int));
+            #ifdef PRINTF_ENFMT_BIN
+                // binary
+                case 'b':
+                    num_ull = get_va_unum(args, lcount);
+                    nwritten += __fprint_ull(f, num_ull, 2, padc, padn);
+                    break;
+            #endif
+
+                // octal
+                case 'o':
+                    num_ull = get_va_unum(args, lcount);
+                    nwritten += __fprint_ull(f, num_ull, 8, padc, padn);
                     break;
                 
+                // length specifier 'l'
+                case 'l':
+                    lcount++;
+                    fmt++;
+                    goto __vprintf_loop;
+
+                // length specifier 'z'
+                case 'z':
+					if (sizeof(size_t) == 8U)
+						lcount = 2;
+					fmt++;
+					goto __vprintf_loop;
+                    
+                // pointer
+                case 'p':
+                    ptr = (uintptr_t) va_arg(args, void*);
+                    __fputs(f, "0x");
+                    nwritten += 2 + __fprint_ull(f, ptr, 16, padc, padn);
+                    break;
+
+                // char
+                case 'c':
+                    __fputc(f, va_arg(args, int)); nwritten++;
+                    break;
+
+                // string
                 case 's':
-                    // string
-                    puts(va_arg(ap, char *));
+                    nwritten += __fputs(f, va_arg(args, char*));
+                    break;
+
+            #ifdef PRINTF_ENFMT_N
+                // store nwritten
+                case 'n':
+                    *(va_arg(args, int*)) = nwritten;
+                    break;
+            #endif
+
+            #ifdef PRINTF_ENFMT_FLOAT
+                // Float
+                case 'f':
+                    break;
+            #endif // PRINTF_ENFMT_FLOAT
+
+                case '%':
+                    __fputc(f, '%'); nwritten++;
                     break;
 
                 default:
-                    putchar(*fmt);
-            }           
+                    // Unsupported format specifier
+                    return -1;
+            }
+            fmt++;
+            continue;
         }
-        else putchar(*fmt);
-    }
 
-    va_end(ap);
-    return 0;
+        __fputc(f, *fmt);
+        fmt++;
+        nwritten++;
+    }
+    return nwritten;
 }
 
 
-void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
+int fprintf(FILE *f, const char *fmt, ...)
+{
+    va_list va;
+    va_start(va, fmt);
+    int rv = vfprintf(f, fmt, va);
+    va_end(va);
+    return rv;
+}
+
+
+int printf(const char *fmt, ...)
+{
+    va_list va;
+    va_start(va, fmt);
+    int rv = vfprintf(stdout, fmt, va);
+    va_end(va);
+    return rv;
+}
+
+
+void dumphexbuf(char *buf, unsigned len, unsigned base_addr)
 {
     const int bpw = 4; // bytes per word
     const int wpl = 4; // words per line
@@ -246,11 +322,13 @@ void dumphexbuf(uint8_t *buf, unsigned len, unsigned base_addr)
     for (unsigned i=0; i<len; i++) {
         // print address at the start of the line
         if(i%(wpl*bpw) == 0) {
-            putint(base_addr+i, 8, HEX); puts(": ");
+            __fprint_ull(stdout, base_addr+i, 16, '0', 8);
+            puts(": ");
         }
         
         // print byte
-        putint(0xff & buf[i], 2, HEX);  putchar(' ');
+        __fprint_ull(stdout, 0xff & buf[i], 16, '0', 2);
+        putchar(' ');
         
         // extra space at word boundry
         if(i%bpw == bpw-1)

@@ -1,6 +1,5 @@
-#ifndef __CSR_H__
-#define __CSR_H__
-
+#pragma once
+#include <utils.h>
 #include <stdint.h>
 
 enum CSR_ID
@@ -80,5 +79,3 @@ inline void __attribute__ ((always_inline)) CSR_write(const int csr_id, uint32_t
     register uint32_t csr_data = data;
     asm volatile ("csrw %[input_i], %[input_j]" :  : [input_i] "i" (csr_id), [input_j] "r" (csr_data));
 }
-
-#endif // __CSR_H__

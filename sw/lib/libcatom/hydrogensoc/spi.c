@@ -1,6 +1,8 @@
-#include "platform.h"
-#include "mmio.h"
-#include "spi.h"
+#include <platform.h>
+#include <mmio.h>
+#include <utils.h>
+#include <spi.h>
+
 
 #define SPI_REG_SCKDIV_OFFSET   0x00
 #define SPI_REG_SCTRL_OFFSET    0x04
