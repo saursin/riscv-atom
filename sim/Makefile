@@ -51,6 +51,8 @@ VSRCS += $(RTL_DIR)/core/Alu.v
 VSRCS += $(RTL_DIR)/core/Decode.v 
 VSRCS += $(RTL_DIR)/core/RegisterFile.v 
 VSRCS += $(RTL_DIR)/core/CSR_Unit.v
+VSRCS += $(RTL_DIR)/core/RVC_Aligner.v
+VSRCS += $(RTL_DIR)/core/RVC_Decoder.v
 
 
 ####################################################

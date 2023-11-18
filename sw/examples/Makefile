@@ -82,7 +82,7 @@ endif
 
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall
-CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -O0 -g
+CFLAGS += -mabi=ilp32 -march=rv32ic -nostartfiles -ffreestanding -O0 -g
 CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 
 LINKERSCRIPT := None

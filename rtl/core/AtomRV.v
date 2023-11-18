@@ -56,6 +56,47 @@ module AtomRV # (
     input   wire            timer_int_i
     `endif // EN_EXCEPT
 );
+    wire instr_request_valid = !rst_i; // Always valid (Except on Reset condition)
+
+    `ifdef RV_C
+    wire [31:0] rvc_aligner_fetch_addr_o;
+    wire        rvc_aligner_fetch_valid_o;
+
+    wire [31:0] rvc_alignr_data_o;
+    wire        rvc_alignr_ack_o;
+    RVC_Aligner rvc_alignr (
+        .clk_i      (clk_i),
+        .rst_i      (rst_i),
+        
+        // Iport IFC
+        .m_adr_o    (rvc_aligner_fetch_addr_o),
+        .m_dat_i    (iport_data_i),
+        .m_valid_o  (rvc_aligner_fetch_valid_o),
+        .m_ack_i    (iport_ack_i),
+
+        // Pipeline IFC
+        .s_adr_i    (ProgramCounter),
+        .s_dat_o    (rvc_alignr_data_o),
+        .s_valid_i  (instr_request_valid),
+        .s_ack_o    (rvc_alignr_ack_o)
+    );
+
+    wire [31:0] rvc_decdr_instr_o;
+    wire        rvc_decdr_is_compressed_o;
+    RVC_Decoder rvc_decdr (
+        .clk_i          (clk_i),
+        .instr_i        (rvc_alignr_data_o),
+        .ack_i          (rvc_alignr_ack_o),
+        .instr_o        (rvc_decdr_instr_o),
+        .is_compressed  (rvc_decdr_is_compressed_o) // handle
+    );
+    `endif // RV_C
+
+    assign      iport_addr_o = `INLINE_IFDEF(RV_C, rvc_aligner_fetch_addr_o, ProgramCounter);
+    assign      iport_valid_o = `INLINE_IFDEF(RV_C, rvc_aligner_fetch_valid_o, instr_request_valid);
+    wire        iport_acknowledged = `INLINE_IFDEF(RV_C, rvc_alignr_ack_o, iport_ack_i);
+    wire [31:0] fetched_instr = `INLINE_IFDEF(RV_C, rvc_decdr_instr_o, iport_data_i);
+
     /*
         ///////////// Protocol specification //////////////
         CPU has a generic handshaking protocol interface (GHPI). Handshaking is done via means 
@@ -98,7 +139,7 @@ module AtomRV # (
         currently executing instruction happens to be a load-store instruction, but since currrent 
         instruction is a jump, there is no memory request made anyways.
     */
-    wire raw_imem_handshake = (iport_valid_o && iport_ack_i);
+    wire raw_imem_handshake = (instr_request_valid && iport_acknowledged);
 
     wire imem_handshake = raw_imem_handshake && !ignore_imem_handshake;
     wire dmem_handshake = (dport_valid_o && dport_ack_i);
@@ -124,7 +165,7 @@ module AtomRV # (
             - Stage2 is stalled, since the instruction in stage1 cant popogate to stage2. Therefore until
             the stage2 is stalled, instruction in stage1 is kept held.
     */
-    wire waiting_for_ibus_response = (!imem_handshake && iport_valid_o);
+    wire waiting_for_ibus_response = (!imem_handshake && instr_request_valid);
     wire stall_stage1 = waiting_for_ibus_response || stall_stage2;
 
     /*
@@ -158,7 +199,7 @@ module AtomRV # (
 
     `ifdef EN_EXCEPT
     // Exception signals
-    wire    except_instr_addr_misaligned = |ProgramCounter[1:0];
+    wire    except_instr_addr_misaligned = `INLINE_IFDEF(RV_C, ProgramCounter[0], |ProgramCounter[1:0]);    
     wire    except_load_addr_misaligned = dport_valid_o & !dport_we_o & |dport_addr_o[1:0];
     wire    except_store_addr_misaligned = dport_valid_o & dport_we_o & |dport_addr_o[1:0];
 
@@ -171,12 +212,11 @@ module AtomRV # (
     ////////////////////////////////////////////////////////////////////
     //  STAGE 1 - FETCH
     ////////////////////////////////////////////////////////////////////
-    assign iport_valid_o = !rst_i;  // Always valid (Except on Reset condition)
     /*
         Program Counter
     */
     reg [31:0] ProgramCounter   /*verilator public*/;
-    wire [31:0] ProgramCounter_next = ProgramCounter + 32'd4;
+    wire [31:0] ProgramCounter_next = ProgramCounter + `INLINE_IFDEF(RV_C, (rvc_decdr_is_compressed_o ? 32'd2 : 32'd4), 32'd4);
 
     always @(posedge clk_i) begin 
         if(rst_i)
@@ -252,7 +292,7 @@ module AtomRV # (
                 InstructionRegister <= `RV_INSTR_NOP;
                 
             else if(!stall_stage1)
-                InstructionRegister <= iport_data_i;
+                InstructionRegister <= fetched_instr;
         end
     end
 

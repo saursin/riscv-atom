@@ -43,7 +43,7 @@
     compressed instructions. It adds a decoder which decodes the 16 bit instructions 
     to 32 bit equivalents and a aligner to word-align Instruction fetches.
 */
-// `define RV_C
+`define RV_C
 
 
 /*
