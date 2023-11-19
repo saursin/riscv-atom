@@ -1,8 +1,14 @@
-`ifndef __HYDROGENSOC_CONFIG_VH__
-`define __HYDROGENSOC_CONFIG_VH__
+`ifndef __ATOMBONES_CONFIG_VH__
+`define __ATOMBONES_CONFIG_VH__
 
 // Reset address
-`define SOC_RESET_ADDRESS   32'h00000000
+`define SOC_RESET_ADDRESS   32'h0001_0000
+
+`define RV_ZICSR
+
+`define RV_C
+
+`define EN_EXCEPT
 
 // Atombones doesn't need the following parameters since everything 
 // other that the core is software simulated
@@ -21,4 +27,4 @@
 // `define UART_ADDR   32'h08000000    // 1.0 GB boundry
 // `define UART_SIZE   32'h00000008    // 8 bytes
 
-`endif //__HYDROGENSOC_CONFIG_VH__
+`endif //__ATOMBONES_CONFIG_VH__
