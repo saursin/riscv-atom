@@ -68,8 +68,8 @@ help : Makefile						## Show help message
 	@printf "\n"
 	
 	@printf "SOCTARGETs:\n"
-	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "atombones" "A barebone Atom based SoC with simulated memories\n"
-	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "hydrogensoc" "A minimal Atom based SoC\n"
+	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "atombones" "A barebone Atom based SoC with simulated memories"
+	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "hydrogensoc" "A minimal Atom based SoC"
 
 	@printf "\n"
 	@printf "TARGETs:\n"

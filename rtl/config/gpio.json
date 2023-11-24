@@ -1,0 +1,12 @@
+{
+    "name": "gpio",
+    "vtopmodule": "GPIO",
+    "vdefines": [],
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/gpio/GPIO.v",
+        "${RVATOM}/rtl/uncore/gpio/IOBuf.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

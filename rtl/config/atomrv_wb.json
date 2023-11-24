@@ -1,0 +1,10 @@
+{
+    "name": "atomrv_wb",
+    "vtopmodule": "AtomRV_wb",
+    "vsrcs": [
+        "${RVATOM}/rtl/core/AtomRV_wb.v"
+    ],
+    "includes": [
+        "atomrv"
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "name": "wbcomponents",
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/wishbone/Arbiter.v",
+        "${RVATOM}/rtl/uncore/wishbone/Arbiter2_wb.v",
+        "${RVATOM}/rtl/uncore/wishbone/Arbiter3_wb.v",
+        "${RVATOM}/rtl/uncore/wishbone/Crossbar5_wb.v",
+        "${RVATOM}/rtl/uncore/wishbone/Crossbar6_wb.v",
+        "${RVATOM}/rtl/uncore/wishbone/Priority_encoder.v"
+    ],
+    "incdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

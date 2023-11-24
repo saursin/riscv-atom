@@ -1,0 +1,12 @@
+{
+    "name": "uart",
+    "vtopmodule": "UART",
+    "vdefines": [],
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/uart/UART.v",
+        "${RVATOM}/rtl/uncore/uart/UART_core.v"
+    ],
+    "incdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

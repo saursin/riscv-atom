@@ -1,0 +1,22 @@
+{
+    "name": "hydrogensoc_minimal",
+    "vtopmodule": "HydrogenSoC",
+    "vdefines": [
+        "ENABLE_RISCV_EMBEDDED"
+    ],
+    "vsrcs": [
+        "${RVATOM}/rtl/soc/hydrogensoc/HydrogenSoC.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/soc/hydrogensoc"
+    ],
+    "includes": [
+        "atomrv_wb",
+        "wbcomponents",
+        "uart",
+        "gpio",
+        "spi",
+        "timer",
+        "mem"
+    ]
+}
