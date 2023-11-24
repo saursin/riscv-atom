@@ -10,12 +10,11 @@
 `ifdef verilator
     // Macros for Verilator
 `endif
-`ifdef SYNTHESIS_YOSYS
-    // Macros for Yosys
-`endif
 `ifdef SYNTHESIS
-    // Macros for Xilinx ISE
+    // Macros for Yosys & Xilinx ISE
+    `ifndef __ROM_INIT_FILE__
     `define __ROM_INIT_FILE__ "rom.hex"
+    `endif
 `endif
 
 `ifndef __ROM_INIT_FILE__

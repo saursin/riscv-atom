@@ -57,7 +57,7 @@ module RVC_Decoder(
                 instr_scope = "C.ADDI4SPN";
             end
             
-            5'b000_010: begin
+            5'b00_010: begin
                 // c.lw -> lw rd', imm(rs1')
                 decompr_instr = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
                             2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};

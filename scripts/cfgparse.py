@@ -280,7 +280,7 @@ if __name__ == "__main__":
             txt = list2str(cfgp.get_verilog_defines(), args.one_per_line) 
 
         if args.vflags:
-            txt = list2str(cfgp.get_vflags())
+            txt = list2str(cfgp.get_vflags(args.tool))
         
         if args.tcl:
             txt = cfgp.gen_tcl('verilator' if args.tool == 'generic' else args.tool)
