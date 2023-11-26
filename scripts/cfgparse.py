@@ -151,6 +151,26 @@ class ConfigParser:
             self.search_dirs = [dir] + self.search_dirs
 
     def parse(self):
+        # check if extends
+        def chk_extends(cfg:Config):
+            if 'extends' in cfg.json.keys():
+                import copy
+                bak = copy.deepcopy(cfg)
+                parent_cfg = cfg.json['extends']
+                parent_cfg_file = search_file(parent_cfg+'.json', self.search_dirs)
+                assert parent_cfg_file is not None, f'Cannot find parent "{parent_cfg}" for "{cfg.get_name()}"\n\tSearched in {str(self.search_dirs)}'
+                with open(parent_cfg_file, 'r') as cf:
+                    cfg.json = json.load(cf)
+                # override name
+                cfg.json['name'] = bak.get_name()
+                # override params
+                for param in bak.get_params().keys():
+                    cfg.json['params'][param] = bak.get_params()[param] # updates, adds if not presents
+                print(cfg.get_params())
+            for dep in cfg.deps:
+                chk_extends(dep)
+        chk_extends(self.cfg)
+
         def resolve_config_deps(cfg: Config):
             # resolve deps in current config
             for inc_cfg_name in cfg.get_includes():
