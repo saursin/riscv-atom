@@ -93,14 +93,14 @@ clean-sim:							## Clean atomsim build files
 
 .PHONY: test
 test: sim lib						## Test the build using banner example
-	cd sw/examples && make ex=banner sim=true clean compile run
+	cd sw/examples && make ex=banner sim=1 clean compile run
 
 
 # ======== Bootloader ========
 .PHONY : boot
 boot: lib                     		## Build bootloader for given target [default: atombones]
 	@printf "$(CLR_GR)>> Building bootloader [soctarget:$(soctarget)] $(CLR_NC)\n"
-	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=true
+	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=1
 
 
 .PHONY: clean-boot

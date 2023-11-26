@@ -11,7 +11,7 @@ LFLAGS:= -L $(RVATOM_LIB)/ -T $(RVATOM_LIB)/link/link_bootloader.ld -lcatom -Xli
 
 CONVELF_ARGS:= -t elf -c
 
-ifeq ($(sim), true) 
+ifeq ($(sim), 1) 
     CFLAGS+= -DSIM
 endif
 

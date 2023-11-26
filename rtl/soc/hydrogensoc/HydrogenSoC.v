@@ -449,7 +449,10 @@ module HydrogenSoC(
         .wb_ack_o   (timer_wb_ack_o),
 
         .int_o      (timer_int_o)
-);
+    );
 
+    `ifndef RV_EXCEPT
+    `UNUSED_VAR(timer_int_o)
+    `endif // RV_EXCEPT
 
 endmodule

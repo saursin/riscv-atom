@@ -520,6 +520,11 @@ module AtomRV # (
         .we_i   (d_csru_we),
         .data_o (csru_data_o)
     );
+    `else
+        `UNUSED_VAR(VEND_ID)
+        `UNUSED_VAR(ARCH_ID)
+        `UNUSED_VAR(IMPL_ID)
+        `UNUSED_VAR(HART_ID)
     `endif
 
 
