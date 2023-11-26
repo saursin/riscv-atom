@@ -4,7 +4,9 @@ sim ?= false
 
 RVPREFIX:= riscv64-unknown-elf
 
-CFLAGS:= -mabi=ilp32 -march=rv32ic -nostartfiles -ffreestanding -Os
+ISA:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
+ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
+CFLAGS:= -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os
 CFLAGS+= -DENABLE_UART
 CFLAGS+= -I $(RVATOM_LIB)/include
 LFLAGS:= -L $(RVATOM_LIB)/ -T $(RVATOM_LIB)/link/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections

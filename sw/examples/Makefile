@@ -82,10 +82,8 @@ endif
 
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall
-CFLAGS += -mabi=ilp32 -march=rv32ic -nostartfiles -ffreestanding -O0 -g
-CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
-
 LINKERSCRIPT := None
+
 #### check soctarget ####
 ifeq ($(__check_soctarget),true)
 
@@ -120,6 +118,10 @@ ifeq ($(__check_soctarget),true)
 
 endif
 
+ISA:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
+ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
+CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -O0 -g
+CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
 
 #### check ex ####

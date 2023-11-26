@@ -16,10 +16,10 @@
 `default_nettype none
 
 `ifdef EN_EXCEPT
-`ifndef RV_ZICSR
+`ifndef EN_RVZICSR
 `error "Exception support requires CSR registers"
-`endif
-`endif
+`endif // EN_EXCEPT
+`endif // EN_RVZICSR
 
 
 
@@ -58,7 +58,7 @@ module AtomRV # (
 );
     wire instr_request_valid = !rst_i; // Always valid (Except on Reset condition)
 
-    `ifdef RV_C
+    `ifdef EN_RVC
     wire [31:0] rvc_aligner_fetch_addr_o;
     wire        rvc_aligner_fetch_valid_o;
 
@@ -90,12 +90,12 @@ module AtomRV # (
         .instr_o        (rvc_decdr_instr_o),
         .is_compressed  (rvc_decdr_is_compressed_o) // handle
     );
-    `endif // RV_C
+    `endif // EN_RVC
 
-    assign      iport_addr_o = `INLINE_IFDEF(RV_C, rvc_aligner_fetch_addr_o, ProgramCounter);
-    assign      iport_valid_o = `INLINE_IFDEF(RV_C, rvc_aligner_fetch_valid_o, instr_request_valid);
-    wire        iport_acknowledged = `INLINE_IFDEF(RV_C, rvc_alignr_ack_o, iport_ack_i);
-    wire [31:0] fetched_instr = `INLINE_IFDEF(RV_C, rvc_decdr_instr_o, iport_data_i);
+    assign      iport_addr_o = `INLINE_IFDEF(EN_RVC, rvc_aligner_fetch_addr_o, ProgramCounter);
+    assign      iport_valid_o = `INLINE_IFDEF(EN_RVC, rvc_aligner_fetch_valid_o, instr_request_valid);
+    wire        iport_acknowledged = `INLINE_IFDEF(EN_RVC, rvc_alignr_ack_o, iport_ack_i);
+    wire [31:0] fetched_instr = `INLINE_IFDEF(EN_RVC, rvc_decdr_instr_o, iport_data_i);
 
     /*
         ///////////// Protocol specification //////////////
@@ -199,7 +199,7 @@ module AtomRV # (
 
     `ifdef EN_EXCEPT
     // Exception signals
-    wire    except_instr_addr_misaligned = `INLINE_IFDEF(RV_C, ProgramCounter[0], |ProgramCounter[1:0]);    
+    wire    except_instr_addr_misaligned = `INLINE_IFDEF(EN_RVC, ProgramCounter[0], |ProgramCounter[1:0]);    
     wire    except_load_addr_misaligned = dport_valid_o & !dport_we_o & |dport_addr_o[1:0];
     wire    except_store_addr_misaligned = dport_valid_o & dport_we_o & |dport_addr_o[1:0];
 
@@ -216,7 +216,7 @@ module AtomRV # (
         Program Counter
     */
     reg [31:0] ProgramCounter   /*verilator public*/;
-    wire [31:0] ProgramCounter_next = ProgramCounter + `INLINE_IFDEF(RV_C, (rvc_decdr_is_compressed_o ? 32'd2 : 32'd4), 32'd4);
+    wire [31:0] ProgramCounter_next = ProgramCounter + `INLINE_IFDEF(EN_RVC, (rvc_decdr_is_compressed_o ? 32'd2 : 32'd4), 32'd4);
 
     always @(posedge clk_i) begin 
         if(rst_i)
@@ -245,14 +245,14 @@ module AtomRV # (
         initial begin
             dpi_logger_start();
         end
-    `endif
+    `endif // DPI_LOGGER
 
     `ifdef LOG_RVATOM_JUMP
     always @(posedge clk_i) begin
         if(jump_decision)
             dpi_logger("Jump  address=0x%x\n", {alu_out[31:1], 1'b0});
     end
-    `endif
+    `endif // LOG_RVATOM_JUMP
 
     //----------------------------------------------------------
     // PIPELINE REGISTERS
@@ -324,10 +324,10 @@ module AtomRV # (
     wire            d_mem_load_store;
     wire            d_mem_we;
 
-    `ifdef RV_ZICSR
+    `ifdef EN_RVZICSR
     wire    [2:0]   d_csru_op_sel;
     wire            d_csru_we;
-    `endif
+    `endif // EN_RVZICSR
 
     `ifdef EN_EXCEPT
     wire            d_trap_ret;
@@ -358,11 +358,11 @@ module AtomRV # (
         .d_mem_load_store   (d_mem_load_store),
         .mem_we_o           (d_mem_we)
         
-        `ifdef RV_ZICSR
+        `ifdef EN_RVZICSR
         ,
         .csru_op_sel_o      (d_csru_op_sel),
         .csru_we_o          (d_csru_we)
-        `endif
+        `endif // EN_RVZICSR
 
         `ifdef EN_EXCEPT
         ,
@@ -386,22 +386,22 @@ module AtomRV # (
             3'd2:   rf_rd_data = alu_out;
             3'd3:   rf_rd_data = {31'd0, comparison_result};
             3'd4:   rf_rd_data = memload;
-            `ifdef RV_ZICSR
+            `ifdef EN_RVZICSR
             3'd5:   rf_rd_data = csru_data_o;
-            `endif
+            `endif // EN_RVZICSR
 
             default: rf_rd_data = 32'd0;
         endcase
     end
 
 
-    `ifdef RV_E
+    `ifdef EN_RVE
     localparam RF_INDX_BITS = 3;
     localparam RF_NREGS = 16;
     `else
     localparam RF_INDX_BITS = 4;
     localparam RF_NREGS = 32;
-    `endif
+    `endif // EN_RVE
 
     wire    [31:0]  rf_rs1;
     wire    [31:0]  rf_rs2;
@@ -422,13 +422,13 @@ module AtomRV # (
         .Data_i     (rf_rd_data)
     );
 
-    `ifdef RV_E
+    `ifdef EN_RVE
         // We need these because we are not using MSB 
-        // of select lines in RV_E
+        // of select lines
         `UNUSED_VAR(d_rs1_sel)
         `UNUSED_VAR(d_rs2_sel)
         `UNUSED_VAR(d_rd_sel)
-    `endif
+    `endif // EN_RVE
 
 
     /*
@@ -475,7 +475,7 @@ module AtomRV # (
         endcase
     end
 
-    `ifdef RV_ZICSR
+    `ifdef EN_RVZICSR
     /*
         ////// CSR Unit //////
         Contains all the Control and status registers
@@ -525,7 +525,7 @@ module AtomRV # (
         `UNUSED_VAR(ARCH_ID)
         `UNUSED_VAR(IMPL_ID)
         `UNUSED_VAR(HART_ID)
-    `endif
+    `endif // EN_RVZICSR
 
 
     /*

@@ -76,23 +76,65 @@ class Config:
     def get_name(self):
         return self.json['name'] if 'name' in self.json.keys() else '?'
     
+    def get_params(self):
+        return self.json['params'] if 'params' in self.json.keys() else dict()
+    
     def get_type(self):
         return self.json['type'] if 'type' in self.json.keys() else 'generic'
 
     def get_vtopmodule(self):
-        return self.json['vtopmodule'] if 'vtopmodule' in self.json.keys() else self.get_name()
+        return self.eval_conditionals(self.json['vtopmodule']) if 'vtopmodule' in self.json.keys() else self.get_name()
 
     def get_vdefines(self)->list:
-        return self.json['vdefines'] if 'vdefines' in self.json.keys() else list()
+        return self.eval_conditionals(self.json['vdefines']) if 'vdefines' in self.json.keys() else list()
     
     def get_vsrcs(self)->list:
-        return self.json['vsrcs'] if 'vsrcs' in self.json.keys() else list()
+        return self.eval_conditionals(self.json['vsrcs']) if 'vsrcs' in self.json.keys() else list()
 
     def get_vincdirs(self)->list:
-        return self.json['vincdirs'] if 'vincdirs' in self.json.keys() else list()
+        return self.eval_conditionals(self.json['vincdirs']) if 'vincdirs' in self.json.keys() else list()
 
     def get_includes(self)->list:
-        return self.json['includes'] if 'includes' in self.json.keys() else list()
+        return self.eval_conditionals(self.json['includes']) if 'includes' in self.json.keys() else list()
+
+    def get_attr(self, attr)->any:
+        return self.eval_conditionals(self.json[attr]) if attr in self.json.keys() else None
+
+    def eval_conditionals(self, ds:str or list or dict):
+        """
+            Evaluates non nested conditional statements in str, list, dict(not in key)
+            fmt: [cond?A:B]
+            cond can by a python style condition which can contain veriables 
+            from the param field provided in the same json file. Depending on the condition 
+            the whole conditonal block i.e. [?:] is replaced by either A or B
+        """
+        def __eval(txt:str):
+            while '[' in txt:
+                expr_strt = txt.find('[')
+                expr_que = txt.find('?', expr_strt)
+                expr_col = txt.find(':', expr_que)
+                expr_end = txt.find(']', expr_col)
+                if expr_strt == -1 or expr_que == -1 or expr_col == -1 or expr_end == -1:
+                    raise f'Malformed expr in {self.jsonfile}:{txt}'
+                condn = txt[expr_strt+1:expr_que]
+                res = txt[expr_que+1:expr_col] if eval(condn, self.get_params()) else txt[expr_col+1:expr_end]
+                txt = txt[0:expr_strt]+res+txt[expr_end+1:]
+            return txt
+
+        if isinstance(ds, str):
+            ds = __eval(ds)
+        elif isinstance(ds, list):
+            tmp = []
+            for l in ds:
+                res = __eval(l)
+                tmp += [res] if len(res.strip())>0 else [] # cleanup any blank entries
+            ds = tmp
+        elif isinstance(ds, dict):
+            for k in ds.keys():
+                ds[k] = __eval(ds[k])
+        else:
+            raise f'cannot resolve expession in type {type(ds)}'
+        return ds
 
 
 
@@ -235,7 +277,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--one-per-line', help='Print one entry per line', action='store_true')
     parser.add_argument('-o', '--output', help='Dump output to file', type=str)
     parser.add_argument('-n', '--no-resolve', help='Do not resolve environment variables in path', action='store_true')
-    parser.add_argument('--tool', help='Specify tool', type=str, default='generic')
+    parser.add_argument('-T', '--tool', help='Specify tool', type=str, default='generic')
 
     mutex_group = parser.add_mutually_exclusive_group()
     mutex_group.add_argument('-t', '--top', help='get verilog topmodule', action='store_true')
@@ -245,7 +287,8 @@ if __name__ == "__main__":
     mutex_group.add_argument('-f', '--vflags', help='get verilog sim flags', action='store_true')
     mutex_group.add_argument('-c', '--tcl', help='generate tcl script', action='store_true')
     mutex_group.add_argument('-F', '--filelist', help='generate filelist', action='store_true')
-    mutex_group.add_argument('--hierarchy', help='print module hierarchy', action='store_true')
+    mutex_group.add_argument('-a', '--get-attr', help='get raw attribute', type=str)
+    mutex_group.add_argument('-H', '--hierarchy', help='print module hierarchy', action='store_true')
 
     # Parse args
     args = parser.parse_args()
@@ -280,7 +323,7 @@ if __name__ == "__main__":
             txt = list2str(cfgp.get_verilog_defines(), args.one_per_line) 
 
         if args.vflags:
-            txt = list2str(cfgp.get_vflags(args.tool))
+            txt = list2str(cfgp.get_vflags('verilator' if args.tool == 'generic' else args.tool))
         
         if args.tcl:
             txt = cfgp.gen_tcl('verilator' if args.tool == 'generic' else args.tool)
@@ -290,6 +333,9 @@ if __name__ == "__main__":
         
         if args.hierarchy:
             txt = cfgp.get_hierarcy()
+        
+        if args.get_attr:
+            txt = str(cfgp.cfg.get_attr(args.get_attr))
 
         # Dump requested info
         if args.output:

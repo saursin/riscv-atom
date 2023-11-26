@@ -451,8 +451,8 @@ module HydrogenSoC(
         .int_o      (timer_int_o)
     );
 
-    `ifndef RV_EXCEPT
+    `ifndef EN_EXCEPT
     `UNUSED_VAR(timer_int_o)
-    `endif // RV_EXCEPT
+    `endif // EN_EXCEPT
 
 endmodule

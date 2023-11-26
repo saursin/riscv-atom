@@ -176,19 +176,19 @@ module CSR_Unit#
         1'b0,               // bit-15    P Tentatively reserved for Packed-SIMD extension
         1'b0,               // bit-14    O Reserved
         1'b0,               // bit-13    N Tentatively reserved for User-Level Interrupts extension
-        `isdefined(RV_M),   // bit-12    M Integer Multiply/Divide extension
+        `isdefined(EN_RVM), // bit-12    M Integer Multiply/Divide extension
         1'b0,               // bit-11    L Reserved
         1'b0,               // bit-10    K Reserved
         1'b0,               // bit-9     J Tentatively reserved for Dynamically Translated Languages extension
         1'b1,               // bit-8     I RV32I/64I/128I base ISA
         1'b0,               // bit-7     H Hypervisor extension
         1'b0,               // bit-6     G Reserved
-        `isdefined(RV_F),   // bit-5     F Single-precision floating-point extension
-        `isdefined(RV_E),   // bit-4     E RV32E base ISA
-        `isdefined(RV_D),   // bit-3     D Double-precision floating-point extension
-        `isdefined(RV_C),   // bit-2     C Compressed extension
+        `isdefined(EN_RVF), // bit-5     F Single-precision floating-point extension
+        `isdefined(EN_RVE), // bit-4     E RV32E base ISA
+        `isdefined(EN_RVD), // bit-3     D Double-precision floating-point extension
+        `isdefined(EN_RVC), // bit-2     C Compressed extension
         1'b0,               // bit-1     B Tentatively reserved for Bit-Manipulation extension
-        `isdefined(RV_A)    // bit-0     A Atomic extension
+        `isdefined(EN_RVA)  // bit-0     A Atomic extension
     };
 
 

@@ -3,7 +3,7 @@
 
 include ../../common.mk
 ##################################################
-soctarget?=None
+soctarget?=atombones
 
 # enable this to generate one section per function, 
 # this allows these sections(functions) to be removed 
@@ -49,7 +49,9 @@ soctarget_ALLCAPS = $(shell echo $(soctarget) | tr  '[:lower:]' '[:upper:]')
 
 RVPREFIX := riscv64-unknown-elf
 CC := $(RVPREFIX)-gcc
-CFLAGS = -mabi=ilp32 -march=rv32i -ffreestanding -nostartfiles -nostdlib -Wall -I include -DTARGET_$(soctarget_ALLCAPS)
+ISA:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
+ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
+CFLAGS = -march=$(ISA) -mabi=$(ABI) -ffreestanding -nostartfiles -nostdlib -Wall -I include -DTARGET_$(soctarget_ALLCAPS)
 SRC_DIR = libcatom
 OBJ_DIR = obj
 
