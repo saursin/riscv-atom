@@ -150,7 +150,7 @@ class ConfigParser:
         if dir not in self.search_dirs:
             self.search_dirs = [dir] + self.search_dirs
 
-    def parse(self):
+    def parse(self, override_params=[]):
         # check if extends
         def chk_extends(cfg:Config):
             if 'extends' in cfg.json.keys():
@@ -170,6 +170,13 @@ class ConfigParser:
             for dep in cfg.deps:
                 chk_extends(dep)
         chk_extends(self.cfg)
+
+        # override params
+        if len(override_params) > 0:
+            for param in override_params:
+                pname, pvalue = param.split('=')
+                if pname in self.cfg.json['params']:
+                    self.cfg.json['params'][pname] = pvalue
 
         def resolve_config_deps(cfg: Config):
             # resolve deps in current config
@@ -298,6 +305,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', help='Dump output to file', type=str)
     parser.add_argument('-n', '--no-resolve', help='Do not resolve environment variables in path', action='store_true')
     parser.add_argument('-T', '--tool', help='Specify tool', type=str, default='generic')
+    parser.add_argument('-p', '--param', action='append', help='override a parameter', type=str)
 
     mutex_group = parser.add_mutually_exclusive_group()
     mutex_group.add_argument('-t', '--top', help='get verilog topmodule', action='store_true')
@@ -326,7 +334,7 @@ if __name__ == "__main__":
             cfgp.add_searchdir(rvatom_root+'/rtl/config')       
         
         # parse
-        cfgp.parse()
+        cfgp.parse(override_params=args.param if args.param else [])
         
         # obtain
         txt = ''
