@@ -53,6 +53,7 @@ def search_file(filename: str, search_dirs: list):
 # module.json
 # {
 #     "name": "xyz",    // name of the module
+#     "extends": "abc"  // derive configuration for xyz from abc overriding the params
 #     "defines": [],    // preprocessor defines
 #     "vsrcs": [],      // Verilog sources
 #     "incdirs": []     // Verilog include directories
@@ -110,15 +111,25 @@ class Config:
         """
         def __eval(txt:str):
             while '[' in txt:
+                # get expr bounds
                 expr_strt = txt.find('[')
+                expr_end = txt.find(']', expr_strt)
+                assert expr_end != -1, "malformed expression"
+
+                # Get fields
                 expr_que = txt.find('?', expr_strt)
+                if expr_que == -1: # ? not found: just evaluate expr and emplace
+                    condn = txt[expr_strt+1:expr_end]
+                    res = str(eval(condn, self.get_params()))
+                    txt = txt[0:expr_strt]+res+txt[expr_end+1:]
+                    continue
+                
                 expr_col = txt.find(':', expr_que)
-                expr_end = txt.find(']', expr_col)
                 if expr_strt == -1 or expr_que == -1 or expr_col == -1 or expr_end == -1:
                     raise f'Malformed expr in {self.jsonfile}:{txt}'
                 condn = txt[expr_strt+1:expr_que]
                 res = txt[expr_que+1:expr_col] if eval(condn, self.get_params()) else txt[expr_col+1:expr_end]
-                txt = txt[0:expr_strt]+res+txt[expr_end+1:]
+                txt = txt[0:expr_strt]+res+txt[expr_end+1:]                    
             return txt
 
         if isinstance(ds, str):

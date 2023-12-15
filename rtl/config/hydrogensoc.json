@@ -4,7 +4,9 @@
         "en_embedded": false,
         "en_compressed": true,
         "en_csr": true,
-        "en_exceptions": true
+        "en_exceptions": true,
+        "num_gpio_io": 32, 
+        "num_spi_cs": 1
     },
     "isa": "rv32[en_embedded?e:i][en_compressed?c:]_[en_csr?zicsr:]",
     "abi": "ilp32[en_embedded?e:]",
@@ -13,7 +15,9 @@
         "[en_embedded?EN_RVE:]",
         "[en_csr?EN_RVZICSR:]",
         "[en_exceptions?EN_EXCEPT:]",
-        "[en_compressed?EN_RVC:]"
+        "[en_compressed?EN_RVC:]",
+        "NGPIO=[num_gpio_io]",
+        "NSPI_CS=[num_spi_cs]"
     ],
     "vsrcs": [
         "${RVATOM}/rtl/soc/hydrogensoc/HydrogenSoC.v"
