@@ -1,8 +1,8 @@
 `default_nettype none
 
 module RVC_Aligner(
-    input                   clk_i,
-    input                   rst_i,
+    input   wire            clk_i,
+    input   wire            rst_i,
     // From Core (Slave)
     input   wire    [31:0]  s_adr_i,
     output  wire    [31:0]  s_dat_o,
