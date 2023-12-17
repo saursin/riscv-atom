@@ -177,7 +177,6 @@ class ConfigParser:
                 # override params
                 for param in bak.get_params().keys():
                     cfg.json['params'][param] = bak.get_params()[param] # updates, adds if not presents
-                print(cfg.get_params())
             for dep in cfg.deps:
                 chk_extends(dep)
         chk_extends(self.cfg)
