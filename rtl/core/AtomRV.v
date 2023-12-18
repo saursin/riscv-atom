@@ -237,10 +237,6 @@ module AtomRV # (
         end
     end
 
-    // Connect pc to imem address input
-    assign iport_addr_o = ProgramCounter;
-
-
     `ifdef DPI_LOGGER
         initial begin
             dpi_logger_start();
