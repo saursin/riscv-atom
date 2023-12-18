@@ -358,7 +358,7 @@ if __name__ == "__main__":
             txt = list2str(cfgp.get_verilog_srcs(), args.one_per_line)
 
         if args.defines:
-            txt = list2str(cfgp.get_verilog_defines(), args.one_per_line) 
+            txt = list2str(prefixlist(cfgp.get_verilog_defines(), '-D'), args.one_per_line) 
 
         if args.vflags:
             txt = list2str(cfgp.get_vflags('verilator' if args.tool == 'generic' else args.tool))
