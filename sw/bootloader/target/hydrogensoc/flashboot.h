@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <spi.h>
 #include <utils.h>
+#include <mmio.h>
 
 // Flash definitions
 #define FLASH_CMD_READ 0x03

@@ -1,12 +1,12 @@
-#pragma once
+#include <stdint.h>
 
-#include <gpio.h>
+#include "common.h"
+
+#include <platform.h>
 #include <stdio.h>
 #include <time.h>
-#include <mmio.h>
+#include <gpio.h>
 #include <spi.h>
-#include <utils.h>
-
 #include "flashboot.h"
 
 #define STRINGIFY(s) #s
@@ -14,7 +14,6 @@
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
-
 
 //-------------------- Configuration --------------------
 #define BOOTLED_PIN 0
@@ -32,8 +31,14 @@ extern uint32_t __approm_size;
 
 // number of flashes to indicate entering of user application
 #define END_LED_FLASHES   1
-//-------------------------------------------------------
 
+// Bootmodes
+#define BOOTMODE_FLASHBOOT      0
+#define BOOTMODE_JUMP_TO_RAM    1
+#define BOOTMODE_INF_LOOP       2
+#define BOOTMODE_DEFAULT        BOOTMODE_JUMP_TO_RAM
+
+//-------------------------------------------------------
 
 /**
  * @brief Blink BOOTLED
@@ -58,13 +63,10 @@ void led_blink(int pin, int count, int time_period)
     }
 }
 
+void * platform_init(){
+    uint8_t bootmode = BOOTMODE_DEFAULT;
 
-/**
- * @brief Platform specific initialization
- * 
- * @return void* address to jump to after boot
- */
-void * platform_init() {
+#ifdef SOC_EN_GPIO
     // Initialize GPIO
     gpio_setmode(BOOTLED_PIN, OUTPUT);     
     gpio_setmode(BOOTMODE_PIN0, INPUT);
@@ -76,36 +78,44 @@ void * platform_init() {
     // get bootmode
     uint8_t pin0_val = (uint8_t)gpio_read(BOOTMODE_PIN0);
     uint8_t pin1_val = (uint8_t)gpio_read(BOOTMODE_PIN1);
-    uint8_t bootmode = pin0_val | pin1_val << 1;
-
+    bootmode = pin0_val | pin1_val << 1;
+#else
+    P(puts("nogpio: using default bootmode\n");)
+#endif
     // Print Bootmode
-    P(putchar('0'+pin0_val);)
-    P(putchar('0'+pin1_val);)
-    P(putchar(':');)
+    P(puts("bootmode: ");)
+    P(putchar('0'+bootmode);)
+    P(puts(": ");)
+    
+    // Perform action according to bootmode
+    switch (bootmode)
+    {
+        case BOOTMODE_FLASHBOOT:
+            P(puts("flashboot: copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) "\n");)
+        #ifdef SOC_EN_SPI
+            flashcpy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+        #else
+            boot_panic(RCODE_FLASHBOOT_FAIL);
+        #endif
+            break;
 
-    /**
-     * Bootmode: 
-     *  0b00: flashboot
-     *  0b01: jump to ram
-     *  default: infinite loop
-    */
-    if (bootmode == 0b00) {
-        // Bootmode: flash boot
-        P(puts("flashboot: Copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) "\n");)
-        // copy from flash
-        flashcpy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
-    } else if (bootmode == 0b01) {
-        // Bootmode: jump to ram
-    } else { 
-        // Bootmode: Infinite loop
-        while(1){
-            asm volatile("");
-        }
+        case BOOTMODE_JUMP_TO_RAM: 
+            P(puts("jmptoram\n");)
+            break;
+    
+        case BOOTMODE_INF_LOOP:
+        default:
+            P(puts("infloop\n");)
+            while(1){
+                asm volatile("");
+            }
     }
 
+    #ifdef SOC_EN_GPIO
     // Blink single (signal jump to user code)
     led_blink(BOOTLED_PIN, END_LED_FLASHES, 50);
-
-    // Jump to start of approm
+    #endif
+    
+    // return start address of approm
     return (void *) &__approm_start;
 }
