@@ -21,7 +21,7 @@ SRCS:= main.c crt0.S target/$(soctarget)/boot.c
 RVPREFIX:= riscv64-unknown-elf
 CFLAGS:= -march=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
 CFLAGS+= -mabi=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
-CFLAGS+= -nostartfiles -ffreestanding -g -Os
+CFLAGS+= -Wall -nostartfiles -ffreestanding -g -Os
 CFLAGS+= -I $(RVATOM_LIB)/include -I include
 CFLAGS+= $(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -d)
 CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')

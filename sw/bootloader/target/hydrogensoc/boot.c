@@ -91,11 +91,10 @@ void * platform_init(){
     switch (bootmode)
     {
         case BOOTMODE_FLASHBOOT:
-            P(puts("flashboot: copying from " EXPAND_AND_STRINGIFY(FLASH_IMG_OFFSET) "\n");)
         #ifdef SOC_EN_SPI
-            flashcpy((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+            flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
         #else
-            boot_panic(RCODE_FLASHBOOT_FAIL);
+            boot_panic(RCODE_FLASHBOOT_COPY_FAIL);
         #endif
             break;
 

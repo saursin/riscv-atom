@@ -31,8 +31,11 @@ void boot_panic(int code){
         case RCODE_INIT_FAIL:
             puts("init fail");
             break;
-        case RCODE_FLASHBOOT_FAIL:
-            puts("flashboot fail; nospi");
+        case RCODE_FLASHBOOT_INVALID_DEVICE:
+            puts("flashboot: invalid device");
+            break;
+        case RCODE_FLASHBOOT_COPY_FAIL:
+            puts("flashboot: no spi IP");
             break;
         default:
             puts("unknown");
@@ -51,7 +54,7 @@ int main(){
     #ifdef CLS_AT_START
         P(putchar(0x1b); putchar('c');)  // clear screen
     #else
-        P('\n');
+        P(putchar('\n'));
     #endif
 
     // Print header
