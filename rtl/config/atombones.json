@@ -1,10 +1,22 @@
 {
     "name": "atombones",
+    "type": "soc",
+    "params": {
+        "en_embedded": false,
+        "en_compressed": false,
+        "en_csr": true,
+        "en_exceptions": true
+    },
+
+    "isa": "rv32[en_embedded?e:i][en_compressed?c:][en_csr?_zicsr:]",
+    "abi": "ilp32[en_embedded?e:]",
+    
     "vtopmodule": "AtomBones",
     "vdefines": [
-        "SOC_RESET_ADDRESS=32'h0001_0000",
-        "ENABLE_RVZICSR",
-        "ENABLE_EXCEPT"
+        "[en_embedded?EN_RVE:]",
+        "[en_compressed?EN_RVC:]",
+        "[en_csr?EN_RVZICSR:]",
+        "[en_exceptions?EN_EXCEPT:]"
     ],
     "vsrcs": [
         "${RVATOM}/rtl/soc/atombones/AtomBones.v"
@@ -12,6 +24,7 @@
     "vincdirs": [
         "${RVATOM}/rtl/soc/atombones"
     ],
+    
     "includes": [
         "atomrv"
     ]
