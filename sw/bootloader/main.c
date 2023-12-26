@@ -14,32 +14,17 @@ void puthex(unsigned val) {
 }
 
 void boot_panic_handler(){
-    boot_panic(RCODE_EXCEPTION);
+    #ifdef __EN_PRINTS
+    puts("Exception: cause=0x"); puthex(CSR_read(CSR_MCAUSE));
+    puts(", addr=0x"); puthex(CSR_read(CSR_MEPC));
+    #endif
+    exit(RCODE_EXCEPTION);
 }
 
-void boot_panic(int code){
+void boot_panic(int code, char * msg){
 #ifdef __EN_PRINTS
     puts("boot-panic: ");
-    switch (code) {
-        case RCODE_EXCEPTION:
-            puts("exception: cause=0x"); puthex(CSR_read(CSR_MCAUSE));
-            puts(", addr=0x"); puthex(CSR_read(CSR_MEPC));
-            break;
-        case RCODE_UNREACHABLE:
-            puts("unreachable");
-            break;
-        case RCODE_INIT_FAIL:
-            puts("init fail");
-            break;
-        case RCODE_FLASHBOOT_INVALID_DEVICE:
-            puts("flashboot: invalid device");
-            break;
-        case RCODE_FLASHBOOT_COPY_FAIL:
-            puts("flashboot: no spi IP");
-            break;
-        default:
-            puts("unknown");
-    };
+    puts(msg ? msg : "?");
     putchar('\n');
 #endif
     exit(code);
@@ -63,8 +48,7 @@ int main(){
     // ********** Platform specific initialization **********
     void * jump_addr = platform_init();
     if(jump_addr == NULL) {
-        
-        boot_panic(RCODE_INIT_FAIL);
+        boot_panic(RCODE_PLATFORM_INIT_FAIL, "Platform init failure");
     }
 
     // Jump to target
@@ -73,5 +57,5 @@ int main(){
     app_main();
 
     // Unreachable
-    boot_panic(RCODE_UNREACHABLE);
+    boot_panic(RCODE_UNREACHABLE, "Unreachable");
 }

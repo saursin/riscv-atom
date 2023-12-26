@@ -1,16 +1,12 @@
-#include <stdint.h>
-
-#include "common.h"
-
 #include <platform.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 #include <gpio.h>
-#include <spi.h>
-#include "flashboot.h"
 
-#define STRINGIFY(s) #s
-#define EXPAND_AND_STRINGIFY(s) STRINGIFY(s)
+#include "common.h"
+#include "flashboot.h"
+#include "uartboot.h"
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
@@ -23,19 +19,20 @@ extern uint32_t __approm_size;
 // Address offset at which image resides
 #define FLASH_IMG_OFFSET    0x000c0000
 
-// Size of Image
-#define FLASH_IMG_SIZE      32 * 1024       // 32 KB
-
 // number of flashes to indicate entering of bootloader
 #define START_LED_FLASHES   3
 
 // number of flashes to indicate entering of user application
 #define END_LED_FLASHES   1
 
+// Time period of LED flashes
+#define LED_FLASH_TIMEPERIOD 100
+
 // Bootmodes
 #define BOOTMODE_FLASHBOOT      0
 #define BOOTMODE_JUMP_TO_RAM    1
-#define BOOTMODE_INF_LOOP       2
+#define BOOTMODE_UARTBOOT       2
+#define BOOTMODE_INF_LOOP       3
 #define BOOTMODE_DEFAULT        BOOTMODE_JUMP_TO_RAM
 
 //-------------------------------------------------------
@@ -45,11 +42,11 @@ extern uint32_t __approm_size;
  * 
  * @param pin led pin
  * @param count number of times to blink
- * @param time_period time_period in of one ON & OFF
+ * @param period_ms time_period in of one ON & OFF
  */
-void led_blink(int pin, int count, int time_period)
+void led_blink(int pin, int count, int period_ms)
 {
-    int halfperiod = time_period >> 1;
+    int halfperiod = period_ms >> 1;
     #ifdef SIM
     halfperiod = 0;
     #endif
@@ -73,46 +70,67 @@ void * platform_init(){
     gpio_setmode(BOOTMODE_PIN1, INPUT);
 
     // Blink LED START_LED_FLASHES times (signal entering of bootloader)
-    led_blink(BOOTLED_PIN, START_LED_FLASHES, 50);
+    led_blink(BOOTLED_PIN, START_LED_FLASHES, LED_FLASH_TIMEPERIOD);
 
     // get bootmode
     uint8_t pin0_val = (uint8_t)gpio_read(BOOTMODE_PIN0);
     uint8_t pin1_val = (uint8_t)gpio_read(BOOTMODE_PIN1);
     bootmode = pin0_val | pin1_val << 1;
 #else
-    P(puts("nogpio: using default bootmode\n");)
+    P(puts("no gpio: using default bootmode\n");)
 #endif
+
     // Print Bootmode
-    P(puts("bootmode: ");)
+    P(puts("bootmode: 0x");)
     P(putchar('0'+bootmode);)
-    P(puts(": ");)
+    P(putchar('\n');)
     
     // Perform action according to bootmode
+    bool wait_for_keypress = false;
     switch (bootmode)
     {
         case BOOTMODE_FLASHBOOT:
         #ifdef SOC_EN_SPI
-            flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, FLASH_IMG_SIZE);
+            flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, (unsigned)&__approm_size);
         #else
-            boot_panic(RCODE_FLASHBOOT_COPY_FAIL);
+            boot_panic(RCODE_FLASHBOOT_NOSPI, "No SPI IP");
         #endif
             break;
 
         case BOOTMODE_JUMP_TO_RAM: 
-            P(puts("jmptoram\n");)
+            P(puts("Jumping to RAM\n");)
+            break;
+        
+        case BOOTMODE_UARTBOOT:
+            wait_for_keypress = true;
+        #ifdef SOC_EN_UART
+            uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size);
+        #else
+            boot_panic(RCODE_UARTBOOT_NOUART, "No UART IP");  // TODO: fixme
+        #endif
             break;
     
         case BOOTMODE_INF_LOOP:
         default:
-            P(puts("infloop\n");)
+            P(puts("Infinite loop\n");)
             while(1){
                 asm volatile("");
             }
     }
 
+    #ifdef SIM
+    wait_for_keypress = false;
+    #endif
+
+    if(wait_for_keypress){
+        puts("\nPress ENTER to continue...\n");
+        while(serial_read()!='\r')
+            asm volatile ("");
+    }
+    
     #ifdef SOC_EN_GPIO
     // Blink single (signal jump to user code)
-    led_blink(BOOTLED_PIN, END_LED_FLASHES, 50);
+    led_blink(BOOTLED_PIN, END_LED_FLASHES, LED_FLASH_TIMEPERIOD);
     #endif
     
     // return start address of approm

@@ -16,13 +16,15 @@ include ../../common.mk
 ##############################################################################
 
 EXEC:= bootloader
-SRCS:= main.c crt0.S target/$(soctarget)/boot.c
+SRCS:= crt0.S main.c 
+SRCS+= $(wildcard target/$(soctarget)/*.c)
+SRCS+= $(wildcard target/$(soctarget)/*.S)
 
 RVPREFIX:= riscv64-unknown-elf
 CFLAGS:= -march=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
 CFLAGS+= -mabi=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
 CFLAGS+= -Wall -nostartfiles -ffreestanding -g -Os
-CFLAGS+= -I $(RVATOM_LIB)/include -I include
+CFLAGS+= -I $(RVATOM_LIB)/include -I include -I target/$(soctarget)
 CFLAGS+= $(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -d)
 CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')
 ifeq ($(sim), 1) 
