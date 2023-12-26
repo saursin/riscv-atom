@@ -57,14 +57,31 @@ if {$make_assignments} {
 	set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 	set_global_assignment -name SDC_FILE HydrogenSoC.sdc
 	set_global_assignment -name VERILOG_FILE HydrogenSoC.v
+
+	###########################################################################
+	# clock and reset
 	set_location_assignment PIN_M9 -to clk_i
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk_i
 	set_location_assignment PIN_U7 -to rst_i
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to rst_i
+
+	###########################################################################
+	# UART
 	set_location_assignment PIN_T17 -to uart_rx_i
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_rx_i
 	set_location_assignment PIN_T15 -to uart_tx_o
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_tx_o
+
+	###########################################################################
+	# GPIO - LED
+	set_location_assignment PIN_AA2 -to gpio_io[0]
+	set_location_assignment PIN_AA1 -to gpio_io[1]
+	set_location_assignment PIN_W2 -to gpio_io[2]
+	set_location_assignment PIN_Y3 -to gpio_io[3]
+	set_location_assignment PIN_N2 -to gpio_io[4]
+	set_location_assignment PIN_N1 -to gpio_io[5]
+	set_location_assignment PIN_U2 -to gpio_io[6]
+	set_location_assignment PIN_U1 -to gpio_io[7]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[0]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[1]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[2]
@@ -89,6 +106,9 @@ if {$make_assignments} {
 	set_instance_assignment -name SLEW_RATE 1 -to gpio_io[5]
 	set_instance_assignment -name SLEW_RATE 1 -to gpio_io[6]
 	set_instance_assignment -name SLEW_RATE 1 -to gpio_io[7]
+
+	###########################################################################
+	# GPIO - Pushbuttons
 	set_location_assignment PIN_U13 -to gpio_io[8]
 	set_location_assignment PIN_V13 -to gpio_io[9]
 	set_location_assignment PIN_T13 -to gpio_io[10]
@@ -97,6 +117,9 @@ if {$make_assignments} {
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[9]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[10]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[11]
+
+	###########################################################################
+	# GPIO - 7 Seg
 	set_location_assignment PIN_U21 -to gpio_io[12]
 	set_location_assignment PIN_V21 -to gpio_io[13]
 	set_location_assignment PIN_W22 -to gpio_io[14]
@@ -145,14 +168,32 @@ if {$make_assignments} {
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_mosi_o
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_miso_i
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_sck_o
+
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments
 	export_assignments
-
-
 }
 
+load_package flow
+
+# Synthesize the design
+puts "Synthesizing the design..."
+execute_module -tool map
+
+# Place and route
+puts "Performing place and route..."
+execute_module -tool fit
+
+# Generate programming files (Bitstream)
+puts "Generating bitstream..."
+execute_module -tool asm
+
+# Generate Timing Analysis Report
+puts "Generating timing analysis report..."
+execute_module -tool sta
+
+puts "Bitstream generation completed."
 # Load necessary package
 load_package flow
 
