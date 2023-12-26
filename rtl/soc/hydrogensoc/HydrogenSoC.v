@@ -33,7 +33,7 @@ module HydrogenSoC(
 `endif
 );
     wire wb_clk_i = clk_i;
-    wire wb_rst_i = rst_i;
+    wire wb_rst_i = `INLINE_IFDEF(SOC_INVERT_RST, ~rst_i, rst_i);
 
     // ******************** Core ********************
     wire    [31:0]  core_iport_wb_adr_o;
