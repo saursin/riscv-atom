@@ -3,24 +3,24 @@
 ###############################################################################
 set time_start [clock seconds]; puts "Start time: [clock format ${time_start} -gmt false]"
 
-if {[llength $argv] != 4} {
-    puts "Usage: script.tcl <sources_tcl> <fpga_vendor> <fpga_family> <build_dir>"
+if {[llength $argv] != 3} {
+    puts "Usage: script.tcl <fpga_vendor> <fpga_family> <build_dir>"
     exit 1
 }
 
-set sources_tcl [lindex $argv 0]
-source $sources_tcl
-
 ###############################################################################
 # Settings
-set fpga_vendor [lindex $argv 1]
-set fpga_family [lindex $argv 2]
+set fpga_vendor [lindex $argv 0]
+set fpga_family [lindex $argv 1]
 set flatten 0
 
 # Output directories
-set build_dir [lindex $argv 3]
+set build_dir [lindex $argv 2]
 set output_dir "$build_dir/output"
 set report_dir "$build_dir/report"
+
+set vsource $build_dir/HydrogenSoC.v
+set topmodule HydrogenSoC
 ###############################################################################
 file mkdir $output_dir
 file mkdir $report_dir
@@ -28,16 +28,8 @@ file mkdir $report_dir
 yosys "echo on"
 
 # -- Read Verilog ----------------------
-set rd_vrlg_flags "-DSYNTHESIS_YOSYS -D__ROM_INIT_FILE__=\"$build_dir/init.hex\""
-foreach dir $include_dirs {
-    append rd_vrlg_flags " -I$dir"
-}
-foreach def $defines {
-    append rd_vrlg_flags " -D$dir"
-}
-foreach file $design_sources {
-    yosys "read_verilog $rd_vrlg_flags $file"
-}
+set rd_vrlg_flags "-DSYNTHESIS_YOSYS -DSOC_BOOTROM_INIT_FILE=\"$build_dir/bootloader.hex\""
+yosys "read_verilog $rd_vrlg_flags $vsource"
 
 # Check hierarchy
 yosys "hierarchy -check -top $topmodule"
@@ -58,7 +50,10 @@ yosys "check -mapped"
 
 # -- Write reports ---------------------
 yosys "tee -a $report_dir/utilization.rpt stat"
-yosys "tee -a $report_dir/ltp.rpt ltp"
+
+# prints detected loop warning
+# yosys "tee -a $report_dir/ltp.rpt ltp"
+
 yosys "tee -a $report_dir/timing.rpt sta"
 
 yosys "clean"
