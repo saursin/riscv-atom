@@ -38,9 +38,6 @@
 set myProject "spartan6-mini"
 set myScript "spartan6-mini.tcl"
 
-set RTLDir "../../../rtl"
-set incDirs "$RTLDir/common|$RTLDir/rtl/core"
-
 # 
 # Main (top-level) routines
 # 
@@ -227,47 +224,15 @@ proc set_project_props {} {
 proc add_source_files {} {
 
    global myScript
-   global RTLDir
-   global incDirs
-
    if { ! [ open_project ] } {
       return false
    }
 
    puts "$myScript: Adding sources to project..."
 
-   # include dirs
-   project set "Verilog Include Directories" "$incDirs" -process "Synthesize - XST"
-   
-   # include Config file as a global header (used for setting SoC-Params)
-   xfile add "$RTLDir/soc/hydrogensoc/HydrogenSoC_Config.vh" -include_global
-
    # SoC
-   xfile add "$RTLDir/soc/hydrogensoc/HydrogenSoC.v"
-   
-   # Core
-   xfile add "$RTLDir/core/Alu.v"
-   xfile add "$RTLDir/core/CSR_Unit.v"
-   xfile add "$RTLDir/core/Decode.v"
-   xfile add "$RTLDir/core/RegisterFile.v"
-   xfile add "$RTLDir/core/AtomRV.v"
-   xfile add "$RTLDir/core/AtomRV_wb.v"
-
-   # Uncore
-   xfile add "$RTLDir/uncore/gpio/GPIO.v"
-   xfile add "$RTLDir/uncore/gpio/IOBuf.v"
-   xfile add "$RTLDir/uncore/mem/SinglePortROM_wb.v"
-   xfile add "$RTLDir/uncore/mem/SinglePortRAM_wb.v"
-   xfile add "$RTLDir/uncore/uart/UART.v"
-   xfile add "$RTLDir/uncore/uart/UART_core.v"
-   xfile add "$RTLDir/uncore/spi/SPI_core.v"
-   xfile add "$RTLDir/uncore/spi/SPI_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/Arbiter.v"
-   xfile add "$RTLDir/uncore/wishbone/Arbiter2_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/Arbiter3_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/Crossbar5_wb.v"
-   xfile add "$RTLDir/uncore/wishbone/Priority_encoder.v"
-   
+   xfile add "HydrogenSoC.v"
+     
    # Constraints
    xfile add "HydrogenSoC.ucf"
 
@@ -310,7 +275,6 @@ proc create_libraries {} {
 proc set_process_props {} {
 
    global myScript
-   global incDirs
 
    if { ! [ open_project ] } {
       return false
@@ -479,7 +443,6 @@ proc set_process_props {} {
    project set "Use Synchronous Reset" "Auto" -process "Synthesize - XST"
    project set "Use Synchronous Set" "Auto" -process "Synthesize - XST"
    project set "Use Synthesis Constraints File" "true" -process "Synthesize - XST"
-   project set "Verilog Include Directories" "$incDirs" -process "Synthesize - XST"
    project set "Verilog Macros" "" -process "Synthesize - XST"
    project set "Work Directory" "xst" -process "Synthesize - XST"
    project set "Write Timing Constraints" "false" -process "Synthesize - XST"

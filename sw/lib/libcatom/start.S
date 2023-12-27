@@ -50,7 +50,9 @@ _start:
     jal main
 
 _exit:
-    ebreak  # Exit simulation
+#ifdef SIM
+	ebreak  # Exit simulation
+#endif
     j _exit
 
 

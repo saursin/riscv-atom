@@ -2,7 +2,7 @@
 *.o
 *.bin
 *.map
-*.objdump
+*.lst
 *.hex
 *.vcd
 *.gtkw
