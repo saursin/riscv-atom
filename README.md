@@ -9,7 +9,7 @@ RISC-V Atom is an open-source soft-core processor platform targeted for FPGAs. I
 
 Key highlights of the RISC-V Atom projects are are listed below:
 
-- Atom processor implements `RV32I_Zicsr` ISA as defined in the [RISC-V unprivileged ISA manual](https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMAFDQC/riscv-spec-20191213.pdf).
+- Atom processor implements `RV32IC_Zicsr` ISA as defined in the [RISC-V unprivileged ISA manual](https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMAFDQC/riscv-spec-20191213.pdf).
 - Simple 2-stage pipelined architecture, ideal for smaller FPGAs.
 - Wishbone ready CPU interface.
 - Support for RISC-V interrupts and exceptions.
