@@ -1,10 +1,10 @@
 #====================================================================#
-#        ____  _________ _______    __         __                    #
-#       / __ \/  _/ ___// ____/ |  / /  ____ _/ /_____  ____ ___     #
-#      / /_/ // / \__ \/ /    | | / /  / __ `/ __/ __ \/ __ `__ \    #
-#     / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / /    #
-#    /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/     #
-#                                                                    #
+#h#.     ____  _________ _______    __         __                 
+#h#.    / __ \/  _/ ___// ____/ |  / /  ____ _/ /_____  ____ ___  
+#h#.   / /_/ // / \__ \/ /    | | / /  / __ `/ __/ __ \/ __ `__ \ 
+#h#.  / _, _// / ___/ / /___  | |/ /  / /_/ / /_/ /_/ / / / / / / 
+#h#. /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/  
+#h#                                                               
 #====================================================================#
 # README:
 #	This is the root makefile for the RISC-V Atom project. It 
@@ -13,19 +13,24 @@
 #	on how to usage instructions and available targets
 #
 #====================================================================#
-# About this makefile:
-#	This is a self-documenting Makefile. It parses the target 
-# 	descriptions from the makefile autoimetically to display when 
-#	`$ make help` is called. To enable this, One-line target 
-#	description should be prefixed with double hash(#), and should 
-#	placed be in same line as target recepie. lines prefixed with 
-#	#h and #f will be placed at the header abnd footer of help page
-#	respectively.
-#====================================================================#
-include common.mk
+#h# ***** RISC-V Atom Root Makefile *****
 
-# soctarget variable (should be overridden using CLI)
-soctarget ?= atombones
+#v# Specify soctarget
+soctarget?= atombones
+
+#v# Build for simulation
+sim?=1
+
+#v# Enable debug build of atomsim
+debug?=1
+
+
+# Flags to the makefiles
+MKFLAGS := -s 
+
+_mk_check_env:=1
+include common.mk
+#######################################################################
 
 # Directories
 sim_dir  		:= sim
@@ -35,141 +40,111 @@ bootloader_dir 	:= sw/bootloader
 lib_dir			:= sw/lib
 doxy_dir		:= sim/docs
 
-# Flags to the makefiles
-MKFLAGS := -s
-
-# Check if RVATOM env variable is set
-ifeq ($(RVATOM),)
-    $(error RVATOM environment variable not set; did you forget to source the sourceme script?)
-endif
-
 #======================================================================
 # Recepies
 #======================================================================
 
-default: sim lib boot  				## Build sim, elfdump, and libs
+default: sim lib boot  				#t# Build atomsim, libcatom and bootloader
 	@printf "\n$(CLR_GR)==============================\n"
 	@printf "       Build Succesful!\n"
 	@printf "==============================$(CLR_NC)\n"
-	@printf " - atomsim [$(soctarget)]\n"
-	@printf " - software libraries\n"
-	@printf " - bootloader [$(soctarget)]\n"
+	@printf " soctarget: $(soctarget), sim: $(sim), debug: $(debug)\n"
 
-all : doxy-pdf default				## Build default with docs
-	@printf " - doxygen-docs in latex, html & pdf\n"
-
-
-#======== Help ========
-.PHONY : help
-help : Makefile						## Show help message
-	@printf "****** RISC-V Atom Makefile ******\n"
-	@printf "Usage:\n"
-	@printf "	$$ make soctarget=[SOCTARGET] [TARGET]\n"
-	@printf "\n"
-	
-	@printf "SOCTARGETs:\n"
-	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "atombones" "A barebone Atom based SoC with simulated memories"
-	@printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n" "hydrogensoc" "A minimal Atom based SoC"
-
-	@printf "\n"
-	@printf "TARGETs:\n"
-	@grep -E -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n", $$1, $$2}'
-	@printf "\n"
-	@sed -n 's/^#f //p' Makefile
-
+all : doxy-pdf default				#t# Build default with docs
 
 # ======== AtomSim ========
 .PHONY : sim
-sim: boot                      		## Build atomsim for given target [default: atombones]
-	@printf "$(CLR_GR)>> Building Atomsim [soctarget:$(soctarget)] $(CLR_NC)\n"
-	make $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=1
+sim: boot                      		#t# Build atomsim for given soctarget
+	$(call print_msg_root,Building AtomSim)
+	make $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=$(debug)
 
 
 .PHONY: clean-sim
-clean-sim:							## Clean atomsim build files
-	@printf "$(CLR_GR)>> Cleaning atomsim build files $(CLR_NC)\n"
+clean-sim:							#t# Clean atomsim build files
+	$(call print_msg_root,Cleaning AtomSim build files)
 	make $(MKFLAGS) -C $(sim_dir)  soctarget=$(soctarget) clean
 
 
 .PHONY: test
-test: sim lib						## Test the build using banner example
-	cd sw/examples && make ex=banner sim=1 clean compile run
+test: sim lib						#t# Test the build using banner example
+	$(call print_msg_root,Running example on Atomsim)
+	make $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner sim=1 clean compile run
 
 
 # ======== Bootloader ========
 .PHONY : boot
-boot: lib                     		## Build bootloader for given target [default: atombones]
-	@printf "$(CLR_GR)>> Building bootloader [soctarget:$(soctarget)] $(CLR_NC)\n"
-	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=1
+boot: lib                     		#t# Build bootloader for given target
+	$(call print_msg_root,Building bootloader)
+	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=$(sim)
 
 
 .PHONY: clean-boot
-clean-boot:							## Clean bootloader build files
-	@printf "$(CLR_GR)>> Cleaning bootloader build files $(CLR_NC)\n"
+clean-boot:							#t# Clean bootloader build files
+	$(call print_msg_root,Cleaning bootloader build files)
 	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
 
 
 # ======== SCAR ========
 .PHONY: scar     			
-scar: sim 		 					## Verify target using scar
-	@printf "$(CLR_GR)>> Running SCAR $(CLR_NC)\n"
+scar: sim 		 					#t# Verify target using scar
+	$(call print_msg_root,Running SCAR)
 	make $(MKFLAGS) -C $(scar_dir)
 
 
 .PHONY: clean-scar
-clean-scar:							## Clean scar directory
-	@printf "$(CLR_GR)>> Cleaning scar working directory$(CLR_NC)\n"
+clean-scar:							#t# Clean scar directory
+	$(call print_msg_root,Cleaning SCAR working directory)
 	make $(MKFLAGS) -C $(scar_dir) clean
 
 
 # ======== ElfDump ========
 .PHONY: elfdump
-elfdump:							## Build elfdump utility
-	@printf "$(CLR_GR)>> Building elfdump $(CLR_NC)\n"
+elfdump:							#t# Build elfdump utility
+	$(call print_msg_root,Building ELFDump)
 	make $(MKFLAGS) -C $(elfdump_dir)
 
 
 .PHONY: clean-elfdump
-clean-elfdump:					    ## Clean elfdump directory
-	@printf "$(CLR_GR)>> Cleaning elfdump directory [tools/elfdump/bin/*]$(CLR_NC)\n"
+clean-elfdump:					    #t# Clean elfdump directory
+	$(call print_msg_root,Cleaning ELFDump build files)
 	make $(MKFLAGS) -C $(elfdump_dir) clean
 
 # ======== SW libs ========
 .PHONY: lib
-lib:								## compile software libraries
-	@printf "$(CLR_GR)>> Compiling software libraries $(CLR_NC)\n"
-	make $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget)
+lib:								#t# compile software libraries
+	$(call print_msg_root,Building libcatom)
+	make $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget) sim=$(sim)
 
 
 .PHONY: clean-lib
-clean-lib:							## Clean software libs
-	@printf "$(CLR_GR)>> Cleaning build files for lib $(CLR_NC)\n"
+clean-lib:							#t# Clean software libs
+	$(call print_msg_root,Cleaning libcatom build files)
 	make $(MKFLAGS) -C $(lib_dir) clean
 
 
 # ======== Documentation ========
 .PHONY: doxy
-doxy:								## Generate atomsim C++ source documentation
-	@printf "$(CLR_GR)>> Generating Doxygen C++ documentation [latex & html]$(CLR_NC)\n"
+doxy:								#t# Generate atomsim C++ source documentation
+	$(call print_msg_root,Generating docs for AtomSim,LATEX & HTML)
 	make $(MKFLAGS) -C $(doxy_dir)
 
 
 .PHONY: doxy-pdf
-doxy-pdf: doxy						## Generate atomsim C++ source documentation (pdf)
-	@printf "$(CLR_GR)>> Generating Doxygen C++ documentation [pdf]$(CLR_NC)\n"
+doxy-pdf: doxy						#t# Generate atomsim C++ source documentation (pdf)
+	$(call print_msg_root,Generating docs for AtomSim,PDF)
 	make $(MKFLAGS) -C $(doxy_dir) pdf
 
 
 .PHONY: clean-doxy
-clean-doxy:							## Clean build files for Atomsim docs
-	@printf "$(CLR_GR)>> Cleaning docs $(CLR_NC)\n"
+clean-doxy:							#t# Clean build files for Atomsim docs
+	$(call print_msg_root,Cleaning docs build files)
 	make $(MKFLAGS) -C $(doxy_dir) clean
 
 
 # ======== clean ========
 .PHONY: clean						
-clean: clean-sim clean-boot clean-lib					## Alias for clean-sim, clean-lib
+clean: clean-sim clean-boot clean-lib					#t# Alias for clean-sim, clean-lib
 
 
 .PHONY: clean-all					
-clean-all: clean-sim clean-boot clean-scar clean-elfdump clean-lib clean-doxy  ## Clean all build files
+clean-all: clean-sim clean-boot clean-scar clean-elfdump clean-lib clean-doxy  #t# Clean all build files

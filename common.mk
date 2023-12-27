@@ -40,19 +40,33 @@ endif
 ##############################################################################
 # common functions
 
-# $1 level
-# $2 msg
+# Print a formatted message 
+define print_msg_root
+	@printf "$(CLR_GR)$(CLR_B)❖ %-30b$(CLR_NB)%s$(CLR_NC)\n" "$(1)" "$(2)"
+endef
+define print_msg
+	@printf "$(CLR_CY)$(CLR_B)► %-30b$(CLR_NB)%s$(CLR_NC)\n" "$(1)" "$(2)"
+endef
+
+# Print a formatted message with target information
+define print_msgt_root
+	@printf "$(CLR_GR)$(CLR_B)❖ %-30b$(CLR_NB)%s$(CLR_NC)\n" "$(1)" "$(@F)"
+endef
+define print_msgt
+	@printf "$(CLR_CY)$(CLR_B)► %-30b$(CLR_NB)%s$(CLR_NC)\n" "$(1)" "$(@F)"
+endef
+
 define print_info
-	@printf "$(CLR_GR)>$(1)$(CLR_NC)\n"
+	@printf "$(CLR_CY)$(CLR_B)INFO:$(CLR_NB)$(CLR_NC)$(1)\n"
 endef
 
 define print_warn
-	@printf "$(CLR_YL)> WARNING:$(CLR_NC)$(1)\n"
+	@printf "$(CLR_YL)$(CLR_B)WARN:$(CLR_NB)$(CLR_NC)$(1)\n"
 endef
 
 define print_error
-	@printf "$(CLR_RD)> ERROR:$(CLR_NC)$(1)\n"
-	$(error "Exiting...")
+	@printf "$(CLR_RD)$(CLR_B)ERROR:$(CLR_NB)$(CLR_NC)$(1)\n"
+	@printf "Exiting..."; exit 1
 endef
 
 ##############################################################################
@@ -60,12 +74,4 @@ endef
 
 .PHONY: help
 help: Makefile
-# Print Header comments '#h#'
-	@sed -n 's/^#h# //p' $<
-
-# Print Target descriptions '#t#'
-	@printf "\nTARGETs:\n"
-	@grep -E -h '\s#t#\s' $< | awk 'BEGIN {FS = ":.*?#t# "}; {printf "\t$(CLR_CY)%-20s$(CLR_NC) %s\n", $$1, $$2}'
-
-# Print footer '#f#'
-	@sed -n 's/^#f# //p' $<
+	@python3 $(RVATOM)/scripts/genmkhelp.py $<

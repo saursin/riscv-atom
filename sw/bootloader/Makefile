@@ -1,13 +1,12 @@
 #h# ***** Makefile to build RISC-V Atom bootloader *****
-#h# Usage: make soctarget=[SOCTARGET] [TARGET]
 
-# soctarget to build for
+#v# Specify soctarget
 soctarget?= atombones
 
-# Build for simulation
+#v# Build for simulation
 sim?=1
 
-# Build with prints enabled (if SoC has console)
+#v# Enable prints in bootloader
 prints?=1
 
 _mk_check_env:=1
@@ -49,12 +48,12 @@ default: build
 build: $(EXEC).elf			#t# Build bootloader
 
 $(EXEC).elf: $(SRCS)
-	$(call print_info, Building bootloader for soctarget: $(soctarget))
+	$(call print_msgt,Compiling)
 	$(RVPREFIX)-gcc $(CFLAGS) -o $@ $^ $(LFLAGS)
 	$(RVPREFIX)-objdump -htd $@ > $(basename $@).lst
+	$(call print_msg,Generating hex,$(basename $@).hex)
 	convelf.py -t elf -c -m="BOOTROM:0x00010000:8192:h:$(basename $@).hex" $@
 
 .PHONY: clean
 clean:						#t# Clean build files
-	$(call print_info, Cleaning bootloader)
 	rm -f *.o *.lst *.map *.elf *.hex *.bin

@@ -1,19 +1,18 @@
 ####################################################
-#h ********* Makefile for Building AtomSim *********
+#h# ******* Makefile for Building AtomSim *******
 ####################################################
-# To configure build, override the following 
-# vaiables from command line while calling make, 
-# like so:
-#	$ make soctarget=hydrogensoc
 
+#v# Specify soctarget
 soctarget ?= None
+
+#v# Enable debug build
 DEBUG ?= 0
+
+#v# Enable DPI support in RTL
 DPI ?= 0
 
-# Uncomment/define while calling make to disable colors
-# NO_COLOR = 1
-
 include ../common.mk
+####################################################
 
 # use default soctarget if not specified
 DEFAULT_SOCTARGET := atombones
@@ -107,20 +106,20 @@ VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
 ####################################################
 # Recepies
 
-default: sim								#t Alias for sim
-sim: lib_verilated $(EXE)					#t Build atomsim
+default: sim								#t# Alias for sim
+sim: lib_verilated $(EXE)					#t# Build atomsim
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
-	@printf "$(CLR_CY)> Verilating Verilog files$(CLR_NC)\n"
+	$(call print_msg,Verilating Verilog)
 	$(VC) $(VFLAGS) `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`
 
-	@printf "$(CLR_CY)> Generating shared object$(CLR_NC)\n"
-	make -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk
+	$(call print_msgt,Generating library)
+	make -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null
 
-	@printf "$(CLR_CY)> Generating combined header$(CLR_NC)\n"
+	$(call print_msg,Generating combined header,V$(VTOPMODULE)_headers.h)
 	printf "#ifndef __V$(VTOPMODULE)_headers__\n" > $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
 	printf "#define __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
 	find $(VERILATED_DIR) -type f -name "*.h" -exec echo '#include "{}"' \; >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
@@ -129,27 +128,27 @@ $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
 # Generic rule to compile Cpp Files in . (prerequisite: complete verilate step first)
 $(OBJ_DIR)/%.o: %.cpp
 $(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
-	@printf "$(CLR_CY)> Compiling   %-35s <-  %s$(CLR_NC)\n" $@ $<
+	$(call print_msgt,Compiling)
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files in VERILATOR_INCLUDE_PATH (verilated.cpp & verilated.vcd_c.cpp)
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp
 $(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp $(DEPDIR)/%.Td
-	@printf "$(CLR_CY)> Compiling   %-35s <-  %s$(CLR_NC)\n" $@ $<
+	$(call print_msgt,Compiling)
 	$(COMPILE_CPP_MACRO) $<
 
 # Generic rule to compile Cpp Files rtl/dpi
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp $(DEPDIR)/%.Td
-	@printf "$(CLR_CY)> Compiling   %-35s <-  %s$(CLR_NC)\n" $@ $<
+	$(call print_msgt,Compiling)
 	$(COMPILE_CPP_MACRO) $<
 
 
 # Link & Create executable
 $(EXE): $(OBJS)
-	@printf "$(CLR_CY)> Linking shared object and driver to create executable $(CLR_NC)\n"
+	$(call print_msgt,Linking)
 	$(CC) $^ -o $@ $(LDLIBS) $(LDFLAGS)
-	@printf "$(CLR_CY)> Build successful!  [soctarget: $(soctarget)] $(CLR_NC)\n"
+	$(call print_msg,Atomsim build successful!)
 
 .PRECIOUS: $(DEPDIR)/%.Td
 $(DEPDIR)/%.Td: ;
@@ -159,32 +158,7 @@ $(DEPDIR)/%.Td: ;
 # Cleanup Recepies
 
 .PHONY: clean
-clean:									#t Clean build files
+clean:									#t# Clean build files
 	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/* $(VERILATED_DIR)/* $(DEPDIR)/*
 
-
-.PHONY: help
-help: 									#t Show help
-	@sed -n 's/^#h //p' Makefile
-	@echo ""
-	@echo "Usage:"
-	@echo "	$$ make soctarget=[SOCTARGET] [TARGET]"
-	@echo ""
-	@echo "TARGETs:"
-	@grep -E -h '\s#t\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?#t "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ""
-	@sed -n 's/^#f //p' Makefile
-
-
-# Extra to be printed in make help
-#f 
-#f SOCTARGETs:
-#f 	atombones
-#f 	hydrogensoc
-#f 
-#f Note:
-#f  - Use DEBUG=1/2/3 to build debug binary (also sets debug level)
-#f  - Use DPI=1 to enable DPI support in RTL
-#f  - Use NO_COLOR=1 to disable coloured output
-####################################################
 -include $(DEPS)

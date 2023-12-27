@@ -30,7 +30,7 @@ char * banner =
 " /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
 "/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
 
-print_isastring(){
+void print_isastring(){
     uint32_t misa = CSR_read(CSR_MISA);
     puts("RV32I");
     if(bitcheck(misa, 12))  putchar('M');
@@ -49,5 +49,5 @@ int main()
     printf("CODE RAM : 0x%08x (%d bytes)\n", (unsigned)CODERAM_BASE, (unsigned)CODERAM_SIZE);
     printf("DATA RAM : 0x%08x (%d bytes)\n", (unsigned)DATARAM_BASE, (unsigned)DATARAM_SIZE);
     puts("Exiting...\n");
-    return 0;
+    return 134;
 }
