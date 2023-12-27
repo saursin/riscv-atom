@@ -32,6 +32,8 @@
 #define UART_REG_LCR_PERR 0b00001000
 
 int __serial_read(char * bf, uint32_t sz){
+    assert(sz==1);
+    bf[0] = serial_read();
     return 0;
 }
 
@@ -47,7 +49,7 @@ void serial_init(uint32_t baud_rate)
     uart_config.baud = baud_rate;
     serial_set_config(&uart_config);
 
-    stddev[DEV_STDOUT].read=__serial_read;
+    stddev[DEV_STDIN].read=__serial_read;
     stddev[DEV_STDOUT].write=__serial_write;
 }
 
