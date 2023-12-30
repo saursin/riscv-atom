@@ -4,7 +4,8 @@
     "vdefines": [],
     "vsrcs": [
         "${RVATOM}/rtl/uncore/uart/UART.v",
-        "${RVATOM}/rtl/uncore/uart/UART_core.v"
+        "${RVATOM}/rtl/uncore/uart/UART_core.v",
+        "${RVATOM}/rtl/uncore/uart/FIFO_sync.v"
     ],
     "incdirs": [
         "${RVATOM}/rtl/common"
