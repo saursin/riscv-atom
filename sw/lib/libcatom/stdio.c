@@ -3,14 +3,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 #define BACKSPACE 0x7f
 
 // Enable printf %b format specifier (non standard) 
 #define PRINTF_ENFMT_BIN
 
 // Enable printf %f format specifer
-// #define PRINTF_ENFMT_FLOAT
+#define PRINTF_ENFMT_FLOAT
 
 // Enable printf %n format specifer
 #define PRINTF_ENFMT_N
@@ -85,6 +84,25 @@ static int __fprint_ull(FILE *f, unsigned long long n, unsigned base, char padc,
     return ret;
 }
 
+#ifdef PRINTF_ENFMT_FLOAT
+static int __fltprint(FILE *f, double flt, char padc, int padd, int padf)
+{
+	int ret = 0;
+	unsigned long long d = (unsigned long long) flt;
+	double frac = flt - (double) d;
+	ret = __fprint_ull(f, d, 10, padc, padd);
+    if(padf>0){
+        __fputc(f, '.');
+	    ret++;
+        while(padf--) {
+            frac *= 10.0;
+        }
+        d = (unsigned long long) frac;
+        ret += __fprint_ull(f, d, 10, '0', 0);
+    }
+	return ret;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -161,10 +179,12 @@ char * gets(char *str){
 int vfprintf(FILE *f, const char * fmt, va_list args){
     long long num_ll;
     unsigned long long num_ull;
+    double num_f;
     uintptr_t ptr;
 
     char padc;
     int padn;
+    int padf;
     int lcount;
     unsigned nwritten = 0;
 
@@ -174,17 +194,30 @@ int vfprintf(FILE *f, const char * fmt, va_list args){
         if (*fmt == '%') {
             fmt++; // skip over %
 
-            // check for padc & padn
-            padn = 0;
+            // Parse padchar (padc), width (padn) and precision (padf)
             padc = ' ';
+            padn = 0;
+            padf = 6;
             if (*fmt == '0') {
                 padc = '0';
                 fmt++;
+            }
+            while(1){
+                if(!__char_is_num(*fmt))
+                    break;
+                padn = (*fmt-'0') + (padn << 3) + (padn << 1);  // padn = padn*10 + digit
+                fmt++;
+            }
+            if(*fmt == '.') {
+                fmt++; // skip over .
+                padf = 0;
                 while(1){
                     if(!__char_is_num(*fmt))
                         break;
-                    padn = (*fmt-'0') + (padn << 3) + (padn << 1);  // padn = padn*10 + digit
+                    padf = (*fmt-'0') + (padf << 3) + (padf << 1);  // padn = padn*10 + digit
                     fmt++;
+                    if(padn > padf + 1)
+                        padn -= (padf+1);
                 }
             }
 
@@ -271,6 +304,14 @@ __vprintf_loop:
             #ifdef PRINTF_ENFMT_FLOAT
                 // Float
                 case 'f':
+                    // floats are always promoted to double in va_args
+					num_f = va_arg(args, double);
+					if(num_f < 0) {
+						__fputc(f, '-');
+						num_f *= -1.0;
+						padn--;
+					}
+					nwritten += __fltprint(f, num_f, padc, padn, padf);
                     break;
             #endif // PRINTF_ENFMT_FLOAT
 
