@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define BACKSPACE 0x7f
 
@@ -354,6 +355,39 @@ int printf(const char *fmt, ...)
     return rv;
 }
 
+
+static char * __sstream_strbuf = NULL;
+static int __sstream_strbuf_writepos = -1;
+int __sstream_write(char * bf, uint32_t sz){
+    assert(__sstream_strbuf != NULL);
+    __sstream_strbuf[__sstream_strbuf_writepos++] = bf[0];
+    return 0;
+}
+
+int vsprintf(char *str, const char *fmt, va_list args) {
+    // setup a fake string stream that writes to a string buffer
+    FILE fake_sstream = {.read=NULL, .write=__sstream_write};
+    __sstream_strbuf = str;
+    __sstream_strbuf_writepos = 0;
+
+    int rv = vfprintf(&fake_sstream, fmt, args);
+    
+    // terminate with nullchar
+    fake_sstream.write("\0", 1);
+
+    // cleanup after we're done
+    __sstream_strbuf = NULL;
+    __sstream_strbuf_writepos = -1;
+    return rv;
+}
+
+int sprintf(char *str, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int rv = vsprintf(str, fmt, args);
+    va_end(args);
+    return rv;
+}
 
 void dumphexbuf(char *buf, unsigned len, unsigned base_addr)
 {
