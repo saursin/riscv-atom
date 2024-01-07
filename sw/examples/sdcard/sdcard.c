@@ -22,6 +22,8 @@ int main(){
     };
     
     uint8_t rc = sd_init(&cfg);
+    if(rc != SD_SUCCESS)
+        return 1;
 
     printf("read Sector 0\n");
     uint8_t rbuf[512], res[5], token;
@@ -30,11 +32,12 @@ int main(){
 
 
     // print response
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == 0xFE)) {
+    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_START_TOKEN)) {
         dumphexbuf((char*)rbuf, 512, 0x00000000);
     }
     else {
         puts("Error reading sector\n");
+        return 1;
     }
 
 
@@ -44,21 +47,23 @@ int main(){
 
     res[0] = sdc_write_block(&cfg, 0x00000000, wbuf, &token);
     // print response
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == 0x05)) {
+    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_DATA_ACCEPTED)) {
         puts("Write OK\n");
     }
     else {
         puts("Error writing\n");
+        return 1;
     }
 
 
     // read again
     res[0] = sdc_read_block(&cfg, 0x00000000, rbuf, &token);
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == 0xFE)) {
+    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_START_TOKEN)) {
         dumphexbuf((char*)rbuf, 512, 0x00000000);
     }
     else {
         puts("Error reading sector\n");
+        return 1;
     }
 
     // verify

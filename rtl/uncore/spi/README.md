@@ -70,7 +70,7 @@ SPI IP with Wishbone B-4 Interface.
 
 | **Range** | **Access** | **RstVal** | **Name** | **Description**
 |-----------|------------|------------|----------|-----------------
-| [31:24]   | RW         | -          | ACS      | Active Chip Select
+| [31:24]   | RW         | 0x1        | ACS      | Active Chip Select
 | [23:2]    | -          | -          | -        | Reserved
 | [1:0]     | RW         | 0x0        | CSMODE   | CS Mode
 

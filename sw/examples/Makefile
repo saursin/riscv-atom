@@ -77,7 +77,7 @@ ifeq ($(__check_soctarget), true)
     ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
 endif
 
-CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os
+CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
 CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
 

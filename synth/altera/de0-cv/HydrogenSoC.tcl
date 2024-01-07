@@ -160,14 +160,26 @@ if {$make_assignments} {
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[29]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[30]
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio_io[31]
-	set_location_assignment PIN_G13 -to spi_cs_o[0]
-	set_location_assignment PIN_G12 -to spi_mosi_o
-	set_location_assignment PIN_J17 -to spi_miso_i
-	set_location_assignment PIN_K16 -to spi_sck_o
+
+	# SDCARD Slot
+	set_location_assignment PIN_C11 -to spi_cs_o[0]
+	set_location_assignment PIN_H11 -to spi_sck_o 
+	set_location_assignment PIN_B11 -to spi_mosi_o
+	set_location_assignment PIN_K9 	-to spi_miso_i
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_cs_o[0]
+	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_sck_o
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_mosi_o
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_miso_i
-	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to spi_sck_o
+
+	# GPIO - SDCARD ELA
+	# set_location_assignment PIN_G13 -to ela_spi_cs_o
+	# set_location_assignment PIN_G12 -to ela_spi_sck_o
+	# set_location_assignment PIN_J17 -to ela_spi_mosi_o
+	# set_location_assignment PIN_K16 -to ela_spi_miso_o
+	# set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ela_spi_cs_o[0]
+	# set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ela_spi_sck_o
+	# set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ela_spi_mosi_o
+	# set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ela_spi_miso_o
 
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
@@ -175,25 +187,6 @@ if {$make_assignments} {
 	export_assignments
 }
 
-load_package flow
-
-# Synthesize the design
-puts "Synthesizing the design..."
-execute_module -tool map
-
-# Place and route
-puts "Performing place and route..."
-execute_module -tool fit
-
-# Generate programming files (Bitstream)
-puts "Generating bitstream..."
-execute_module -tool asm
-
-# Generate Timing Analysis Report
-puts "Generating timing analysis report..."
-execute_module -tool sta
-
-puts "Bitstream generation completed."
 # Load necessary package
 load_package flow
 
