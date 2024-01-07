@@ -15,27 +15,9 @@
 #define SD_NUM_ATTEMPTS     10
 #define SD_SPI_INIT_BAUD    200000
 
-// Commands
-#define SD_CMD0         0
-#define SD_CMD0_ARG     0x00000000
-#define SD_CMD0_CRC     0x94
-#define SD_DUMMY_BYTE   0xff
-
-#define SD_CMD8         8
-#define SD_CMD8_ARG     0x0000001AA
-#define SD_CMD8_CRC     0x86 //(1000011 << 1)
-
-#define SD_CMD58        58
-#define SD_CMD58_ARG    0x00000000
-#define SD_CMD58_CRC    0x00
-
-#define SD_CMD55        55
-#define SD_CMD55_ARG    0x00000000
-#define SD_CMD55_CRC    0x00
-
-#define SD_ACMD41       41
-#define SD_ACMD41_ARG   0x40000000
-#define SD_ACMD41_CRC   0x00
+//FIXME: change these to time based timeout values
+#define SD_MAX_READ_ATTEMPTS    1563
+#define SD_MAX_WRITE_ATTEMPTS   3907
 
 // Helper Macros
 #define R1_CHECK_CARD_RDY(X)        ((X) == 0)
@@ -141,115 +123,77 @@ void sd_print_r3_resp(uint8_t *res) {
     puts("\n");
 }
 
-void sdc_cmd(struct SPI_Config *cfg, uint8_t cmd, uint32_t arg, uint8_t crc) {
-    spi_transfer(cfg, cmd | 0x40);
+enum SDRespType {
+    RESP1,
+    RESP3,
+    RESP7
+};
 
-    spi_transfer(cfg, arg >> 24);
-	spi_transfer(cfg, arg >> 16);
-	spi_transfer(cfg, arg >> 8);
-    spi_transfer(cfg, arg);
+typedef struct {
+    uint8_t cmd;
+    uint32_t arg;
+    uint8_t crc;
+    enum SDRespType resp_type;
+} SDCmd_attr;
+
+typedef enum {
+    SD_CMD0  = 0,
+    SD_CMD8  = 1,
+    SD_CMD17 = 2,
+    SD_CMD24 = 3,
+    SD_CMD41 = 4, 
+    SD_CMD55 = 5, 
+    SD_CMD58 = 6
+} SDCmd;
+
+const SDCmd_attr sdcmds[7] = {
+    /* SD_CMD0  */ {.cmd=0,  .arg=0x00000000, .crc=0x94, .resp_type=RESP1},
+    /* SD_CMD8  */ {.cmd=8,  .arg=0x000001AA, .crc=0x86, .resp_type=RESP7},
+    /* SD_CMD17 */ {.cmd=17, .arg=0x00000000, .crc=0x00, .resp_type=RESP1},
+    /* SD_CMD24 */ {.cmd=24, .arg=0x00000000, .crc=0x00, .resp_type=RESP1},
+    /* SD_CMD41 */ {.cmd=41, .arg=0x40000000, .crc=0x00, .resp_type=RESP1},
+    /* SD_CMD55 */ {.cmd=55, .arg=0x00000000, .crc=0x00, .resp_type=RESP1},
+    /* SD_CMD58 */ {.cmd=58, .arg=0x00000000, .crc=0x00, .resp_type=RESP3}
+};
+
+#define _spi_select(cfg) \
+    spi_transfer(cfg, 0xFF); \
+    spi_select(cfg); \
+    spi_transfer(cfg, 0xFF); 
+
+#define _spi_deselect(cfg) \
+    spi_transfer(cfg, 0xFF); \
+    spi_deselect(cfg); \
+    spi_transfer(cfg, 0xFF); \
+
+void sdc_cmd(struct SPI_Config *cfg, SDCmd cmd, uint8_t * resp) {
+    // send command
+    spi_transfer(cfg, sdcmds[cmd].cmd | 0x40);
+
+    // send arg
+    spi_transfer(cfg, sdcmds[cmd].arg >> 24);
+	spi_transfer(cfg, sdcmds[cmd].arg >> 16);
+	spi_transfer(cfg, sdcmds[cmd].arg >> 8);
+    spi_transfer(cfg, sdcmds[cmd].arg);
     
-    spi_transfer(cfg, crc | 0x1);
-}
-
-uint8_t sdc_send_cmd0(struct SPI_Config *cfg) {
-    // assert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_select(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    // send CMD0
-    sdc_cmd(cfg, SD_CMD0, SD_CMD0_ARG, SD_CMD0_CRC);
+    // send CRC
+    spi_transfer(cfg, sdcmds[cmd].crc | 0x1);
 
     // read response
-    uint8_t res1 = sdc_read_res1(cfg);
+    switch(sdcmds[cmd].resp_type) {
+        case RESP1: 
+            resp[0] = sdc_read_res1(cfg); 
+            break;
 
-    // deassert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_deselect(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    return res1;
-}
-
-void sdc_send_cmd8(struct SPI_Config *cfg, uint8_t *res) {
-    // IFC Cond Command
-    // assert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_select(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    // send CMD8
-    sdc_cmd(cfg, SD_CMD8, SD_CMD8_ARG, SD_CMD8_CRC);
-
-    // read response 3
-    sdc_read_res3_or_7(cfg, res);
-
-    // deassert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_deselect(cfg);
-    spi_transfer(cfg, 0xFF);
-}
-
-uint8_t sd_send_cmd55(struct SPI_Config *cfg) {
-    // APP CMD
-    // assert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_select(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    // send CMD55
-    sdc_cmd(cfg, SD_CMD55, SD_CMD55_ARG, SD_CMD55_CRC);
-
-    // read response
-    uint8_t res1 = sdc_read_res1(cfg);
-
-    // deassert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_deselect(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    return res1;
-}
-
-uint8_t sd_send_acmd41(struct SPI_Config *cfg)
-{
-    // OP Cond CMD
-    // assert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_select(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    // send CMD0
-    sdc_cmd(cfg, SD_ACMD41, SD_ACMD41_ARG, SD_ACMD41_CRC);
-
-    // read response
-    uint8_t res1 = sdc_read_res1(cfg);
-
-    // deassert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_deselect(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    return res1;
-}
-
-void sdc_send_cmd58(struct SPI_Config *cfg, uint8_t *res) {
-    // assert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_select(cfg);
-    spi_transfer(cfg, 0xFF);
-
-    // send CMD58
-    sdc_cmd(cfg, SD_CMD58, SD_CMD58_ARG, SD_CMD58_CRC);
-
-    // read response
-    sdc_read_res3_or_7(cfg, res);
-
-    // deassert chip select
-    spi_transfer(cfg, 0xFF);
-    spi_deselect(cfg);
-    spi_transfer(cfg, 0xFF);
+        case RESP3:
+        case RESP7:
+            sdc_read_res3_or_7(cfg, resp); 
+            break;
+        
+        default:
+            resp[0] = sdc_read_res1(cfg); 
+            break;
+    }
 }
 
 uint8_t sdc_read_res1(struct SPI_Config *cfg) {
@@ -294,8 +238,7 @@ uint8_t sd_init(struct SPI_Config *cfg)
     spi_init(cfg);
 
     uint8_t res[5];
-    uint8_t cmdAttempts = 0;
-
+    uint8_t ntries = 0;
 
     // Step - 1: Power UP Sequence
     SD_DBG(puts("SDC: Powering up\n");)
@@ -304,17 +247,22 @@ uint8_t sd_init(struct SPI_Config *cfg)
 
     // Step - 2: goto IDLE
     SD_DBG(puts("SDC: Sending CMD0..\n");)
-    while((res[0] = sdc_send_cmd0(cfg)) != 0x01) {
-        cmdAttempts++;
-        if(cmdAttempts > SD_NUM_ATTEMPTS) 
-            return SD_ERR_UNKNOWN_CARD;
-    }
-    SD_DBG(sd_print_r1_resp(res[0]);)
+    ntries = SD_NUM_ATTEMPTS;
+    do {
+        _spi_select(cfg)
+        sdc_cmd(cfg, SD_CMD0, res);
+        _spi_deselect(cfg)
+    } while ((res[0] != 0x01) && (ntries-- > 0));
+
+    if(ntries==0)   
+        return SD_ERR_UNKNOWN_CARD;
 
 
     // Step - 3: Send interface conditions
     SD_DBG(puts("SDC: Sending CMD8..\n");)
-    sdc_send_cmd8(cfg, res);
+    _spi_select(cfg)
+    sdc_cmd(cfg, SD_CMD8, res);
+    _spi_deselect(cfg)
     SD_DBG(sd_print_r7_resp(res);)
 
     // check idle
@@ -324,35 +272,42 @@ uint8_t sd_init(struct SPI_Config *cfg)
     if(res[4] != 0xAA)
         return SD_ERR_UNKNOWN_CARD;
 
+
     // Step - 4: Initialization
     SD_DBG(puts("SDC: Initializing..\n");)
-    cmdAttempts = 0;
+    ntries = 0;
     do {
-        if(cmdAttempts > SD_NUM_ATTEMPTS) {
+        if(ntries > SD_NUM_ATTEMPTS) {
             return SD_ERR_UNKNOWN_CARD;
         }
 
         // send app cmd
-        SD_DBG(printf("SDC: Sending CMD55... (Try:%d)\n", cmdAttempts);)
-        res[0] = sd_send_cmd55(cfg);
+        SD_DBG(printf("SDC: Sending CMD55... (Try:%d)\n", ntries);)
+        _spi_select(cfg)
+        sdc_cmd(cfg, SD_CMD55, res);
+        _spi_deselect(cfg)
         SD_DBG(sd_print_r1_resp(res[0]);)
 
         // if no error in response
         if(res[0] < 2)
         {
             SD_DBG(puts("SDC: Sending ACMD41...\n");)
-            res[0] = sd_send_acmd41(cfg);
+            _spi_select(cfg)
+            sdc_cmd(cfg, SD_CMD41, res);
+            _spi_deselect(cfg)
             SD_DBG(sd_print_r1_resp(res[0]);)
         }
 
         // wait
         sleep_ms(10);
-        cmdAttempts++;
+        ntries++;
     } while(!R1_CHECK_CARD_RDY(res[0]));
 
     // Step - 5: read OCR
     SD_DBG(puts("SDC: Send CMD58 (Read OCR)..\n");)
-    sdc_send_cmd58(cfg, res);
+    _spi_select(cfg)
+    sdc_cmd(cfg, SD_CMD58, res);
+    _spi_deselect(cfg)
     SD_DBG(sd_print_r3_resp(res);)
 
     // check card is ready
@@ -365,4 +320,95 @@ uint8_t sd_init(struct SPI_Config *cfg)
 
     SD_DBG(puts("SUCCESS\n");)
     return SD_SUCCESS;
+}
+
+uint8_t sdc_read_block(struct SPI_Config *cfg, uint32_t addr, uint8_t *buf, uint8_t *token) {
+    uint8_t res1, read;
+    uint16_t readAttempts;
+
+    // set token to none
+    *token = 0xFF;
+
+    _spi_select(cfg);
+
+    // send command 17
+    sdc_cmd(cfg, SD_CMD17, &res1);
+
+    // if response received from card
+    if(res1 != 0xFF)
+    {
+        // wait for a response token (timeout = 100ms)
+        readAttempts = 0;
+        while(++readAttempts != SD_MAX_READ_ATTEMPTS)
+            if((read = spi_transfer(cfg, 0xFF)) != 0xFF) break;
+
+        // if response token is 0xFE
+        if(read == SD_START_TOKEN)
+        {
+            // read 512 byte block
+            for(uint16_t i = 0; i < SD_BLOCK_LEN; i++) 
+                *buf++ = spi_transfer(cfg, 0xFF);
+
+            // read (& discard) 16-bit CRC
+            spi_transfer(cfg, 0xFF);
+            spi_transfer(cfg, 0xFF);
+        }
+
+        // set token to card response
+        *token = read;
+    }
+
+    // deassert chip select
+    _spi_deselect(cfg);
+    return res1;
+}
+
+uint8_t sdc_write_block(struct SPI_Config *cfg, uint32_t addr, uint8_t *buf, uint8_t *token)
+{
+    uint8_t res1, readAttempts, read;
+
+    // set token to none
+    *token = 0xFF;
+
+    // assert chip select
+    _spi_select(cfg)
+
+    // send CMD24
+    sdc_cmd(cfg, SD_CMD24, &res1);
+
+    // if no error
+    if(R1_CHECK_CARD_RDY(res1))
+    {
+        // send start token
+        spi_transfer(cfg, SD_START_TOKEN);
+
+        // write buffer to card
+        for(uint16_t i = 0; i < SD_BLOCK_LEN; i++) 
+            spi_transfer(cfg, buf[i]);
+
+        // wait for a response (timeout = 250ms)
+        readAttempts = 0;
+        while(++readAttempts != SD_MAX_WRITE_ATTEMPTS)
+            if((read = spi_transfer(cfg, 0xFF)) != 0xFF) { *token = 0xFF; break; }
+
+        // if data accepted
+        if((read & 0x1F) == 0x05)
+        {
+            // set token to data accepted
+            *token = 0x05;
+
+            // wait for write to finish (timeout = 250ms)
+            readAttempts = 0;
+            while(spi_transfer(cfg, 0xFF) == 0x00) {
+                if(++readAttempts == SD_MAX_WRITE_ATTEMPTS) { 
+                    *token = 0x00; 
+                    break; 
+                }
+            }
+        }
+    }
+
+    // deassert chip select
+    _spi_deselect(cfg)
+    return res1;
 }
