@@ -32,16 +32,16 @@ module Decode
     output  reg             d_mem_load_store,
     output  reg             mem_we_o
     
-    `ifdef RV_ZICSR
+    `ifdef EN_RVZICSR
     ,
     output  wire    [2:0]   csru_op_sel_o,
     output  reg             csru_we_o
-    `endif
+    `endif // EN_RVZICSR
 
     `ifdef EN_EXCEPT
     ,
     output  reg             trap_ret_o
-    `endif
+    `endif // EN_EXCEPT
 );
 
     // Decode fields
@@ -51,9 +51,9 @@ module Decode
 
     assign mem_access_width_o = func3;
 
-    `ifdef RV_ZICSR
+    `ifdef EN_RVZICSR
     assign csru_op_sel_o = func3;
-    `endif
+    `endif // EN_RVZICSR
 
 
     assign  rd_sel_o    = instr_i[11:7];
@@ -104,13 +104,13 @@ module Decode
         d_mem_load_store = 1'b0;
         imm_format = `RV_IMM_TYPE_U;
 
-        `ifdef RV_ZICSR
+        `ifdef EN_RVZICSR
         csru_we_o = 0;
-        `endif
+        `endif // EN_RVZICSR
 
         `ifdef EN_EXCEPT
         trap_ret_o = 1'b0;
-        `endif
+        `endif // EN_EXCEPT
 
 
         casez({func7, func3, opcode})
@@ -480,19 +480,9 @@ module Decode
                 alu_op_sel_o = `ALU_FUNC_SRA;
             end
 
-            /* OR    */ 
-            17'b0000000_110_0110011:
-            begin
-                instr_scope = "OR";
-                rf_we_o = 1'b1;
-                rf_din_sel_o = 3'd2;
-                a_op_sel_o = 1'b0;
-                b_op_sel_o = 1'b0;
-                alu_op_sel_o = `ALU_FUNC_OR;
-            end
 
             /* AND   */ 
-            17'b0000000_111_0110011: 
+            17'b0000000_111_0110011:
             begin
                 instr_scope = "AND";
                 rf_we_o = 1'b1;
@@ -501,6 +491,96 @@ module Decode
                 b_op_sel_o = 1'b0;
                 alu_op_sel_o = `ALU_FUNC_AND;
             end
+            //////////////////////////////m extension
+            ///fun7   fun3 opcode
+            /* MUL   */
+            17'b0100001_000_0110011:
+            begin
+                instr_scope = "MUL";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_MUL;
+            end
+            
+            /* MULH   */
+            17'b0100001_001_0110011:
+            begin
+                instr_scope = "MULH";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_MULH;
+            end
+            
+            /* MULHSU   */
+            17'b0100001_010_0110011:
+            begin
+                instr_scope = "MULHSU";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_MULHSU;
+            end
+            
+            /* MULHU   */
+            17'b0100001_011_0110011:
+            begin
+                instr_scope = "MULHU";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_MULHU;
+            end
+            
+            /* DIV   */
+            17'b0100001_100_0110011:
+            begin
+                instr_scope = "DIV";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_DIV;
+            end
+            
+            /* DIVU   */
+            17'b0100001_101_0110011:
+            begin
+                instr_scope = "DIVU";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_DIVU;
+            end
+            
+            /* REM   */
+            17'b0100001_110_0110011:
+            begin
+                instr_scope = "REM";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_REM;
+            end
+            
+            /* REMU   */
+            17'b0100001_111_0110011:
+            begin
+                instr_scope = "REMU";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_REMU;
+            end
+      			
 
             /* OPCODE: SYSTEM */
             17'b???????_???_1110011:
@@ -521,7 +601,7 @@ module Decode
                     trap_ret_o = 1'b1;
                     `else
                     illegal_instr_o = 1'b1; // Not supported
-                    `endif
+                    `endif // EN_EXCEPT
 
                 end
                 else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00101 && func7 == 7'b0001000) /* WFI */ begin
@@ -529,7 +609,7 @@ module Decode
                     illegal_instr_o = 1'b1; // Not supported
                 end
                 else begin
-                    `ifdef RV_ZICSR
+                    `ifdef EN_RVZICSR
                         /* CSR Instructions */
                         case(func3)
                             3'b001: instr_scope = "CSRRW";
@@ -549,7 +629,7 @@ module Decode
                         imm_format = `RV_IMM_TYPE_I;
                     `else
                         illegal_instr_o = 1'b1;
-                    `endif // RV_ZICSR
+                    `endif // EN_RVZICSR
                 end
             end
 
@@ -566,9 +646,9 @@ module Decode
                 mem_we_o = 1'b0;
                 imm_format = 0;
 
-                `ifdef RV_ZICSR
+                `ifdef EN_RVZICSR
                 csru_we_o = 0;
-                `endif
+                `endif // EN_RVZICSR
 
                 `ifdef EN_EXCEPT
                 trap_ret_o = 0;

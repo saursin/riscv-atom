@@ -21,14 +21,25 @@
 
 
 // ALU
-`define ALU_FUNC_ADD    3'd0
-`define ALU_FUNC_SUB    3'd1
-`define ALU_FUNC_XOR    3'd2
-`define ALU_FUNC_OR     3'd3
-`define ALU_FUNC_AND    3'd4
-`define ALU_FUNC_SLL    3'd5
-`define ALU_FUNC_SRL    3'd6
-`define ALU_FUNC_SRA    3'd7
+`define ALU_FUNC_ADD    4'd0
+`define ALU_FUNC_SUB    4'd1
+`define ALU_FUNC_XOR    4'd2
+`define ALU_FUNC_OR     4'd3
+`define ALU_FUNC_AND    4'd4
+`define ALU_FUNC_SLL    4'd5
+`define ALU_FUNC_SRL    4'd6
+`define ALU_FUNC_SRA    4'd7
+
+
+// ALU M extension
+`define ALU_FUNC_MUL    4'd8
+`define ALU_FUNC_MULH   4'd9
+`define ALU_FUNC_MULHSU 4'd10
+`define ALU_FUNC_MULHU  4'd11
+`define ALU_FUNC_DIV    4'd12
+`define ALU_FUNC_DIVU   4'd13
+`define ALU_FUNC_REM    4'd14
+`define ALU_FUNC_REMU   4'd15
 
 
 // Comparator Unit
@@ -41,15 +52,7 @@
 `define CMP_FUNC_GEU    3'd6
 
 
-// ALU
-`define ALU_FUNC_ADD 3'd0
-`define ALU_FUNC_SUB 3'd1
-`define ALU_FUNC_XOR 3'd2
-`define ALU_FUNC_OR  3'd3
-`define ALU_FUNC_AND 3'd4
-`define ALU_FUNC_SLL 3'd5
-`define ALU_FUNC_SRL 3'd6
-`define ALU_FUNC_SRA 3'd7
+
 
 
 `endif // __DEFS_VH__

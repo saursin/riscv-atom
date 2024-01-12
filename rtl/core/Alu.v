@@ -35,8 +35,8 @@ module Alu
     /////// m extension
     wire sel_mul 	= (sel_i == `ALU_FUNC_MUL);
     wire sel_mulh	= (sel_i == `ALU_FUNC_MULH);
-    wire sel_mulsu 	= (sel_i == `ALU_FUNC_MULSU);
-    wire sel_mulu 	= (sel_i == `ALU_FUNC_MULU);
+    wire sel_mulhsu 	= (sel_i == `ALU_FUNC_MULHSU);
+    wire sel_mulhu 	= (sel_i == `ALU_FUNC_MULHU);
     wire sel_div 	= (sel_i == `ALU_FUNC_DIV);
     wire sel_divu 	= (sel_i == `ALU_FUNC_DIVU);
     wire sel_rem 	= (sel_i == `ALU_FUNC_REM);
@@ -77,13 +77,13 @@ module Alu
     wire [32:0] shift_output = shift_input >>> b_i[4:0];    // Universal shifter
     /* verilator lint_on UNUSED */
     
-    //mul,mulh,mulsu,mulu
+    //mul,mulh,mulhsu,mulhu
     always @(*) begin
         if (sel_mul)
             mul_result = $signed(a_i) * $signed(b_i);
-        else if (sel_mulu)
+        else if (sel_mulhu)
             mul_result = (a_i)*(b_i);
-        else if (sel_mulsu)
+        else if (sel_mulhsu)
             mul_result = $signed(a_i)* (b_i);
         else if (sel_mulh)
             mul_result = $signed(a_i) * $signed(b_i);
@@ -139,7 +139,7 @@ module Alu
             result_o = a_i & b_i;
         else if (sel_mul)
             result_o = mul_result[31:0];
-        else if (sel_mulu | sel_mulh | sel_mulsu)
+        else if (sel_mulhu | sel_mulh | sel_mulhsu)
             result_o = mul_result[63:32];
         else if (sel_div | sel_divu)
             result_o = div_result
