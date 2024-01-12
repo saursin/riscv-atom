@@ -1,0 +1,12 @@
+{
+    "name": "spi",
+    "vtopmodule": "SPI_wb",
+    "vdefines": [],
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/spi/SPI_wb.v",
+        "${RVATOM}/rtl/uncore/spi/SPI_core.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "name": "hydrogensoc_minimal",
+    "extends": "hydrogensoc",
+    "params": {
+        "en_embedded": true,
+        "en_compressed": false,
+        "en_csr": false,
+        "en_exceptions": false
+    }
+}

@@ -106,7 +106,6 @@ void soft_pwm(uint8_t dutycycle, uint32_t duration)
         {
             if(i>dutycycle)
                 gpio_writew(0x00);
-            sleep_us(500);
         }
     }
 }
@@ -159,7 +158,7 @@ void main()
             run_pattern(pat7, sizeof(pat7), 100, false);
         
 
-        puts("Pattern 8: Soft PWM");
+        puts("Pattern 8: Soft PWM\n");
         for(int i=0; i<5; i++){
             for(int d=0; d<255; d+=5)
                 soft_pwm(d, 30);

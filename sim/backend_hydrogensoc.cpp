@@ -67,7 +67,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     reset();
 
     // ====== Initialize BBUart ========
-    bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_usb_tx_o, (bool *)&tb->m_core->uart_usb_rx_i, BBUART_FRATIO);
+    bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_tx_o, (bool *)&tb->m_core->uart_rx_i, BBUART_FRATIO);
 
     // create a new vuart object
     if (using_vuart_)

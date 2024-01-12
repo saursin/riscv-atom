@@ -4,66 +4,36 @@
 //  Description : HydrogenSoC is an FPGA ready SoC, it consists of
 //      a single atom core with memories and communication modules.
 ///////////////////////////////////////////////////////////////////
-`include "HydrogenSoC_Config.vh"
 `include "Utils.vh"
-
-`ifdef verilator
-    // Macros for Verilator
-`endif
-`ifdef SYNTHESIS_YOSYS
-    // Macros for Yosys
-`endif
-`ifdef SYNTHESIS
-    // Macros for Xilinx ISE
-    `define __ROM_INIT_FILE__ "rom.hex"
-`endif
-
-`ifndef __ROM_INIT_FILE__
-`define __ROM_INIT_FILE__ ""
-`endif
-
-// converts memory aperture size to 32 bit mask for wishbone crossbar
-`define size_to_mask32(sz) (-32'h1 << $clog2(sz))
+`include "HydrogenSoC_Config.vh"
 
 `default_nettype none
 
 module HydrogenSoC(
-    // GLOBAL SIGNALS
-    input   wire                clk_i,
-    input   wire                rst_i,
+    input   wire    clk_i,
+    input   wire    rst_i
 
-    // GPIO
-    inout   wire [`NGPIO-1:0]   gpio_io,
+`ifdef SOC_EN_UART
+    ,
+    input   wire    uart_rx_i,
+    output  wire    uart_tx_o
+`endif
 
-    // UART
-    input   wire                uart_mux_sel_i,
-    input   wire                uart_usb_rx_i,
-    output  wire                uart_usb_tx_o,
-    input   wire                uart_io_rx_i,
-    output  wire                uart_io_tx_o,
+`ifdef SOC_EN_GPIO
+    ,
+    inout   wire [`SOC_GPIO_NUM_PINS-1:0]   gpio_io
+`endif
 
-    // SPI
-    input   wire                spi_miso_i,
-    output  wire                spi_mosi_o,
-    output  wire                spi_sck_o,
-    output  wire [`NSPI_CS-1:0] spi_cs_o
+`ifdef SOC_EN_SPI
+    ,
+    input   wire                            spi_miso_i,
+    output  wire                            spi_mosi_o,
+    output  wire                            spi_sck_o,
+    output  wire [`SOC_SPI_NUM_CS-1:0]      spi_cs_o
+`endif
 );
     wire wb_clk_i = clk_i;
-    wire wb_rst_i = rst_i;
-
-    // ******************** FrontPort ********************
-    // FrontPort Signals
-    `ifdef SOC_FRONTPORT
-    wire    [31:0]  fp_wb_adr_o     = 32'h00000000;
-    wire    [31:0]  fp_wb_dat_o     = 32'h00000000;
-    wire    [31:0]  fp_wb_dat_i;    `UNUSED_VAR(fp_wb_dat_i)
-    wire            fp_wb_we_o      = 1'b0;
-    wire    [3:0]   fp_wb_sel_o     = 4'b0000;
-    wire            fp_wb_stb_o     = 1'b0;
-    wire            fp_wb_ack_i;    `UNUSED_VAR(fp_wb_ack_i)
-    wire            fp_wb_cyc_o     = 1'b0;
-    `endif
-
+    wire wb_rst_i = `INLINE_IFDEF(SOC_INVERT_RST, ~rst_i, rst_i);
 
     // ******************** Core ********************
     wire    [31:0]  core_iport_wb_adr_o;
@@ -108,7 +78,7 @@ module HydrogenSoC(
         `ifdef EN_EXCEPT
         ,
         .irq_i          (1'b0),
-        .timer_int_i    (timer_int_o)
+        .timer_int_i    (`INLINE_IFDEF(SOC_EN_TIMER, timer_int_o, 1'b0))
         `endif // EN_EXCEPT
     );
 
@@ -125,17 +95,14 @@ module HydrogenSoC(
     wire            arb_wb_err_i;
     `UNUSED_VAR(arb_wb_err_i)
 
-    `ifdef SOC_FRONTPORT
-    Arbiter3_wb #(
-    `else
     Arbiter2_wb #(
-    `endif
-        .DATA_WIDTH (32),
-        .ADDR_WIDTH (32),
-        .SELECT_WIDTH (4)
+        .DATA_WIDTH             (32),
+        .ADDR_WIDTH             (32),
+        .ARB_TYPE_ROUND_ROBIN   (0),
+        .ARB_LSB_HIGH_PRIORITY  (0)
     ) arbiter (
-        .clk        (clk_i),
-        .rst        (rst_i),
+        .clk        (wb_clk_i),
+        .rst        (wb_rst_i),
 
         // Wishbone master 0 input
         .wbm0_adr_i     (core_iport_wb_adr_o),
@@ -157,18 +124,6 @@ module HydrogenSoC(
         .wbm1_ack_o     (core_dport_wb_ack_i),
         .wbm1_cyc_i     (core_dport_wb_cyc_o),
 
-        `ifdef SOC_FRONTPORT
-        // Wishbone master 2 input
-        .wbm2_adr_i     (fp_wb_adr_o),
-        .wbm2_dat_i     (fp_wb_dat_o),
-        .wbm2_dat_o     (fp_wb_dat_i),
-        .wbm2_we_i      (fp_wb_we_o),
-        .wbm2_sel_i     (fp_wb_sel_o),
-        .wbm2_stb_i     (fp_wb_stb_o),
-        .wbm2_ack_o     (fp_wb_ack_i),
-        .wbm2_cyc_i     (fp_wb_cyc_o),
-        `endif
-
         // Wishbone slave output
         .wbs_adr_o      (arb_wb_adr_o),
         .wbs_dat_i      (arb_wb_dat_i),
@@ -182,127 +137,164 @@ module HydrogenSoC(
 
 
     // ******************** Crossbar ********************
-    Crossbar6_wb #(
+    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_adr_o;
+    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_dat_i;
+    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_dat_o;
+    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_we_o;
+    // wire [4*`SOC_XBAR_SLAVE_COUNT-1:0]   xbar_wb_sel_o;
+    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_cyc_o;
+    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_stb_o;
+    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_ack_i;
+    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_err_i;
+
+    `define listappend(macro, x) \
+            `ifdef macro \
+            , x \
+            `endif
+
+    Crossbar_wb #(
+        .NSLAVES        (`SOC_XBAR_SLAVE_COUNT),
         .DATA_WIDTH     (32),
         .ADDR_WIDTH     (32),
-        .DEVICE0_ADDR   (`BOOTROM_ADDR),
-        .DEVICE0_MASK   (`size_to_mask32(`BOOTROM_SIZE)),
-        .DEVICE1_ADDR   (`RAM_ADDR),
-        .DEVICE1_MASK   (`size_to_mask32(`RAM_SIZE)),
-        .DEVICE2_ADDR   (`UART_ADDR),
-        .DEVICE2_MASK   (`size_to_mask32(`UART_SIZE)),
-        .DEVICE3_ADDR   (`GPIO_ADDR),
-        .DEVICE3_MASK   (`size_to_mask32(`GPIO_SIZE)),
-        .DEVICE4_ADDR   (`SPI_ADDR),
-        .DEVICE4_MASK   (`size_to_mask32(`SPI_SIZE)),
-        .DEVICE5_ADDR   (`TIMER_ADDR),
-        .DEVICE5_MASK   (`size_to_mask32(`TIMER_SIZE))
+        .DEVICE_ADDR    ({
+            `SOC_BOOTROM_ADDR,
+            `SOC_RAM_ADDR
+            `listappend(SOC_EN_UART, `SOC_UART_ADDR)
+            `listappend(SOC_EN_GPIO, `SOC_GPIO_ADDR)
+            `listappend(SOC_EN_SPI, `SOC_SPI_ADDR)
+            `listappend(SOC_EN_TIMER, `SOC_TIMER_ADDR)
+        }),
+        .DEVICE_MASK    ({
+            `size_to_mask32(`SOC_BOOTROM_SIZE),
+            `size_to_mask32(`SOC_RAM_SIZE)
+            `listappend(SOC_EN_UART, `size_to_mask32(`SOC_UART_SIZE))
+            `listappend(SOC_EN_GPIO, `size_to_mask32(`SOC_GPIO_SIZE))
+            `listappend(SOC_EN_SPI, `size_to_mask32(`SOC_SPI_SIZE))
+            `listappend(SOC_EN_TIMER, `size_to_mask32(`SOC_TIMER_SIZE))
+        })
     ) xbar (
-        .wbs_adr_i      (arb_wb_adr_o),
-        .wbs_dat_i      (arb_wb_dat_o),
-        .wbs_dat_o      (arb_wb_dat_i),
-        .wbs_we_i       (arb_wb_we_o),
-        .wbs_sel_i      (arb_wb_sel_o),
-        .wbs_stb_i      (arb_wb_stb_o),
-        .wbs_cyc_i      (arb_wb_cyc_o),
-        .wbs_ack_o      (arb_wb_ack_i),
-        .wbs_err_o      (arb_wb_err_i),
+        .wb_clk_i       (wb_clk_i),
 
-        .wbm0_adr_o     (bootrom_wb_adr_i),
-        .wbm0_dat_i     (bootrom_wb_dat_o),
-        /* verilator lint_off PINCONNECTEMPTY */
-        .wbm0_dat_o     (),
-        .wbm0_we_o      (),
-        .wbm0_sel_o     (),
-        /* verilator lint_on PINCONNECTEMPTY */
-        .wbm0_cyc_o     (bootrom_wb_cyc_i),
-        .wbm0_stb_o     (bootrom_wb_stb_i),
-        .wbm0_ack_i     (bootrom_wb_ack_o),
-        .wbm0_err_i     (1'b0),
+        .wbm_adr_i      (arb_wb_adr_o),
+        .wbm_dat_i      (arb_wb_dat_o),
+        .wbm_dat_o      (arb_wb_dat_i),
+        .wbm_we_i       (arb_wb_we_o),
+        .wbm_sel_i      (arb_wb_sel_o),
+        .wbm_stb_i      (arb_wb_stb_o),
+        .wbm_cyc_i      (arb_wb_cyc_o),
+        .wbm_ack_o      (arb_wb_ack_i),
+        .wbm_err_o      (arb_wb_err_i),
 
-        .wbm1_adr_o     (ram_wb_adr_i),
-        .wbm1_dat_i     (ram_wb_dat_o),
-        .wbm1_dat_o     (ram_wb_dat_i),
-        .wbm1_we_o      (ram_wb_we_i),
-        .wbm1_sel_o     (ram_wb_sel_i),
-        .wbm1_cyc_o     (ram_wb_cyc_i),
-        .wbm1_stb_o     (ram_wb_stb_i),
-        .wbm1_ack_i     (ram_wb_ack_o),
-        .wbm1_err_i     (1'b0),
-
-        .wbm2_adr_o     (uart_wb_adr_i),
-        .wbm2_dat_i     (uart_wb_dat_o),
-        .wbm2_dat_o     (uart_wb_dat_i),
-        .wbm2_we_o      (uart_wb_we_i),
-        .wbm2_sel_o     (uart_wb_sel_i),
-        .wbm2_cyc_o     (uart_wb_cyc_i),
-        .wbm2_stb_o     (uart_wb_stb_i),
-        .wbm2_ack_i     (uart_wb_ack_o),
-        .wbm2_err_i     (1'b0),
-
-        .wbm3_adr_o     (gpio_wb_adr_i),
-        .wbm3_dat_i     (gpio_wb_dat_o),
-        .wbm3_dat_o     (gpio_wb_dat_i),
-        .wbm3_we_o      (gpio_wb_we_i),
-        .wbm3_sel_o     (gpio_wb_sel_i),
-        .wbm3_cyc_o     (gpio_wb_cyc_i),
-        .wbm3_stb_o     (gpio_wb_stb_i),
-        .wbm3_ack_i     (gpio_wb_ack_o),
-        .wbm3_err_i     (1'b0),
-
-        .wbm4_adr_o     (spi_wb_adr_i),
-        .wbm4_dat_i     (spi_wb_dat_o),
-        .wbm4_dat_o     (spi_wb_dat_i),
-        .wbm4_we_o      (spi_wb_we_i),
-        .wbm4_sel_o     (spi_wb_sel_i),
-        .wbm4_cyc_o     (spi_wb_cyc_i),
-        .wbm4_stb_o     (spi_wb_stb_i),
-        .wbm4_ack_i     (spi_wb_ack_o),
-        .wbm4_err_i     (1'b0),
-
-        .wbm5_adr_o     (timer_wb_adr_i),
-        .wbm5_dat_i     (timer_wb_dat_o),
-        .wbm5_dat_o     (timer_wb_dat_i),
-        .wbm5_we_o      (timer_wb_we_i),
-        .wbm5_sel_o     (timer_wb_sel_i),
-        .wbm5_cyc_o     (timer_wb_cyc_i),
-        .wbm5_stb_o     (timer_wb_stb_i),
-        .wbm5_ack_i     (timer_wb_ack_o),
-        .wbm5_err_i     (1'b0)
+        .wbs_adr_o      ({
+            bootrom_wb_adr_i, 
+            ram_wb_adr_i
+            `listappend(SOC_EN_UART, uart_wb_adr_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_adr_i)
+            `listappend(SOC_EN_SPI, spi_wb_adr_i)
+            `listappend(SOC_EN_TIMER, timer_wb_adr_i)
+        }),
+        .wbs_dat_i      ({
+            bootrom_wb_dat_o,
+            ram_wb_dat_o
+            `listappend(SOC_EN_UART, uart_wb_dat_o)
+            `listappend(SOC_EN_GPIO, gpio_wb_dat_o)
+            `listappend(SOC_EN_SPI, spi_wb_dat_o)
+            `listappend(SOC_EN_TIMER, timer_wb_dat_o)
+        }),
+        .wbs_dat_o      ({
+            bootrom_wb_dat_i,
+            ram_wb_dat_i
+            `listappend(SOC_EN_UART, uart_wb_dat_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_dat_i)
+            `listappend(SOC_EN_SPI, spi_wb_dat_i)
+            `listappend(SOC_EN_TIMER, timer_wb_dat_i)
+        }),
+        .wbs_we_o       ({
+            bootrom_wb_we_i,
+            ram_wb_we_i
+            `listappend(SOC_EN_UART, uart_wb_we_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_we_i)
+            `listappend(SOC_EN_SPI, spi_wb_we_i)
+            `listappend(SOC_EN_TIMER, timer_wb_we_i)
+        }),
+        .wbs_sel_o      ({
+            bootrom_wb_sel_i,
+            ram_wb_sel_i
+            `listappend(SOC_EN_UART, uart_wb_sel_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_sel_i)
+            `listappend(SOC_EN_SPI, spi_wb_sel_i)
+            `listappend(SOC_EN_TIMER, timer_wb_sel_i)
+        }),
+        .wbs_cyc_o      ({
+            bootrom_wb_cyc_i,
+            ram_wb_cyc_i
+            `listappend(SOC_EN_UART, uart_wb_cyc_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_cyc_i)
+            `listappend(SOC_EN_SPI, spi_wb_cyc_i)
+            `listappend(SOC_EN_TIMER, timer_wb_cyc_i)
+        }),
+        .wbs_stb_o      ({
+            bootrom_wb_stb_i,
+            ram_wb_stb_i
+            `listappend(SOC_EN_UART, uart_wb_stb_i)
+            `listappend(SOC_EN_GPIO, gpio_wb_stb_i)
+            `listappend(SOC_EN_SPI, spi_wb_stb_i)
+            `listappend(SOC_EN_TIMER, timer_wb_stb_i)
+        }),
+        .wbs_ack_i      ({
+            bootrom_wb_ack_o,
+            ram_wb_ack_o
+            `listappend(SOC_EN_UART, uart_wb_ack_o)
+            `listappend(SOC_EN_GPIO, gpio_wb_ack_o)
+            `listappend(SOC_EN_SPI, spi_wb_ack_o)
+            `listappend(SOC_EN_TIMER, timer_wb_ack_o)
+        }),
+        .wbs_err_i      ({
+            bootrom_wb_err_o,
+            ram_wb_err_o
+            `listappend(SOC_EN_UART, uart_wb_err_o)
+            `listappend(SOC_EN_GPIO, gpio_wb_err_o)
+            `listappend(SOC_EN_SPI, spi_wb_err_o)
+            `listappend(SOC_EN_TIMER, timer_wb_err_o)
+        })
     );
 
 
     // ******************** BOOTROM ********************
-    parameter BOOTROM_ADR_SIZE = $clog2(`BOOTROM_SIZE);
+    parameter BOOTROM_ADR_SIZE = $clog2(`SOC_BOOTROM_SIZE);
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    wire [31:0] bootrom_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
-    wire [31:0] bootrom_wb_dat_o;
-    wire        bootrom_wb_stb_i;
-    wire        bootrom_wb_cyc_i;
-    wire        bootrom_wb_ack_o;
+    wire  [31:0]    bootrom_wb_adr_i;
+    `UNUSED_VAR(bootrom_wb_adr_i)
+    wire  [31:0]    bootrom_wb_dat_o;
+    wire  [31:0]    bootrom_wb_dat_i;
+    `UNUSED_VAR(bootrom_wb_dat_i)
+    wire 		    bootrom_wb_we_i;
+    `UNUSED_VAR(bootrom_wb_we_i)
+    wire  [3:0]     bootrom_wb_sel_i;
+    `UNUSED_VAR(bootrom_wb_sel_i)
+    wire            bootrom_wb_cyc_i;
+    wire            bootrom_wb_stb_i;
+    wire 		    bootrom_wb_ack_o;
+    wire            bootrom_wb_err_o = 0;
     
     SinglePortROM_wb #(
-        .ADDR_WIDTH(BOOTROM_ADR_SIZE),
-        .MEM_FILE(`__ROM_INIT_FILE__)
+        .ADDR_WIDTH (BOOTROM_ADR_SIZE),
+        .MEM_FILE   (`SOC_BOOTROM_INIT_FILE)
     ) bootrom (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
-
         .wb_adr_i   (bootrom_wb_adr_i[BOOTROM_ADR_SIZE-1:2]),
         .wb_dat_o   (bootrom_wb_dat_o),
-        .wb_stb_i   (bootrom_wb_stb_i & bootrom_wb_cyc_i),
+        .wb_stb_i   (bootrom_wb_cyc_i & bootrom_wb_stb_i),
         .wb_ack_o   (bootrom_wb_ack_o)
     );
 
 
     // ******************** RAM ********************
-    parameter RAM_ADR_SIZE = $clog2(`RAM_SIZE);
+    parameter RAM_ADR_SIZE = $clog2(`SOC_RAM_SIZE);
 
-    /* verilator lint_off UNUSEDSIGNAL */
     wire  [31:0]    ram_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
+    `UNUSED_VAR(ram_wb_adr_i)
     wire  [31:0]    ram_wb_dat_o;
     wire  [31:0]    ram_wb_dat_i;
     wire 		    ram_wb_we_i;
@@ -310,6 +302,7 @@ module HydrogenSoC(
     wire            ram_wb_cyc_i;
     wire            ram_wb_stb_i;
     wire 		    ram_wb_ack_o;
+    wire            ram_wb_err_o = 0;
 
     SinglePortRAM_wb #(
         .ADDR_WIDTH(RAM_ADR_SIZE),
@@ -327,11 +320,11 @@ module HydrogenSoC(
         .wb_ack_o   (ram_wb_ack_o)
     );
 
-
+    
     // ******************** UART ********************
-    /* verilator lint_off UNUSEDSIGNAL */
+    `ifdef SOC_EN_UART
     wire  [31:0]    uart_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
+    `UNUSED_VAR(uart_wb_adr_i)
     wire  [31:0]    uart_wb_dat_o;
     wire  [31:0]    uart_wb_dat_i;
     wire 		    uart_wb_we_i;
@@ -339,12 +332,7 @@ module HydrogenSoC(
     wire            uart_wb_cyc_i;
     wire            uart_wb_stb_i;
     wire 		    uart_wb_ack_o;
-
-    // Uart Mux Logic
-    wire    uart_rx_i = uart_mux_sel_i ? uart_usb_rx_i : uart_io_rx_i;
-    wire    uart_tx_o;
-    assign  uart_io_tx_o = uart_mux_sel_i ? uart_tx_o : 1'b1;
-    assign  uart_usb_tx_o = uart_mux_sel_i ? 1'b1 : uart_tx_o;
+    wire            uart_wb_err_o = 0;
     
     UART uart (
         .wb_clk_i   (wb_clk_i),
@@ -361,12 +349,12 @@ module HydrogenSoC(
         .rx_i       (uart_rx_i),
         .tx_o       (uart_tx_o)
     );
-
+    `endif
 
     // ******************** GPIO ********************
-    /* verilator lint_off UNUSEDSIGNAL */
+    `ifdef SOC_EN_GPIO
     wire  [31:0]    gpio_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
+    `UNUSED_VAR(gpio_wb_adr_i)
     wire  [31:0]    gpio_wb_dat_o;
     wire  [31:0]    gpio_wb_dat_i;
     wire 		    gpio_wb_we_i;
@@ -374,9 +362,10 @@ module HydrogenSoC(
     wire            gpio_wb_cyc_i;
     wire            gpio_wb_stb_i;
     wire 		    gpio_wb_ack_o;
+    wire            gpio_wb_err_o = 0;
     
     GPIO #(
-        .N(`NGPIO)
+        .N(`SOC_GPIO_NUM_PINS)
     ) gpio (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
@@ -391,12 +380,12 @@ module HydrogenSoC(
 
         .gpio_io    (gpio_io)
     );
-
+    `endif
 
     // ******************** SPI ********************
-    /* verilator lint_off UNUSEDSIGNAL */
+    `ifdef SOC_EN_SPI
     wire  [31:0]    spi_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
+    `UNUSED_VAR(spi_wb_adr_i)
     wire  [31:0]    spi_wb_dat_o;
     wire  [31:0]    spi_wb_dat_i;
     wire 		    spi_wb_we_i;
@@ -404,8 +393,10 @@ module HydrogenSoC(
     wire            spi_wb_cyc_i;
     wire            spi_wb_stb_i;
     wire 		    spi_wb_ack_o;
+    wire            spi_wb_err_o = 0;
+
     SPI_wb #(
-        .NCS(`NSPI_CS)
+        .NCS(`SOC_SPI_NUM_CS)
     ) spi (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
@@ -423,11 +414,12 @@ module HydrogenSoC(
         .mosi_o     (spi_mosi_o),
         .cs_o       (spi_cs_o)
     );
+    `endif
 
     // ******************* TIMER *******************
-    /* verilator lint_off UNUSEDSIGNAL */
+    `ifdef SOC_EN_TIMER
     wire  [31:0]    timer_wb_adr_i;
-    /* verilator lint_on UNUSEDSIGNAL */
+    `UNUSED_VAR(timer_wb_adr_i)
     wire  [31:0]    timer_wb_dat_o;
     wire  [31:0]    timer_wb_dat_i;
     wire 		    timer_wb_we_i;
@@ -436,6 +428,7 @@ module HydrogenSoC(
     wire            timer_wb_stb_i;
     wire 		    timer_wb_ack_o;
     wire            timer_int_o;
+    wire            timer_wb_err_o = 0;
 
     Timer_wb timer (
         .wb_clk_i   (wb_clk_i),
@@ -450,7 +443,12 @@ module HydrogenSoC(
         .wb_ack_o   (timer_wb_ack_o),
 
         .int_o      (timer_int_o)
-);
+    );
 
+    `ifndef EN_EXCEPT
+    `UNUSED_VAR(timer_int_o)
+    `endif // EN_EXCEPT
+    
+    `endif
 
 endmodule

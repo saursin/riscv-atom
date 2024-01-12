@@ -1,24 +1,52 @@
-`ifndef __HYDROGENSOC_CONFIG_VH__
-`define __HYDROGENSOC_CONFIG_VH__
+////////////////////////////////////////////////////////////////////   
+//  File        : AtomBones_Config.vh
+//  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
+//  Description : Configuration file for AtomBones. It defines the 
+//      AtomBones related parameters using verilog preprocessor macros.
+////////////////////////////////////////////////////////////////////
+`ifndef __ATOMBONES_CONFIG_VH__
+`define __ATOMBONES_CONFIG_VH__
 
-// Reset address
-`define SOC_RESET_ADDRESS   32'h00000000
+////////////////////////////// SoC Config Macros //////////////////////////////
+/*
+    Reset address for SOC. Upon Reset, PC jumps to the defined address
+*/
+`ifndef SOC_RESET_ADDRESS
+`define SOC_RESET_ADDRESS   32'h0001_0000
+`endif
 
-// Atombones doesn't need the following parameters since everything 
-// other that the core is software simulated
+/*
+    If defined, enables the RVE extenstion which disables the upper 16 registers 
+    in the register file.
+*/
+`ifdef ENABLE_RISCV_EMBEDDED
+`define RV_E
+`endif
 
-// SoC Peripherals
+/*
+    If defined, enables the RISC-V Zicsr extension which adds support for CSR 
+    registers. It adds a CSR Unit to the Core which implements CSR registers 
+    like CYCLEL/H.
+*/
+`ifdef ENABLE_RISCV_ZICSR
+`define RV_ZICSR
+`endif
 
-// IRAM
-// `define IRAM_ADDR   32'h00000000    // 0 GB boundry
-// `define IRAM_SIZE   32'h00008000    // 32 KB
+/*
+    If defined, enables the RISC-V Compressed extension which adds support for 16-bit 
+    compressed instructions. It adds a decoder which decodes the 16 bit instructions 
+    to 32 bit equivalents and a aligner to word-align Instruction fetches.
+*/
+`ifdef ENABLE_RISCV_COMPRESSED
+`define RV_C
+`endif
 
-// // RAM
-// `define RAM_ADDR    32'h04000000    // 0.5 GB boundry
-// `define RAM_SIZE    32'h00002000    // 8 KB
+/*
+    If defined enables exceptions and interrupts
+*/
+`ifdef ENABLE_RISCV_EXCEPTIONS
+`define RV_ZICSR
+`define EN_EXCEPT
+`endif
 
-// // UART
-// `define UART_ADDR   32'h08000000    // 1.0 GB boundry
-// `define UART_SIZE   32'h00000008    // 8 bytes
-
-`endif //__HYDROGENSOC_CONFIG_VH__
+`endif //__ATOMBONES_CONFIG_VH__

@@ -18,41 +18,79 @@
 # 	- 1 RGB LED
 #
 ####################################################################
+NET "clk_i" LOC = P87 |IOSTANDARD = LVCMOS33;
+#NET CLOCK_100MHZ LOC = P84 | IOSTANDARD = LVCMOS33; 
+
+NET "rst_i" LOC = P17 |IOSTANDARD = LVCMOS33;
+
+`ifdef SOC_EN_UART
+# ========================== USB-UART Bridge ==========================
+NET "uart_rx_i" LOC = P88 | IOSTANDARD = LVCMOS33;
+NET "uart_tx_o" LOC = P85 | IOSTANDARD = LVCMOS33;
+`endif
+
+`ifdef SOC_EN_GPIO
+# ========================== LED's ==========================
+NET "gpio_io[0]" LOC = p16  | IOSTANDARD = LVCMOS33;
+NET "gpio_io[1]" LOC = p15  | IOSTANDARD = LVCMOS33;
+NET "gpio_io[2]" LOC = p12  | IOSTANDARD = LVCMOS33;
+NET "gpio_io[3]" LOC = p11  | IOSTANDARD = LVCMOS33;
+NET "gpio_io[4]" LOC = p9   | IOSTANDARD = LVCMOS33;
+NET "gpio_io[5]" LOC = p8   | IOSTANDARD = LVCMOS33;
+NET "gpio_io[6]" LOC = p6   | IOSTANDARD = LVCMOS33;
+NET "gpio_io[7]" LOC = p5   | IOSTANDARD = LVCMOS33;
+
 # ========================== DIP Switches ==========================
 NET "gpio_io[8]" LOC = P80 | IOSTANDARD = LVCMOS33;
 NET "gpio_io[9]" LOC = P81 | IOSTANDARD = LVCMOS33;
 NET "gpio_io[10]" LOC = P82 | IOSTANDARD = LVCMOS33;
 NET "gpio_io[11]" LOC = P83 | IOSTANDARD = LVCMOS33;
 
-# ========================== PushButtons ==========================
-NET "rst_i" LOC = P17 |IOSTANDARD = LVCMOS33;
-#NET PUSH_BTN_2 LOC = P14 | IOSTANDARD = LVCMOS33;
-#NET PUSH_BTN_3 LOC = P10 | IOSTANDARD = LVCMOS33;
-#NET PUSH_BTN_4 LOC = P7 | IOSTANDARD = LVCMOS33; 
-
-# ========================== LED's ==========================
-NET "gpio_io[0]" loc=p16    |IOSTANDARD = LVCMOS33;
-NET "gpio_io[1]" loc=p15    |IOSTANDARD = LVCMOS33;
-NET "gpio_io[2]" loc=p12    |IOSTANDARD = LVCMOS33;
-NET "gpio_io[3]" loc=p11    |IOSTANDARD = LVCMOS33;
-NET "gpio_io[4]" loc=p9     |IOSTANDARD = LVCMOS33;
-NET "gpio_io[5]" loc=p8     |IOSTANDARD = LVCMOS33;
-NET "gpio_io[6]" loc=p6     |IOSTANDARD = LVCMOS33;
-NET "gpio_io[7]" loc=p5     |IOSTANDARD = LVCMOS33;
-
-# ========================== USB-UART Bridge ==========================
-NET "uart_usb_rx_i" LOC = P88 | IOSTANDARD = LVCMOS33;
-NET "uart_usb_tx_o" LOC = P85 | IOSTANDARD = LVCMOS33;
- 
-# ========================== Clock Sources ==========================
-NET "clk_i" LOC = P87 |IOSTANDARD = LVCMOS33;
-#NET CLOCK_12MHZ LOC = P87 | IOSTANDARD = LVCMOS33;
-#NET CLOCK_100MHZ LOC = P84 | IOSTANDARD = LVCMOS33; 
-
 # ========================== RGB LED ==========================
 NET gpio_io[12] LOC = p95 | IOSTANDARD = LVCMOS33;
 NET gpio_io[13] LOC = p94 | IOSTANDARD = LVCMOS33;
 NET gpio_io[14] LOC = p93 | IOSTANDARD = LVCMOS33;
+
+# ========================== User I/O - J2 ==========================
+NET "gpio_io[15]" LOC = P1 | IOSTANDARD = LVCMOS33;
+
+NET "gpio_io[16]" LOC = P2 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[17]" LOC = P143 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[18]" LOC = P144 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[19]" LOC = P141 | IOSTANDARD = LVCMOS33;
+
+NET "gpio_io[20]" LOC = P142 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[21]" LOC = P139 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[22]" LOC = P140 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[23]" LOC = P137 | IOSTANDARD = LVCMOS33;
+
+NET "gpio_io[24]" LOC = P138 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[25]" LOC = P133 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[26]" LOC = P134 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[27]" LOC = P131 | IOSTANDARD = LVCMOS33;
+
+NET "gpio_io[28]" LOC = P132 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[29]" LOC = P126 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[30]" LOC = P127 | IOSTANDARD = LVCMOS33;
+NET "gpio_io[31]" LOC = P123 | IOSTANDARD = LVCMOS33;
+`endif
+
+`ifdef SOC_EN_SPI
+NET "spi_cs_o[0]"   LOC = P38 | IOSTANDARD = LVCMOS33;    # CS
+NET "spi_mosi_o"    LOC = P64 | IOSTANDARD = LVCMOS33;    # MOSI
+NET "spi_miso_i"    LOC = P65 | IOSTANDARD = LVCMOS33;    # MISO
+NET "spi_sck_o"     LOC = P70 | IOSTANDARD = LVCMOS33;    # SCK
+`endif
+
+
+# ========================== PushButtons ==========================
+#NET PUSH_BTN_2 LOC = P14 | IOSTANDARD = LVCMOS33;
+#NET PUSH_BTN_3 LOC = P10 | IOSTANDARD = LVCMOS33;
+#NET PUSH_BTN_4 LOC = P7 | IOSTANDARD = LVCMOS33; 
+
+# ========================== Clock Sources ==========================
+#NET CLOCK_12MHZ LOC = P87 | IOSTANDARD = LVCMOS33;
+#NET CLOCK_100MHZ LOC = P84 | IOSTANDARD = LVCMOS33; 
 
 # ========================== SPI FLASH ==========================
 # NET "gpio_io[12]" LOC = P38 | IOSTANDARD = LVCMOS33;    # CS
@@ -60,15 +98,10 @@ NET gpio_io[14] LOC = p93 | IOSTANDARD = LVCMOS33;
 # NET "gpio_io[14]" LOC = P65 | IOSTANDARD = LVCMOS33;    # MISO
 # NET "gpio_io[15]" LOC = P70 | IOSTANDARD = LVCMOS33;    # SCK
 
-NET "spi_cs_o[0]"   LOC = P38 | IOSTANDARD = LVCMOS33;    # CS
-NET "spi_mosi_o"    LOC = P64 | IOSTANDARD = LVCMOS33;    # MOSI
-NET "spi_miso_i"    LOC = P65 | IOSTANDARD = LVCMOS33;    # MISO
-NET "spi_sck_o"     LOC = P70 | IOSTANDARD = LVCMOS33;    # SCK
-
 # ========================== User I/O - J1 ==========================
-NET "uart_io_tx_o" LOC = P22 | IOSTANDARD = LVCMOS33;
-NET "uart_io_rx_i" LOC = P21 | IOSTANDARD = LVCMOS33;
-NET "uart_mux_sel_i" LOC = P24 | IOSTANDARD = LVCMOS33 | PULLDOWN;
+# NET "uart_io_tx_o" LOC = P22 | IOSTANDARD = LVCMOS33;
+# NET "uart_io_rx_i" LOC = P21 | IOSTANDARD = LVCMOS33;
+# NET "uart_mux_sel_i" LOC = P24 | IOSTANDARD = LVCMOS33 | PULLDOWN;
 
 # NET "uart_rx_test_point_o" LOC = P23 |IOSTANDARD = LVCMOS33;
 
@@ -104,29 +137,6 @@ NET "uart_mux_sel_i" LOC = P24 | IOSTANDARD = LVCMOS33 | PULLDOWN;
 #NET IO_J1_36 LOC = P74 | IOSTANDARD = LVCMOS33;
 #NET IO_J1_37 LOC = P79 | IOSTANDARD = LVCMOS33;
 #NET IO_J1_38 LOC = P78 | IOSTANDARD = LVCMOS33; 
-
-# ========================== User I/O - J2 ==========================
-NET "gpio_io[15]" LOC = P1 | IOSTANDARD = LVCMOS33;
-
-NET "gpio_io[16]" LOC = P2 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[17]" LOC = P143 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[18]" LOC = P144 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[19]" LOC = P141 | IOSTANDARD = LVCMOS33;
-
-NET "gpio_io[20]" LOC = P142 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[21]" LOC = P139 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[22]" LOC = P140 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[23]" LOC = P137 | IOSTANDARD = LVCMOS33;
-
-NET "gpio_io[24]" LOC = P138 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[25]" LOC = P133 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[26]" LOC = P134 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[27]" LOC = P131 | IOSTANDARD = LVCMOS33;
-
-NET "gpio_io[28]" LOC = P132 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[29]" LOC = P126 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[30]" LOC = P127 | IOSTANDARD = LVCMOS33;
-NET "gpio_io[31]" LOC = P123 | IOSTANDARD = LVCMOS33;
 
 # NET "gpio_io[28]" LOC = P124 | IOSTANDARD = LVCMOS33;
 # NET "gpio_io[29]" LOC = P120 | IOSTANDARD = LVCMOS33;

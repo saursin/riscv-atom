@@ -1,0 +1,11 @@
+{
+    "name": "timer",
+    "vtopmodule": "Timer_wb",
+    "vdefines": [],
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/timer/Timer_wb.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

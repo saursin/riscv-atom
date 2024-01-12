@@ -1,0 +1,17 @@
+{
+    "name": "atomrv",
+    "vtopmodule": "AtomRV",
+    "vsrcs": [
+        "${RVATOM}/rtl/core/Alu.v",
+        "${RVATOM}/rtl/core/AtomRV.v",
+        "${RVATOM}/rtl/core/CSR_Unit.v",
+        "${RVATOM}/rtl/core/Decode.v",
+        "${RVATOM}/rtl/core/RegisterFile.v",
+        "${RVATOM}/rtl/core/RVC_Aligner.v",
+        "${RVATOM}/rtl/core/RVC_Decoder.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/common",
+        "${RVATOM}/rtl/core"
+    ]
+}

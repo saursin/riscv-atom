@@ -38,7 +38,11 @@
     #define TIMER_ADDR      0x40004000
 
     // ------ CLOCK FREQUENCY --------
-    #define CLK_FREQ 12000000
+    // Spartan6-mini
+    // #define CLK_FREQ 12000000
+    
+    // DE0-CV
+    #define CLK_FREQ 50000000
 
 #else
 #ifdef TARGET_ATOMBONES

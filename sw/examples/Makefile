@@ -1,57 +1,37 @@
-.DEFAULT_GOAL := help
+#h# ***** RISC-V Atom Examples Makefile *****
 
-# Bash color codes
-COLOR_RED 	  := \033[0;31m
-COLOR_GREEN   := \033[0;32m
-COLOR_YELLOW  := \033[0;33m
-COLOR_CYAN 	  := \033[0;36m
-COLOR_NC 	  := \033[0m
+#v# Specify soctarget (autodetected if not provided)
+soctarget?= None
 
-# SoC target to compile for       (to be oerridden)
-soctarget ?= None
+#v# Specify example to build (compulsory)
+ex?= None
 
-# example to compile              (to be overridden)
-ex ?= None
+#v# Build for simulation
+sim?= 1
 
-# Compile for simulation          (may be overridden)
-sim ?= false
+#v# Vuart for make run example
+vuart?= None
 
-# Compile for use with bootloader (may be overridden)
-boot ?= false
-
-# Vuart for make run example      (may be overridden)
-vuart ?= None
-
-# Save objdump while compiling    (may be overridden)
-objdump ?= true
-
-# Save binary while compiling     (may be overridden)
-bin ?= true
-
-# Save map file while compiling   (may be overridden)
-map ?= true
+#v# Save map file while compiling
+map?= 1
 
 ########################################################################
 # Checks
 
-__check_env = true
 __check_soctarget = true
 __check_eg = true
 
 ifeq ($(MAKECMDGOALS),)  # default target = help
-    __check_env = false
     __check_soctarget = false
     __check_eg = false
 endif
 
 ifeq ($(MAKECMDGOALS),help)
-    __check_env = false
     __check_soctarget = false
     __check_eg = false
 endif
 
 ifeq ($(MAKECMDGOALS),clean)
-    __check_env = false
     __check_soctarget = false
 endif
 
@@ -61,7 +41,6 @@ ifeq ($(MAKECMDGOALS),all)
 endif
 
 ifeq ($(MAKECMDGOALS),clean-all)
-    __check_env = false
     __check_soctarget = false
     __check_eg = false
 endif
@@ -71,23 +50,15 @@ ifeq ($(MAKECMDGOALS),run-all)
     __check_eg = false
 endif
 
-#### check environment #####
-ifeq ($(__check_env),true)
-    # check if RVATOM env variable is set
-    ifeq ($(RVATOM),)
-        $(error RVATOM environment variable not set; did you forget to source the sourceme script?)
-    endif
-endif
-
-
+_mk_check_env = 1
+include ../../common.mk
+########################################################################
 RVPREFIX := riscv64-unknown-elf
-CFLAGS := -Wall
-CFLAGS += -mabi=ilp32 -march=rv32i -nostartfiles -ffreestanding -Os -g
-CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
-
+CFLAGS += -Wall
 LINKERSCRIPT := None
+
 #### check soctarget ####
-ifeq ($(__check_soctarget),true)
+ifeq ($(__check_soctarget), true)
 
     ifeq (${soctarget},None)  # if soctarget not overridden
         # check if atomsim exists
@@ -100,26 +71,14 @@ ifeq ($(__check_soctarget),true)
         $(info Autodetected soctarget from atomsim: $(soctarget))
     endif
 
-
-    # check for validity of soctarget & select compile script
-    ifeq ($(soctarget),atombones)
-        CFLAGS += -DTARGET_ATOMBONES
-        LINKERSCRIPT:= $(RVATOM_LIB)/link/link_atombones.ld
-    else
-    ifeq ($(soctarget),hydrogensoc)
-        CFLAGS += -DTARGET_HYDROGENSOC
-        LINKERSCRIPT:= $(RVATOM_LIB)/link/link_hydrogensoc.ld
-    else
-        $(error Invalid SoC target target $(soctarget))
-    endif
-    endif
-
-    ifeq ($(boot), true)
-        LINKERSCRIPT:= ../flashboot/link_app.lds
-    endif
-
+    CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')
+    LINKERSCRIPT:= $(RVATOM_LIB)/link/link_$(soctarget).ld
+    ISA:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
+    ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
 endif
 
+CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os
+CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
 LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
 
 #### check ex ####
@@ -150,99 +109,63 @@ EXAMPLE_DIRS = $(sort $(dir $(wildcard */)))
 SRC_FILES = $(patsubst %, $(ex)/%, $(src_files))
 
 # atomsim args
-ATOMSIM_ARGS = --maxitr=999999999 --enable-uart-dump
+ATOMSIM_ARGS = --maxitr=999999999 -uv
 
 # VUART setting
 ifneq ($(vuart), None)
     ATOMSIM_ARGS += --vuart=$(vuart)
 endif
 
-ifeq ($(map), true)
+ifeq ($(map), 1)
     LFLAGS += -Xlinker -Map $(executable).map
 endif
 
-ifeq ($(sim), true)
+ifeq ($(sim), 1)
     CFLAGS += -DSIM
 endif
 
-.DEFAULT_GOAL := help
-# Query the default goal.
-ifeq ($(.DEFAULT_GOAL),)
-	$(warning no default goal is set)
-endif
-
-.PHONY: help
-help:										## Show help
-	@printf "*** Makefile for compiling & running examples ***\n"
-	@printf "Usage:"
-	@printf "	$$ make soctarget=<SOCTARGET> ex=<EXAMPLE> [TARGET]\n"
-	@printf "\n"
-	@printf "TARGETs:\n"
-	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n", $$1, $$2}'
-	@printf "\n"
-	@printf "SOCTARGETs:\n"
-	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" atombones ""
-	@printf "\t$(COLOR_CYAN)%-20s$(COLOR_NC) %s\n" hydrogensoc ""
-	@printf "\n"
-	@printf "EXAMPLEs (auto-detected):\n"
-	@printf "	$(patsubst %/,%,${EXAMPLE_DIRS})\n"
-	@printf "\n"
-	@printf "Note:\n"
-	@printf " - Following TARGETs can be run without overriding \"ex\" & \"soctarget\" variables\n"
-	@printf "	help, all, clean-all\n"
-	@printf " - To save objdump,, set the \"objdump\" variable to \"true\" in the CLI.\n"
-	@printf " - To save run using vuart, set the vuart variable to the path of the simport\n"
-    
-
-
 
 .PHONY: compile
-compile: $(ex)/$(executable)				## Compile specified example
+compile: $(ex)/$(executable)    			#t# Compile specified example
 
 $(ex)/$(executable): $(SRC_FILES)
-	@printf "$(COLOR_CYAN)%-15s | Compiling   %-35s <-  %s$(COLOR_NC)\n" ${ex} $@ $<
+	$(call print_msgt,Building)
 	cd $(ex) && $(RVPREFIX)-gcc $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
-
-ifeq ($(objdump), true)
-	$(RVPREFIX)-objdump -Shtd $@ > $@.objdump
-endif
-
-ifeq ($(bin), true)
-	$(RVPREFIX)-objcopy -O binary $@ $@.bin
-	@printf "Binary size: %s bytes\n" $$(stat --format=%s "$@.bin")
-endif
-
+	$(RVPREFIX)-objdump -Shtd $@ > $(basename $@).lst
+	$(RVPREFIX)-objcopy -O binary $@ $(basename $@).bin
+	@printf "$(CLR_BL)$(CLR_B)  Binary size:$(CLR_NB) %s bytes$(CLR_NC)\n" $$(stat --format=%s "$(basename $@).bin")
 
 .PHONY: run
-run: $(ex)/$(executable)					## Run example
-	@printf "${COLOR_CYAN}Running \"${ex}\" example ${COLOR_NC}\n"
+run: $(ex)/$(executable)					#t# Run example
+	$(call print_msg,Running, $<)
 	atomsim $(ATOMSIM_ARGS) $^
 
 
-.PHONY: objdump
-objdump: $(ex)/$(executable)				## Dump disassembly
-	riscv64-unknown-elf-objdump -htd $^ > $^.objdump
+.PHONY: dism
+dism: $(ex)/$(executable)				    #t# Dump disassembly
+	$(call print_msg,Generating disassembly,$(basename $^).lst)
+	riscv64-unknown-elf-objdump -htd $^ > $(basename $^).lst
 
 
-.PHONY: prog
-prog: $(ex)/$(executable).bin               ## Program fpga flash
-	prog_firmware.sh $^
+# .PHONY: prog
+# prog: $(ex)/$(executable).bin               #t# Program fpga flash
+# 	prog_firmware.sh $^
 
 
 .PHONY: clean
-clean:										## Clean executable
-	@printf "${COLOR_CYAN}Cleaning \"${ex}\" example binaries ${COLOR_NC}\n"
-	rm -f $(ex)/$(executable) $(ex)/*.o $(ex)/*.map $(ex)/*.objdump
+clean:										#t# Clean executable
+	$(call print_msg,Cleaning,$(ex))
+	rm -f $(ex)/$(executable) $(ex)/*.o $(ex)/*.map $(ex)/*.lst
 
 
-all:										## Build all examples
-	@$(patsubst %/, make -s ex=% compile;,${EXAMPLE_DIRS})
+all:										#t# Build all examples
+	@$(patsubst %/, make -s ex=% sim=1 compile;,${EXAMPLE_DIRS})
 
 
-run-all:									## Build & run all examples
-	@$(patsubst %/, printf "${COLOR_CYAN}----------------------------------------------------${COLOR_NC}\n"; make -s ex=% run;,${EXAMPLE_DIRS})
+run-all:									#t# Build & run all examples
+	@$(patsubst %/, printf "${CLR_CY}----------------------------------------------------${CLR_NC}\n"; make -s ex=% sim=1 run;,${EXAMPLE_DIRS})
 
 
 .PHONY: clean-all
-clean-all:									## Clean all executables
+clean-all:									#t# Clean all executables
 	@$(patsubst %/, make -s ex=% clean;,${EXAMPLE_DIRS})

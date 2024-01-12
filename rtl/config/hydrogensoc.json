@@ -1,0 +1,53 @@
+{
+    "name": "hydrogensoc",
+    "type": "soc",
+    "params": {
+        "en_embedded": false,
+        "en_compressed": true,
+        "en_csr": true,
+        "en_exceptions": true,
+
+        "soc_en_uart": true,
+        "soc_en_gpio": true,
+        "soc_en_spi": true,
+        "soc_en_timer": false,
+        
+        "soc_gpio_num_pins": 32, 
+        "soc_spi_num_cs": 1
+    },
+
+    "isa": "rv32[en_embedded?e:i][en_compressed?c:][en_csr?_zicsr:]",
+    "abi": "ilp32[en_embedded?e:]",
+    
+    "vtopmodule": "HydrogenSoC",
+    "vdefines": [
+        "[en_embedded?EN_RVE:]",
+        "[en_compressed?EN_RVC:]",
+        "[en_csr?EN_RVZICSR:]",
+        "[en_exceptions?EN_EXCEPT:]",
+
+        "[soc_en_uart?SOC_EN_UART:]",
+        "[soc_en_gpio?SOC_EN_GPIO:]",
+        "[soc_en_spi?SOC_EN_SPI:]",
+        "[soc_en_timer?SOC_EN_TIMER:]",
+
+        "SOC_GPIO_NUM_PINS=[soc_gpio_num_pins]",
+        "SOC_SPI_NUM_CS=[soc_spi_num_cs]"
+    ],
+    "vsrcs": [
+        "${RVATOM}/rtl/soc/hydrogensoc/HydrogenSoC.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/soc/hydrogensoc"
+    ],
+
+    "includes": [
+        "atomrv_wb",
+        "wbcomponents",
+        "uart",
+        "gpio",
+        "spi",
+        "timer",
+        "mem"
+    ]
+}

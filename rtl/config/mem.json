@@ -1,0 +1,12 @@
+{
+    "name": "mem",
+    "vdefines": [],
+    "vsrcs": [
+        "${RVATOM}/rtl/uncore/mem/DualPortRAM_wb.v",
+        "${RVATOM}/rtl/uncore/mem/SinglePortROM_wb.v",
+        "${RVATOM}/rtl/uncore/mem/SinglePortRAM_wb.v"
+    ],
+    "vincdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}

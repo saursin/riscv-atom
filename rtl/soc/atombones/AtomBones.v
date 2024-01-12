@@ -6,8 +6,7 @@
 //      memories and communication modules.
 ///////////////////////////////////////////////////////////////////
 `default_nettype none
-
-`define RV_ZICSR
+`include "AtomBones_Config.vh"
 
 module AtomBones
 (
@@ -30,18 +29,21 @@ module AtomBones
     input   wire            dport_ack_i      // DMEM Ack signal
 );
 
-    reg [31:0] reset_vector = 32'h0001_0000;
+    reg [31:0] reset_vector = `SOC_RESET_ADDRESS;
 
     // Core
     AtomRV atom_core
     (
         .clk_i          (clk_i),   
         .rst_i          (rst_i),
+
         .reset_vector_i (reset_vector),
+        
         .iport_addr_o    (iport_addr_o),   
         .iport_data_i    (iport_data_i),   
         .iport_valid_o   (iport_valid_o),   
         .iport_ack_i     (iport_ack_i),   
+        
         .dport_addr_o    (dport_addr_o),   
         .dport_data_i    (dport_data_i),   
         .dport_data_o    (dport_data_o),   
@@ -49,6 +51,12 @@ module AtomBones
         .dport_we_o      (dport_we_o),   
         .dport_valid_o   (dport_valid_o),   
         .dport_ack_i     (dport_ack_i)
+
+        `ifdef EN_EXCEPT
+        ,
+        .irq_i          (1'b0),
+        .timer_int_i    (1'b0)
+        `endif // EN_EXCEPT
     );
 
 endmodule

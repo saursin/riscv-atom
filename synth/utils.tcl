@@ -35,3 +35,17 @@ proc parse_listfile {listfile} {
     # Return both arrays as a list
     return [list $verilog_files $include_dirs]
 }
+
+# Print elapsed time
+proc print_elapsed_time {time_start time_end} {
+    # Calculate elapsed time in seconds
+    set time_elapsed [expr {$time_end - $time_start}]
+    set time_elapsed_days [expr {$time_elapsed / (24 * 3600)}]
+    set time_elapsed [expr {$time_elapsed % (24 * 3600)}]
+    set time_elapsed_hours [expr {$time_elapsed / 3600}]
+    set time_elapsed [expr {$time_elapsed % 3600}]
+    set time_elapsed_minutes [expr {$time_elapsed / 60}]
+    set time_elapsed_seconds [expr {$time_elapsed % 60}]
+    set formatted_time [format "%02d d %02d h %02d m %02d s" $time_elapsed_days $time_elapsed_hours $time_elapsed_minutes $time_elapsed_seconds]
+    puts "Time Elapsed: $formatted_time"
+}
