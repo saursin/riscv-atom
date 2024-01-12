@@ -27,7 +27,7 @@ module Decode
     output  reg             a_op_sel_o,
     output  reg             b_op_sel_o,
     output  reg             cmp_b_op_sel_o,
-    output  reg     [2:0]   alu_op_sel_o,
+    output  reg     [3:0]   alu_op_sel_o,
     output  wire    [2:0]   mem_access_width_o,
     output  reg             d_mem_load_store,
     output  reg             mem_we_o
@@ -480,9 +480,19 @@ module Decode
                 alu_op_sel_o = `ALU_FUNC_SRA;
             end
 
+            /* OR    */ 
+            17'b0000000_110_0110011:
+            begin
+                instr_scope = "OR";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_OR;
+            end
 
             /* AND   */ 
-            17'b0000000_111_0110011:
+            17'b0000000_111_0110011: 
             begin
                 instr_scope = "AND";
                 rf_we_o = 1'b1;
@@ -491,19 +501,6 @@ module Decode
                 b_op_sel_o = 1'b0;
                 alu_op_sel_o = `ALU_FUNC_AND;
             end
-            //////////////////////////////m extension
-            ///fun7   fun3 opcode
-            /* MUL   */
-            17'b0100001_000_0110011:
-            begin
-                instr_scope = "MUL";
-                rf_we_o = 1'b1;
-                rf_din_sel_o = 3'd2;
-                a_op_sel_o = 1'b0;
-                b_op_sel_o = 1'b0;
-                alu_op_sel_o = `ALU_FUNC_MUL;
-            end
-            
             /* MULH   */
             17'b0100001_001_0110011:
             begin
@@ -580,7 +577,6 @@ module Decode
                 b_op_sel_o = 1'b0;
                 alu_op_sel_o = `ALU_FUNC_REMU;
             end
-      			
 
             /* OPCODE: SYSTEM */
             17'b???????_???_1110011:
