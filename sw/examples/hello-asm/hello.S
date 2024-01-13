@@ -2,9 +2,9 @@
 .text
 
 #ifdef TARGET_ATOMBONES
-.equ TX_ADDRESS, 0x08000000
-#else
 .equ TX_ADDRESS, 0x40000000
+#else
+.equ TX_ADDRESS, 0x08000000
 #endif
 
 main:

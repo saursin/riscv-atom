@@ -1,7 +1,13 @@
 #include "xmodem.h"
 #include "platform.h"
 #include "serial.h"
-
+#include "mmio.h"
+#include "utils.h"
+// Register Offsets
+#define UART_REG_RBR 0x00
+#define UART_REG_THR 0x00
+#define UART_REG_LCR 0x04
+#define UART_REG_LSR 0x08
 //////////////////////////////////////////////////////////
 // Utility Functions
 void udelay(unsigned tick)
