@@ -1,11 +1,37 @@
-#include <stdint.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
+#include <serial.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <gpio.h>
+// #define VUART
+
+#ifdef ATOMSIM
+
+bool LEDS[8] = {false, false, false, false, false, false, false, false};
+
+void print_LEDS()
+{
+    puts("[");
+    for(int i=7; i>=0; i--)
+    {
+        putchar(LEDS[i] ? '@': '-');
+    }
+    #ifdef VUART
+    puts("]\r");
+    #else
+    puts("]\n");
+    #endif
+}
+#endif
+
 
 uint8_t pat1 [] = 
 {
+    0b00010001,
+    0b00100010,
+    0b01000100,
+    0b10001000,
     0b00010001,
     0b00100010,
     0b01000100,
@@ -40,9 +66,9 @@ uint8_t pat4 [] =
     0b00000010,
     0b00000001,
     0b00000010,
-    0b00010000,
+    0b00001000,
     0b01000000,
-    0b10000000
+    0b10000000,
 };
 
 uint8_t pat5 [] = 
@@ -52,37 +78,6 @@ uint8_t pat5 [] =
 };
 
 
-uint8_t pat6 [] = 
-{
-    0b00000001,
-    0b00000100,
-    0b00000010,
-    0b00001000,
-    0b00000100,
-    0b00010000,
-    0b00001000,
-    0b00100000,
-    0b00010000,
-    0b01000000,
-    0b00100000,
-    0b10000000
-};
-
-uint8_t pat7 [] = 
-{
-    0b00000001,
-    0b00000011,
-    0b00000111,
-    0b00001110,
-    0b00011100,
-    0b00111000,
-    0b01110000,
-    0b11100000,
-    0b11000000,
-    0b10000000,
-    0b00000000
-};
-
 bool bitget(uint8_t byte, uint8_t n)
 {
     return (byte >> n) & 0x1;
@@ -90,81 +85,71 @@ bool bitget(uint8_t byte, uint8_t n)
 
 void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
 {
+    //gpio_reset();
+    static uint8_t prev_state = 0;
+    static uint8_t curr_state = 0;
+
     for (int indx= reverse?len:0; reverse?(indx>=0):(indx<len); reverse ? indx--: indx++)
     {
-        gpio_writew(pat[indx]);
-        sleep_ms(delay);
+        curr_state = pat[indx];
+        
+        for (uint8_t led=0; led<8; led++)
+        {
+            if(bitget(prev_state, led) != bitget(curr_state, led))
+            {
+                #ifdef ATOMSIM
+                LEDS[led] = bitget(curr_state, led);
+                #else
+                gpio_setmode(led, bitget(curr_state, led));
+                #endif
+            }
+        }
+        sleep_us(delay);
+
+        #ifdef ATOMSIM
+        print_LEDS();
+        #endif
+        prev_state = curr_state;
     }
 }
 
-void soft_pwm(uint8_t dutycycle, uint32_t duration)
-{
-    clock_t tend = cycle() + (duration * (CLK_FREQ/1000));
-    while(cycle() < tend) {
-        gpio_writew(0x1ff);
-        for(uint16_t i=0; i<255; i++)
-        {
-            if(i>dutycycle)
-                gpio_writew(0x00);
-        }
-    }
-}
 
 
 void main()
 {
-    serial_init(UART_BAUD_115200);
+    int delay;
 
-    gpio_setmode(0, OUTPUT);
-    gpio_setmode(1, OUTPUT);
-    gpio_setmode(2, OUTPUT);
-    gpio_setmode(3, OUTPUT);
-    gpio_setmode(4, OUTPUT);
-    gpio_setmode(5, OUTPUT);
-    gpio_setmode(6, OUTPUT);
-    gpio_setmode(7, OUTPUT);
+    #ifndef ATOMSIM
+    serial_init(9600);
+    gpio_init();
+    delay = 500;
+    #else
+    delay = 0;
+    #endif
 
-    while(1) {
-        puts("Pattern 1: Rolling\n");
-        for(int i=0; i<8; i++)
-            run_pattern(pat1, sizeof(pat1), 100, false);
-        
-        puts("Pattern 2: Zig Zag\n");
-        for(int i=0; i<8; i++)
-            run_pattern(pat2, sizeof(pat2), 100, false);
+    printf("\nPattern 1: Rolling\n");
+    for(int i=0; i<4; i++)
+        run_pattern(pat1, sizeof(pat1), 2*delay, false);
+    
+    printf("\nPattern 2: Zig Zag\n");
+    for(int i=0; i<4; i++)
+        run_pattern(pat2, sizeof(pat2), 2*delay, false);
 
-        puts("Pattern 3: Diverge\n");
-        for(int i=0; i<8; i++)
-            run_pattern(pat3, sizeof(pat3), 100, false);
+    printf("\nPattern 3: Diverge\n");
+    for(int i=0; i<4; i++)
+        run_pattern(pat3, sizeof(pat3), 2*delay, false);
 
-        puts("Pattern 3: Converge\n");
-        for(int i=0; i<8; i++)
-            run_pattern(pat3, sizeof(pat3), 100, true);
-        
-        puts("Pattern 4: Sine\n");
-        for(int i=0; i<16; i++)
-            run_pattern(pat4, sizeof(pat4), 100, false);
+    printf("\nPattern 3: Converge\n");
+    for(int i=0; i<4; i++)
+        run_pattern(pat3, sizeof(pat3), 2*delay, true);
+    
+    printf("\nPattern 4: Sine\n");
+    for(int i=0; i<8; i++)
+        run_pattern(pat4, sizeof(pat4), delay, false);
 
-        puts("Pattern 5: Alternate\n");
-        for(int i=0; i<10; i++)
-            run_pattern(pat5, sizeof(pat5), 100, false);
-        
-        puts("Pattern 6: 2 step forward, 1 step backward\n");
-        for(int i=0; i<10; i++)
-            run_pattern(pat6, sizeof(pat6), 100, false);
-        
-        puts("Pattern 7: loading\n");
-        for(int i=0; i<10; i++)
-            run_pattern(pat7, sizeof(pat7), 100, false);
-        
+    printf("\nPattern 5: Alternate\n");
+    for(int i=0; i<4; i++)
+        run_pattern(pat5, sizeof(pat5), 10*delay, false);
 
-        puts("Pattern 8: Soft PWM\n");
-        for(int i=0; i<5; i++){
-            for(int d=0; d<255; d+=5)
-                soft_pwm(d, 30);
-            for(int d=255; d>=0; d-=5)
-                soft_pwm(d, 30);
-        }
-    }
     return;
 }

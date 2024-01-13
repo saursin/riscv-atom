@@ -121,7 +121,7 @@ ifeq ($(map), 1)
 endif
 
 ifeq ($(sim), 1)
-    CFLAGS += -DSIM
+    CFLAGS += -DSIM -DTARGET_HYDROGENSOC ../../lib/libcatom/hydrogensoc/gpio.c
 endif
 
 
