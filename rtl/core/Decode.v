@@ -501,7 +501,19 @@ module Decode
                 b_op_sel_o = 1'b0;
                 alu_op_sel_o = `ALU_FUNC_AND;
             end
-            /* MULH   */
+
+            /* MUL   */ 
+            17'b0100001_000_0110011:
+            begin
+                instr_scope = "MUL";
+                rf_we_o = 1'b1;
+                rf_din_sel_o = 3'd2;
+                a_op_sel_o = 1'b0;
+                b_op_sel_o = 1'b0;
+                alu_op_sel_o = `ALU_FUNC_MUL;
+            end
+
+            /* MULH  */ 
             17'b0100001_001_0110011:
             begin
                 instr_scope = "MULH";
