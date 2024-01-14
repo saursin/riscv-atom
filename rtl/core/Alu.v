@@ -35,18 +35,14 @@ module Alu
     
     
     /////// m extension
-    wire sel_mul 	= (sel_i == `ALU_FUNC_MUL);
-    wire sel_mulh	= (sel_i == `ALU_FUNC_MULH);
-    wire sel_mulhsu 	= (sel_i == `ALU_FUNC_MULHSU);
-    wire sel_mulhu 	= (sel_i == `ALU_FUNC_MULHU);
-    wire sel_div 	= (sel_i == `ALU_FUNC_DIV);
-    wire sel_divu 	= (sel_i == `ALU_FUNC_DIVU);
-    wire sel_rem 	= (sel_i == `ALU_FUNC_REM);
-    wire sel_remu 	= (sel_i == `ALU_FUNC_REMU);
-    /////// result of m extension
-    reg [63:0] mul_result;
-    reg [31:0] div_result;
-    reg [31:0] rem_result;
+    wire sel_mul    =   (sel_i == `ALU_FUNC_MUL);
+    wire sel_mulh   =   (sel_i == `ALU_FUNC_MULH);
+    wire sel_mulhsu =   (sel_i == `ALU_FUNC_MULHSU);
+    wire sel_mulhu  =   (sel_i == `ALU_FUNC_MULHU);
+    wire sel_div    =   (sel_i == `ALU_FUNC_DIV);
+    wire sel_divu   =   (sel_i == `ALU_FUNC_DIVU);
+    wire sel_rem    =   (sel_i == `ALU_FUNC_REM);
+    wire sel_remu   =   (sel_i == `ALU_FUNC_REMU);
 
     // Result of arithmetic calculations (ADD/SUB)
     wire [31:0] arith_result = a_i + (sel_sub ? ((~b_i)+1) : b_i);
@@ -77,42 +73,40 @@ module Alu
     wire [32:0] shift_output = shift_input >>> b_i[4:0];    // Universal shifter
     /* verilator lint_on UNUSED */
      //mul,mulh,mulhsu,mulhu
-    always @(*) begin
-        if (sel_mul)
-            mul_result = $signed(a_i) * $signed(b_i);
-        else if (sel_mulhu)
-            mul_result = (a_i)*(b_i);
-        else if (sel_mulhsu)
-            mul_result = $signed(a_i)* (b_i);
-        else if (sel_mulh)
-            mul_result = $signed(a_i) * $signed(b_i);
-        else
-            mul_result= 64'h0  ;  
-    end
-    //div divu
-    always @(*) begin
-        if (sel_div)
-            div_result = (b_i == 32'h0) ? 32'hffffffff:
-            	   	  (a_i == 32'h80000000 && b_i == 32'hffffffff) ? 32'h80000000:
-                	  $signed(a_i) / $signed(b_i);
-        else if (sel_divu)
-            div_result = (b_i == 32'h0) ? 32'hffffffff:
-            		  $unsigned($unsigned(a_i) / $unsigned(b_i));
-        else
-            div_result= 32'h0;
-    end
-    //rem remu
-    always @(*) begin
-        if (sel_rem)
-            rem_result = (b_i == 32'h0) ? a_i:
-            	   	  (a_i == 32'h80000000 && b_i == 32'hffffffff) ? 32'h0:
-                	  $signed(a_i) % $signed(b_i);
-        else if (sel_remu)
-            rem_result = (b_i == 32'h0) ? a_i:
-            		  $unsigned($unsigned(a_i) % $unsigned(b_i));
-        else
-            rem_result= 32'h0;
-    end   
+    // M-Extension mux
+    wire [63:0] result_mul;
+    /* verilator lint_off UNUSED */
+    wire [63:0] result_mulsu;
+    /* verilator lint_off UNUSED */
+    wire [63:0] result_mulu;
+    /* verilator lint_off UNUSED */
+    wire [31:0] result_div;
+    wire [31:0] result_divu;
+    wire [31:0] result_rem;
+    wire [31:0] result_remu;
+    
+    assign result_mul[63:0]     =   $signed  ({{32{a_i[31]}}, a_i[31: 0]}) *
+                                    $signed  ({{32{b_i[31]}}, b_i[31: 0]});
+
+    assign result_mulu[63:0]    =   $unsigned  ({{32{1'b0}}, a_i[31: 0]}) *
+                                    $unsigned  ({{32{1'b0}}, b_i[31: 0]});
+    
+    assign result_mulsu[63:0]   =   $signed  ({{32{a_i[31]}}, a_i[31: 0]}) *
+                                    $unsigned  ({{32{1'b0}}, b_i[31: 0]});
+
+    assign result_div[31:0]     =   (b_i == 32'h00000000) ? 32'hffffffff :
+                                    ((a_i == 32'h80000000) && (b_i == 32'hffffffff)) ? 32'h80000000 :
+                                    $signed  ($signed  (a_i) / $signed  (b_i));
+
+    assign result_divu[31:0]    =   (b_i == 32'h00000000) ? 32'hffffffff :
+                                    $unsigned($unsigned(a_i) / $unsigned(b_i));
+
+    assign result_rem[31:0]     =   (b_i == 32'h00000000) ? a_i :
+                                    ((a_i == 32'h80000000) && (b_i == 32'hffffffff)) ? 32'h00000000 :
+                                    $signed  ($signed  (a_i) % $signed  (b_i));
+
+    assign result_remu[31: 0]   =   (b_i == 32'h00000000) ? a_i :
+                                    $unsigned($unsigned(a_i) % $unsigned(b_i));  
 
 
     // output of universal shifter
@@ -136,14 +130,22 @@ module Alu
             result_o = a_i | b_i;
         else if (sel_and)
             result_o = a_i & b_i;
-        else if (sel_mul)
-            result_o = mul_result[31:0];
-        else if (sel_mulhu | sel_mulh | sel_mulhsu)
-            result_o = mul_result[63:32];
-        else if (sel_div | sel_divu)
-            result_o = div_result;
-        else if (sel_rem | sel_remu)
-            result_o = rem_result;
+        else if(sel_mul)                             // M start
+            result_o = result_mul[31:0];
+        else if(sel_mulh)
+            result_o = result_mul[63:32];
+        else if(sel_mulhsu)
+            result_o = result_mulsu[63:32];
+        else if(sel_mulhu)
+            result_o = result_mulu[63:32];
+        else if(sel_div)
+            result_o = result_div[31:0];
+        else if(sel_divu)
+            result_o = result_divu[31:0];
+        else if(sel_rem)
+            result_o = result_rem[31:0];
+        else if(sel_remu)
+            result_o = result_remu[31:0]; 
         else
             result_o = arith_result;
     end        
