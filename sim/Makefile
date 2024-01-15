@@ -117,7 +117,7 @@ $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
 	$(VC) $(VFLAGS) `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`
 
 	$(call print_msgt,Generating library)
-	make -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null
+	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null
 
 	$(call print_msg,Generating combined header,V$(VTOPMODULE)_headers.h)
 	printf "#ifndef __V$(VTOPMODULE)_headers__\n" > $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
