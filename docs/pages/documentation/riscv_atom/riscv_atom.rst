@@ -1,5 +1,5 @@
-RISC-V Atom (Core)
-###################
+RISC-V Atom CPU
+################
 Atom is an open-source 32-bit soft-core processor written in Verilog. It is an embedded class processor 
 architecture that implements the open-source RISC-V instruction set architecture (RV32I), as described 
 in the RISC-V unprivileged spec. Atom contains a two stage pipeline inspired from arm cortex m0+.

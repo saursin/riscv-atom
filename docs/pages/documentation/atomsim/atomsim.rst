@@ -34,19 +34,15 @@ Modes of Operation
 *******************
 Atomsim supports two modes of operation:
 
-.. toctree::
-   :maxdepth: 1
-
-   debug_mode.rst
-   normal_mode.rst
-
+#. :ref:`Normal Mode <atomsim_normal_mode>`
+#. :ref:`Debug Mode <atomsim_debug_mode>`
 
 AtomSim Topics
 ***************
 .. toctree::
    :maxdepth: 1
 
-
    cli_args.rst
+   atomsim_modes.rst
    code_structure.rst
    adding_target.rst

@@ -4,11 +4,15 @@ SoC Targets are systems that use the RISC-V atom core alongside different periph
 complexity and functionality point-of-view, SoC Targets can be as simple as a wrapper to the core 
 interface (e.g. AtomBones) and as complex as multi-core fully-fledged SOCs.
 
+.. _soctarget-atombones:
+
 AtomBones
 **********
 
 .. image:: ../../../diagrams/AtomBones.png
 
+
+.. _soctarget-hydrogensoc:
 
 HydrogenSoC
 ************

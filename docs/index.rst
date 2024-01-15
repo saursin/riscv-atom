@@ -11,15 +11,15 @@
 RISC-V Atom Documentation & User Manual
 ****************************************
 
+Welcome to RISC-V Atom Documentation and User Manual! Please follow the :doc:`getting started guide</pages/getting_started/prerequisites>` 
+to setup an environment to build and test the RISC-V Atom project. Please feel free file a bug report in github.
+
 .. toctree::
    :maxdepth: 1
    :caption: Overview
 
    pages/overview/introduction.rst
-   pages/overview/components.rst
    pages/overview/directory_structure.rst
-   pages/overview/performance.rst
-   pages/overview/fpga_results.rst
 
 
 .. toctree::
@@ -28,11 +28,12 @@ RISC-V Atom Documentation & User Manual
 
    pages/getting_started/prerequisites.rst
    pages/getting_started/building.rst
+   pages/getting_started/docker.rst
    pages/getting_started/examples.rst
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Documentation & User Manual
 
    pages/documentation/riscv_atom/riscv_atom.rst
@@ -40,6 +41,10 @@ RISC-V Atom Documentation & User Manual
    pages/documentation/atomsim/atomsim.rst
    pages/documentation/scar.rst
    pages/documentation/convelf.rst
+   pages/documentation/bootloader.rst
+   pages/documentation/build_flow.rst
+   pages/documentation/performance.rst
+   pages/documentation/fpga_results.rst
 
 
 Indices and tables

@@ -1,6 +1,34 @@
+AtomSim Simulation Modes
+#########################
+
+.. _atomsim_normal_mode:
+
+Normal Mode
+************
+In this mode of simulation, no debug information is printed. Only serial data recieved from the soc is printed to the 
+stdout. Using ``--verbose / -v`` flag shows additional useful information.
+
+.. code-block:: bash
+  
+  $ atomsim sw/examples/banner/banner.elf -v
+  Input File: hello-asm/hello.elf
+  Resetting..
+  Relaying uart-rx to stdout (Note: This mode does not support uart-tx)
+  Initialization complete!
+  Hello World!
+        -- from Assembly
+  
+  Haulting @ tick 931
+
+
+.. _atomsim_debug_mode:
+
 Debug/Interactive Mode
-#######################
-In this mode of simulation, Contents of Program counter (in both stages), Instruction register, instruction disassembly and contents of registers (if verbosity is set) are printed to stdout. A console with symbol ``:`` is also displayed at the bottom if screen for user to enter various commands to control the simulation. To step through one clock cycle, user can simply press :kbd:`enter` key (without entering anything in console).
+***********************
+In this mode of simulation, Contents of Program counter (in both stages), Instruction register, instruction disassembly 
+and contents of registers (if verbosity is set) are printed to stdout. A console with symbol ``:`` is also displayed at 
+the bottom if screen for user to enter various commands to control the simulation. To step through one clock cycle, user 
+can simply press :kbd:`enter` key (without entering anything in console).
 
 To invoke interactive debug mode, invoke atomsim with `-d` & `-v` flag:
 
@@ -37,10 +65,10 @@ To invoke interactive debug mode, invoke atomsim with `-d` & `-v` flag:
 
 
 Interacting With Debug Console
-*******************************
+===============================
 
 Displaying contents of a register
-==================================
+----------------------------------
 Contents of register can be displayed simply typing its name (abi names are also supported) on the 
 console. ex:
 
@@ -59,7 +87,7 @@ Use ':' to display a range of registers. ex:
 
 
 Displaying Contents of a memory location
-========================================
+-----------------------------------------
 ::
 
   : m <address> <sizetag>
@@ -83,7 +111,7 @@ Use ':' to display contents of memory in a range. ex:
 
 
 Generating VCD traces
-=====================
+----------------------
 Tracing can be enabled by:
 
 ::
@@ -102,7 +130,7 @@ Tracing can be disabled by:
 
 
 Controlling execution
-=====================
+----------------------
 You can advance the simulation by one clock cycle by pressing the enter-key. You can also execute 
 until a desired equality is reached:
 

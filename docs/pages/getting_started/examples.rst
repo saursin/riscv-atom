@@ -1,8 +1,8 @@
 Running Examples on AtomSim
 ############################
 
-The RISC-V Atom project consists of a wide range of examples programs out-of-the-box to test. These examples programs reside 
-in `RVATOM/sw/examples` directory.
+The RISC-V Atom project consists of a wide range of examples programs out-of-the-box to test. These examples programs 
+reside in `RVATOM/sw/examples` directory.
 
 Switch to examples directory
 
@@ -14,14 +14,20 @@ Lets run the classical "hello World!" example first!
 
 Hello World Example 
 ********************
-The source code for the *hello-world* example resides in the ``hello-asm`` directory. You can have a look at the source code. First we need to compile the hello world example with our RISC-V gcc cross-compiler. For this purpose, use the provided makefile as following.
+The source code for the *hello-world* example resides in the ``hello-asm`` directory. You can have a look at the source 
+code. First we need to compile the hello world example with our RISC-V gcc cross-compiler. For this purpose, use the 
+provided makefile as following.
 
 .. code-block:: bash
 
-  $ make soctarget=atombones ex=hello-asm compile
+  $ make soctarget=atombones ex=hello-asm sim=1 compile
 
 The above command should generate a ``hello.elf`` file in the ``hello-asm`` directory. Now fire up atomsim and 
 provide the generated elf file as argument.
+
+.. tip::
+  ``soctarget=atombones`` in the above command can be skipped if AtomSim is already built. The SoC target will be automatically detected from 
+  the AtomSim executable.
 
 .. code-block:: bash
 
@@ -29,7 +35,7 @@ provide the generated elf file as argument.
   Hello World!
     -- from Assembly
 
-Alternatively, use make run to run the example.
+Alternatively, use ``make run`` to run the example as follows
 
 .. code-block:: bash
 
@@ -40,7 +46,7 @@ We can compile other examples also in the similar fashion by using the following
 
 .. code-block:: bash
 
-  $ make soctarget=<TARGET> ex=<EXAMPLE> compile
+  $ make soctarget=<TARGET> ex=<EXAMPLE> sim=1 compile
   $ make soctarget=<TARGET> ex=<EXAMPLE> run
 
 .. note::
@@ -58,6 +64,11 @@ Banner Example
 Output:
 
 .. code-block:: text
+
+  **** RISC-V Atom Bootloader ****
+  bootmode: 0x1
+  Jumping to RAM
+  --------------------------------
 
                     .';,.           ....;;;.  
                   .ll,:o,                ':c,. 
@@ -83,21 +94,22 @@ Output:
   /_/ |_/___//____/\____/  |___/   \__,_/\__/\____/_/ /_/ /_/  
   /=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/
 
-  ROM size: xxxxx bytes   (xx KB)
-  RAM size: xxxxx bytes   (xx KB)
-  exiting...
+  CPU      : RISC-V Atom @ 50000000 Hz
+  Arch     : RV32IC - little endian
+  CODE RAM : 0x20000000 (40960 bytes)
+  DATA RAM : 0x2000a000 (8192 bytes)
+  Exiting...
+  EBreak hit at 0x2000007c
+  Exiting... (return code: 0)
 
 
-The Runexamples Script
-***********************
-Instead of testing all examples one-by-one, we can use the provided ``atomsim-runexamples`` script to 
-automatically compile and simulate all examples.
-
-Simply invoke the script as following
+How to compile and run all examples?
+*************************************
+Instead of testing all examples one-by-one, we can compile and run all examples as follows.
 
 .. code-block:: bash
 
-  $ atomsim-runexamples
+  $ make run-all
 
 atomsim-runexamples script internally uses the same makefile that we used earlier, with the run-all target.
 Therefore we can alternatively get the same result by using the make command (in ``RVATOM/sw/examples`` directory).
