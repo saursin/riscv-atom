@@ -38,9 +38,11 @@ to setup an environment to build and test the RISC-V Atom project. Please feel f
 
    pages/documentation/riscv_atom/riscv_atom.rst
    pages/documentation/soc_targets.rst
+   pages/documentation/memory_map.rst
    pages/documentation/atomsim/atomsim.rst
    pages/documentation/scar.rst
    pages/documentation/convelf.rst
+   pages/documentation/libcatom.rst
    pages/documentation/bootloader.rst
    pages/documentation/build_flow.rst
    pages/documentation/performance.rst

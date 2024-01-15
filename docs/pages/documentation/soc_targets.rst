@@ -9,7 +9,8 @@ interface (e.g. AtomBones) and as complex as multi-core fully-fledged SOCs.
 AtomBones
 **********
 
-.. image:: ../../../diagrams/AtomBones.png
+.. image:: /diagrams/AtomBones.png
+   :width: 600
 
 
 .. _soctarget-hydrogensoc:
@@ -17,4 +18,5 @@ AtomBones
 HydrogenSoC
 ************
 
-.. image:: ../../diagrams/HydrogenSoC.png
+.. image:: /diagrams/HydrogenSoC.png
+   :width: 600

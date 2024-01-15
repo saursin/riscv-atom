@@ -27,7 +27,7 @@ Key highlights of the RISC-V Atom projects are are listed below:
 #. Interactive RTL simulator - :doc:`AtomSim</pages/documentation/atomsim/atomsim>`.
 #. In-house verification framework - :doc:`SCAR</pages/documentation/scar>`.
 #. Multiple SoC configurations.
-#. Tiny libc like standard library - **libcatom**.
+#. Tiny libc like standard library - :doc:`Libcatom</pages/documentation/libcatom>`.
 #. Wide range of example programs.
 #. Open source under `MIT License <https://en.wikipedia.org/wiki/MIT_License>`_.
 

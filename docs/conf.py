@@ -30,7 +30,7 @@ release = 'v1.2'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autosectionlabel', 'sphinx_design', 'sphinx_copybutton']
+extensions = ['sphinx.ext.autosectionlabel', 'sphinx_design', 'sphinx_copybutton', 'sphinx.ext.graphviz']
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
