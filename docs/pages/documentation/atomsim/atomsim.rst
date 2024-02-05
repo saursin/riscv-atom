@@ -23,6 +23,8 @@ The following figure depicts the architecture of AtomSim.
 
 .. image:: ../../../diagrams/atomsim_arch.png
 
+.. _atomsim_arch:
+
 AtomSim Architecture
 *********************
 AtomSim is designed in a modular fashion with a clear API between the layers. There are 3 main layers in AtomSim,
@@ -65,5 +67,4 @@ AtomSim Topics
 
    cli_args.rst
    atomsim_modes.rst
-   code_structure.rst
-   adding_target.rst
+   atomsim_developers_guide.rst

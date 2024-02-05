@@ -41,7 +41,7 @@ Following is list of various components of the RISC-V Atom project.
 
 .. card:: RISC-V Atom CPU
    :link-type: doc
-   :link: /pages/documentation/riscv_atom/riscv_atom
+   :link: /pages/documentation/riscv_atom
 
    A simple 32-bit RISC-V processor.
 
