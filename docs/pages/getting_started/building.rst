@@ -3,6 +3,7 @@ Building RISC-V Atom
 
 Clone the repository
 *********************
+First let's clone the repository as follows.
 
 .. code-block:: bash
 
@@ -10,55 +11,51 @@ Clone the repository
   $ cd riscv-atom     # switch to riscv-atom directory
 
 
-.. note:: All the commands are executed from the root directory unless explicitly mentioned. We'll refer to this root directory as ``RVATOM``.
-
-Edit Config.mk
-***************
-
-Edit Config.mk file and provide paths appropriately
+.. note::
+  All the commands are executed from the root directory unless explicitly mentioned. We'll refer to this root 
+  directory as ``RVATOM``.
 
 
-RISC-V Atom environment variables
-**********************************
+Setting up the environment
+***************************
 
 #. ``RVATOM`` environment variable must point to root of riscv-atom directory for the tools & scripts to work properly.
-#. ``RVATOM_LIB`` environment variable must point to the ``RVATOM/sw/lib`` folder. This variable is used by the compile scripts to locate *libcatom*.
+#. ``RVATOM_LIB`` environment variable must point to the ``RVATOM/sw/lib`` folder. This variable is used by the compile 
+   scripts to locate *libcatom*.
 
-For convenience, ``RVATOM/sourceme`` script is provided that you can source everytime you work with the project.
-This can be done as follows:
+For convenience, ``RVATOM/sourceme`` script is provided that you can source as follows:
 
 .. code-block:: bash
 
   $ source sourceme
 
-With this method, everytime you open a new terminal, you have to source the ``sourceme`` file. You can optionally append the aforementioned 
-to your ``.bashrc`` to source it automatically everytime you open a new terminl.
+.. tip::
+  With this method, every time you open a new terminal, you have to source the ``sourceme`` file. You can optionally
+  append the aforementioned to your ``.bashrc`` to source it automatically every time you open a new terminal.
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  $ echo "source <rvatom-path>/sourceme" >> ~/.bashrc
+    $ echo "source <rvatom-path>/sourceme" >> ~/.bashrc
+  
+  Replace ``rvatom-path`` with the path to your RISC-V atom directory.
 
-In the above command replace ``rvatom-path`` with the path to your RISC-V atom directory.
 
-
-Building the Simulator
-***********************
-Let's build AtomSim simulator for ``atombones`` target.
+Building AtomSim
+*****************
+:doc:`AtomSim</pages/documentation/atomsim/atomsim>` is the interactive RTL simulator for RISC-V Atom. Let's build AtomSim for :ref:`AtomBones <soctarget-atombones>` target.
 
 .. code-block:: bash
   
-  $ make soctarget=atombones
+  $ make soctarget=atombones sim=1
 
-This will create ``RVATOM/sim/build`` and ``RVATOM/sim/run`` directories for Atomsim build files and runtime files respectively.
-You can find the Atomsim executable in the former directory. 
+Optionally, to speed up builds, you can specify the number of parallel jobs to run using ``-j <njobs>`` flag in the above
+command. This will create ``RVATOM/sim/build`` directory for AtomSim build files. You can find the Atomsim executable in
+``RVATOM/sim/build/bin`` directory. 
 
-Assuming you've sourced the ``RVATOM/sourceme`` file, try the following command to verify the build.
+Assuming you've sourced the ``RVATOM/sourceme`` file, try the following command to check if the build was successful.
 
 .. code-block:: bash
   
-  $ atomsim --help
-  AtomSim v_._
-  Interactive RTL Simulator for Atom based systems [ atombones ]
-  Usage:
-    atomsim [OPTION...] input
+  $ atomsim --version
+  v2.2 [ atombones ]
   ...

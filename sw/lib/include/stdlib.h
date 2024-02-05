@@ -88,7 +88,7 @@ char *memset(char *dptr, int x, int len);
  * @param block_size size of block to be allocated (in bytes)
  * @return void* pointer to the allocated block of memory
  */
-void *malloc(size_t block_size);
+void *malloc(unsigned block_size);
 
 
 /**
@@ -98,3 +98,14 @@ void *malloc(size_t block_size);
  */
 void free(void* ptr);
 
+
+/**
+ * @brief Defragments heap
+ */
+void heap_defrag();
+
+
+/**
+ * @brief Displays heap blocks and overall status
+ */
+void heap_status();

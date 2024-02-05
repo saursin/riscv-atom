@@ -9,15 +9,8 @@ SIMPORT=$RVATOM/simport
 
 if [[ $1 != -s ]]
 then
-    echo "simport : $SIMPORT"
-    echo "userport: $USERPORT"
-
-    echo -n "Generating Virtual UART Ports... "
+    printf "\033[0;36m$SIMPORT\033[0m <--\033[0;33m socat \033[0m--> \033[0;36m$USERPORT\033[0m\n"
 fi
 
 socat pty,link=$USERPORT,echo=0 pty,link=$SIMPORT,echo=0 &
-
-if [[ $1 != -s ]]
-then
-    echo " Done!"
-fi
+echo "Socat PID: $!"

@@ -6,6 +6,6 @@
 
 #define assert(x) \
 if(!(x)) { \
-    puts("[ERROR]: Assert Failed:" EXPAND_AND_STRINGIFY(__FILE__) EXPAND_AND_STRINGIFY(__LINE__));  \
+    puts("[ERROR]: Assert Failed: " __FILE__ ":" EXPAND_AND_STRINGIFY(__LINE__) "\n");  \
     exit(1); \
 }

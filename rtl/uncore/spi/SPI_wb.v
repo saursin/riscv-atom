@@ -85,7 +85,7 @@ always @(posedge wb_clk_i) begin
         rg_sctrl_pol        <= 1'b0;
         rg_sctrl_spien      <= 1'b0;
 
-        rg_csctrl_acs       <= 0;
+        rg_csctrl_acs       <= 1;
         rg_csctrl_csmode    <= 2'b00;
 
         rg_dctrl_prcshd     <= DEFAULT_DCTRL_PRECSHD;

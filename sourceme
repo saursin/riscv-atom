@@ -1,4 +1,4 @@
-########## RISCV-ATOM Environment Setup ##########
+echo "***** RISC-V Atom Environment Setup *****"
 
 # Uncomment if using environment modules
 # module load verilator/5.006
