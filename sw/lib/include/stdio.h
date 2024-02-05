@@ -112,6 +112,14 @@ int	fprintf (FILE * file, const char * fmt, ...)
 int	printf (const char * fmt, ...)
         __attribute__((__format__ (__printf__, 1, 2)));
 
+/**
+ * @brief Writes formatted string to a char buffer
+ * @param str char buffer
+ * @param fmt format string
+ * @return int number of chars written
+ */
+int sprintf(char *str, const char *fmt, ...)
+    __attribute__((__format__ (__printf__, 2, 3)));
 
 // ========== Non Standard Functions ==========
 

@@ -35,7 +35,7 @@ $(MAN_PDF): $(LATEX_DIR)/refman.pdf
 	mv $^ $@
 
 $(LATEX_DIR)/refman.pdf:
-	make -C build/latex/
+	$(MAKE) -C build/latex/
 
 
 

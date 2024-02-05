@@ -56,89 +56,89 @@ all : doxy-pdf default				#t# Build default with docs
 .PHONY : sim
 sim: boot                      		#t# Build atomsim for given soctarget
 	$(call print_msg_root,Building AtomSim)
-	make $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=$(debug)
+	$(MAKE) $(MKFLAGS) -C $(sim_dir) soctarget=$(soctarget) DEBUG=$(debug)
 
 
 .PHONY: clean-sim
 clean-sim:							#t# Clean atomsim build files
 	$(call print_msg_root,Cleaning AtomSim build files)
-	make $(MKFLAGS) -C $(sim_dir)  soctarget=$(soctarget) clean
+	$(MAKE) $(MKFLAGS) -C $(sim_dir)  soctarget=$(soctarget) clean
 
 
 .PHONY: test
 test: sim lib						#t# Test the build using banner example
 	$(call print_msg_root,Running example on Atomsim)
-	make $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner sim=1 clean compile run
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner sim=1 clean compile run
 
 
 # ======== Bootloader ========
 .PHONY : boot
 boot: lib                     		#t# Build bootloader for given target
 	$(call print_msg_root,Building bootloader)
-	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=$(sim)
+	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=$(sim)
 
 
 .PHONY: clean-boot
 clean-boot:							#t# Clean bootloader build files
 	$(call print_msg_root,Cleaning bootloader build files)
-	make $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
+	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
 
 
 # ======== SCAR ========
 .PHONY: scar     			
 scar: sim 		 					#t# Verify target using scar
 	$(call print_msg_root,Running SCAR)
-	make $(MKFLAGS) -C $(scar_dir)
+	$(MAKE) $(MKFLAGS) -C $(scar_dir)
 
 
 .PHONY: clean-scar
 clean-scar:							#t# Clean scar directory
 	$(call print_msg_root,Cleaning SCAR working directory)
-	make $(MKFLAGS) -C $(scar_dir) clean
+	$(MAKE) $(MKFLAGS) -C $(scar_dir) clean
 
 
 # ======== ElfDump ========
 .PHONY: elfdump
 elfdump:							#t# Build elfdump utility
 	$(call print_msg_root,Building ELFDump)
-	make $(MKFLAGS) -C $(elfdump_dir)
+	$(MAKE) $(MKFLAGS) -C $(elfdump_dir)
 
 
 .PHONY: clean-elfdump
 clean-elfdump:					    #t# Clean elfdump directory
 	$(call print_msg_root,Cleaning ELFDump build files)
-	make $(MKFLAGS) -C $(elfdump_dir) clean
+	$(MAKE) $(MKFLAGS) -C $(elfdump_dir) clean
 
 # ======== SW libs ========
 .PHONY: lib
 lib:								#t# compile software libraries
 	$(call print_msg_root,Building libcatom)
-	make $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget) sim=$(sim)
+	$(MAKE) $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget) sim=$(sim)
 
 
 .PHONY: clean-lib
 clean-lib:							#t# Clean software libs
 	$(call print_msg_root,Cleaning libcatom build files)
-	make $(MKFLAGS) -C $(lib_dir) clean
+	$(MAKE) $(MKFLAGS) -C $(lib_dir) clean
 
 
 # ======== Documentation ========
 .PHONY: doxy
 doxy:								#t# Generate atomsim C++ source documentation
 	$(call print_msg_root,Generating docs for AtomSim,LATEX & HTML)
-	make $(MKFLAGS) -C $(doxy_dir)
+	$(MAKE) $(MKFLAGS) -C $(doxy_dir)
 
 
 .PHONY: doxy-pdf
 doxy-pdf: doxy						#t# Generate atomsim C++ source documentation (pdf)
 	$(call print_msg_root,Generating docs for AtomSim,PDF)
-	make $(MKFLAGS) -C $(doxy_dir) pdf
+	$(MAKE) $(MKFLAGS) -C $(doxy_dir) pdf
 
 
 .PHONY: clean-doxy
 clean-doxy:							#t# Clean build files for Atomsim docs
 	$(call print_msg_root,Cleaning docs build files)
-	make $(MKFLAGS) -C $(doxy_dir) clean
+	$(MAKE) $(MKFLAGS) -C $(doxy_dir) clean
 
 
 # ======== clean ========
