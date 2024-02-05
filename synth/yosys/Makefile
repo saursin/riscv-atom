@@ -39,8 +39,8 @@ default: fpga										#t# alias for fpga target
 
 $(build_dir)/bootloader.hex:
 	$(call print_msg_root,Rebuilding libcatom and bootloader)
-	make $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) sim=0 clean build
-	make $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) sim=0 clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) sim=0 clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) sim=0 clean build
 	cp $(RVATOM)/sw/bootloader/bootloader.hex $@
 
 $(build_dir)/HydrogenSoC.v:

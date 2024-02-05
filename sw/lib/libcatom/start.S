@@ -31,6 +31,9 @@ _start:
     sub a2, t0, a0      // size = _sbss - _sbss
 	jal	memset
 
+	// Initialize heap
+	jal heap_init
+
 	/* Disable and clear all interrupt sources */
     li   a3, -1
     csrc mie, a3

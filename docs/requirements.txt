@@ -1,4 +1,4 @@
-sphinx==4.5.0           # not using latest due to compatibility issues with with sphinx-panels
+sphinx==5.0           # not using latest due to compatibility issues with with sphinx-panels
 sphinx-rtd-theme
 sphinx-copybutton
-sphinx-panels
+sphinx-design

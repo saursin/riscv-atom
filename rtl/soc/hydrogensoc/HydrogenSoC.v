@@ -334,7 +334,11 @@ module HydrogenSoC(
     wire 		    uart_wb_ack_o;
     wire            uart_wb_err_o = 0;
     
-    UART uart (
+    UART #(
+        .DEFAULT_DIV(1),
+        .FIFO_EN    (`SOC_UART_FIFO_EN),
+        .FIFO_DEPTH (`SOC_UART_FIFO_DEPTH)
+    ) uart (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
 

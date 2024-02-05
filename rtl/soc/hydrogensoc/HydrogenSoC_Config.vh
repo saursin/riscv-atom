@@ -54,6 +54,8 @@
 // `define SOC_EN_UART
 `define SOC_UART_ADDR           32'h4000_0000
 `define SOC_UART_SIZE           16              // 4 words
+`define SOC_UART_FIFO_EN        1
+`define SOC_UART_FIFO_DEPTH     4
 
 
 /*

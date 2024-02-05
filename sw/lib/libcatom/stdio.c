@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <assert.h>
 
 #define BACKSPACE 0x7f
 
@@ -10,7 +10,7 @@
 #define PRINTF_ENFMT_BIN
 
 // Enable printf %f format specifer
-// #define PRINTF_ENFMT_FLOAT
+#define PRINTF_ENFMT_FLOAT
 
 // Enable printf %n format specifer
 #define PRINTF_ENFMT_N
@@ -85,6 +85,25 @@ static int __fprint_ull(FILE *f, unsigned long long n, unsigned base, char padc,
     return ret;
 }
 
+#ifdef PRINTF_ENFMT_FLOAT
+static int __fltprint(FILE *f, double flt, char padc, int padd, int padf)
+{
+	int ret = 0;
+	unsigned long long d = (unsigned long long) flt;
+	double frac = flt - (double) d;
+	ret = __fprint_ull(f, d, 10, padc, padd);
+    if(padf>0){
+        __fputc(f, '.');
+	    ret++;
+        while(padf--) {
+            frac *= 10.0;
+        }
+        d = (unsigned long long) frac;
+        ret += __fprint_ull(f, d, 10, '0', 0);
+    }
+	return ret;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -161,10 +180,12 @@ char * gets(char *str){
 int vfprintf(FILE *f, const char * fmt, va_list args){
     long long num_ll;
     unsigned long long num_ull;
+    double num_f;
     uintptr_t ptr;
 
     char padc;
     int padn;
+    int padf;
     int lcount;
     unsigned nwritten = 0;
 
@@ -174,17 +195,30 @@ int vfprintf(FILE *f, const char * fmt, va_list args){
         if (*fmt == '%') {
             fmt++; // skip over %
 
-            // check for padc & padn
-            padn = 0;
+            // Parse padchar (padc), width (padn) and precision (padf)
             padc = ' ';
+            padn = 0;
+            padf = 6;
             if (*fmt == '0') {
                 padc = '0';
                 fmt++;
+            }
+            while(1){
+                if(!__char_is_num(*fmt))
+                    break;
+                padn = (*fmt-'0') + (padn << 3) + (padn << 1);  // padn = padn*10 + digit
+                fmt++;
+            }
+            if(*fmt == '.') {
+                fmt++; // skip over .
+                padf = 0;
                 while(1){
                     if(!__char_is_num(*fmt))
                         break;
-                    padn = (*fmt-'0') + (padn << 3) + (padn << 1);  // padn = padn*10 + digit
+                    padf = (*fmt-'0') + (padf << 3) + (padf << 1);  // padn = padn*10 + digit
                     fmt++;
+                    if(padn > padf + 1)
+                        padn -= (padf+1);
                 }
             }
 
@@ -271,6 +305,14 @@ __vprintf_loop:
             #ifdef PRINTF_ENFMT_FLOAT
                 // Float
                 case 'f':
+                    // floats are always promoted to double in va_args
+					num_f = va_arg(args, double);
+					if(num_f < 0) {
+						__fputc(f, '-');
+						num_f *= -1.0;
+						padn--;
+					}
+					nwritten += __fltprint(f, num_f, padc, padn, padf);
                     break;
             #endif // PRINTF_ENFMT_FLOAT
 
@@ -313,6 +355,39 @@ int printf(const char *fmt, ...)
     return rv;
 }
 
+
+static char * __sstream_strbuf = NULL;
+static int __sstream_strbuf_writepos = -1;
+int __sstream_write(char * bf, uint32_t sz){
+    assert(__sstream_strbuf != NULL);
+    __sstream_strbuf[__sstream_strbuf_writepos++] = bf[0];
+    return 0;
+}
+
+int vsprintf(char *str, const char *fmt, va_list args) {
+    // setup a fake string stream that writes to a string buffer
+    FILE fake_sstream = {.read=NULL, .write=__sstream_write};
+    __sstream_strbuf = str;
+    __sstream_strbuf_writepos = 0;
+
+    int rv = vfprintf(&fake_sstream, fmt, args);
+    
+    // terminate with nullchar
+    fake_sstream.write("\0", 1);
+
+    // cleanup after we're done
+    __sstream_strbuf = NULL;
+    __sstream_strbuf_writepos = -1;
+    return rv;
+}
+
+int sprintf(char *str, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int rv = vsprintf(str, fmt, args);
+    va_end(args);
+    return rv;
+}
 
 void dumphexbuf(char *buf, unsigned len, unsigned base_addr)
 {
