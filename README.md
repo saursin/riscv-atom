@@ -23,6 +23,7 @@ Key highlights of the RISC-V Atom projects are are listed below:
 
 > ***To checkout this project, Please refer to the [Getting Started Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/riscv-atom.html)***:
 
+> ***Use the `dev` branch, if you like to see the latest additions to the project***
 
 ## Directory Structure
 
