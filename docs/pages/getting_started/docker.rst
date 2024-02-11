@@ -56,3 +56,8 @@ You should be able to see a bash prompt, and the riscv-atom repository already c
 
 .. tip::
   Checkout this `cheatsheet <https://docs.docker.com/get-started/docker_cheatsheet.pdf>`_ to learn more about Docker CLI syntax.
+
+.. tip::
+  If you want to use VS Code for development, install the **Remote Explorer** and **Dev Containers** extensions. You
+  should now be able to see the "Dev Containers" options in the *Remote Containers* tab and the container we just created
+  in the list.
