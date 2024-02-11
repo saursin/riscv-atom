@@ -14,7 +14,7 @@
 #include TARGET_HEADER
 
 // define atomsim version
-#define ATOMSIM_VERSION "v2.2"
+#define ATOMSIM_VERSION "v3.0"
 
 #define ATOMSIM_BANNER \
 "   ___  __             _____     \n" 		\
