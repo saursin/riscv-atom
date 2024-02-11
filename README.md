@@ -25,18 +25,10 @@ Key highlights of the RISC-V Atom projects are are listed below:
 > ***Use the `dev` branch, if you like to see the latest additions to the project***
 
 ## Useful Links
-1. [Project Website](https://sites.google.com/view/saurabh-singh-web/projects/risc-v-atom?authuser=0)
-2. [Project Documentation](https://riscv-atom.readthedocs.io/en/latest/index.html)
-    - [Getting Started Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/prerequisites.html)
-    - [Examples Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting-started/examples.html)
-
-
-<!-- 5. AtomSim Source Documentation -->
-
-<!--
-## Other related projects
-1. **AtomShell**: A simple shell for RISC-V Atom based SoCs : [AtomShell Github](https://github.com/saurabhsingh99100/atomshell)
--->
+1. [Project Website](https://sites.google.com/view/saursin/projects/risc-v-atom?authuser=0)
+2. [Project Documentation](https://riscv-atom.readthedocs.io)
+    - [Getting Started Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting_started/prerequisites.html)
+    - [Examples Guide](https://riscv-atom.readthedocs.io/en/latest/pages/getting_started/examples.html)
 
 ## License
 This project is open-source under [MIT license](https://github.com/saursin/riscv-atom/blob/main/LICENSE)!
