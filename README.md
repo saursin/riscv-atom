@@ -1,4 +1,4 @@
-![RISCVAtom-header](docs/diagrams/rvatom-header.drawio.png)
+![RISCVAtom-header](docs/diagrams/rvatom-header.png)
 
 # RISCV-Atom
 
