@@ -82,7 +82,7 @@ int Atomsim::run()
 
             // check ebreak
             if(simstate_.state_.ins_e == RV_INSTR_EBREAK) {
-                printf("EBreak hit at %s0x%08x%s\n", ansicode(FG_BLUE), simstate_.state_.pc_e, ansicode(FG_RESET));
+                printf("EBreak hit at %ld ticks, PC=%s0x%08x%s\n", simstate_.state_.tickcount_total, ansicode(FG_BLUE), simstate_.state_.pc_e, ansicode(FG_RESET));
 
                 if(sim_config_.dump_on_ebreak_flag)  // For SCAR
                     simstate_.dump_simstate(sim_config_.dump_file);

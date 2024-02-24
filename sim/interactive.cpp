@@ -17,6 +17,7 @@
 #define DEFAULT_DUMPMEM_PATH "memdump.txt"
 #define DEFAULT_TRACEFILE_PATH "trace.vcd"
 #define ATOMSIM_PROMPT "atomsim> "
+#define ATOMSIM_HISTORY_FILE ".atomsim_history"
 
 
 void Atomsim::display_dbg_screen()
@@ -187,6 +188,18 @@ Rcode Atomsim::run_interactive_mode()
     static std::string prev_cmd;
     static std::vector<std::string> prev_args;
 
+    // create history file if it doen't exist
+    FILE *history_file = fopen(ATOMSIM_HISTORY_FILE, "a");
+    if (history_file != NULL) {
+        fclose(history_file);
+    } else {
+        std::cerr << "Error creating history file.\n";
+        return RC_EXIT;
+    }
+
+    // read history file
+    read_history(ATOMSIM_HISTORY_FILE);
+
     while(!backend_.done())
     {
         // get input
@@ -214,15 +227,17 @@ Rcode Atomsim::run_interactive_mode()
             cmd = prev_cmd;
             args = prev_args;
         }
-        
+
+        // Add input to history if it's != previous input
+        if(cmd != prev_cmd){
+            add_history(input.c_str());
+            // save to history file
+            write_history(ATOMSIM_HISTORY_FILE);
+        }
+
         // prev <= current
         prev_cmd = cmd;
         prev_args = args;
-
-        // Add to history
-        if(input!=""){
-            add_history(input.c_str());
-        }
 
         // execute
         if (funcs.count(cmd)) // check if command exists
