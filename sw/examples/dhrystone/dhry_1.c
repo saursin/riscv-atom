@@ -22,6 +22,7 @@
 #include <stdio.h>
 #ifndef DHRY_ITERS
 #define DHRY_ITERS 2000
+#undef TIME
 #endif
 #endif
 

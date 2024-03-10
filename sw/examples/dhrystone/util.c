@@ -7,15 +7,16 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 extern long rvcycles();
 // extern long insn();
 
-extern char *malloc();
+// extern char *malloc();
 extern int printf(const char *format, ...);
 
-char heap_memory[1024];
-int heap_memory_used = 0;
+// char heap_memory[1024];
+// int heap_memory_used = 0;
 
 long rvcycles()
 {
@@ -32,12 +33,12 @@ long rvcycles()
 // 	return insns;
 // }
 
-char *malloc(int size)
-{
-	char *p = heap_memory + heap_memory_used;
-	// printf("[malloc(%d) -> %d (%d..%d)]", size, (int)p, heap_memory_used, heap_memory_used + size);
-	heap_memory_used += size;
-	if (heap_memory_used > 1024)
-		asm volatile ("ebreak");
-	return p;
-}
+// char *malloc(int size)
+// {
+// 	char *p = heap_memory + heap_memory_used;
+// 	// printf("[malloc(%d) -> %d (%d..%d)]", size, (int)p, heap_memory_used, heap_memory_used + size);
+// 	heap_memory_used += size;
+// 	if (heap_memory_used > 1024)
+// 		asm volatile ("ebreak");
+// 	return p;
+// }

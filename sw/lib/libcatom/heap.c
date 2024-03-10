@@ -6,7 +6,7 @@ extern int _start_heap[2];  // specified as array to prevent a bounds warning
 
 #define HEAP_START &_start_heap
 #ifndef HEAP_SIZE
-    #define HEAP_SIZE  2048
+    #define HEAP_SIZE  1024
 #endif
 
 struct heapblock{
