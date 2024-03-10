@@ -12,8 +12,8 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    CODE_RAM (rx):  ORIGIN = 0x20000000, LENGTH = 40K
-    DATA_RAM (rwx): ORIGIN = 0x2000a000, LENGTH = 8K
+    CODE_RAM (rx):  ORIGIN = 0x20000000,                            LENGTH = 36K
+    DATA_RAM (rwx): ORIGIN = (ORIGIN(CODE_RAM) + LENGTH(CODE_RAM)), LENGTH = 12K
 }
 
 __coderam_start = ORIGIN(CODE_RAM);
