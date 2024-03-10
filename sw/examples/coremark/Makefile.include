@@ -1,0 +1,5 @@
+src_files:= core_list_join.c core_main.c core_matrix.c core_state.c core_util.c barebones/core_portme.c
+executable:= coremark.elf
+CFLAGS += -O2 -I . -I barebones -DRVATOM -DITERATIONS=150 -DHAS_FLOAT=1 -DHAS_TIME_H=1 -DHAS_STDIO=1 -DHAS_PRINTF=1 -DMULTITHREAD=1
+FLAGS_STR:= $(CFLAGS)
+CFLAGS += -DFLAGS_STR='"$(FLAGS_STR)"'

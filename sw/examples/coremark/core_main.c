@@ -436,6 +436,17 @@ for (i = 0; i < MULTITHREAD; i++)
         portable_free(results[i].memblock[0]);
 #endif
     /* And last call any target specific code for finalizing */
+#ifdef RVATOM
+    ee_printf("\nAtom Clk Freq    : %d Hz\n", CLK_FREQ);
+    ee_printf("Atom Inst retired: %d\n", get_instret());
+#ifdef HAS_FLOAT
+    ee_printf("Atom CPI         : %f\n", (double)total_time / (double)get_instret());
+    ee_printf("Atom IPC         : %f\n", (double)get_instret() / (double)total_time);
+#else
+    ee_printf("Atom CPI         : %d\n", total_time / get_instret());
+    ee_printf("Atom IPC         : %d\n", get_instret() / total_time);
+#endif
+#endif
     portable_fini(&(results[0].port));
 
     return MAIN_RETURN_VAL;

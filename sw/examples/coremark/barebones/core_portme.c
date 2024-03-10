@@ -18,6 +18,13 @@ Original Author: Shay Gal-on
 #include "coremark.h"
 #include "core_portme.h"
 
+#ifdef RVATOM
+#include <platform.h>
+#include <time.h>
+#include <stdio.h>
+#include <csr.h>
+#endif // RVATOM
+
 #if VALIDATION_RUN
 volatile ee_s32 seed1_volatile = 0x3415;
 volatile ee_s32 seed2_volatile = 0x3415;
@@ -44,8 +51,12 @@ volatile ee_s32 seed5_volatile = 0;
 CORETIMETYPE
 barebones_clock()
 {
+#ifdef RVATOM
+    return cycle();
+#else
 #error \
     "You must implement a method to measure time in barebones_clock()! This function should return current time.\n"
+#endif //RVATOM
 }
 /* Define : TIMER_RES_DIVIDER
         Divider to trade off timer resolution and total time that can be
@@ -59,10 +70,17 @@ barebones_clock()
 #define MYTIMEDIFF(fin, ini)       ((fin) - (ini))
 #define TIMER_RES_DIVIDER          1
 #define SAMPLE_TIME_IMPLEMENTATION 1
+#ifdef RVATOM
+#define CLOCKS_PER_SEC CLK_FREQ
+#endif // RVATOM
 #define EE_TICKS_PER_SEC           (CLOCKS_PER_SEC / TIMER_RES_DIVIDER)
 
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
+
+#ifdef RVATOM
+static ee_u32 start_n_instr, stop_n_instr;
+#endif // RVATOM
 
 /* Function : start_time
         This function will be called right before starting the timed portion of
@@ -76,6 +94,9 @@ void
 start_time(void)
 {
     GETMYTIME(&start_time_val);
+#ifdef RVATOM
+    start_n_instr = CSR_read(CSR_INSTRET);
+#endif // RVATOM
 }
 /* Function : stop_time
         This function will be called right after ending the timed portion of the
@@ -89,6 +110,10 @@ void
 stop_time(void)
 {
     GETMYTIME(&stop_time_val);
+#ifdef RVATOM
+    stop_n_instr = CSR_read(CSR_INSTRET);
+#endif // RVATOM
+
 }
 /* Function : get_time
         Return an abstract "ticks" number that signifies time on the system.
@@ -120,6 +145,13 @@ time_in_secs(CORE_TICKS ticks)
     return retval;
 }
 
+#ifdef RVATOM
+ee_u32
+get_instret(){
+	return stop_n_instr - start_n_instr;
+}
+#endif // RVATOM
+
 ee_u32 default_num_contexts = 1;
 
 /* Function : portable_init
@@ -129,8 +161,13 @@ ee_u32 default_num_contexts = 1;
 void
 portable_init(core_portable *p, int *argc, char *argv[])
 {
+#ifdef RVATOM
+    serial_init(UART_BAUD_115200);
+    printf("Starting Coremark...\n");
+#else
 #error \
     "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
+#endif // RVATOM
 
     (void)argc; // prevent unused warning
     (void)argv; // prevent unused warning

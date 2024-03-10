@@ -21,6 +21,12 @@ Original Author: Shay Gal-on
 */
 #ifndef CORE_PORTME_H
 #define CORE_PORTME_H
+
+#ifdef RVATOM
+#include <stdlib.h>
+#include <platform.h>
+#endif
+
 /************************/
 /* Data types and settings */
 /************************/
@@ -193,6 +199,9 @@ typedef struct CORE_PORTABLE_S
 /* target specific init/fini */
 void portable_init(core_portable *p, int *argc, char *argv[]);
 void portable_fini(core_portable *p);
+#ifdef RVATOM
+ee_u32 get_instret();
+#endif // RVATOM
 
 #if !defined(PROFILE_RUN) && !defined(PERFORMANCE_RUN) \
     && !defined(VALIDATION_RUN)
