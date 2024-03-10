@@ -8,7 +8,7 @@ import sys
 
 InterByteDelay_simt = 0.2   # SIM_WITH_TRACE: simulation with trace       
 InterByteDelay_sim  = 0.005 # NORMAL SIM: 0.001 works, for safety we chose this
-InterByteDelay_fpga = 0.001 # FPGA
+InterByteDelay_fpga = 0     # FPGA
 
 InterByteDelay = 0
 
