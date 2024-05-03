@@ -60,24 +60,12 @@ public:
      */
     Atomsim(Atomsim_config sim_config, Backend_config bk_config);
 
-    /**
-     * @brief step simulation by a cycle
-     */
-    void step();
 
     /**
      * @brief run simulation until finished
      * @return int return code (non 0 if finished)
      */
     int run();
-
-    /**
-     * @brief enter interactive mode
-     * 
-     * @returns int return code [if 2: exit sim]
-     */
-    Rcode run_interactive_mode();
-        
 
 private:
     /**
@@ -129,6 +117,27 @@ private:
 
     // used to provide cycles for step command
     long long pending_steps = 0;
+
+    /**
+     * @brief step simulation by a cycle
+     */
+    void step();
+
+    /**
+     * @brief initialize interactive mode
+    */
+    void init_interactive_mode();
+
+    /**
+     * @brief Deinitialize interactive mode
+    */
+    void deinit_interactive_mode();
+
+    /**
+     * @brief enter interactive mode
+     */
+    Rcode run_interactive_mode();
+
 
     // display debug screen
     void display_dbg_screen();

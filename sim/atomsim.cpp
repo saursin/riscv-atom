@@ -39,6 +39,8 @@ void Atomsim::step()
 
 int Atomsim::run()
 {   
+    int exitcode=EXIT_SUCCESS;
+
     // tick backend and update backend status, until ctrl+c is.
     try
     {
@@ -49,9 +51,10 @@ int Atomsim::run()
         in_debug_mode_ = sim_config_.debug_flag;
 
         pending_steps = 0;
+
+        init_interactive_mode();
         
         // *** Simulation Loop ***
-        Rcode rval = RC_NONE;
         while (bkend_running_)
         {
             // Refresh state
@@ -94,18 +97,21 @@ int Atomsim::run()
                     pending_steps = 0;
                 } else {
                     printf("Exiting..\n");
-                    return 0;
+                    exitcode = EXIT_SUCCESS;
+                    break;
                 }
             }
 
             // check sim iterations
             if(simstate_.state_.tickcount_total > sim_config_.maxitr) {
                 throwError("SIM0", "Simulation iterations exceeded maxitr("+std::to_string(sim_config_.maxitr)+")\n");
-                return 1;
+                exitcode = EXIT_FAILURE;
+                break;
             }
             
             // Enter interactive mode if we aren's stepping and we are already in debug mode or run mode
             // was interrupted by user (CTRL_C)
+            Rcode rval;
             if((pending_steps == 0) && (in_debug_mode_ || CTRL_C_PRESSED)) {
                 // explictly set: since we can also enter if CTRL_C_PRESSED
                 in_debug_mode_ = true;
@@ -125,6 +131,7 @@ int Atomsim::run()
                     CTRL_C_PRESSED = false;
                 } else if (rval == RC_EXIT) {
                     // Exit sim
+                    exitcode = EXIT_SUCCESS;
                     break;
                 }
             }
@@ -143,5 +150,9 @@ int Atomsim::run()
         std::cerr << "Runtime exception: " << e.what() << std::endl;
         return 1;
     }
-    return 0;
+
+    // Exiting sim
+    deinit_interactive_mode();
+
+    return exitcode;
 }

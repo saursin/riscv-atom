@@ -18,6 +18,7 @@
 #define DEFAULT_TRACEFILE_PATH "trace.vcd"
 #define ATOMSIM_PROMPT "atomsim> "
 #define ATOMSIM_HISTORY_FILE ".atomsim_history"
+#define ATOMSIM_HISTORY_LENGTH 1000
 
 
 void Atomsim::display_dbg_screen()
@@ -157,6 +158,24 @@ void _hexdump(const unsigned char *buf, size_t bufsz, uint32_t base_addr, bool e
     }
 }
 
+void Atomsim::init_interactive_mode(){
+    // init
+    using_history();
+
+    // Set history list length
+    stifle_history(ATOMSIM_HISTORY_LENGTH);
+
+    // read history file
+    read_history(ATOMSIM_HISTORY_FILE);
+}
+
+
+void Atomsim::deinit_interactive_mode(){
+    // write history file
+    write_history(ATOMSIM_HISTORY_FILE);
+}
+
+
 Rcode Atomsim::run_interactive_mode()
 {
     typedef Rcode (Atomsim::*interactive_func)(const std::vector<std::string>&);
@@ -187,18 +206,6 @@ Rcode Atomsim::run_interactive_mode()
   
     static std::string prev_cmd;
     static std::vector<std::string> prev_args;
-
-    // create history file if it doen't exist
-    FILE *history_file = fopen(ATOMSIM_HISTORY_FILE, "a");
-    if (history_file != NULL) {
-        fclose(history_file);
-    } else {
-        std::cerr << "Error creating history file.\n";
-        return RC_EXIT;
-    }
-
-    // read history file
-    read_history(ATOMSIM_HISTORY_FILE);
 
     while(!backend_.done())
     {
@@ -231,8 +238,6 @@ Rcode Atomsim::run_interactive_mode()
         // Add input to history if it's != previous input
         if(cmd != prev_cmd){
             add_history(input.c_str());
-            // save to history file
-            write_history(ATOMSIM_HISTORY_FILE);
         }
 
         // prev <= current
