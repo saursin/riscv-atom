@@ -163,7 +163,9 @@ def verify_test(test:dict, compile_outputs:dict, execute_outputs:dict):
     reg_vals={}
     with open(execute_outputs["dump_file"], 'r') as dumpfile:
         for line in dumpfile:
-            tokens = line.strip().split(' ')
+            tokens = line.strip().split(':')
+            for i in range(len(tokens)):
+                tokens[i] = tokens[i].strip()
             reg_vals[tokens[0]] = int(tokens[1], 16)
     
 
