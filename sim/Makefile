@@ -60,10 +60,12 @@ INCLUDES += -I $(VERILATED_DIR) -I $(VERILATOR_INCLUDE_PATH) -I $(VERILATOR_INCL
 
 ifeq ($(DEBUG), 1)
     CFLAGS += -g -O0
+else
+    CFLAGS += -O3
 endif
 
 EXE := $(BIN_DIR)/atomsim
-SRCS := main.cpp atomsim.cpp simstate.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp
+SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp
 COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 SIM_BACKEND_FILE := backend_$(soctarget).cpp
