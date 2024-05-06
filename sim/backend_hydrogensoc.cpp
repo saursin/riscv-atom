@@ -1,13 +1,11 @@
 #include "backend_hydrogensoc.hpp"
 
 #include "atomsim.hpp"
-#include "simstate.hpp"
-// #include "testbench.hpp"
 #include "memory.hpp"
 #include "vuart.hpp"
 #include "bitbang_uart.hpp"
 #include "except.hpp"
-// #include "util.hpp"
+#include "rvdefs.hpp"
 
 #include "build/verilated/VHydrogenSoC_headers.h"
 
@@ -28,10 +26,10 @@
 #define RAM_SIZE 49152  // 48 KB
 
 #define BBUART_FRATIO 3
-
 #define BOOTMODE_PIN_OFFSET 8
 
-Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim, &(sim->simstate_)),
+
+Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim),
                                                                         config_(config),
                                                                         using_vuart_(config.vuart_portname != "")
 {
@@ -56,6 +54,14 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
 
     // Construct Testbench object
     tb = new Testbench<VHydrogenSoC>();
+
+    // Construct reg map
+    regs_.push_back({.name="pc", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->ProgramCounter_Old, .is_arch_reg=false});
+    regs_.push_back({.name="ir", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->InstructionRegister, .is_arch_reg=false});
+    for (int i=0; i<32; i++) {
+        std::string regname = "x"+std::to_string(i);
+        regs_.push_back({.name=regname, .alt_name=rv_abi_regnames[i], .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->rf->regs[i], .is_arch_reg=true});
+    }
 
     // ====== Initialize ========
     // init ram
@@ -106,26 +112,6 @@ Backend_atomsim::~Backend_atomsim()
     delete tb;
 }
 
-void Backend_atomsim::refresh_state()
-{
-    // Get PC
-    simstate_->state_.pc_f = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->ProgramCounter;
-    simstate_->state_.pc_e = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->ProgramCounter_Old;
-
-    // Get IR
-    simstate_->state_.ins_e = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->InstructionRegister;
-
-    // Get Regs
-    for (int i = 0; i < 32; i++)
-        simstate_->state_.rf[i] = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->rf->regs[i];
-
-    // Get Signals
-    simstate_->signals_.jump_decision = tb->m_core->HydrogenSoC->atom_wb_core->atom_core->__PVT__jump_decision;
-
-    // get Tickcounts
-    simstate_->state_.tickcount = tb->m_tickcount;
-    simstate_->state_.tickcount_total = tb->m_tickcount_total;
-}
 
 void Backend_atomsim::UART()
 {

@@ -1,5 +1,4 @@
 #include "atomsim.hpp"
-#include "simstate.hpp"
 #include <iostream>
 #include "util.hpp"
 
@@ -57,14 +56,11 @@ int Atomsim::run()
         // *** Simulation Loop ***
         while (bkend_running_)
         {
-            // Refresh state
-            backend_.refresh_state();
-            
             int breakpoint_hit = -1;
 
             // Evaluate breakpoints (early)
             for(int i=0; i<NUM_MAX_BREAKPOINTS; i++) {
-                if(breakpoints_[i].active && breakpoints_[i].addr == simstate_.state_.pc_e){
+                if(breakpoints_[i].active && breakpoints_[i].addr == backend_.read_reg("pc")){
                     breakpoint_hit = i;
                     break;
                 }
@@ -78,17 +74,29 @@ int Atomsim::run()
             
             if(breakpoint_hit != -1) {
                 // Make sure we enter debug mode after breakpoint hit
-                printf("Breakpoint %d hit %s0x%08x%s\n", breakpoint_hit, ansicode(FG_BLUE), simstate_.state_.pc_e, ansicode(FG_RESET));
+                printf("Breakpoint %d hit %s0x%08lx%s\n", breakpoint_hit, ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
                 in_debug_mode_ = true;
                 pending_steps = 0;
             }
 
             // check ebreak
-            if(simstate_.state_.ins_e == RV_INSTR_EBREAK) {
-                printf("EBreak hit at %ld ticks, PC=%s0x%08x%s\n", simstate_.state_.tickcount_total, ansicode(FG_BLUE), simstate_.state_.pc_e, ansicode(FG_RESET));
+            if(backend_.read_reg("ir") == RV_INSTR_EBREAK) {
+                printf("EBreak hit at %ld ticks, PC=%s0x%08lx%s\n", backend_.get_total_tick_count() , ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
 
-                if(sim_config_.dump_on_ebreak_flag)  // For SCAR
-                    simstate_.dump_simstate(sim_config_.dump_file);
+                if(sim_config_.dump_on_ebreak_flag){  // For SCAR
+                    // Temporarily redirect stdout to file
+                    FILE *stream;
+                    if((stream = freopen(sim_config_.dump_file.c_str(), "w", stdout)) == NULL)
+                        Atomsim_exception("Cannot open dump file");
+
+                    // call info command
+                    cmd_info({"reg", "--no-alt-names"});
+                    
+                    // restore stdout
+                    stream = freopen("/dev/tty", "w", stdout);
+                    if(sim_config_.verbose_flag)
+                        printf("State dumped to: %s\n", sim_config_.dump_file.c_str());
+                }
 
                 // ebreak hit while debug mode was enabled through cli
                 if(sim_config_.debug_flag) {
@@ -103,7 +111,7 @@ int Atomsim::run()
             }
 
             // check sim iterations
-            if(simstate_.state_.tickcount_total > sim_config_.maxitr) {
+            if(backend_.get_total_tick_count() > sim_config_.maxitr) {
                 throwError("SIM0", "Simulation iterations exceeded maxitr("+std::to_string(sim_config_.maxitr)+")\n");
                 exitcode = EXIT_FAILURE;
                 break;

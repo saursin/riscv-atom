@@ -52,8 +52,6 @@ public:
 	 */
     void service_mem_req();
 
-	void refresh_state();
-
     void UART();
 
     int tick();

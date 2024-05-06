@@ -6,10 +6,23 @@
 
 #include <string>
 
+enum Regwidth_t {
+    R8=8, 
+    R16=16, 
+    R32=32, 
+    R64=64
+};
+
+struct ArchReg_t {
+    std::string name;
+    std::string alt_name;
+    Regwidth_t width;
+    void * ptr;
+    bool is_arch_reg;
+};
 
 // Forward declaration
 class Atomsim;
-class Simstate;
 
 /**
  * @brief Backend class
@@ -27,7 +40,7 @@ class Backend
 {
 public:
 
-    Backend(Atomsim *sim_ptr, Simstate *simstate_ptr);
+    Backend(Atomsim *sim_ptr);
 
     /**
      * @brief Get the Target Name                       [** OVERRIDE **]
@@ -39,12 +52,6 @@ public:
 	 * @brief reset the backend
 	 */
 	void reset();
-
-	/**
-	 * @brief probe all internal signals and registers and 
-	 * update state of middle-end                       [** OVERRIDE **]
-	 */
-	virtual void refresh_state() = 0;
 
 	/**
 	 * @brief Tick for one cycle
@@ -100,6 +107,21 @@ public:
      */
     virtual void store(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
 
+    /**
+     * @brief read register value                       [** MAY OVERRIDE **]
+     * 
+     * @param reg_id register ID
+    */
+    virtual uint64_t read_reg(const std::string name);
+
+    /**
+     * @brief write register value                      [** MAY OVERRIDE **]
+     * 
+     * @param reg_id register ID
+     * @param buf value
+    */
+    virtual void write_reg(const std::string name, uint64_t value);
+
 protected:
 	/**
      * @brief Pointer to Atomsim object
@@ -107,32 +129,29 @@ protected:
     Atomsim *sim_;
 
     /**
-     * @brief Pointer to middle-end
-     */
-    Simstate *simstate_;
-
-    /**
 	 * @brief Pointer to testbench object
      * NOTE: To be initialized and deleted by child class
 	 */
 	Testbench<VTarget> *tb;
+
+    /**
+     * @brief Map or architectural registers
+    */
+    std::vector<ArchReg_t> regs_;
+
+    friend class Atomsim;
 };
 
 
 template <class VTarget>
-Backend<VTarget>::Backend(Atomsim *sim_ptr, Simstate *simstate_ptr):
-    sim_(sim_ptr),
-    simstate_(simstate_ptr)
+Backend<VTarget>::Backend(Atomsim *sim_ptr):
+    sim_(sim_ptr)
 {}
 
 template <class VTarget>
 void Backend<VTarget>::reset()
 {
     tb->reset();
-    // tb->m_core->eval();
-
-    // Update simstate
-    refresh_state();
 }
 
 template <class VTarget>
@@ -185,4 +204,50 @@ template <class VTarget>
 void Backend<VTarget>::store(const uint32_t /*start_addr*/, uint8_t */*buf*/, const uint32_t /*buf_sz*/)
 {
     throw Atomsim_exception("storing to current target's memory is not supported");
+}
+
+template <class VTarget>
+uint64_t Backend<VTarget>::read_reg(const std::string name)
+{
+    if (regs_.size() == 0) 
+        throw Atomsim_exception("Reading register value in current target is not supported");
+
+    uint64_t val;
+    for(auto it = regs_.begin(); it != regs_.end(); it++){
+        if(it->name == name || it->alt_name == name) {
+            switch(it->width){
+                case R8:    val = *((uint64_t*)it->ptr) & 0xffULL; break;
+                case R16:   val = *((uint64_t*)it->ptr) & 0xffffULL; break;
+                case R32:   val = *((uint64_t*)it->ptr) & 0xffffffffULL; break;
+                case R64:
+                default:
+                    val = *((uint64_t*)it->ptr); break;
+            }
+            return val;
+        }
+    }
+    
+    throw Atomsim_exception("Invalid register: " + name);
+}
+
+template <class VTarget>
+void Backend<VTarget>::write_reg(const std::string name, uint64_t value)
+{
+    if (regs_.size() == 0) 
+        throw Atomsim_exception("W`riting register value in current target is not supported");
+
+    for(auto it = regs_.begin(); it != regs_.end(); it++){
+        if(it->name == name || it->alt_name == name) {
+            switch(it->width){
+                case R8:    *((uint8_t*)it->ptr) = (uint8_t) (value & 0xffULL); break;
+                case R16:   *((uint16_t*)it->ptr) = (uint16_t) (value & 0xffffULL); break;
+                case R32:   *((uint32_t*)it->ptr) = (uint32_t) (value & 0xffffffffULL); break;
+                case R64:
+                default:
+                    *((uint64_t*)it->ptr) = value; break;
+            }
+        }
+    }
+
+    throw Atomsim_exception("Invalid register: " + name);
 }

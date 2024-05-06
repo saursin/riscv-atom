@@ -20,61 +20,51 @@
 #define ATOMSIM_HISTORY_FILE ".atomsim_history"
 #define ATOMSIM_HISTORY_LENGTH 1000
 
+#define DEBUG_SCREEN_RF_COLS 2
 
 void Atomsim::display_dbg_screen()
-{   // calculate change in PC.    
-    unsigned int pc_change = simstate_.state_.pc_f - simstate_.state_.pc_e;
-
-    // Check if it's a jump
-    bool isJump = simstate_.signals_.jump_decision;
-
-    // Fetch Values   
+{   
     uint64_t tickcount = backend_.get_total_tick_count();
+    uint64_t pc = backend_.read_reg("pc");
+    uint64_t ir = backend_.read_reg("ir");
 
-    const int disam_width = 39;
-    std::string disam = (disassembly_[simstate_.state_.pc_e].instr == simstate_.state_.ins_e) ? disassembly_[simstate_.state_.pc_e].disassembly : "_";
-    if(disam.length() > disam_width) {
-        disam.resize(disam_width-3);
-        disam += " ..";
-    }
-    else if (disam.length()< disam_width)
-        disam.append(disam_width-disam.length(), ' ');
-    
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // Print debug screen
+    std::string disasm = trimstr((disassembly_[pc].instr == ir) ? disassembly_[pc].disassembly : "_", 40);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Non verbose debug screen
     if(!sim_config_.verbose_flag){
-        printf("[%10ld] PC: 0x%08x, IR: 0x%08x, %s%s%s\n", tickcount, simstate_.state_.pc_e, simstate_.state_.ins_e, ansicode(FG_BLUE), disam.c_str(), ansicode(FG_RESET));
+        printf("[%10ld] PC: 0x%08lx, IR: 0x%08lx, %s%s%s\n", tickcount, pc, ir, ansicode(FG_BLUE), disasm.c_str(), ansicode(FG_RESET));
         return;
     }
-
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Verbose debug screen
+    static uint64_t last_pc = 0;
+    int64_t pc_change = pc - last_pc;
+    last_pc = pc;
+    
     printf("┌─[%10ld]─────────────────────────────────────────────┐\n", tickcount);
-    printf("│ %sPC: 0x%08x%s%s    PC_f: 0x%08x     (%+10d%s)%s   │\n", ansicode(S_BOLD), simstate_.state_.pc_e, ansicode(SN_BOLD), 
-                                                    ansicode(S_DIM), simstate_.state_.pc_f, pc_change, (isJump ? ", J": "   "), ansicode(SN_DIM));
-    printf("│ IR: 0x%08x    %s%s%s│\n", simstate_.state_.ins_e, ansicode(FG_CYAN), disam.c_str(), ansicode(FG_RESET));
+    printf("│ %sPC: 0x%08lx%s  %s%-+15ld%s                          │\n", ansicode(S_BOLD), pc, ansicode(SN_BOLD), 
+                                                                        ansicode(S_DIM), pc_change, ansicode(SN_DIM));
+    printf("│ IR: 0x%08lx  %s%s%s │\n", ir, ansicode(FG_CYAN), disasm.c_str(), ansicode(FG_RESET));
     printf("└──────────────────────────────────────────────────────────┘\n");
 
-    // Print Register File
-    int cols = 2; // no of columns per rows
-    #ifndef DEBUG_PRINT_T2B
-    for(int i=0; i<32; i++)	// print in left-right fashion
-    {
-        printf("r%-2d: 0x%08x    ", i, simstate_.state_.rf[i]);
-        if(i%cols == cols-1)
-            printf("\n");
-    }
-    #else
-    for(int i=0; i<32/cols; i++)	// print in topdown fashion
-    {
-        for(int j=0; j<cols; j++)
-        {
-            printf("  %s: 0x%08x  ", this->reg_names_[i+(32/cols)*j].c_str(), simstate_.state_.rf[i+(32/cols)*j]);
-        }
-        printf("\n");
-    }
-    #endif
-
+    // Print architecture registers in DEBUG_SCREEN_RF_COLS columns
+    cmd_info({"reg", "-a", "-c", std::to_string(DEBUG_SCREEN_RF_COLS)});
 }
 
+void print_reg(ArchReg_t reg, bool append_alt_name){
+    printf("%-10s : ", (reg.name + ((append_alt_name && reg.alt_name != "") ? (" ("+reg.alt_name+")") : "")).c_str());
+    switch(reg.width){
+        case R8:    printf("%02x",   (uint8_t)  (*((uint64_t*)reg.ptr) & 0xffULL)); break;
+        case R16:   printf("%04x",   (uint16_t) (*((uint64_t*)reg.ptr) & 0xffffULL)); break;
+        case R32:   printf("%08x",   (uint32_t) (*((uint64_t*)reg.ptr) & 0xffffffffULL)); break;
+        case R64:   printf("%016lx", (uint64_t) (*((uint64_t*)reg.ptr))); break;
+        default:
+            printf("%16s", " - ");
+        break;
+    }
+}
 
 void _parse_line(const std::string s, std::string &cmd, std::vector<std::string> &args)
 {
@@ -476,13 +466,15 @@ Rcode Atomsim::cmd_break(const std::vector<std::string> &args)
     return RC_OK;
 }
 
+
+
 Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
 {
-    if(args.size() == 0)   // step 1
+    if(args.size() == 0)
     {
         display_dbg_screen();
     }
-    else if(args.size() == 1)  // step n
+    else if(args.size() >= 1)
     {
         if(args[0] == "b" || args[0] == "break") {
             // show breakpoints
@@ -492,10 +484,69 @@ Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
                     printf("%3d  %s0x%08x%s\n", i, ansicode(FG_BLUE), breakpoints_[i].addr, ansicode(FG_RESET));
                 }
             }
-        } else if (args[0] == "r" || args[0] == "reg") {
-            printf(" %s:    0x%08x\n", "pc         ", simstate_.state_.pc_e);
-            for(unsigned i=0; i<32; i++) {
-                printf(" %s:    0x%08x\n", reg_names_[i].c_str(), simstate_.state_.rf[i]);
+        }
+        else if(args[0] == "r" || args[0] == "reg") {
+            // Print registers
+            bool arch_regs_only = false;
+            unsigned cols=1;
+            bool no_alt_names = false;
+            std::string regname;
+            for(int i=1; i<args.size(); i++){
+                if (args[i] == "-a") {
+                    arch_regs_only = true;
+                }
+                else if (args[i] == "-c") {
+                    cols = std::atoi(args[i+1].c_str());   // FIXME: unprotected
+                    i++;
+                }
+                else if (args[i] == "--no-alt-names") {
+                    no_alt_names=true;
+                }
+                else {
+                    regname = args[i];
+                }
+            }
+
+            std::vector<ArchReg_t> regs;
+            if(regname.length()) {
+                // If regname provided, search for it
+                auto it = backend_.regs_.begin();
+                for(; it != backend_.regs_.end(); it++) {
+                    if(it->name == regname || it->alt_name == regname) {
+                        regs.push_back(*it); break;
+                    }
+                }
+
+                if(it == backend_.regs_.end()) {
+                    throw Atomsim_exception("Invalid register: "+ regname);
+                }
+            }
+            else {
+                // Show all regs
+                regs = backend_.regs_;
+            }
+
+            // Filter out non arch registers
+            if(arch_regs_only) {
+                regs.erase(std::remove_if(regs.begin(), regs.end(), [](const ArchReg_t& r) {
+                        return !r.is_arch_reg;
+                    }), regs.end());
+            }
+            
+            unsigned nregs = regs.size();
+            unsigned nregs_per_col = ceil((float)nregs/(float)cols);
+
+            for(unsigned i=0; i<nregs_per_col; i++){
+                for(unsigned j=0; j<cols; j++) {
+                    if(i+nregs_per_col*j >= nregs) break;
+
+                    auto reg = regs[i+nregs_per_col*j];
+                    // regname
+                    print_reg(reg, !no_alt_names);
+
+                    printf("     ");
+                }
+                printf("\n");
             }
         }
     }

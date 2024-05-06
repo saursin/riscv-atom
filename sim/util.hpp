@@ -101,6 +101,14 @@ std::string rStrip(const std::string& s);
  */
 std::string strip(const std::string& s);
 
+/**
+ * @brief trims string to specified length, inserts ' ..' suffix if len exceeds
+ * 
+ * @param str input string
+ * @param len desired length
+ * @return trimmed string
+*/
+std::string trimstr(std::string str, size_t len);
 
 //////////////////////////////////////////////////////////////////////////////
 // String Tokenizing

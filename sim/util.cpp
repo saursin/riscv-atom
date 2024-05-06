@@ -81,6 +81,17 @@ std::string strip(const std::string& s)
 }
 
 
+std::string trimstr(std::string str, size_t len)
+{
+    if(str.length() > len){
+        str.resize(len-3);
+        str+=" ..";
+    }
+    else if (str.length()< len)
+        str.append(len-str.length(), ' ');
+    return str;
+}
+
 size_t tokenize(const std::string &txt, std::vector<std::string> &strs, char ch)
 {
     size_t pos = txt.find( ch );
