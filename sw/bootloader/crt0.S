@@ -11,6 +11,20 @@ _start:
 .option norelax
     la gp, _global_pointer
 .option pop
+    
+    // copy data from rom to ram
+    la	a0, _sdata      // destination
+    la	a1, _etext      // source
+    la  t0, _edata
+    sub a2, t0, a0      // size = _edata - _sdata
+	jal memcpy
+    
+    // zero initialize bss section
+    la	a0, _sbss       // destination
+	li	a1, 0           // value = 0
+	la  t0, _ebss
+    sub a2, t0, a0      // size = _sbss - _sbss
+	jal	memset
 
 #ifdef EN_EXCEPT
 	// Disable and clear all interrupt sources

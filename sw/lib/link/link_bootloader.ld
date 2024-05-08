@@ -49,6 +49,14 @@ SECTIONS
 
     /* ==== DATA RAM ==== */
     /* The .data section contains static variables which have an initial value at boot. */
+    
+    /* Reserve for Approm */
+    .appram_reserved (NOLOAD) : {
+        . = . + LENGTH(RAM) - 2K;   /* Use last 2K of RAM for bootloader stack and data */
+        . = ALIGN(16);
+    } > RAM AT> BOOT_ROM
+
+    /* Bootrom data section */
     .data :
     {           
         _sdata = .;
