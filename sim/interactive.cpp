@@ -432,7 +432,7 @@ Rcode Atomsim::cmd_run(const std::vector<std::string> &/*args*/)
 }
 
 
-Rcode Atomsim::cmd_while(const std::vector<std::string> &args)
+Rcode Atomsim::cmd_while(const std::vector<std::string> &/*args*/)
 {
     std::cout << "command not implemented" << std::endl;
     return RC_OK;
@@ -491,7 +491,7 @@ Rcode Atomsim::cmd_info(const std::vector<std::string> &args)
             unsigned cols=1;
             bool no_alt_names = false;
             std::string regname;
-            for(int i=1; i<args.size(); i++){
+            for(unsigned i=1; i<args.size(); i++){
                 if (args[i] == "-a") {
                     arch_regs_only = true;
                 }
