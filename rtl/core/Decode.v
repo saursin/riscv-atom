@@ -21,6 +21,7 @@ module Decode
     output  wire    [31:0]  imm_o,
 
     output  reg             jump_en_o,
+    output  reg             wfi_o,
     output  reg     [2:0]   comparison_type_o,
     output  reg             rf_we_o,
     output  reg     [2:0]   rf_din_sel_o,
@@ -103,7 +104,7 @@ module Decode
         mem_we_o = 1'b0;
         d_mem_load_store = 1'b0;
         imm_format = `RV_IMM_TYPE_U;
-
+        wfi_o = 1'b0;
         `ifdef EN_RVZICSR
         csru_we_o = 0;
         `endif // EN_RVZICSR
@@ -525,8 +526,16 @@ module Decode
 
                 end
                 else if(rd_sel_o == 5'b00000 && func3 == 3'b000 && rs1_sel_o == 5'b00000 && rs2_sel_o == 5'b00101 && func7 == 7'b0001000) /* WFI */ begin
+                    // Implemented as NOP
+                    // Instruction will commit but next fetch is stalled and pipeline is flushed.
                     instr_scope = "WFI";
-                    illegal_instr_o = 1'b1; // Not supported
+                    rf_we_o = 1'b1;
+                    rf_din_sel_o = 3'd2;
+                    a_op_sel_o = 1'b0;
+                    b_op_sel_o = 1'b1;
+                    alu_op_sel_o = `ALU_FUNC_ADD;
+                    imm_format = `RV_IMM_TYPE_I;
+                    wfi_o = 1'b1;
                 end
                 else begin
                     `ifdef EN_RVZICSR
@@ -565,6 +574,7 @@ module Decode
                 alu_op_sel_o = 0;
                 mem_we_o = 1'b0;
                 imm_format = 0;
+                wfi_o = 1'b0;
 
                 `ifdef EN_RVZICSR
                 csru_we_o = 0;

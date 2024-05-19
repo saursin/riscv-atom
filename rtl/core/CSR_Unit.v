@@ -23,6 +23,7 @@ module CSR_Unit#
 
     // input signals from pipeline
     input   wire    instr_retired_i,
+    input   wire    halted_i,
 
 `ifdef EN_EXCEPT
     input   wire            except_instr_addr_misaligned_i,
@@ -287,7 +288,7 @@ module CSR_Unit#
             csr_mepc <= 0;
         end
         else if(trap_caught_o) begin
-            csr_mepc <= except_pc_i;
+            csr_mepc <= halted_i ? except_pc_i + 'b10 : except_pc_i;      // EPC = PC + 4 if core was halted using WFI, else PC
         end
         else if(we_i && (addr_i == `CSR_mepc)) begin
             csr_mepc <= write_value[31:1];

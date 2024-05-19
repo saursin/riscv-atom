@@ -56,7 +56,9 @@ module AtomRV # (
     input   wire            timer_int_i
     `endif // EN_EXCEPT
 );
-    wire instr_request_valid = !rst_i; // Always valid (Except on Reset condition)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Pipeline control logic
+    wire instr_request_valid = !(rst_i || halted);  // Always valid (Except on Reset condition OR if halted)
 
     `ifdef EN_RVC
     wire [31:0] rvc_aligner_fetch_addr_o;
@@ -66,7 +68,7 @@ module AtomRV # (
     wire        rvc_alignr_ack_o;
     RVC_Aligner rvc_alignr (
         .clk_i      (clk_i),
-        .rst_i      (rst_i),
+        .rst_i      (rst_i | halted),   // also reset aligner if halted
         
         // Iport IFC
         .m_adr_o    (rvc_aligner_fetch_addr_o),
@@ -144,6 +146,18 @@ module AtomRV # (
     wire imem_handshake = raw_imem_handshake && !ignore_imem_handshake;
     wire dmem_handshake = (dport_valid_o && dport_ack_i);
 
+    // core halt logic
+    wire got_interrupt = irq_i | timer_int_i;
+    reg halted;
+    always @(posedge clk_i) begin
+        if(rst_i)
+            halted <= 0;
+        else if(got_interrupt)
+            halted <= 0;    // wake up
+        else if(d_wfi & !stall_stage2)  // We want to commit WFI instruction therefore stage2 cannot be stalled
+            halted <= 1;    // sleep
+    end
+
     /*
         Definition of stall:
         Stall is a state of a pipeline stage in which the current instuction cannot popogate forward.
@@ -166,7 +180,7 @@ module AtomRV # (
             the stage2 is stalled, instruction in stage1 is kept held.
     */
     wire waiting_for_ibus_response = (!imem_handshake && instr_request_valid);
-    wire stall_stage1 = waiting_for_ibus_response || stall_stage2;
+    wire stall_stage1 = waiting_for_ibus_response || stall_stage2 || halted;
 
     /*
         Flush pipeline (insert nop in s2) in case:
@@ -175,7 +189,7 @@ module AtomRV # (
             execute therefore a bubble is introduced. 
             - 
     */
-    wire flush_pipeline = jump_decision || (stall_stage2 ? 0 : stall_stage1);
+    wire flush_pipeline = jump_decision || halted || (stall_stage2 ? 0 : stall_stage1);
 
 
     reg ignore_imem_handshake = 0;
@@ -309,6 +323,7 @@ module AtomRV # (
     wire    [31:0]  d_imm;
 
     wire            d_jump_en;
+    wire            d_wfi;
     wire    [2:0]   d_comparison_type;
     wire            d_rf_we;
     wire    [2:0]   d_rf_din_sel;
@@ -343,6 +358,7 @@ module AtomRV # (
         .imm_o              (d_imm),
 
         .jump_en_o          (d_jump_en),
+        .wfi_o              (d_wfi),
         .comparison_type_o  (d_comparison_type),
         .rf_we_o            (d_rf_we),
         .rf_din_sel_o       (d_rf_din_sel),
@@ -494,6 +510,7 @@ module AtomRV # (
         .rst_i   (rst_i),
         
         .instr_retired_i(!stall_stage1),
+        .halted_i       (halted),
 
         `ifdef EN_EXCEPT
         .except_instr_addr_misaligned_i (except_instr_addr_misaligned),

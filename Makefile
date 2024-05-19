@@ -22,7 +22,7 @@ soctarget?= atombones
 sim?=1
 
 #v# Enable debug build of atomsim
-debug?=1
+debug?=0
 
 
 # Flags to the makefiles
