@@ -15,8 +15,9 @@ void puthex(unsigned val) {
 
 void boot_panic_handler(){
     #ifdef __EN_PRINTS
-    puts("Exception: cause=0x"); puthex(CSR_read(CSR_MCAUSE));
+    puts("Boot Exception: cause=0x"); puthex(CSR_read(CSR_MCAUSE));
     puts(", addr=0x"); puthex(CSR_read(CSR_MEPC));
+    putchar('\n');
     #endif
     exit(RCODE_EXCEPTION);
 }
