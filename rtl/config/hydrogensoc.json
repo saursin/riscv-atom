@@ -10,7 +10,7 @@
         "soc_en_uart": true,
         "soc_en_gpio": true,
         "soc_en_spi": true,
-        "soc_en_timer": false,
+        "soc_en_timer": true,
         
         "soc_gpio_num_pins": 32, 
         "soc_spi_num_cs": 1

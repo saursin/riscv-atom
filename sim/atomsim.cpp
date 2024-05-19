@@ -119,7 +119,7 @@ int Atomsim::run()
             
             // Enter interactive mode if we aren's stepping and we are already in debug mode or run mode
             // was interrupted by user (CTRL_C)
-            Rcode rval;
+            Rcode rval = RC_NONE;
             if((pending_steps == 0) && (in_debug_mode_ || CTRL_C_PRESSED)) {
                 // explictly set: since we can also enter if CTRL_C_PRESSED
                 in_debug_mode_ = true;
