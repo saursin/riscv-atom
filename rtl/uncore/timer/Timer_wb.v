@@ -65,7 +65,7 @@ assign int_o = mtime >= mtimecmp;
 always @(posedge wb_clk_i) begin
     if(wb_rst_i) begin
         mtime       <= 'd0;
-        mtimecmp    <= 'd0;
+        mtimecmp    <= 64'hffffffff_ffffffff;   // Initialize to large value
     end
     else begin
         case(wb_adr_i)
