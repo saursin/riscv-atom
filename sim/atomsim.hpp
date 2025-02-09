@@ -31,14 +31,12 @@ struct Atomsim_config
     bool no_color_flag      = false;    // Disable colored output
     bool no_banner_flag     = false;    // Disable banner flag
 
-
-    // input file
-    std::string ifile       = "";
+    std::string ifile       = "";       // input file
     
-    unsigned long int maxitr    = 1000000;
-    std::string trace_file      = "trace.vcd";  //  default loc: curr directory
-    std::string dump_file       = "dump.txt";
-    std::string signature_file  = "";
+    unsigned long int maxitr    = 10000000;     // max iterations
+    std::string trace_file      = "trace.vcd";  // trace file, default location: current dir
+    std::string dump_file       = "dump.txt";   // dump file, default location: current dir
+    std::string signature_file  = "";           // signature file, default location: current dir
 
     bool print_info_topdown = true;
 };

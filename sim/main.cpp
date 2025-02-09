@@ -68,23 +68,35 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 
 		// Adding CLI options
 		options.add_options("General")
-		("h,help", "Show this message")
-		("version", "Show version information")
-		("soctarget", "Show current AtomSim SoC target")
-		("no-color", "Don't show colored output", cxxopts::value<bool>(sim_config.no_color_flag)->default_value(default_sim_config.no_color_flag?"true":"false"))
-		("no-banner", "Don't show banner", cxxopts::value<bool>(sim_config.no_banner_flag)->default_value(default_sim_config.no_banner_flag?"true":"false"))
-		("i,input", "Specify an input file", cxxopts::value<std::string>(sim_config.ifile))
+		("h,help", 		"Show this message")
+		("version", 	"Show version information")
+		("soctarget", 	"Show current AtomSim SoC target")
+		("no-color", 	"Don't show colored output", cxxopts::value<bool>(sim_config.no_color_flag)->default_value(default_sim_config.no_color_flag?"true":"false"))
+		("no-banner", 	"Don't show banner", cxxopts::value<bool>(sim_config.no_banner_flag)->default_value(default_sim_config.no_banner_flag?"true":"false"))
+		("i,input", 	"Specify an input file", cxxopts::value<std::string>(sim_config.ifile))
 		;
 		
+		options.add_options("Debug")
+		("v,verbose",	"Turn on verbose output", cxxopts::value<bool>(sim_config.verbose_flag)->default_value(default_sim_config.verbose_flag?"true":"false"))
+		("d,debug",		"Start in debug mode", cxxopts::value<bool>(sim_config.debug_flag)->default_value(default_sim_config.debug_flag?"true":"false"))
+		("t,trace",		"Enable VCD tracing ", cxxopts::value<bool>(sim_config.trace_flag)->default_value(default_sim_config.trace_flag?"true":"false"))
+		("trace-file",	"Specify trace file", cxxopts::value<std::string>(sim_config.trace_file)->default_value(default_sim_config.trace_file))
+		("dump-file",	"Specify dump file", cxxopts::value<std::string>(sim_config.dump_file)->default_value(default_sim_config.dump_file))
+		("ebreak-dump",	"Enable processor state dump at hault", cxxopts::value<bool>(sim_config.dump_on_ebreak_flag)->default_value(default_sim_config.dump_on_ebreak_flag?"true":"false"))
+		("signature",	"Enable signature dump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(sim_config.signature_file)->default_value(default_sim_config.signature_file))
+		;
+
 		options.add_options("Sim Config")
-		("maxitr", "Specify maximum simulation iterations", cxxopts::value<unsigned long int>(sim_config.maxitr)->default_value(std::to_string(default_sim_config.maxitr)))
+		("maxitr", 		"Specify maximum simulation iterations", cxxopts::value<unsigned long int>(sim_config.maxitr)->default_value(std::to_string(default_sim_config.maxitr)))
 		;
 
 		options.add_options("Backend Config")
-		("p,vuart-port", "serial port for virtual UART", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
-		("b,vuart-baud", "serial baud rate for virtual UART", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
-		("u,enable-uart-dump", "Enable dumping UART data (from soc) to stdout", cxxopts::value<bool>(backend_config.enable_uart_dump)->default_value(default_backend_config.enable_uart_dump?"true":"false"))
-		
+		("p,vuart-port", 		"serial port for virtual UART", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
+		("b,vuart-baud", 		"serial baud rate for virtual UART", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
+		("u,enable-uart-dump", 	"Enable dumping UART data (from soc) to stdout", cxxopts::value<bool>(backend_config.enable_uart_dump)->default_value(default_backend_config.enable_uart_dump?"true":"false"))
+		("j,jtag-port", 		"TCP port for Bitbang JTAG", cxxopts::value<uint16_t>(backend_config.jtag_port)->default_value(std::to_string(default_backend_config.jtag_port)))
+		("H,start-halted", 		"Start halted allowing debugger to connect", cxxopts::value<bool>(backend_config.start_halted)->default_value(default_backend_config.start_halted?"true":"false"))
+
 		#ifdef TARGET_ATOMBONES
 		("bootrom-size", "Specify size of bootrom to simulate (in KB)", cxxopts::value<uint32_t>(backend_config.bootrom_size_kb)->default_value(std::to_string(default_backend_config.bootrom_size_kb)))
 		("bootrom-image", "Specify bootrom hex image", cxxopts::value<std::string>(backend_config.bootrom_img)->default_value(default_backend_config.bootrom_img))
@@ -96,15 +108,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		#endif
 		;
 
-		options.add_options("Debug")
-		("v,verbose", "Turn on verbose output", cxxopts::value<bool>(sim_config.verbose_flag)->default_value(default_sim_config.verbose_flag?"true":"false"))
-		("d,debug", "Start in debug mode", cxxopts::value<bool>(sim_config.debug_flag)->default_value(default_sim_config.debug_flag?"true":"false"))
-		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(sim_config.trace_flag)->default_value(default_sim_config.trace_flag?"true":"false"))
-		("trace-file", "Specify trace file", cxxopts::value<std::string>(sim_config.trace_file)->default_value(default_sim_config.trace_file))
-		("dump-file", "Specify dump file", cxxopts::value<std::string>(sim_config.dump_file)->default_value(default_sim_config.dump_file))
-		("ebreak-dump", "Enable processor state dump at hault", cxxopts::value<bool>(sim_config.dump_on_ebreak_flag)->default_value(default_sim_config.dump_on_ebreak_flag?"true":"false"))
-		("signature", "Enable signature dump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(sim_config.signature_file)->default_value(default_sim_config.signature_file))
-		;
+
 
 	    options.parse_positional({"input"});
 

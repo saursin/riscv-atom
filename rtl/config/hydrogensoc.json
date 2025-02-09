@@ -6,6 +6,7 @@
         "en_compressed": true,
         "en_csr": true,
         "en_exceptions": true,
+        "en_debug": true,
 
         "soc_en_uart": true,
         "soc_en_gpio": true,
@@ -25,6 +26,7 @@
         "[en_compressed?EN_RVC:]",
         "[en_csr?EN_RVZICSR:]",
         "[en_exceptions?EN_EXCEPT:]",
+        "[en_debug?EN_DEBUG:]",
 
         "[soc_en_uart?SOC_EN_UART:]",
         "[soc_en_gpio?SOC_EN_GPIO:]",

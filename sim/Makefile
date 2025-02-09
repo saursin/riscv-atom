@@ -47,6 +47,9 @@ VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
 VFLAGS += -DSOC_BOOTROM_INIT_FILE='"$(RVATOM)/sw/bootloader/bootloader.hex"' 
 VTOPMODULE:= $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --top)
+VFLAGS += $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator)
+VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
+
 
 ####################################################
 # CPP configs
@@ -64,8 +67,11 @@ else
     CFLAGS += -O3
 endif
 
+# Add verilog flags to CFLAGS also
+CFLAGS += $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --defines)
+
 EXE := $(BIN_DIR)/atomsim
-SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp
+SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp bitbang_jtag.cpp
 COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 SIM_BACKEND_FILE := backend_$(soctarget).cpp
@@ -104,7 +110,6 @@ else
     CFLAGS += -O3 -DNDEBUG
 endif
 
-VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
 ####################################################
 # Recepies
 
@@ -116,7 +121,7 @@ lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
 	$(call print_msg,Verilating Verilog)
-	$(VC) $(VFLAGS) `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`
+	$(VC) $(VFLAGS)
 
 	$(call print_msgt,Generating library)
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null

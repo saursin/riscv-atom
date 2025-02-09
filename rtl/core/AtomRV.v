@@ -55,7 +55,33 @@ module AtomRV # (
     input   wire            irq_i,
     input   wire            timer_int_i
     `endif // EN_EXCEPT
+
+    `ifdef EN_DEBUG
+    // Debug Signals
+    ,
+    input   wire            jtag_tck_i,
+    input   wire            jtag_trst_n_i,
+    input   wire            jtag_tms_i,
+    input   wire            jtag_tdi_i,
+    output  wire            jtag_tdo_o
+    `endif // EN_DEBUG
 );
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Debug Subsystem
+    `ifdef EN_DEBUG
+
+    debug_subsystem debug_subsys (
+        .jtag_tck_i     (jtag_tck_i),
+        .jtag_trst_n_i  (jtag_trst_n_i),
+        .jtag_tms_i     (jtag_tms_i),
+        .jtag_tdi_i     (jtag_tdi_i),
+        .jtag_tdo_o     (jtag_tdo_o)
+    );
+
+
+    `endif // EN_DEBUG
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Pipeline control logic
     wire instr_request_valid = !(rst_i || halted);  // Always valid (Except on Reset condition OR if halted)

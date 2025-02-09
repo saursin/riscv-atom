@@ -31,6 +31,15 @@ module HydrogenSoC(
     output  wire                            spi_sck_o,
     output  wire [`SOC_SPI_NUM_CS-1:0]      spi_cs_o
 `endif
+
+`ifdef EN_DEBUG
+    ,
+    input   wire                            jtag_tck_i,
+    input   wire                            jtag_trst_n_i,
+    input   wire                            jtag_tms_i,
+    input   wire                            jtag_tdi_i,
+    output  wire                            jtag_tdo_o
+`endif
 );
     wire wb_clk_i = clk_i;
     wire wb_rst_i = `INLINE_IFDEF(SOC_INVERT_RST, ~rst_i, rst_i);
@@ -80,6 +89,15 @@ module HydrogenSoC(
         .irq_i          (1'b0),
         .timer_int_i    (`INLINE_IFDEF(SOC_EN_TIMER, timer_int_o, 1'b0))
         `endif // EN_EXCEPT
+
+        `ifdef EN_DEBUG
+        ,
+        .jtag_tck_i     (jtag_tck_i),
+        .jtag_trst_n_i  (jtag_trst_n_i),
+        .jtag_tms_i     (jtag_tms_i),
+        .jtag_tdi_i     (jtag_tdi_i),
+        .jtag_tdo_o     (jtag_tdo_o)
+        `endif // EN_DEBUG
     );
 
 
