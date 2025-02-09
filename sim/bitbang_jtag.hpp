@@ -18,11 +18,10 @@ private:
     bool *tdi;
     bool *tdo;
 
-    void set_pins(bool tck, bool tms, bool tdi) {
+    void set_pins(bool tck, bool tms, bool tdi, bool trstn=true) {
         printf("JTAG: tck=%d, tms=%d, tdi=%d\n", tck, tms, tdi);
-        *this->tck = tck; *this->tms = tms; *this->tdi = tdi; }
+        *this->tck = tck; *this->tms = tms; *this->tdi = tdi; *this->trstn = trstn;}
     bool get_tdo() { return *tdo; }
-    bool reset() {}
 
     // Socket descriptors
     int socket_fd;

@@ -107,7 +107,12 @@ void BitbangJTAG::tick() {
         switch (recv_chr) {
             case 'B': printf("** BLINK ON **\n"); break;
             case 'b': printf("** BLINK OFF **\n"); break;
-            case 'r': reset(); break;
+            case 'r': {
+                set_pins(0, 0, 0, 0); 
+                set_pins(1, 0, 0, 0); 
+                set_pins(0, 0, 0, 1);       // TODO: is this correct?
+                break;
+            }
             case '0': set_pins(0, 0, 0); break;
             case '1': set_pins(0, 0, 1); break;
             case '2': set_pins(0, 1, 0); break;
@@ -132,4 +137,3 @@ void BitbangJTAG::tick() {
         }
     }   
 }
-

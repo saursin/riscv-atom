@@ -53,7 +53,8 @@ module jtag_tap #(
     always @(posedge tck_i) begin
         if (!trst_n_i) begin
             tap_state <= TS_TEST_LOGIC_RST;
-        end begin
+        end 
+        else begin
             case (tap_state)
                 TS_TEST_LOGIC_RST:  tap_state <= (tms_i ? TS_TEST_LOGIC_RST : TS_RUN_TEST_IDLE);
                 TS_RUN_TEST_IDLE:   tap_state <= (tms_i ? TS_SELECT_DR_SCAN : TS_RUN_TEST_IDLE);
@@ -73,11 +74,8 @@ module jtag_tap #(
                 TS_PAUSE_IR:        tap_state <= (tms_i ? TS_EXIT2_IR       : TS_PAUSE_IR);
                 TS_EXIT2_IR:        tap_state <= (tms_i ? TS_UPDATE_IR      : TS_SHIFT_IR);
                 TS_UPDATE_IR:       tap_state <= (tms_i ? TS_SELECT_DR_SCAN : TS_RUN_TEST_IDLE);
-
                 default:            tap_state <= TS_TEST_LOGIC_RST;
             endcase
-
-            $display("tap_state: %d", tap_state);
         end
     end
 
@@ -94,9 +92,12 @@ module jtag_tap #(
         end
         else begin
             case(tap_state)
+                TS_TEST_LOGIC_RST: begin
+                    reg_shift_ir    <= 'd0;
+                    reg_ir          <= ADDR_IDCODE;
+                end
                 TS_CAPTURE_IR:  begin 
-                    reg_shift_ir    <= reg_ir;                   // Capture IR into IR shift register
-                    reg_ir          <= ADDR_IDCODE;              // Load IDCODE into IR
+                    reg_shift_ir    <= reg_ir;                                  // Capture IR into IR shift register
                 end
                 TS_SHIFT_IR:    begin
                     reg_shift_ir    <= {tdi_i, reg_shift_ir[IR_WIDTH-1:1]};     // Shift IR
@@ -104,7 +105,10 @@ module jtag_tap #(
                 TS_UPDATE_IR:   begin
                     reg_ir          <= reg_shift_ir;                            // Update IR
                 end
-                default:            reg_shift_ir    <= 'd0;
+                default: begin
+                    reg_shift_ir    <= reg_shift_ir;
+                    reg_ir          <= reg_ir;
+                end
             endcase 
         end
     end
@@ -152,7 +156,7 @@ module jtag_tap #(
                         reg_shift_dr[31] <= tdi_i;
                     end
                     else if (cust_rg_val_o) begin
-                        reg_shift_dr[CUST_REG_WIDTHS[(DR_WIDTH_BITS*cust_rg_addr_o)+:DR_WIDTH_BITS]] <= tdi_i;
+                        reg_shift_dr[CUST_REG_WIDTHS[(DR_WIDTH_BITS*cust_rg_addr_o)+:DR_WIDTH_BITS]-1] <= tdi_i;
                     end
                     else begin                            // Bypass
                         reg_shift_dr[0] <= tdi_i;
@@ -160,7 +164,7 @@ module jtag_tap #(
                 end
 
                 default:
-                    reg_shift_dr <= 'd0;
+                    reg_shift_dr <= reg_shift_dr;
             endcase
         end
     end
@@ -170,7 +174,8 @@ module jtag_tap #(
     always @ (negedge tck_i) begin
         if (!trst_n_i) begin
             tdo_o <= 1'b0;
-        end else begin
+        end 
+        else begin
             case(tap_state)
                 TS_SHIFT_IR: tdo_o <= reg_shift_ir[0];
                 TS_SHIFT_DR: tdo_o <= reg_shift_dr[0];
