@@ -2,7 +2,7 @@
 
 module debug_subsystem #(
     parameter TAP_IDCODE            = 32'h0000_0001,    // JTAG IDCODE {31:28-version, 27-12-partNumber, 21:1-manufId, 1}
-    parameter DMI_ADDRW             = 9,                // DMI address width
+    parameter DMI_ADDRW             = 8,                // DMI address width
     parameter DMI_DATAW             = 32,               // DMI data width
     parameter DTMCS_IDLE_HINT       = 3'd4,             // Number of cycles debugger should spend in idle state to avoid dmistat == 3
     parameter DEBUG_SPEC_VERSION    = 4'b0001           // 0: version 0.11, 1: version 0.13, 15: none  
@@ -25,6 +25,7 @@ module debug_subsystem #(
     wire                    dmi_wb_stb_o;
     wire                    dmi_wb_we_o;
     wire [DMI_DATAW/8-1:0]  dmi_wb_sel_o;
+    wire                    dmi_wb_err_i = 0;
     wire                    dmi_wb_ack_i = 0;
     /* verilator lint_on UNUSED */
 
@@ -47,6 +48,7 @@ module debug_subsystem #(
         .dmi_wb_stb_o       (dmi_wb_stb_o),
         .dmi_wb_we_o        (dmi_wb_we_o),
         .dmi_wb_sel_o       (dmi_wb_sel_o),
+        .dmi_wb_err_i       (dmi_wb_err_i),
         .dmi_wb_ack_i       (dmi_wb_ack_i)
     );
 endmodule
