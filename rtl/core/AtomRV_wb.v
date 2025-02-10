@@ -39,16 +39,6 @@ module AtomRV_wb
     input   wire            irq_i,
     input   wire            timer_int_i
     `endif // EN_EXCEPT
-
-    `ifdef EN_DEBUG
-    // Debug Signals
-    ,
-    input   wire            jtag_tck_i,
-    input   wire            jtag_trst_n_i,
-    input   wire            jtag_tms_i,
-    input   wire            jtag_tdi_i,
-    output  wire            jtag_tdo_o
-    `endif // EN_DEBUG
 );
     /////////////////////////////////////////////////////////////////
     wire    [31:0]  iport_addr_o;    // IMEM Address
@@ -82,7 +72,6 @@ module AtomRV_wb
         .iport_valid_o   (iport_valid_o),
         .iport_ack_i     (iport_ack_i),
 
-
         .dport_addr_o    (dport_addr_o),
         .dport_data_i    (dport_data_i),
         .dport_data_o    (dport_data_o),
@@ -96,15 +85,6 @@ module AtomRV_wb
         .irq_i          (irq_i),
         .timer_int_i    (timer_int_i)
         `endif // EN_EXCEPT
-
-        `ifdef EN_DEBUG
-        ,
-        .jtag_tck_i     (jtag_tck_i),
-        .jtag_trst_n_i  (jtag_trst_n_i),
-        .jtag_tms_i     (jtag_tms_i),
-        .jtag_tdi_i     (jtag_tdi_i),
-        .jtag_tdo_o     (jtag_tdo_o)
-        `endif // EN_DEBUG
     );
     
 

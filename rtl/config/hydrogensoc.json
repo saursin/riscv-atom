@@ -50,6 +50,7 @@
         "gpio",
         "spi",
         "timer",
-        "mem"
+        "mem",
+        "debug"
     ]
 }

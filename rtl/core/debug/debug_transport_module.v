@@ -1,6 +1,6 @@
 `default_nettype none
 
-module dtm #(
+module debug_transport_module #(
     parameter TAP_IDCODE            = 32'h0000_0001,    // JTAG IDCODE
     parameter DMI_ADDRW             = 8,
     parameter DMI_DATAW             = 32,
@@ -31,13 +31,13 @@ module dtm #(
 );
    
     localparam NUM_CUST_REGS    = 2;            // DTMCS, DMI
-    localparam ABITS            = DMI_ADDRW;
+    localparam ABITS            = DMI_ADDRW-2;  // -2 cuz wb is byte addressable while dm registers are word addressed
 
     localparam REG_DTMCS_ADDR   = 5'h10;
     localparam REG_DTMCS_WIDTH  = 8'd32;
     
     localparam REG_DMI_ADDR     = 5'h11;
-    localparam REG_DMI_WIDTH    = DMI_ADDRW + DMI_DATAW + 2;
+    localparam REG_DMI_WIDTH    = ABITS + DMI_DATAW + 2;
     localparam REG_DMI_WIDTH1   = REG_DMI_WIDTH[7:0];
 
     localparam IR_WIDTH         = 5;
@@ -91,7 +91,7 @@ module dtm #(
     wire dtmcs_dmireset             = dtmcs_written && cust_rg_dat_o[16];
     wire [2:0]  dtmcs_idle          = DTMCS_IDLE_HINT;
     wire [1:0]  dtmcs_dmistat       = wb_status;
-    wire [5:0]  dtmcs_abits         = DMI_ADDRW[5:0];
+    wire [5:0]  dtmcs_abits         = ABITS;
     wire [3:0]  dtmcs_version       = DEBUG_SPEC_VERSION;
 
     wire [31:0] dtmcs_readval = {17'd0, dtmcs_idle, dtmcs_dmistat, dtmcs_abits, dtmcs_version};
@@ -127,7 +127,7 @@ module dtm #(
 
     ////////////////////////////////////////
     // Wishbone master
-    assign dmi_wb_adr_o = dmi_address;
+    assign dmi_wb_adr_o = {dmi_address, 2'b00};
     assign dmi_wb_dat_o = dmi_data;
     assign dmi_wb_sel_o = 4'b1111;
 
@@ -201,6 +201,6 @@ module dtm #(
                 end
             endcase
         end
-    end                                
+    end
 
 endmodule

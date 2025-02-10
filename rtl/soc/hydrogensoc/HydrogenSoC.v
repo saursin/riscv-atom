@@ -44,6 +44,21 @@ module HydrogenSoC(
     wire wb_clk_i = clk_i;
     wire wb_rst_i = `INLINE_IFDEF(SOC_INVERT_RST, ~rst_i, rst_i);
 
+    // ************* Debug Subsystem ****************
+    `ifdef EN_DEBUG
+
+    debug_subsystem debug_subsys (
+        .clk_i          (wb_clk_i),
+        .rst_i          (wb_rst_i),
+        .jtag_tck_i     (jtag_tck_i),
+        .jtag_trst_n_i  (jtag_trst_n_i),
+        .jtag_tms_i     (jtag_tms_i),
+        .jtag_tdi_i     (jtag_tdi_i),
+        .jtag_tdo_o     (jtag_tdo_o)
+    );
+
+    `endif // EN_DEBUG
+
     // ******************** Core ********************
     wire    [31:0]  core_iport_wb_adr_o;
     wire    [31:0]  core_iport_wb_dat_o     = 32'h000000;
@@ -89,15 +104,6 @@ module HydrogenSoC(
         .irq_i          (1'b0),
         .timer_int_i    (`INLINE_IFDEF(SOC_EN_TIMER, timer_int_o, 1'b0))
         `endif // EN_EXCEPT
-
-        `ifdef EN_DEBUG
-        ,
-        .jtag_tck_i     (jtag_tck_i),
-        .jtag_trst_n_i  (jtag_trst_n_i),
-        .jtag_tms_i     (jtag_tms_i),
-        .jtag_tdi_i     (jtag_tdi_i),
-        .jtag_tdo_o     (jtag_tdo_o)
-        `endif // EN_DEBUG
     );
 
 

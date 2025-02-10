@@ -8,10 +8,7 @@
         "${RVATOM}/rtl/core/Decode.v",
         "${RVATOM}/rtl/core/RegisterFile.v",
         "${RVATOM}/rtl/core/RVC_Aligner.v",
-        "${RVATOM}/rtl/core/RVC_Decoder.v",
-        "${RVATOM}/rtl/core/debug/debug_subsystem.v",
-        "${RVATOM}/rtl/core/debug/jtag_tap.v",
-        "${RVATOM}/rtl/core/debug/dtm.v"
+        "${RVATOM}/rtl/core/RVC_Decoder.v"
     ],
     "vincdirs": [
         "${RVATOM}/rtl/common",
