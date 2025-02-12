@@ -156,6 +156,14 @@ $(EXE): $(OBJS)
 $(DEPDIR)/%.Td: ;
 
 
+# Lint
+lint: $(VSRCS)
+	@if $(VC) $(VFLAGS) --lint-only `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`; then \
+		echo "Lint check: OK"; \
+	else \
+		echo "Lint check: Errors Found"; \
+	fi
+
 ####################################################
 # Cleanup Recepies
 
