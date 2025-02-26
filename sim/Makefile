@@ -11,6 +11,10 @@ DEBUG ?= 0
 #v# Enable DPI support in RTL
 DPI ?= 0
 
+#v# Enable trace format (vcd or fst)
+# FST traces are much smaller and has faster load times
+TRACE ?= vcd
+
 include ../common.mk
 ####################################################
 
@@ -44,7 +48,7 @@ $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR))
 ####################################################
 # Verilog Configs
 VC := verilator
-VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
+VFLAGS := -cc -Wall -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
 VFLAGS += -DSOC_BOOTROM_INIT_FILE='"$(RVATOM)/sw/bootloader/bootloader.hex"' 
 VTOPMODULE:= $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --top)
 VFLAGS += $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator)
@@ -92,7 +96,7 @@ DEPS__ := $(notdir $(DEPS_))						# extract filename, discard full path
 DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 
 # Append verilator objects	(verilated.o, verilated_vcd_c.o, verilated_threads.o)
-OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_vcd_c.o	$(OBJ_DIR)/verilated_threads.o
+OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_threads.o
 
 LDFLAGS += -L build/verilated
 LDLIBS += -l:V$(VTOPMODULE)__ALL.a -lpthread
@@ -102,6 +106,18 @@ ifeq ($(DPI), 1)
     OBJS += $(OBJ_DIR)/util_dpi.o
     VFLAGS += -DDPI_LOGGER -DLOG_RVATOM_JUMP
 endif
+
+# Append trace flags
+ifeq ($(TRACE), fst)
+    VFLAGS += --trace-fst
+    CFLAGS += -DTRACE_FST
+    OBJS += $(OBJ_DIR)/verilated_fst_c.o
+    LDFLAGS += -lz
+else
+    OBJS += $(OBJ_DIR)/verilated_vcd_c.o
+    VFLAGS += --trace
+endif
+VFLAGS += --trace-params --trace-structs --trace-underscore
 
 # Append debugigng flags
 ifeq ($(DEBUG), 1)
