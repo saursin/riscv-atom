@@ -103,16 +103,19 @@ void BitbangJTAG::tick() {
     // }
 
     if (recv_chr != -1) {
-        printf("rbb: '%c'\n", recv_chr);
+        // printf("rbb: '%c'\n", recv_chr);
         switch (recv_chr) {
-            case 'B': printf("** BLINK ON **\n"); break;
-            case 'b': printf("** BLINK OFF **\n"); break;
-            case 'r': {
-                set_pins(0, 0, 0, 0); 
-                set_pins(1, 0, 0, 0); 
-                set_pins(0, 0, 0, 1);       // TODO: is this correct?
-                break;
-            }
+            case 'B': /*printf("** BLINK ON **\n"); */  break;
+            case 'b': /*printf("** BLINK OFF **\n"); */ break;
+            
+            case 'r': 
+            case 's':
+            set_trst(0); break;
+
+            case 't':
+            case 'u':
+            set_trst(1); break;
+
             case '0': set_pins(0, 0, 0); break;
             case '1': set_pins(0, 0, 1); break;
             case '2': set_pins(0, 1, 0); break;

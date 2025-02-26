@@ -5,10 +5,10 @@
 module jtag_tap #(
     parameter IDCODE            = 32'h0000_0000, // JTAG IDCODE
     parameter IR_WIDTH          = 5,             // Instruction register width
-    parameter DR_WIDTH          = 32,            // Data register width
+    parameter DR_WIDTH          = 32,            // Data register width (max of all reg widths, internal and external)
     parameter NUM_CUST_REGS     = 0,             // Number of custom registers
     parameter CUST_REG_ADDRS    = 0,             // Custom register addreeses :{... IR_WIDTH'h<ADDR1>, IR_WIDTH'h<ADDR1>}
-    parameter CUST_REG_WIDTHS   = 0,             // Custom register widths   : {... clog2(DR_WIDTH)'h<WIDTH1>, clog2(DR_WIDTH)'h<WIDTH0>}
+    parameter CUST_REG_WIDTHS   = 0,             // Custom register widths   : {...        8'h<WIDTH1>,       8'h<WIDTH0>}
 
     parameter CUST_REGIF_ADDRW  = (NUM_CUST_REGS > 0 ? $clog2(NUM_CUST_REGS) : 1)
 ) (
@@ -49,6 +49,32 @@ module jtag_tap #(
     localparam TS_UPDATE_IR         = 4'd15;
 
     reg [3:0] tap_state;
+
+    // For debugging
+    reg [127:0] tap_state_dbg;
+    `UNUSED_VAR(tap_state_dbg);
+    always @(*) begin
+        tap_state_dbg = "?";
+        case(tap_state)
+            TS_TEST_LOGIC_RST: tap_state_dbg = "TEST_LOGIC_RST";
+            TS_RUN_TEST_IDLE:  tap_state_dbg = "RUN_TEST_IDLE";
+            TS_SELECT_DR_SCAN: tap_state_dbg = "SELECT_DR_SCAN";
+            TS_CAPTURE_DR:     tap_state_dbg = "CAPTURE_DR";
+            TS_SHIFT_DR:       tap_state_dbg = "SHIFT_DR";
+            TS_EXIT1_DR:       tap_state_dbg = "EXIT1_DR";
+            TS_PAUSE_DR:       tap_state_dbg = "PAUSE_DR";
+            TS_EXIT2_DR:       tap_state_dbg = "EXIT2_DR";
+            TS_UPDATE_DR:      tap_state_dbg = "UPDATE_DR";
+            TS_SELECT_IR_SCAN: tap_state_dbg = "SELECT_IR_SCAN";
+            TS_CAPTURE_IR:     tap_state_dbg = "CAPTURE_IR";
+            TS_SHIFT_IR:       tap_state_dbg = "SHIFT_IR";
+            TS_EXIT1_IR:       tap_state_dbg = "EXIT1_IR";
+            TS_PAUSE_IR:       tap_state_dbg = "PAUSE_IR";
+            TS_EXIT2_IR:       tap_state_dbg = "EXIT2_IR";
+            TS_UPDATE_IR:      tap_state_dbg = "UPDATE_IR";
+            default:           tap_state_dbg = "UNKNOWN";
+        endcase
+    end
 
     always @(posedge tck_i) begin
         if (!trst_n_i) begin
@@ -129,11 +155,9 @@ module jtag_tap #(
     // Data Register
     reg [DR_WIDTH-1:0] reg_shift_dr;
 
-    localparam DR_WIDTH_BITS = $clog2(DR_WIDTH);
-
     always @(posedge tck_i) begin
         if(!trst_n_i) begin
-            reg_shift_dr    <= 'd0;     // TODO: check if we also need to reset reg_dr
+            reg_shift_dr    <= 'd0;
         end
         else begin
             case(tap_state)
@@ -156,7 +180,7 @@ module jtag_tap #(
                         reg_shift_dr[31] <= tdi_i;
                     end
                     else if (cust_rg_val_o) begin
-                        reg_shift_dr[CUST_REG_WIDTHS[(DR_WIDTH_BITS*cust_rg_addr_o)+:DR_WIDTH_BITS]-1] <= tdi_i;
+                        reg_shift_dr[CUST_REG_WIDTHS[(8*cust_rg_addr_o)+:8]-1] <= tdi_i;
                     end
                     else begin                            // Bypass
                         reg_shift_dr[0] <= tdi_i;

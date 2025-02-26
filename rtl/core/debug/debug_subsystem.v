@@ -2,9 +2,9 @@
 
 module debug_subsystem #(
     parameter TAP_IDCODE            = 32'h0000_0001,    // JTAG IDCODE {31:28-version, 27-12-partNumber, 21:1-manufId, 1}
-    parameter DMI_ADDRW             = 8,                // DMI address width
+    parameter DMI_ADDRW             = 9,                // DMI address width
     parameter DMI_DATAW             = 32,               // DMI data width
-    parameter DTMCS_IDLE_HINT       = 3'd4,             // Number of cycles debugger should spend in idle state to avoid dmistat == 3
+    parameter DTMCS_IDLE_HINT       = 3'd7,             // Number of cycles debugger should spend in idle state to avoid dmistat == 3
     parameter DEBUG_SPEC_VERSION    = 4'b0001           // 0: version 0.11, 1: version 0.13, 15: none  
 )(
     input   wire    clk_i,
@@ -17,6 +17,13 @@ module debug_subsystem #(
     output  wire    jtag_tdo_o
 );   
    
+    reg [63:0] jtag_tdo_dbg;
+    `UNUSED_VAR(jtag_tdo_dbg);
+    always @(posedge jtag_tck_i) begin
+        jtag_tdo_dbg <= {jtag_tdo_dbg[62:0], jtag_tdo_o};
+    end
+
+
     ////////////////////////////////////////////////////////////////////////////
     // Debug Transport Module
 
@@ -32,6 +39,10 @@ module debug_subsystem #(
     wire                    dmi_wb_ack_i;
     /* verilator lint_on UNUSED */
 
+    /* verilator lint_off UNUSED */
+    wire dtm_hardreset_o;       // FIXME:
+    /* verilator lint_on UNUSED */
+
     debug_transport_module #(
         .TAP_IDCODE(TAP_IDCODE),
         .DMI_ADDRW(DMI_ADDRW),
@@ -44,6 +55,7 @@ module debug_subsystem #(
         .tms_i              (jtag_tms_i),
         .tdi_i              (jtag_tdi_i),
         .tdo_o              (jtag_tdo_o),
+        .hardreset_o        (dtm_hardreset_o),
         .dmi_wb_adr_o       (dmi_wb_adr_o),
         .dmi_wb_dat_o       (dmi_wb_dat_o),
         .dmi_wb_dat_i       (dmi_wb_dat_i),
@@ -110,12 +122,19 @@ module debug_subsystem #(
     ////////////////////////////////////////////////////////////////////////////
     // Debug Module
 
+    wire ndmreset_o;
+    wire ndmreset_ack_i = ndmreset_o;
+    wire debug_req_o;
+
     debug_module #(
         .DMI_ADDRW(DMI_ADDRW),
         .DMI_DATAW(DMI_DATAW)
     ) dm (
         .clk_i         (clk_i),
         .rst_i         (rst_i),
+        .ndmreset_o    (ndmreset_o),
+        .ndmreset_ack_i(ndmreset_ack_i),
+        .debug_req_o   (debug_req_o),
         .dm_wb_adr_i   (dm_wb_adr_o),
         .dm_wb_dat_i   (dm_wb_dat_o),
         .dm_wb_dat_o   (dm_wb_dat_i),
@@ -126,5 +145,8 @@ module debug_subsystem #(
         .dm_wb_err_o   (dm_wb_err_i),
         .dm_wb_ack_o   (dm_wb_ack_i)
     );
+
+    `UNUSED_VAR(debug_req_o)
+
 
 endmodule
