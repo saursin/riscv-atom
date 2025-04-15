@@ -8,7 +8,6 @@ from io import TextIOBase
 import json, re, argparse
 import os, sys, subprocess
 import textwrap
-from colorama import Fore, Back, Style
 
 Verbose = False
 

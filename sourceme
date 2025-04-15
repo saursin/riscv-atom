@@ -1,23 +1,43 @@
-echo "***** RISC-V Atom Environment Setup *****"
+echo "========================================================"
+echo "  RISC-V Atom Environment Setup"
+echo "========================================================"
+VERILATOR_REQUIRED_VERSION="5.034"
+RVPREFIX="riscv64-unknown-elf"
 
 # Uncomment if using environment modules
-# module load verilator/5.006
-# module load riscv64-multilib-gcc
+# module load verilator
+# module load riscv64-multilib
 # module load openfpgaloader
-
-echo "> Setting environment variables..."
 
 # RVATOM variable: points to root of riscv-atom directory (get dir containing this sourceme file)
 export RVATOM=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
 
+n_errors=0
 # VERILATOR_PATH: points to verilator installation
 if command -v "verilator" &>/dev/null; then
     # get verilator path
     VLP=$(dirname $(dirname `which verilator`))
-    echo "Found Verilator at: $VLP"
+    echo " - Found Verilator at: $VLP"
 	export VERILATOR_PATH=$VLP
 else
-    echo "ERROR: Verilator not found; please install verilator"
+    echo " ERROR: Verilator not found; please install verilator"
+    n_errors=$((n_errors + 1))
+fi
+
+# Check verilator version is >= 5.034
+if [[ $(verilator --version | awk '{print $2}') < "$VERILATOR_REQUIRED_VERSION" ]]; then
+    echo " ERROR: Verilator version >= $VERILATOR_REQUIRED_VERSION is required"
+    echo "       Please update your verilator installation"
+    n_errors=$((n_errors + 1))
+fi
+
+# Check if riscv64-unknown-elf-gcc is in path
+if command -v "$RVPREFIX-gcc" &>/dev/null; then
+    RVP=$(dirname $(dirname `which $RVPREFIX-gcc`))
+    echo " - Found RISCV toolchain at: $RVP"
+else
+    echo " ERROR: $RVPREFIX-gcc not found; please install riscv toolchain"
+    n_errors=$((n_errors + 1))
 fi
 
 # export RVATOM_LIB variable
@@ -31,4 +51,16 @@ export PATH="$RVATOM/tools/elfdump/bin:$PATH"
 
 # add $RVATOM/scripts to path
 export PATH="$RVATOM/scripts:$PATH"
+
+echo " RVATOM_PATH:          $RVATOM"
+echo " VERILATOR_PATH:       $VERILATOR_PATH"
+echo " RISCV_TOOLCHAIN_PATH: $(dirname $(dirname `which riscv64-unknown-elf-gcc`))"
+
+echo "========================================================"
+if [[ $n_errors -eq 0 ]]; then
+    echo " Environment setup complete!"
+else
+    echo " Environment setup failed with $n_errors errors"
+fi
+
 
