@@ -4,6 +4,7 @@
     "params": {
         "en_embedded": false,
         "en_compressed": true,
+        "en_mul": true,
         "en_csr": true,
         "en_exceptions": true,
 
@@ -16,13 +17,14 @@
         "soc_spi_num_cs": 1
     },
 
-    "isa": "rv32[en_embedded?e:i][en_compressed?c:][en_csr?_zicsr:]",
+    "isa": "rv32[en_embedded?e:i][en_mul?m:][en_compressed?c:][en_csr?_zicsr:]",
     "abi": "ilp32[en_embedded?e:]",
     
     "vtopmodule": "HydrogenSoC",
     "vdefines": [
         "[en_embedded?EN_RVE:]",
         "[en_compressed?EN_RVC:]",
+        "[en_mul?EN_RVM:]",
         "[en_csr?EN_RVZICSR:]",
         "[en_exceptions?EN_EXCEPT:]",
 

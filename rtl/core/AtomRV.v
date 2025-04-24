@@ -330,7 +330,7 @@ module AtomRV # (
     wire            d_a_op_sel;
     wire            d_b_op_sel;
     wire            d_cmp_b_op_sel;
-    wire    [2:0]   d_alu_op_sel;
+    wire    [3:0]   d_alu_op_sel;
     wire    [2:0]   d_mem_access_width;
     wire            d_mem_load_store;
     wire            d_mem_we;
