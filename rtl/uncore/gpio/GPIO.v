@@ -30,7 +30,7 @@
 `include "Utils.vh"
 
 module GPIO #(
-    parameter N = 16                // Number of Pins
+    parameter NUM_PINS = 16         // Number of Pins
 )(
     // Wishbone Interface
     input   wire            wb_clk_i,
@@ -44,7 +44,9 @@ module GPIO #(
     input   wire            wb_stb_i,
     output  reg             wb_ack_o,
 
-    inout  wire     [N-1:0] gpio_io
+    input   wire    [NUM_PINS-1:0] inp_i,
+    output  wire    [NUM_PINS-1:0] out_o,
+    output  wire    [NUM_PINS-1:0] oe_o
 );
 
 // Set Ack_o
@@ -57,52 +59,33 @@ end
 
 wire    [3:0]   we  = {4{wb_we_i & wb_stb_i}} & wb_sel_i;
 
-// Reflects current state of GPIO pins as inputs
-wire    [N-1:0] gpio_read_val;
-
 // Holds GPIO pin state to output
-reg     [31:0]  gpio_state = 32'd0;
+reg     [NUM_PINS-1:0]  gpio_state;
+assign out_o = gpio_state;
 
 // Holds GPIO direction 
-reg     [31:0]  gpio_dir = 32'd0;
-
-`UNUSED_VAR(gpio_state)
-`UNUSED_VAR(gpio_dir)
-
-genvar i;
-generate 
-    for(i=0; i<N; i=i+1) begin: bufs
-        IOBuf io
-        (
-            .dir_i  (gpio_dir[i]),
-            .bit_i  (gpio_state[i]),
-            .bit_o  (gpio_read_val[i]),
-            .pin_io (gpio_io[i])
-        );
-    end
-endgenerate
-
+reg     [NUM_PINS-1:0]  gpio_dir;
+assign oe_o = gpio_dir;
 
 // Handle Writes
+integer i;
 always @(posedge wb_clk_i) begin
     if(wb_rst_i) begin
-        gpio_state <= 32'd0;
-        gpio_dir <= 32'd0;
+        gpio_state  <= {NUM_PINS{1'b0}};
+        gpio_dir    <= {NUM_PINS{1'b0}};
     end
     else begin
         case(wb_adr_i)
             2'b00: begin   // DAT
-                    if (we[0])  gpio_state[7:0]      <= wb_dat_i[7:0];
-                    if (we[1])  gpio_state[15:8]     <= wb_dat_i[15:8];
-                    if (we[2])  gpio_state[23:16]    <= wb_dat_i[23:16];
-                    if (we[3])  gpio_state[31:24]    <= wb_dat_i[31:24];
+                for(i=0; i<NUM_PINS; i=i+1) begin
+                    if (we[i/8])  gpio_state[i] <= wb_dat_i[i];
                 end
+            end
             2'b01: begin   // TSC
-                    if (we[0])  gpio_dir[7:0]        <= wb_dat_i[7:0];
-                    if (we[1])  gpio_dir[15:8]       <= wb_dat_i[15:8];
-                    if (we[2])  gpio_dir[23:16]      <= wb_dat_i[23:16];
-                    if (we[3])  gpio_dir[31:24]      <= wb_dat_i[31:24];
+                for(i=0; i<NUM_PINS; i=i+1) begin
+                    if (we[i/8])  gpio_dir[i] <= wb_dat_i[i];
                 end
+            end
             default: begin   // INC  (NOT IMPLEMENTED)
             end
         endcase
@@ -111,10 +94,9 @@ end
 
 
 // READS
-localparam M = 32-N;
 always @(*) /* COMBINATORIAL */ begin
     case(wb_adr_i)
-        2'b00:  wb_dat_o = {{M{1'b0}}, gpio_read_val};
+        2'b00:  wb_dat_o = {{32-NUM_PINS{1'b0}}, inp_i};
         2'b01:  wb_dat_o = gpio_dir;
         default:
                 wb_dat_o = gpio_dir;        // INC (Not implemented)
