@@ -1,0 +1,12 @@
+# original results
+a0 == 0xFFFFFF15    # -235
+a1 == 0x000002F0    # 752
+a2 == 0x00000000    # 0
+
+# small‐number checks
+a3 == 0x00000003    # 10 ÷ 3 = 3
+a4 == 0x00000001    # 10 % 3 = 1
+
+# divide‐by‐zero behavior (signed): quotient = -1, remainder = dividend
+a5 == 0xFFFFFFFF    # 5 ÷ 0 = -1
+a6 == 0x00000005    # 5 % 0 = 5

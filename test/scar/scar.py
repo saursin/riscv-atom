@@ -95,7 +95,7 @@ def compile_test(test:dict, save_objdump:bool=False):
     # ---------- Configuration ----------
     RVPREFIX = 'riscv64-unknown-elf-'
     CC = 'gcc'
-    CFLAGS = ['-march=rv32i', '-mabi=ilp32', '-nostartfiles']
+    CFLAGS = ['-march=rv32im', '-mabi=ilp32', '-nostartfiles']
     LDFLAGS = []
     # select linkerscript by auto detecting soctarget
     try:
