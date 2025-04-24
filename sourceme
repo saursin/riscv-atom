@@ -5,8 +5,8 @@ VERILATOR_REQUIRED_VERSION="5.034"
 RVPREFIX="riscv64-unknown-elf"
 
 # Uncomment if using environment modules
-module load verilator
-module load riscv64-multilib
+# module load verilator
+# module load riscv64-multilib
 # module load openfpgaloader
 
 # RVATOM variable: points to root of riscv-atom directory (get dir containing this sourceme file)
