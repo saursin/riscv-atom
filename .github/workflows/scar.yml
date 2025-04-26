@@ -34,7 +34,7 @@ jobs:
       - name: Install Prerequisites
         run: |
           pip install gdown colorama
-          sudo apt-get install ccache
+          sudo apt-get install ccache libreadline-dev
 
       - name: Install Verilator
         run: |
