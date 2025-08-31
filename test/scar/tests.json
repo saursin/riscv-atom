@@ -37,5 +37,13 @@
     {"name":"sub", "srcs":["tests/sub.S"], "assertion_file": "tests/sub.asrt"},
     {"name":"sw", "srcs":["tests/sw.S"], "assertion_file": "tests/sw.asrt"},
     {"name":"xori", "srcs":["tests/xori.S"], "assertion_file": "tests/xori.asrt"},
-    {"name":"xor", "srcs":["tests/xor.S"], "assertion_file": "tests/xor.asrt"}
+    {"name":"xor", "srcs":["tests/xor.S"], "assertion_file": "tests/xor.asrt"},
+    {"name":"mul", "srcs":["tests/mul.S"], "assertion_file": "tests/mul.asrt"},
+    {"name":"mulh", "srcs":["tests/mulh.S"], "assertion_file": "tests/mulh.asrt"},
+    {"name":"mulhsu", "srcs":["tests/mulhsu.S"], "assertion_file": "tests/mulhsu.asrt"},
+    {"name":"mulhu", "srcs":["tests/mulhu.S"], "assertion_file": "tests/mulhu.asrt"},
+    {"name":"div", "srcs":["tests/div.S"], "assertion_file": "tests/div.asrt"},
+    {"name":"divu", "srcs":["tests/divu.S"], "assertion_file": "tests/divu.asrt"},
+    {"name":"rem", "srcs":["tests/rem.S"], "assertion_file": "tests/rem.asrt"},
+    {"name":"remu", "srcs":["tests/remu.S"], "assertion_file": "tests/remu.asrt"}
 ]

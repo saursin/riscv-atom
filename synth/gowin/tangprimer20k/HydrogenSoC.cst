@@ -1,0 +1,83 @@
+IO_LOC  "clk_i" H11;
+IO_PORT "clk_i" IO_TYPE=LVCMOS33;
+
+IO_LOC  "rst_i" T10;
+IO_PORT "rst_i" IO_TYPE=LVCMOS33;
+
+########################################
+# UART
+IO_LOC  "uart_rx_i" T13;
+IO_PORT "uart_rx_i" IO_TYPE=LVCMOS33;
+
+IO_LOC  "uart_tx_o" M11;
+IO_PORT "uart_tx_o" IO_TYPE=LVCMOS33;
+
+########################################
+# GPIO
+
+IO_LOC  "gpio_io[0]" E9;    # DIP2
+IO_PORT "gpio_io[0]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[1]" E8;    # DIP3
+IO_PORT "gpio_io[1]" IO_TYPE=LVCMOS33;
+
+
+IO_LOC  "gpio_io[2]" C13;   # LED0
+IO_PORT "gpio_io[2]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[3]" A13;   # LED1
+IO_PORT "gpio_io[3]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[4]" N16;   # LED2
+IO_PORT "gpio_io[4]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[5]" N14;   # LED3
+IO_PORT "gpio_io[5]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[6]" L14;   # LED4
+IO_PORT "gpio_io[6]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[7]" L16;   # LED5
+IO_PORT "gpio_io[7]" IO_TYPE=LVCMOS33;
+
+
+IO_LOC  "gpio_io[8]" T3;    # S1
+IO_PORT "gpio_io[8]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[9]" T2;    # S2
+IO_PORT "gpio_io[9]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[10]" D7;   # S3
+IO_PORT "gpio_io[10]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[11]" C7;   # S4
+IO_PORT "gpio_io[11]" IO_TYPE=LVCMOS33;
+
+
+IO_LOC  "gpio_io[12]" L9;   # PMOD3
+IO_PORT "gpio_io[12]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[13]" N8;   # PMOD3
+IO_PORT "gpio_io[13]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[14]" N9;   # PMOD3
+IO_PORT "gpio_io[14]" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpio_io[15]" N7;   # PMOD3
+IO_PORT "gpio_io[15]" IO_TYPE=LVCMOS33;
+
+
+############################################
+# SPI
+IO_LOC  "spi_miso_i" P10;
+IO_PORT "spi_miso_i" IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_mosi_o" R10;
+IO_PORT "spi_mosi_o" IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_sck_o"  L10;
+IO_PORT "spi_sck_o" IO_TYPE=LVCMOS33;
+
+IO_LOC  "spi_cs_o"   M9;
+IO_PORT "spi_cs_o" IO_TYPE=LVCMOS33;
+

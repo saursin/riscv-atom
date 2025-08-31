@@ -55,7 +55,7 @@ wire txfifo_full_o;
 wire txfifo_empty_o;
 wire [7:0] txfifo_data_o;
 generate
-    if (FIFO_EN) begin
+    if (FIFO_EN) begin: fifo
         FIFO_sync #(
             .DEPTH(FIFO_DEPTH),
             .DATAW(8)
@@ -83,7 +83,7 @@ generate
             .full_o     (txfifo_full_o),
             .empty_o    (txfifo_empty_o)
         );
-    end else begin
+    end else begin: no_fifo
         assign rxfifo_empty_o = 1'dx;
         assign rxfifo_full_o = 1'dx;
         assign rxfifo_data_o = 8'dx;

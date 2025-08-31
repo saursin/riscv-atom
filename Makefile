@@ -83,6 +83,11 @@ clean-boot:							#t# Clean bootloader build files
 	$(call print_msg_root,Cleaning bootloader build files)
 	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
 
+# ======== Lint ========
+.PHONY: lint
+lint:								#t# Run lint on the project
+	$(call print_msg_root,Running Lint)
+	$(MAKE) $(MKFLAGS) -C $(sim_dir) lint
 
 # ======== SCAR ========
 .PHONY: scar     			

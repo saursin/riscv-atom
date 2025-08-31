@@ -26,7 +26,7 @@ interactive console in AtomSim. We also want to install GTKWave to view VCD wave
 Install Verilator
 ==================
 Verilator will be used By AtomSim to *Verilate* Verilog RTL into C++. We recommend installing the latest stable
-Verilator version (>=5.006) using `git quick install method <https://veripool.org/guide/latest/install.html>`_.
+Verilator version (>=5.034) using `git quick install method <https://veripool.org/guide/latest/install.html>`_.
 
 
 Install RISC-V GNU Toolchain

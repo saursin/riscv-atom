@@ -1,5 +1,6 @@
 #include <iostream>
 #include <csignal>
+#include <cstdint>
 #include "include/cxxopts/cxxopts.hpp"
 #include "verilated.h"
 

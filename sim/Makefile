@@ -58,7 +58,7 @@ VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
 ####################################################
 # CPP configs
 CC := g++
-CFLAGS :=  -std=c++11 -faligned-new -Wall -Wextra #-pedantic
+CFLAGS :=  -std=c++14 -faligned-new -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 LDFLAGS := -lCppLinuxSerial -lreadline
 LDLIBS := -L include/CppLinuxSerial/
@@ -95,11 +95,8 @@ DEPS_ := $(patsubst %.cpp, %.Td, $(SRCS))			# change .cpp -> .Td
 DEPS__ := $(notdir $(DEPS_))						# extract filename, discard full path
 DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 
-# Append verilator objects	(verilated.o, verilated_vcd_c.o, verilated_threads.o)
-OBJS += $(OBJ_DIR)/verilated.o $(OBJ_DIR)/verilated_threads.o
-
 LDFLAGS += -L build/verilated
-LDLIBS += -l:V$(VTOPMODULE)__ALL.a -lpthread
+LDLIBS += -l:V$(VTOPMODULE)__ALL.a -lverilated -lpthread
 
 # Append DPI objects & add DPI flags 	(if DPI is defined)
 ifeq ($(DPI), 1)
@@ -154,12 +151,6 @@ $(OBJ_DIR)/%.o: %.cpp $(DEPDIR)/%.Td $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 	$(call print_msgt,Compiling)
 	$(COMPILE_CPP_MACRO) $<
 
-# Generic rule to compile Cpp Files in VERILATOR_INCLUDE_PATH (verilated.cpp & verilated.vcd_c.cpp)
-$(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp
-$(OBJ_DIR)/%.o: $(VERILATOR_INCLUDE_PATH)/%.cpp $(DEPDIR)/%.Td
-	$(call print_msgt,Compiling)
-	$(COMPILE_CPP_MACRO) $<
-
 # Generic rule to compile Cpp Files rtl/dpi
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp
 $(OBJ_DIR)/%.o: $(RTL_DIR)/dpi/%.cpp $(DEPDIR)/%.Td
@@ -176,6 +167,14 @@ $(EXE): $(OBJS)
 .PRECIOUS: $(DEPDIR)/%.Td
 $(DEPDIR)/%.Td: ;
 
+
+# Lint
+lint: $(VSRCS)
+	@if $(VC) $(VFLAGS) --lint-only `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`; then \
+		echo "Lint check: OK"; \
+	else \
+		echo "Lint check: Errors Found"; \
+	fi
 
 ####################################################
 # Cleanup Recepies

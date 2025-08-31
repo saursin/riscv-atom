@@ -392,8 +392,12 @@ module HydrogenSoC(
     wire 		    gpio_wb_ack_o;
     wire            gpio_wb_err_o = 0;
     
+    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_inp_i;
+    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_out_o;
+    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_dir_o;
+
     GPIO #(
-        .N(`SOC_GPIO_NUM_PINS)
+        .NUM_PINS(`SOC_GPIO_NUM_PINS)
     ) gpio (
         .wb_clk_i   (wb_clk_i),
         .wb_rst_i   (wb_rst_i),
@@ -406,7 +410,18 @@ module HydrogenSoC(
         .wb_stb_i   (gpio_wb_stb_i & gpio_wb_cyc_i),
         .wb_ack_o   (gpio_wb_ack_o),
 
-        .gpio_io    (gpio_io)
+        .inp_i      (gpio_inp_i),
+        .out_o      (gpio_out_o),
+        .oe_o       (gpio_dir_o)
+    );
+
+    IOBank #(
+        .NUM_PINS(`SOC_GPIO_NUM_PINS)
+    ) iob (
+        .dat_i      (gpio_out_o),
+        .dir_i      (gpio_dir_o),
+        .out_o      (gpio_inp_i),
+        .pins_io    (gpio_io)
     );
     `endif
 
