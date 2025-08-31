@@ -3,12 +3,12 @@
 `default_nettype none
 
 module jtag_tap #(
-    parameter IDCODE            = 32'h0000_0000, // JTAG IDCODE
-    parameter IR_WIDTH          = 5,             // Instruction register width
-    parameter DR_WIDTH          = 32,            // Data register width (max of all reg widths, internal and external)
-    parameter NUM_CUST_REGS     = 0,             // Number of custom registers
-    parameter CUST_REG_ADDRS    = 0,             // Custom register addreeses :{... IR_WIDTH'h<ADDR1>, IR_WIDTH'h<ADDR1>}
-    parameter CUST_REG_WIDTHS   = 0,             // Custom register widths   : {...        8'h<WIDTH1>,       8'h<WIDTH0>}
+    parameter IDCODE            = 32'h0000_0000,                    // JTAG IDCODE
+    parameter IR_WIDTH          = 5,                                // Instruction register width
+    parameter DR_WIDTH          = 32,                               // Data register width (max of all reg widths, internal and external)
+    parameter NUM_CUST_REGS     = 0,                                // Number of custom registers
+    parameter CUST_REG_ADDRS    = {IR_WIDTH*NUM_CUST_REGS{1'b0}},   // Custom register addreeses :{... IR_WIDTH'h<ADDR1>, IR_WIDTH'h<ADDR1>}
+    parameter CUST_REG_WIDTHS   = {8 * NUM_CUST_REGS{1'b0}},        // Custom register widths   : {...        8'h<WIDTH1>,       8'h<WIDTH0>}
 
     parameter CUST_REGIF_ADDRW  = (NUM_CUST_REGS > 0 ? $clog2(NUM_CUST_REGS) : 1)
 ) (
@@ -76,7 +76,8 @@ module jtag_tap #(
         endcase
     end
 
-    always @(posedge tck_i) begin
+    // Tap controller state machine
+    always @(posedge tck_i or negedge trst_n_i) begin
         if (!trst_n_i) begin
             tap_state <= TS_TEST_LOGIC_RST;
         end 
@@ -111,15 +112,15 @@ module jtag_tap #(
     reg [IR_WIDTH-1:0] reg_ir;
     reg [IR_WIDTH-1:0] reg_shift_ir;
 
-    always @(posedge tck_i) begin
+    always @(posedge tck_i or negedge trst_n_i) begin
         if(!trst_n_i) begin
-            reg_shift_ir    <= 'd0;
+            reg_shift_ir    <= {IR_WIDTH{1'b0}};
             reg_ir          <= ADDR_IDCODE;
         end
         else begin
             case(tap_state)
                 TS_TEST_LOGIC_RST: begin
-                    reg_shift_ir    <= 'd0;
+                    reg_shift_ir    <= {IR_WIDTH{1'b0}};
                     reg_ir          <= ADDR_IDCODE;
                 end
                 TS_CAPTURE_IR:  begin 
@@ -132,8 +133,6 @@ module jtag_tap #(
                     reg_ir          <= reg_shift_ir;                            // Update IR
                 end
                 default: begin
-                    reg_shift_ir    <= reg_shift_ir;
-                    reg_ir          <= reg_ir;
                 end
             endcase 
         end
@@ -145,7 +144,7 @@ module jtag_tap #(
         cust_rg_addr_o = 1'b0;
         for (integer i = 0; i < NUM_CUST_REGS; i++) begin
             if(reg_ir == CUST_REG_ADDRS[(i*IR_WIDTH)+:IR_WIDTH]) begin
-                cust_rg_val_o = 1;
+                cust_rg_val_o = 1'b1;
                 cust_rg_addr_o = i[CUST_REGIF_ADDRW-1:0];
             end
         end
@@ -155,36 +154,32 @@ module jtag_tap #(
     // Data Register
     reg [DR_WIDTH-1:0] reg_shift_dr;
 
-    always @(posedge tck_i) begin
+    always @(posedge tck_i or negedge trst_n_i) begin
         if(!trst_n_i) begin
-            reg_shift_dr    <= 'd0;
+            reg_shift_dr    <= {DR_WIDTH{1'b0}};
         end
         else begin
             case(tap_state)
                 TS_CAPTURE_DR: begin
-                    if(reg_ir == ADDR_IDCODE) begin
+                    if(reg_ir == ADDR_IDCODE)
             			reg_shift_dr <= {{DR_WIDTH-32{1'b0}}, IDCODE};
-                    end
                     else if (cust_rg_val_o)             // Load Custom register
                         reg_shift_dr <= cust_rg_dat_i;
-                    else begin                          // Bypass
+                    else                          // Bypass
             			reg_shift_dr <= {DR_WIDTH{1'b0}};
-                    end
                 end
 
                 TS_SHIFT_DR: begin
+                    // Shift DR
                     reg_shift_dr <= {tdi_i, reg_shift_dr[DR_WIDTH-1:1]};
 
                     // Shorten DR chain according to IR
-                    if(reg_ir == ADDR_IDCODE) begin          // 32 bit idcode
+                    if(reg_ir == ADDR_IDCODE)           // 32 bit idcode
                         reg_shift_dr[31] <= tdi_i;
-                    end
-                    else if (cust_rg_val_o) begin
+                    else if (cust_rg_val_o)
                         reg_shift_dr[CUST_REG_WIDTHS[(8*cust_rg_addr_o)+:8]-1] <= tdi_i;
-                    end
-                    else begin                            // Bypass
+                    else                                // Bypass
                         reg_shift_dr[0] <= tdi_i;
-                    end
                 end
 
                 default:
@@ -195,7 +190,7 @@ module jtag_tap #(
 
 
     // Handle TDO
-    always @ (negedge tck_i) begin
+    always @ (negedge tck_i or negedge trst_n_i) begin
         if (!trst_n_i) begin
             tdo_o <= 1'b0;
         end 
