@@ -11,6 +11,10 @@ DEBUG ?= 0
 #v# Enable DPI support in RTL
 DPI ?= 0
 
+#v# Enable trace format (vcd or fst)
+# FST traces are much smaller and has faster load times
+TRACE ?= vcd
+
 include ../common.mk
 ####################################################
 
@@ -44,9 +48,12 @@ $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR))
 ####################################################
 # Verilog Configs
 VC := verilator
-VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
+VFLAGS := -cc -Wall -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
 VFLAGS += -DSOC_BOOTROM_INIT_FILE='"$(RVATOM)/sw/bootloader/bootloader.hex"' 
 VTOPMODULE:= $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --top)
+VFLAGS += $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator)
+VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
+
 
 ####################################################
 # CPP configs
@@ -64,8 +71,11 @@ else
     CFLAGS += -O3
 endif
 
+# Add verilog flags to CFLAGS also
+CFLAGS += $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --defines)
+
 EXE := $(BIN_DIR)/atomsim
-SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp
+SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp bitbang_jtag.cpp
 COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 SIM_BACKEND_FILE := backend_$(soctarget).cpp
@@ -94,6 +104,18 @@ ifeq ($(DPI), 1)
     VFLAGS += -DDPI_LOGGER -DLOG_RVATOM_JUMP
 endif
 
+# Append trace flags
+ifeq ($(TRACE), fst)
+    VFLAGS += --trace-fst
+    CFLAGS += -DTRACE_FST
+    OBJS += $(OBJ_DIR)/verilated_fst_c.o
+    LDFLAGS += -lz
+else
+    OBJS += $(OBJ_DIR)/verilated_vcd_c.o
+    VFLAGS += --trace
+endif
+VFLAGS += --trace-params --trace-structs --trace-underscore
+
 # Append debugigng flags
 ifeq ($(DEBUG), 1)
     CFLAGS += -g -O0 -DDEBUG_LEVEL=$(DEBUG)
@@ -101,7 +123,6 @@ else
     CFLAGS += -O3 -DNDEBUG
 endif
 
-VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
 ####################################################
 # Recepies
 
@@ -113,7 +134,7 @@ lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 # Verilate verilog
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
 	$(call print_msg,Verilating Verilog)
-	$(VC) $(VFLAGS) `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`
+	$(VC) $(VFLAGS)
 
 	$(call print_msgt,Generating library)
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null

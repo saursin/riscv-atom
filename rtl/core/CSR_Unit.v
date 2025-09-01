@@ -315,6 +315,87 @@ module CSR_Unit#
     end
     `endif // EN_EXCEPT
 
+
+`ifdef EN_DEBUG
+    //===== DCSR ============================================================
+    // Debug Control and Status Register
+    wire [3:0]      csr_dcsr_xdebugver = 4'd4;  // Debug spec version 0.13
+    reg             csr_dcsr_ebreakm;           // Ebreak behaviour in machine mode (0: normal, 1: enter debug mode)
+    wire            csr_dcsr_ebreaks = 1'b0;    // Ebreak behaviour in supervisor mode (0: normal, 1: enter debug mode)
+    wire            csr_dcsr_ebreaku = 1'b0;    // Ebreak behaviour in user mode (0: normal, 1: enter debug mode)
+    wire            csr_dcsr_setpie = 1'b0;     // Interrupts enabled/disabled during single stepping   (HARDWIRED to 0)
+    reg             csr_dcsr_stopcount;         // Stop counter when in debug mode
+    reg             csr_dcsr_stoptime;          // Stop timer when in debug mode
+    reg  [2:0]      csr_dcsr_cause;             // Cause of entering debug mode (1: ebreak, 2: trigger, 3: haltreq, 4: step, 5: haltresetreq)
+    wire            csr_dcsr_mprven = 1'b0;     // 1: ignore mprv in debug mode
+    reg             csr_dcsr_nmip;              // Non-maskable interrupt pending                       (HARDWIRED to 0)
+    reg             csr_dcsr_step;              // Single step mode
+    wire [1:0]      csr_dcsr_prv = 2'b00;       // privelege level before entering debug mode           (HARDWIRED to 0)
+
+    wire [31:0]     csr_dcsr_readval = {csr_dcsr_xdebugver, 12'd0, csr_dcsr_ebreakm, 1'b0, csr_dcsr_ebreaks, 
+                                        csr_dcsr_ebreaku, csr_dcsr_setpie, csr_dcsr_stopcount, csr_dcsr_stoptime, 
+                                        csr_dcsr_cause, 1'b0, csr_dcsr_mprven, csr_dcsr_nmip, csr_dcsr_step, csr_dcsr_prv};
+
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_dcsr_ebreakm    <= 0;
+            csr_dcsr_stopcount  <= 0;
+            csr_dcsr_stoptime   <= 0;
+            csr_dcsr_cause      <= 0;
+            csr_dcsr_nmip       <= 0;
+            csr_dcsr_step       <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_dcsr)) begin
+            csr_dcsr_ebreakm    <= write_value[15];
+            csr_dcsr_stopcount  <= write_value[10];
+            csr_dcsr_stoptime   <= write_value[9];
+            csr_dcsr_nmip       <= write_value[3];
+            csr_dcsr_step       <= write_value[2];
+        end
+    end
+
+    //===== DPC =============================================================
+    // Debug Program Counter
+    reg [31:0]      csr_dpc;
+    wire [31:0]     csr_dpc_readval = csr_dpc;
+
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_dpc <= 0;
+        end
+        // TODO: implement
+    end
+
+    //===== DSCRATCH0 =======================================================
+    // Debug Scratch Register 0
+    reg [31:0]      csr_dscratch0;
+    wire [31:0]     csr_dscratch0_readval = csr_dscratch0;
+
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_dscratch0 <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_dscratch0)) begin
+            csr_dscratch0 <= write_value;
+        end
+    end
+
+    //===== DSCRATCH1 =======================================================
+    // Debug Scratch Register 1
+    reg [31:0]      csr_dscratch1;
+    wire [31:0]     csr_dscratch1_readval = csr_dscratch1;
+
+    always @(posedge clk_i) begin
+        if(rst_i) begin
+            csr_dscratch1 <= 0;
+        end
+        else if(we_i && (addr_i == `CSR_dscratch1)) begin
+            csr_dscratch1 <= write_value;
+        end
+    end
+
+`endif // EN_DEBUG
+
     ////////////////////////////////////////////////////////////
     // CSR Selection
 
@@ -347,6 +428,13 @@ module CSR_Unit#
             `CSR_mepc:      read_value = csr_mepc_readval;
             `CSR_mcause:    read_value = csr_mcause_readval;
             `endif // EN_EXCEPT
+
+            `ifdef EN_DEBUG
+            `CSR_dcsr:      read_value = csr_dcsr_readval;
+            `CSR_dpc:       read_value = csr_dpc_readval;
+            `CSR_dscratch0: read_value = csr_dscratch0_readval;
+            `CSR_dscratch1: read_value = csr_dscratch1_readval;
+            `endif // EN_DEBUG
 
             default: begin
                 // $display("RTL_ERR: invalid read to CSR addr 0x%x", addr_i);

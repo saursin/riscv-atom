@@ -4,6 +4,7 @@
 #include "memory.hpp"
 #include "vuart.hpp"
 #include "bitbang_uart.hpp"
+#include "bitbang_jtag.hpp"
 #include "except.hpp"
 #include "rvdefs.hpp"
 
@@ -92,6 +93,30 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
             std::cout << "Relaying uart-tx to stdout (Note: This mode does not support uart-rx)" << std::endl;
     }
 
+    if (config.jtag_port != 0) {
+#ifdef EN_DEBUG
+        if (sim_->sim_config_.verbose_flag)
+            std::cout << "JTAG server started at port " << config.jtag_port << std::endl;
+
+        bb_jtag_ = new BitbangJTAG(config.jtag_port,
+            (bool*) &tb->m_core->jtag_tck_i,
+            (bool*) &tb->m_core->jtag_trst_n_i,
+            (bool*) &tb->m_core->jtag_tms_i, 
+            (bool*) &tb->m_core->jtag_tdi_i, 
+            (bool*) &tb->m_core->jtag_tdo_o
+        );
+
+        if (config.start_halted) {
+            while(!bb_jtag_->is_connected()) {
+                bb_jtag_->accept();
+            }
+        }
+        if(sim_->sim_config_.verbose_flag)
+            std::cout << "Connection successful!" << std::endl;
+#else
+        std::cerr << "WARN: Debug extension is not enabled" << std::endl;
+#endif
+    }
     if (sim_->sim_config_.verbose_flag)
         std::cout << "Initialization complete!\n";
     
@@ -107,6 +132,9 @@ Backend_atomsim::~Backend_atomsim()
         if (vuart_ != nullptr)
             delete vuart_;
     }
+
+    if (bb_jtag_)
+        delete bb_jtag_;
 
     delete bb_uart_;
     delete tb;
@@ -153,6 +181,10 @@ int Backend_atomsim::tick()
     // perform uart transaction (if any)
     UART();
 
+    // Perform JTAG transaction (if any)
+    if (bb_jtag_ && bb_jtag_->is_connected())
+        bb_jtag_->tick();
+    
     // Tick clock once
     tb->tick();
 

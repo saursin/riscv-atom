@@ -10,6 +10,7 @@
 
 class Vuart;
 class BitbangUART;
+class BitbangJTAG;
 
 struct Backend_config
 {
@@ -17,6 +18,8 @@ struct Backend_config
     uint32_t vuart_baudrate     = 115200;
     bool enable_uart_dump       = false;
     int bootmode                = 1;    // Jump to RAM
+    uint16_t jtag_port          = 0;
+    bool start_halted           = false;
 };
 
 
@@ -70,4 +73,9 @@ private:
      * @brief UART btbang drver
      */
     BitbangUART *bb_uart_;
+
+    /**
+     * @brief JTAG btbang
+     */
+    BitbangJTAG *bb_jtag_ = nullptr;
 };

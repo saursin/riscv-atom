@@ -72,7 +72,6 @@ module AtomRV_wb
         .iport_valid_o   (iport_valid_o),
         .iport_ack_i     (iport_ack_i),
 
-
         .dport_addr_o    (dport_addr_o),
         .dport_data_i    (dport_data_i),
         .dport_data_o    (dport_data_o),

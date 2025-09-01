@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef TRACE_FST
+#include <verilated_fst_c.h>
+#else
 #include <verilated_vcd_c.h>
+#endif
+
 #include <stdint.h>
 
 /**
@@ -90,7 +95,11 @@ private:
     /**
      * @brief trace obj ptr
      */
+#ifdef TRACE_FST
+    VerilatedFstC	* m_trace = NULL;
+#else
 	VerilatedVcdC	* m_trace = NULL;
+#endif
 
     /**
      * @brief TickCounter to count clock cycles fom last reset
@@ -131,7 +140,11 @@ void Testbench<VTop>::openTrace(const char *vcdname)
 {
     if (m_trace==NULL)
     {
+#ifdef TRACE_FST
+        m_trace = new VerilatedFstC;
+#else
         m_trace = new VerilatedVcdC;
+#endif
         m_core->trace(m_trace, 99);
         m_trace->open(vcdname);
     }
@@ -209,7 +222,9 @@ void Testbench<VTop>::tick(void)
         // We'll also need to make sure we flush any I/O to
         // the trace file, so that we can use the assert()
         // function between now and the next tick if we want to.
-        m_trace->flush();
+#ifndef TRACE_FST
+        m_trace->flush();       // Affects sim speed with fst format
+#endif
     }
 }
 

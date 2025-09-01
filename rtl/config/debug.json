@@ -1,0 +1,12 @@
+{
+    "name": "debug",
+    "vsrcs": [
+        "${RVATOM}/rtl/core/debug/debug_subsystem.v",
+        "${RVATOM}/rtl/core/debug/jtag_tap.v",
+        "${RVATOM}/rtl/core/debug/debug_transport_module.v",
+        "${RVATOM}/rtl/core/debug/debug_module.v"
+    ],
+    "incdirs": [
+        "${RVATOM}/rtl/common"
+    ]
+}
