@@ -3,7 +3,7 @@
 `default_nettype none
 
 module jtag_tap #(
-    parameter IDCODE            = 32'h0000_0000,                    // JTAG IDCODE
+    parameter IDCODE            = 32'h0000_0001,                    // JTAG IDCODE
     parameter IR_WIDTH          = 5,                                // Instruction register width
     parameter DR_WIDTH          = 32,                               // Data register width (max of all reg widths, internal and external)
     parameter NUM_CUST_REGS     = 0,                                // Number of custom registers

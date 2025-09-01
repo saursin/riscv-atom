@@ -85,27 +85,34 @@ module debug_transport_module #(
     wire write_dmi          = sel_rg_dmi && cust_rg_dat_we_o;
     wire read_dmi           = sel_rg_dmi && ~cust_rg_dat_we_o;
     
+
+    ////////////////////////////////////////
+    // Status codes
+    localparam WBSTAT_OK            =  2'b00;
+    localparam WBSTAT_ERR           =  2'b10;
+    localparam WBSTAT_BUSYATTEMPT   =  2'b11;
+
+    // Wishbone fsm states
+    localparam WB_IDLE  =  1'b0;
+    localparam WB_ACTIV =  1'b1;
+   
+    // Wishbone states
+    reg         wb_state;
+    reg [1:0]   wb_status;
+
     ////////////////////////////////////////
     // DTMCS register
-    // no need to store any state here, all bits are combinational
-    localparam DMISTAT_NOERROR  = 2'd0; // No error
-    localparam DMISTAT_OPFAIL   = 2'd2; // Operation failed
-    localparam DMISTAT_OPBUSYAT = 2'd2; // Operation attempted while busy
-
     reg         dtmcs_dmihardreset;
     wire        dtmcs_dmireset      = write_dtmcs && cust_rg_dat_o[16];
-    wire [2:0]  dtmcs_idle          = DTMCS_IDLE_HINT;
     wire [1:0]  dtmcs_dmistat       = wb_status;
-    wire [5:0]  dtmcs_abits         = ABITS;
-    wire [3:0]  dtmcs_version       = DEBUG_SPEC_VERSION;
 
-    wire [31:0] dtmcs_readval = {17'd0, dtmcs_idle, dtmcs_dmistat, dtmcs_abits, dtmcs_version};
+    wire [31:0] dtmcs_readval = {14'd0, 3'd0, DTMCS_IDLE_HINT[2:0], dtmcs_dmistat, ABITS[5:0], DEBUG_SPEC_VERSION[3:0]};
 
-    always @(posedge tck_i) begin 
+    always @(posedge tck_i or negedge trst_n_i) begin 
         if(!trst_n_i)
             dtmcs_dmihardreset <= 1'b0;
-        else if(write_dtmcs)
-            dtmcs_dmihardreset <= cust_rg_dat_o[17];
+        else
+            dtmcs_dmihardreset <= write_dtmcs && cust_rg_dat_o[17]; // pulse hardreset for 1 TCK
     end
     assign hardreset_o = dtmcs_dmihardreset;
 
@@ -115,53 +122,29 @@ module debug_transport_module #(
     wire [1:0]              dmi_op = cust_rg_dat_o[1:0];
     reg  [31:0]             dmi_data;
     reg  [ABITS-1:0]        dmi_address;
+    wire [1:0]              dmi_statreport = (wb_state == WB_ACTIV && wb_status == WBSTAT_OK) ? WBSTAT_BUSYATTEMPT : wb_status;  
 
-    wire [(ABITS+32+2)-1:0] dmi_readval = {dmi_address, dmi_data, wb_status};   // This reg determines tap DR width
-
-    wire write_dmi = cust_rg_val_o && cust_rg_dat_we_o && sel_rg_dmi;
-
-    // always @(posedge tck_i) begin
-    //     if(!trst_n_i) begin
-    //         dmi_data    <= 32'd0;
-    //         dmi_address <= 'd0;
-    //     end
-    //     else begin
-    //         if(write_dmi) begin
-    //             dmi_data    <= cust_rg_dat_o[33:2];
-    //             dmi_address <= cust_rg_dat_o[34+:ABITS];
-    //         end
-    //     end
-    // end
-    
+    wire [(ABITS+32+2)-1:0] dmi_readval = {dmi_address, dmi_data, dmi_statreport};   // This reg determines tap DR width
 
     // Select DMI or DTMCS for reading
     assign cust_rg_dat_i    = sel_rg_dtmcs ? {{DR_WIDTH-32{1'b0}}, dtmcs_readval} : 
                               sel_rg_dmi   ? dmi_readval   : 0;
 
+
     ////////////////////////////////////////
-    // Wishbone master
+    // Wishbone master state machine
     assign dmi_wb_adr_o = {dmi_address, 2'b00};
     assign dmi_wb_dat_o = dmi_data;
     assign dmi_wb_sel_o = 4'b1111;
 
-    // Wishbone fsm states
-    localparam WB_IDLE  =  1'b0;
-    localparam WB_ACTIV =  1'b1;
-   
-    // Status codes
-    localparam WBSTAT_OK            =  2'b00;
-    localparam WBSTAT_ERR           =  2'b10;
-    localparam WBSTAT_BUSYATTEMPT   =  2'b11;
 
-    reg         wb_state;
-    reg [1:0]   wb_status;
-    always @(posedge tck_i) begin
+    always @(posedge tck_i or negedge trst_n_i) begin
         if(!trst_n_i) begin
             dmi_wb_cyc_o    <= 0;
             dmi_wb_stb_o    <= 0;
             dmi_wb_we_o     <= 0;
             wb_state        <= WB_IDLE;
-            wb_status       <= WBSTAT_OK;       // No errors
+            wb_status       <= WBSTAT_OK;           // No errors
 
             dmi_address     <= 'd0;
             dmi_data        <= 32'd0;
@@ -173,29 +156,34 @@ module debug_transport_module #(
             case (wb_state)
                 WB_IDLE: begin
                     if(write_dmi) begin 
-                        if(dmi_op == 2'b00) begin
-                            // NOP
-                        end
-                        else if (dmi_op == 2'b01) begin
-                            // Start a read access
-                            dmi_address     <= cust_rg_dat_o[34+:ABITS];
-                            dmi_data        <= 32'd0;
+                        case (dmi_op)
+                            2'b00: ; // NOP
+                            2'b01: begin
+                                // Start a read access
+                                dmi_address     <= cust_rg_dat_o[34+:ABITS];
+                                dmi_data        <= 32'd0;
 
-                            dmi_wb_cyc_o    <= 1;
-                            dmi_wb_stb_o    <= 1;
-                            dmi_wb_we_o     <= 0;
-                            wb_state        <= WB_ACTIV;
-                        end
-                        else if (dmi_op == 2'b10) begin
-                            // Start a write access
-                            dmi_address     <= cust_rg_dat_o[34+:ABITS];
-                            dmi_data        <= cust_rg_dat_o[33:2];
+                                dmi_wb_cyc_o    <= 1;
+                                dmi_wb_stb_o    <= 1;
+                                dmi_wb_we_o     <= 0;
+                                wb_state        <= WB_ACTIV;
+                            end
+                            2'b10: begin
+                                // Start a write access
+                                dmi_address     <= cust_rg_dat_o[34+:ABITS];
+                                dmi_data        <= cust_rg_dat_o[33:2];
 
-                            dmi_wb_cyc_o    <= 1;
-                            dmi_wb_stb_o    <= 1;
-                            dmi_wb_we_o     <= 1;
-                            wb_state        <= WB_ACTIV;
-                        end
+                                dmi_wb_cyc_o    <= 1;
+                                dmi_wb_stb_o    <= 1;
+                                dmi_wb_we_o     <= 1;
+                                wb_state        <= WB_ACTIV;
+                            end
+                            default: begin 
+                                // Invalid operation: op failed
+                                if(wb_status == WBSTAT_OK) 
+                                    wb_status <= WBSTAT_ERR;
+                            end
+                        endcase
                     end
                 end
                 WB_ACTIV: begin
@@ -213,7 +201,7 @@ module debug_transport_module #(
                         dmi_wb_stb_o    <= 0;
                         dmi_wb_we_o     <= 0;
                         wb_state        <= WB_IDLE;
-                        wb_status       <= WBSTAT_OK;
+                        // wb_status       <= WBSTAT_OK;//         verify
                         if(!dmi_wb_we_o) begin
                             // It was a read request
                             dmi_data    <= dmi_wb_dat_i;
