@@ -15,3 +15,9 @@ mul a2, t4, t5
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0  == 0x00091E65	#597605
+# a1  == 0x00625370	#6443888
+# a2  == 0x0		#0
+#<<<END_ASSERT

@@ -19,3 +19,12 @@ addi a5, t5, 0x3c0
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0  == 0x00d01054
+# a1  == 0x1ddc1633
+# a2  == 0xdeadc1f0
+# a3  == 0x2210186a
+# a4  == 0xfaf01593
+# a5  == 0x078b13ea
+#<<<END_ASSERT

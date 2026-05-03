@@ -9,6 +9,8 @@ docs/_build/
 *.out
 *.vcd
 python/
+__pycache__/
+.pytest_cache/
 .atomsim_history
 simport
 userport

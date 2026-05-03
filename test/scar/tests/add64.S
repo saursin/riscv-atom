@@ -17,3 +17,8 @@ _start:
     nop
     nop
     ebreak
+
+#>>>ASSERT
+# a4 == 0x2468acf0
+# a5 == 0x2468acf0
+#<<<END_ASSERT

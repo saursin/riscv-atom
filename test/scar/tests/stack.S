@@ -37,3 +37,10 @@ exit:
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x43234323
+# a1 == 0xbabecafe
+# a2 == 0xdeafbeef
+# sp == 0x010a020b
+#<<<END_ASSERT

@@ -18,3 +18,11 @@ subr:
     add a2, a2, 1
     add a3, a3, 1
     ret
+
+#>>>ASSERT
+# a0 == 0xdeadbef0
+# a1 == 0xbabecaff
+# a2 == 0x10101011
+# a3 == 0xabcbedff
+# a4 == 0x1b0b1d0d
+#<<<END_ASSERT

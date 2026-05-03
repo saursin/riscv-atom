@@ -20,3 +20,12 @@ sub a5, t5, t6
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0xe2f3ffcc
+# a1 == 0x3f2e5155
+# a2 == 0xdeadabee
+# a3 == 0x050ffd98
+# a4 == 0xf365053f
+# a5 == 0x2caafc6a
+#<<<END_ASSERT

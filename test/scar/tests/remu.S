@@ -15,3 +15,9 @@ rem a2, t4, t5
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x000000C1	#193
+# a1 == 0x00000129	#297
+# a2 == 0		#0
+#<<<END_ASSERT

@@ -6,7 +6,7 @@ default: clean verify
 
 .PHONY: verify
 verify:
-	$(PY) scar.py -v tests.json
+	$(PY) -m pytest -v
 
 clean:
 	rm -rf work/*

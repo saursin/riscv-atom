@@ -17,3 +17,10 @@ srl a3, t3, s0
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x7fffd555
+# a1 == 0x0000aaaa
+# a2 == 0x07d7d7d7
+# a3 == 0x00000001
+#<<<END_ASSERT

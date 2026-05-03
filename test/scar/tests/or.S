@@ -21,3 +21,14 @@ or a7, a4, a5
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x1ddc1054
+# a1 == 0xdffdbeef
+# a2 == 0xfebdbfef
+# a3 == 0xfaf01769
+# a4 == 0xfffb156b
+# a5 == 0xdfeb13ea
+# a6 == 0xdae013c0
+# a7 == 0xfffb17eb
+#<<<END_ASSERT

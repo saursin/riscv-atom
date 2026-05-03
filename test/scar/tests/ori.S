@@ -19,3 +19,12 @@ ori a5, t5, 0x00f
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x00d0111a
+# a1 == 0x1ddc126c
+# a2 == 0xdeadbeef
+# a3 == 0x2210175d
+# a4 == 0xfaf0176f
+# a5 == 0x078b102f
+#<<<END_ASSERT

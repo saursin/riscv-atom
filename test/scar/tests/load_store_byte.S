@@ -18,3 +18,11 @@ _start:
 
     nop
     ebreak
+
+#>>>ASSERT
+# t1 == 0x00000071
+# t2 == 0x00000089
+# a0 == 0x00000071
+# a1 == 0xffffff89
+# a2 == 0x00000089
+#<<<END_ASSERT

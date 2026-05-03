@@ -13,3 +13,9 @@ mulhsu a2,t0,t1
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x12e32359
+# a1 == 0x014b5a90
+# a2 == 0x04f1c1d5
+#<<<END_ASSERT

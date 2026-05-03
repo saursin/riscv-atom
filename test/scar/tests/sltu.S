@@ -13,3 +13,10 @@ sltu a3, t3, t0
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x00000001
+# a1 == 0x00000000
+# a2 == 0x00000001
+# a3 == 0x00000000
+#<<<END_ASSERT

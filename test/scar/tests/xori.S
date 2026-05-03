@@ -19,3 +19,12 @@ xori a5, t5, 0x00f
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x00d0110a
+# a1 == 0x1ddc1268
+# a2 == 0xdeadba84
+# a3 == 0x2210145c
+# a4 == 0xfaf01647
+# a5 == 0x078b1025
+#<<<END_ASSERT

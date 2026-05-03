@@ -21,3 +21,14 @@ xor a7, a4, a5
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x1d0c0054
+# a1 == 0xc371aeab
+# a2 == 0xfcbdadee
+# a3 == 0xd8e00668
+# a4 == 0xfd7b0543
+# a5 == 0xdd6b03ea
+# a6 == 0xdae013c0
+# a7 == 0x201006a9
+#<<<END_ASSERT

@@ -12,3 +12,9 @@ mv t2, t1 # Copy contents of register t0 to register t1
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# t0 == 0x00ff4a1a
+# t1 == 0x00ff4a1a
+# t2 == 0x00ff4a1a
+#<<<END_ASSERT

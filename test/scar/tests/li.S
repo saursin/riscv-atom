@@ -12,3 +12,10 @@ li x3, 0x01234567
 
 nop
 ebreak
+
+#>>>ASSERT
+# t0 == 0x000000ff
+# t1 == 0x0000ffff
+# t2 == 0xfffff343
+# x3 == 0x01234567
+#<<<END_ASSERT

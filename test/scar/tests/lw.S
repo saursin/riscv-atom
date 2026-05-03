@@ -52,3 +52,18 @@ var9:   .word 0x1beefbee
 var10:   .word 0x12deadbe
 var11:   .word 0x123deadb
 var12:   .word 0x1234dead
+
+#>>>ASSERT
+# x1 == 0x12345678
+# x2 == 0x00002020
+# x3 == 0xf3232532
+# x4 == 0xdea14245
+# x5 == 0xdea12cad
+# x6 == 0xdacadaca
+# x7 == 0xbeefdead
+# x8 == 0xdeadbeef
+# x9 == 0x1beefbee
+# x10 == 0x12deadbe
+# x11 == 0x123deadb
+# x12 == 0x1234dead
+#<<<END_ASSERT

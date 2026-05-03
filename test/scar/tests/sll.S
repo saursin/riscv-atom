@@ -17,3 +17,10 @@ sll t3, t3, a0
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# t0 == 0xdeadbeef
+# t1 == 0x757d95fc
+# t2 == 0x2f368000
+# t3 == 0x80000000
+#<<<END_ASSERT

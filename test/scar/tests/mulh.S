@@ -13,3 +13,9 @@ mulh a2,t1,t1
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x014b5a90
+# a1 == 0x0004eeec
+# a2 == 0x000012cd
+#<<<END_ASSERT

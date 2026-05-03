@@ -13,3 +13,8 @@ _start:
 function:
     add a0, a0, a1
     ret
+
+#>>>ASSERT
+# a0 == 0x000152f5
+# a1 == 0x0000fccd
+#<<<END_ASSERT

@@ -20,3 +20,12 @@ add a5, t5, t6
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0x1eac2054
+# a1 == 0xfc89cf33
+# a2 == 0x00bdd1f0
+# a3 == 0x1d00286a
+# a4 == 0x027b2593 
+# a5 == 0xe26b23ea
+#<<<END_ASSERT

@@ -13,3 +13,10 @@ srai a3, t3, 31
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a0 == 0xffffd555
+# a1 == 0x0000aaaa
+# a2 == 0xffd7d7d7
+# a3 == 0xffffffff
+#<<<END_ASSERT

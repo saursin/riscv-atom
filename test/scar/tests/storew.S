@@ -22,3 +22,10 @@ lw a4, 12(t0)        # Store the word in t1 to the second word slot of address s
 nop
 nop
 ebreak
+
+#>>>ASSERT
+# a1 == 0x9b7a7971
+# a2 == 0x4523521d
+# a3 == 0x73451464
+# a4 == 0xf4323513
+#<<<END_ASSERT
