@@ -84,16 +84,22 @@ int Atomsim::run()
                 printf("EBreak hit at %ld ticks, PC=%s0x%08lx%s\n", backend_.get_total_tick_count() , ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
 
                 if(sim_config_.dump_on_ebreak_flag){  // For SCAR
-                    // Temporarily redirect stdout to file
-                    FILE *stream;
-                    if((stream = freopen(sim_config_.dump_file.c_str(), "w", stdout)) == NULL)
+                    // Save original stdout fd before redirecting
+                    int saved_stdout_fd = dup(fileno(stdout));
+                    if(saved_stdout_fd == -1)
+                        Atomsim_exception("Cannot save stdout fd");
+
+                    if(freopen(sim_config_.dump_file.c_str(), "w", stdout) == NULL)
                         Atomsim_exception("Cannot open dump file");
 
                     // call info command
                     cmd_info({"reg", "--no-alt-names"});
-                    
-                    // restore stdout
-                    stream = freopen("/dev/tty", "w", stdout);
+                    fflush(stdout);
+
+                    // restore original stdout
+                    dup2(saved_stdout_fd, fileno(stdout));
+                    close(saved_stdout_fd);
+
                     if(sim_config_.verbose_flag)
                         printf("State dumped to: %s\n", sim_config_.dump_file.c_str());
                 }
