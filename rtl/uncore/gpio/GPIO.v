@@ -97,9 +97,9 @@ end
 always @(*) /* COMBINATORIAL */ begin
     case(wb_adr_i)
         2'b00:  wb_dat_o = {{32-NUM_PINS{1'b0}}, inp_i};
-        2'b01:  wb_dat_o = gpio_dir;
+        2'b01:  wb_dat_o = {{32-NUM_PINS{1'b0}}, gpio_dir};
         default:
-                wb_dat_o = gpio_dir;        // INC (Not implemented)
+                wb_dat_o = {{32-NUM_PINS{1'b0}}, gpio_dir};        // INC (Not implemented)
     endcase
 end
 
