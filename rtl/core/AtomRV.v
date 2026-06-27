@@ -147,7 +147,7 @@ module AtomRV # (
     wire dmem_handshake = (dport_valid_o && dport_ack_i);
 
     // core halt logic
-    wire got_interrupt = irq_i | timer_int_i;
+    wire got_interrupt = `INLINE_IFDEF(EN_EXCEPT, irq_i | timer_int_i, 0);
     reg halted;
     always @(posedge clk_i) begin
         if(rst_i)

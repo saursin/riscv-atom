@@ -27,7 +27,8 @@ ifeq ("$(wildcard $(VERILATOR_INCLUDE_PATH)/verilated_vcd_c.cpp)","")
     $(error Verilator include path invalid)
 endif
 
-JSONCFG:= $(RVATOM)/rtl/config/$(soctarget).json
+CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
+YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
 
 ####################################################
 # Directories
@@ -42,11 +43,12 @@ DEPDIR := $(BUILD_DIR)/.depend
 $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR))
 
 ####################################################
-# Verilog Configs
+# RTL / Verilator configs
 VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
-VFLAGS += -DSOC_BOOTROM_INIT_FILE='"$(RVATOM)/sw/bootloader/bootloader.hex"' 
-VTOPMODULE:= $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --top)
+VFLAGS += -DSOC_BOOTROM_INIT_FILE=\"$(RVATOM)/sw/bootloader/bootloader.hex\"
+VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+VFILELIST:= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t vflags)
 
 ####################################################
 # CPP configs
@@ -101,28 +103,25 @@ else
     CFLAGS += -O3 -DNDEBUG
 endif
 
-VSRCS := $(shell $(RVATOM)/scripts/cfgparse.py $(JSONCFG) --vsrcs)
+VSRCS := $(shell $(CFGPARSE) -c $(YMLCONFIG) -t vsrcs)
 ####################################################
 # Recepies
 
 default: sim								#t# Alias for sim
-sim: lib_verilated $(EXE)					#t# Build atomsim
+sim: lib_verilated $(EXE)					#t# Build atomsim simulator
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
-
-# Verilate verilog
+# Verilate RTL
 $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
 	$(call print_msg,Verilating Verilog)
-	$(VC) $(VFLAGS) `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`
-
+	$(VC) $(VFLAGS) $(VFILELIST) --top-module $(VTOPMODULE)
 	$(call print_msgt,Generating library)
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null
-
 	$(call print_msg,Generating combined header,V$(VTOPMODULE)_headers.h)
-	printf "#ifndef __V$(VTOPMODULE)_headers__\n" > $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
-	printf "#define __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
-	find $(VERILATED_DIR) -type f -name "*.h" -exec echo '#include "{}"' \; >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
-	printf "#endif // __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	@printf "#ifndef __V$(VTOPMODULE)_headers__\n"  > $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	@printf "#define __V$(VTOPMODULE)_headers__\n" >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	@find $(VERILATED_DIR) -type f -name "*.h" -exec echo '#include "{}"' \; >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
+	@printf "#endif\n"                             >> $(VERILATED_DIR)/V$(VTOPMODULE)_headers.h
 
 # Generic rule to compile Cpp Files in . (prerequisite: complete verilate step first)
 $(OBJ_DIR)/%.o: %.cpp
@@ -146,14 +145,6 @@ $(EXE): $(OBJS)
 .PRECIOUS: $(DEPDIR)/%.Td
 $(DEPDIR)/%.Td: ;
 
-
-# Lint
-lint: $(VSRCS)
-	@if $(VC) $(VFLAGS) --lint-only `$(RVATOM)/scripts/cfgparse.py $(JSONCFG) -f --tool=verilator`; then \
-		echo "Lint check: OK"; \
-	else \
-		echo "Lint check: Errors Found"; \
-	fi
 
 ####################################################
 # Cleanup Recepies

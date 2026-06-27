@@ -27,11 +27,13 @@ SRC_DIR = libcatom
 OBJ_DIR = obj
 $(shell mkdir -p $(OBJ_DIR))
 
-RVPREFIX:= riscv64-unknown-elf
-CFLAGS:= -march=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
-CFLAGS+= -mabi=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
+CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
+YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
+RVPREFIX  := riscv64-unknown-elf
+CFLAGS    := -march=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.isa)
+CFLAGS    += -mabi=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.abi)
 CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include 
-CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')
+CFLAGS+= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t defines --style gcc)
 ifeq ($(optimizable), 1)	# For optimizable code
     CFLAGS+= -fdata-sections -ffunction-sections
 endif

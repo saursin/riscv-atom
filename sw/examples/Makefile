@@ -71,10 +71,12 @@ ifeq ($(__check_soctarget), true)
         $(info Autodetected soctarget from atomsim: $(soctarget))
     endif
 
-    CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')
+    CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
+    YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
     LINKERSCRIPT:= $(RVATOM_LIB)/link/link_$(soctarget).ld
-    ISA:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
-    ABI:=$(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
+    ISA       := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.isa)
+    ABI       := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.abi)
+    CFLAGS+= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t defines --style gcc)
 endif
 
 CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections

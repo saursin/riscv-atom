@@ -19,14 +19,14 @@ SRCS:= crt0.S main.c
 SRCS+= $(wildcard target/$(soctarget)/*.c)
 SRCS+= $(wildcard target/$(soctarget)/*.S)
 
-RVPREFIX:= riscv64-unknown-elf
-CFLAGS:= -march=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a isa)
-CFLAGS+= -mabi=$(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a abi)
-CFLAGS+= -Wall -nostartfiles -ffreestanding -g -Os
-CFLAGS+= -I $(RVATOM_LIB)/include -I include -I target/$(soctarget)
-CFLAGS+= $(shell cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -d)
-CFLAGS+= -DTARGET_$(shell echo $(soctarget) | tr 'a-z' 'A-Z')
-ifeq ($(sim), 1) 
+CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
+YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
+CFLAGS    := -march=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.isa)
+CFLAGS    += -mabi=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.abi)
+CFLAGS    += -Wall -nostartfiles -ffreestanding -g -Os
+CFLAGS    += -I $(RVATOM_LIB)/include -I include -I target/$(soctarget)
+CFLAGS    += $(shell $(CFGPARSE) -c $(YMLCONFIG) -t defines --style gcc)
+ifeq ($(sim), 1)
     CFLAGS+= -DSIM
 endif
 
@@ -49,8 +49,8 @@ build: $(EXEC).elf			#t# Build bootloader
 
 $(EXEC).elf: $(SRCS)
 	$(call print_msgt,Compiling)
-	$(RVPREFIX)-gcc $(CFLAGS) -o $@ $^ $(LFLAGS)
-	$(RVPREFIX)-objdump -htd $@ > $(basename $@).lst
+	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
+	$(OBJDUMP) -htD $@ > $(basename $@).lst
 	$(call print_msg,Generating hex,$(basename $@).hex)
 	convelf.py -t elf -c -m="BOOTROM:0x00010000:8192:h:$(basename $@).hex" $@
 

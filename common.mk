@@ -1,5 +1,15 @@
 .DEFAULT_GOAL := default
 
+# RISC-V Toolchain
+RV_PREFIX:= riscv64-unknown-elf-
+CC:=$(RV_PREFIX)gcc
+CXX:=$(RV_PREFIX)g++
+OBJDUMP:=$(RV_PREFIX)objdump
+GDB:=$(RV_PREFIX)gdb
+
+# Config Parser
+CFGPARSE:= $(RVATOM)/scripts/cfgparse.py
+
 # Define bash color codes
 ifndef NO_COLOR
 CLR_RD := \033[0;31m
@@ -27,11 +37,7 @@ endif
 
 # Check if soctarget is correct
 ifeq ($(_mk_check_soctarget), 1)
-    ifneq ($(wildcard $(RVATOM)/rtl/config/$(soctarget).json),)
-        ifneq ($(shell $(RVATOM)/scripts/cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -a type), soc)
-            $(error Invalid soctarget=$(soctarget); config type not 'soc')
-        endif
-    else
+    ifeq ($(wildcard $(RVATOM)/rtl/config/$(soctarget).yml),)
         $(error Invalid soctarget=$(soctarget); config not found)
     endif
 endif

@@ -14,6 +14,10 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
+CFGPARSE   := $(RVATOM)/scripts/cfgparse.py
+YMLCONFIG  := $(RVATOM)/rtl/config/$(soctarget).yml
+VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+
 default: build
 
 $(build_dir)/bootloader.hex:
@@ -25,13 +29,13 @@ $(build_dir)/bootloader.hex:
 $(build_dir)/HydrogenSoC.v:
 	$(call print_msgt_root,Generating verilog)
 	@printf "$(CLR_GR)>> Generating verilog$(CLR_NC)\n"
-	verilator -E -P `cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -T verilator -f` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
-	verilator --lint-only $@ -top-module `cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -T verilator -t`
+	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
+	verilator --lint-only $@ -top-module $(VTOPMODULE)
 
 build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v		#t# Build FPGA Bitstream
 	$(call print_msg_root,Starting FPGA Flow)
 	cp -f spartan6-mini.tcl $(build_dir)/
-	verilator -E -P `cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -d` HydrogenSoC.ucf > $(build_dir)/HydrogenSoC.ucf
+	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t defines --style verilator` HydrogenSoC.ucf > $(build_dir)/HydrogenSoC.ucf
 	cd $(build_dir) && time xtclsh spartan6-mini.tcl rebuild_project 2>&1 > build.log
 
 .PHONY: prog

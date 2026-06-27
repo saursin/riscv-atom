@@ -1,0 +1,24 @@
+name: atombones
+
+import:
+  - riscv_atom
+
+params:
+  en_exceptions: true   # interrupt/exception support (RV32I_Zicsr + traps)
+
+design:
+  topmodule: AtomBones
+
+  # C-only defines (target selection in libcatom / bootloader)
+  cdefines:
+    - TARGET_ATOMBONES
+
+  sources:
+    atombones:
+      vsrcs:
+        - $[env.RVATOM]/rtl/soc/atombones/AtomBones.v
+
+      vincdirs:
+        - $[env.RVATOM]/rtl/soc/atombones
+
+

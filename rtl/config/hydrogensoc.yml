@@ -1,0 +1,114 @@
+name: hydrogensoc
+
+import:
+  - riscv_atom
+
+params:
+  # Use rv32imc_zicsr
+  xlen: 32
+  ext_muldiv: true
+  ext_compressed: true
+  ext_csr: true
+  en_exceptions: true   # interrupt/exception support
+
+  peripherals:
+    bootrom:
+      addr: 0x00010000
+      size: 8KB
+
+    ram:
+      addr: 0x20000000
+      size: 48KB
+
+    uart:
+      enable: true
+      addr: 0x40000000
+      size: 16
+      fifo_en: true
+      fifo_depth: 4
+
+    gpio:
+      enable: true
+      addr: 0x40002000
+      size: 16
+      pins: 16
+
+    spi:
+      enable: true
+      addr: 0x40004000
+      size: 32
+      cs_pins: 1
+
+    timer:
+      enable: true
+      addr: 0x40004000
+      size: 16
+
+design:
+  topmodule: HydrogenSoC
+
+  # Common defines (peripheral enables are used by both RTL and the bootloader C)
+  defines:
+    - $[peripherals.uart.enable?SOC_EN_UART=1:]
+    - $[peripherals.gpio.enable?SOC_EN_GPIO=1:]
+    - $[peripherals.spi.enable?SOC_EN_SPI=1:]
+    - $[peripherals.timer.enable?SOC_EN_TIMER=1:]
+
+  # Verilog-only defines (RTL config sizing)
+  vdefines:
+    - SOC_GPIO_NUM_PINS=$[peripherals.gpio.pins]
+    - SOC_SPI_NUM_CS=$[peripherals.spi.cs_pins]
+
+  # C-only defines (target selection in libcatom / bootloader)
+  cdefines:
+    - TARGET_HYDROGENSOC
+
+  sources:
+    # SoC Top
+    hydrogensoc:
+      vsrcs:
+        - $[env.RVATOM]/rtl/soc/hydrogensoc/HydrogenSoC.v
+
+      vincdirs:
+        - $[env.RVATOM]/rtl/soc/hydrogensoc
+
+    # Wishbone Memory
+    mem:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/mem/DualPortRAM_wb.v
+        - $[env.RVATOM]/rtl/uncore/mem/SinglePortROM_wb.v
+        - $[env.RVATOM]/rtl/uncore/mem/SinglePortRAM_wb.v
+   
+    # Wishbone UART
+    uart:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/uart/UART.v
+        - $[env.RVATOM]/rtl/uncore/uart/UART_core.v
+        - $[env.RVATOM]/rtl/uncore/uart/FIFO_sync.v
+
+    # Wishbone GPIO
+    gpio:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/gpio/GPIO.v
+        - $[env.RVATOM]/rtl/uncore/gpio/IOBuf.v
+        - $[env.RVATOM]/rtl/uncore/gpio/IOBank.v
+
+    # Wishbone SPI
+    spi:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/spi/SPI_wb.v
+        - $[env.RVATOM]/rtl/uncore/spi/SPI_core.v
+
+    # Wishbone Timer
+    timer:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/timer/Timer_wb.v
+
+    # Wishbone bus components
+    wishbone:
+      vsrcs:
+        - $[env.RVATOM]/rtl/uncore/wishbone/Arbiter.v
+        - $[env.RVATOM]/rtl/uncore/wishbone/Arbiter2_wb.v
+        - $[env.RVATOM]/rtl/uncore/wishbone/Crossbar_wb.v
+        - $[env.RVATOM]/rtl/uncore/wishbone/Priority_encoder.v
+

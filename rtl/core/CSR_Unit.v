@@ -55,6 +55,7 @@ module CSR_Unit#
     `ifndef EN_EXCEPT
     `UNUSED_VAR(write_value)
     `UNUSED_VAR(we_i)
+    `UNUSED_VAR(halted_i)
     `endif // EN_EXCEPT
 
     reg  [31:0] read_value;     // Value of selected CSR register

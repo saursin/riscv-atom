@@ -35,6 +35,10 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
+CFGPARSE   := $(RVATOM)/scripts/cfgparse.py
+YMLCONFIG  := $(RVATOM)/rtl/config/$(soctarget).yml
+VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+
 default: fpga										#t# alias for fpga target
 
 $(build_dir)/bootloader.hex:
@@ -45,8 +49,8 @@ $(build_dir)/bootloader.hex:
 
 $(build_dir)/HydrogenSoC.v:
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -T verilator -f` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
-	verilator --lint-only $@ -top-module `cfgparse.py $(RVATOM)/rtl/config/$(soctarget).json -T verilator -t`
+	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
+	verilator --lint-only $@ -top-module $(VTOPMODULE)
 	
 	$(call print_msg_root,Dumping buildinfo,$(build_info_file))
 	@echo "timestamp: `date +\"%m-%d-%Y %H:%M:%S\"`" > $(build_info_file);

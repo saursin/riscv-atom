@@ -1,390 +1,432 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+"""YAML-based config parser and filelist generator for RISC-V Atom.
 
-import json, os, sys, argparse
+Template syntax used in YAML string values:
+  $[param]                    -- value of param (dot-path for nested: a.b.c), or '' if undefined
+  $[env.VAR]                  -- environment variable or ''
+  $[shell CMD]                -- stdout of a shell command
+  $[expr?true_val:false_val]  -- ternary; expr is eval'd with params in scope
+  $[param?:false_val]         -- short form: '' when true, false_val when false
+  $[p?VALUE\\?\\:END:]        -- escape literal ? or : inside a branch with \\? \\:
+  Branches may contain nested $[...] expressions.
+"""
 
-###############################################################################
-# Helper functions
+import os
+import sys
+import subprocess
+from pathlib import Path
 
-def throwerr(msg, code=1):
+import yaml
+
+
+def evaluate_conditionals(txt, params, strict=True):
+    """Expand all $[...] tokens in txt using params dict.
+
+    All parsing helpers live here to avoid polluting the module namespace.
     """
-    Throw error and exit
-    """
-    RED         = "\033[0;31m"
-    RESET       = "\033[0m"
-    print(f"{RED}CFGPARSE ERROR:{RESET} {msg}", file=sys.stderr)
-    sys.exit(code)
 
-def process_path(inp:any, passthrough=False)->any:
-    """
-    Resolve any environment variable given path(s)
-    """
-    if passthrough:
-        return inp
-    
-    if isinstance(inp, str):
-        return os.path.expanduser(os.path.expandvars(inp))
-    elif isinstance(inp, list):
-        for i in range(len(inp)):
-            inp[i] = os.path.expanduser(os.path.expandvars(inp[i]))
-        return inp
+    def closing(s, open_at):
+        """Index of ] that closes [ at open_at, tracking nested $[...]."""
+        depth, i = 1, open_at + 1
+        while i < len(s):
+            if s[i] == '$' and i + 1 < len(s) and s[i + 1] == '[':
+                depth += 1; i += 2
+            elif s[i] == ']':
+                depth -= 1
+                if depth == 0:
+                    return i
+                i += 1
+            else:
+                i += 1
+        return -1
 
-def remove_dups(lst: list):
-    """
-    Remove duplicate entries from list preserving the order
-    """
-    unique_list = [item for index, item in enumerate(lst) if item not in lst[:index]]
-    return unique_list
+    def split_ternary(s):
+        """Split 'expr?true_val:false_val' at outermost unescaped ? and :.
+        Returns (expr, true_val, false_val) or None when no ? is present."""
+        depth, q, c, i = 0, None, None, 0
+        while i < len(s):
+            ch = s[i]
+            if ch == '\\' and i + 1 < len(s) and s[i + 1] in '?:':
+                i += 2; continue
+            if ch == '$' and i + 1 < len(s) and s[i + 1] == '[':
+                depth += 1; i += 2; continue
+            if ch == ']' and depth:
+                depth -= 1; i += 1; continue
+            if not depth:
+                if   ch == '?' and q is None:                    q = i
+                elif ch == ':' and q is not None and c is None:  c = i
+            i += 1
+        if q is None:
+            return None
+        return s[:q], (s[q+1:c] if c is not None else s[q+1:]), (s[c+1:] if c is not None else '')
 
-def list2str(lst:list, one_per_line=False, line_terminator='\n'):
-    return (line_terminator if one_per_line else ' ').join(lst)
+    class _NS:
+        """Wrap a nested dict so dotted attribute access works inside eval()."""
+        def __init__(self, d):
+            for k, v in d.items():
+                setattr(self, k, _NS(v) if isinstance(v, dict) else v)
+        def __bool__(self):
+            return bool(vars(self))
 
-def prefixlist(lst:list, prefix=''):
-    return [prefix+x for x in lst]
+    def _ns_dict(d):
+        return {k: _NS(v) if isinstance(v, dict) else v for k, v in d.items()}
 
-def search_file(filename: str, search_dirs: list):
-    for dir in search_dirs:
-        fullpath = dir+'/'+filename
-        if os.path.exists(fullpath):
-            return fullpath
-    return None
+    def _getpath(key):
+        """Traverse a dotted key path through the params dict."""
+        cur = params
+        for part in key.split('.'):
+            if not isinstance(cur, dict) or part not in cur:
+                return None, False
+            cur = cur[part]
+        return cur, True
 
-###############################################################################
-# Supported Json config file structure (paths may include environment variables)
-# module.json
-# {
-#     "name": "xyz",    // name of the module
-#     "extends": "abc"  // derive configuration for xyz from abc overriding the params
-#     "defines": [],    // preprocessor defines
-#     "vsrcs": [],      // Verilog sources
-#     "incdirs": []     // Verilog include directories
-#     "includes" []     // config dependencies for current config
-# }
+    def eval_bool(expr):
+        try:
+            return bool(eval(expr, {"__builtins__": {}}, _ns_dict(params)))
+        except (NameError, AttributeError) as e:
+            if strict:
+                raise KeyError(f"Undefined parameter in expression '{expr}': {e}") from e
+            return False
+        except Exception as e:
+            raise ValueError(f"Error evaluating '{expr}': {e}") from e
+
+    def expand(inner):
+        if inner.startswith('shell '):
+            return subprocess.check_output(inner[6:], shell=True, text=True).strip()
+        if inner.startswith('env.'):
+            return os.environ.get(inner[4:], '')
+        parts = split_ternary(inner)
+        if parts:
+            expr, true_val, false_val = parts
+            chosen = true_val if eval_bool(expr.strip()) else false_val
+            return evaluate_conditionals(chosen.replace('\\?', '?').replace('\\:', ':'), params, strict)
+        key = inner.strip()
+        v, found = _getpath(key)
+        if not found:
+            if strict:
+                raise KeyError(f"Undefined parameter: '{key}'")
+            return ''
+        return str(v) if v is not None else ''
+
+    if not isinstance(txt, str):
+        return txt
+    out, i = [], 0
+    while i < len(txt):
+        if txt[i] == '$' and i + 1 < len(txt) and txt[i + 1] == '[':
+            close = closing(txt, i + 1)
+            if close == -1:
+                out.append(txt[i]); i += 1; continue
+            out.append(expand(txt[i + 2:close]))
+            i = close + 1
+        else:
+            out.append(txt[i]); i += 1
+    return ''.join(out)
+
 
 class Config:
-    def __init__(self, json_file:str) -> None:
-        self.jsonfile = json_file
-        self.json = {}
-        self.deps = []
+    def __init__(self):
+        self.cfg = {}
+        self.params = {}
+        self.include_paths = []
+        self.strict = True  # raise on undefined params; disable with --allow-undefined
 
-        # load json
-        with open(json_file, 'r') as cf:
-            self.json = json.load(cf)
-        
-        # check if json filename doesn't match name
-        if os.path.basename(json_file).replace('.json', '') != self.get_name():
-            throwerr(f'json file name, modulename mismatch for {self.jsonfile}')
-        
-    def get_name(self):
-        return self.json['name'] if 'name' in self.json.keys() else '?'
-    
-    def get_params(self):
-        return self.json['params'] if 'params' in self.json.keys() else dict()
-    
-    def get_type(self):
-        return self.json['type'] if 'type' in self.json.keys() else 'generic'
+    # ---- loading / saving --------------------------------------------------
 
-    def get_vtopmodule(self):
-        return self.eval_conditionals(self.json['vtopmodule']) if 'vtopmodule' in self.json.keys() else self.get_name()
+    def from_file(self, yml_file):
+        """Load a YAML file and register its directory for import resolution."""
+        p = Path(yml_file).resolve()
+        with open(p) as f:
+            self.cfg = yaml.safe_load(f) or {}
+        self._add_inc(p.parent)
 
-    def get_vdefines(self)->list:
-        return self.eval_conditionals(self.json['vdefines']) if 'vdefines' in self.json.keys() else list()
-    
-    def get_vsrcs(self)->list:
-        return self.eval_conditionals(self.json['vsrcs']) if 'vsrcs' in self.json.keys() else list()
+    def to_file(self, out=None):
+        """Write resolved config as YAML to a path, file object, or stdout."""
+        txt = yaml.dump(self.cfg, default_flow_style=False, sort_keys=False)
+        if out is None or out is sys.stdout:
+            sys.stdout.write(txt)
+        elif isinstance(out, (str, Path)):
+            Path(out).write_text(txt)
+        else:
+            out.write(txt)
 
-    def get_vincdirs(self)->list:
-        return self.eval_conditionals(self.json['vincdirs']) if 'vincdirs' in self.json.keys() else list()
+    def set(self, dotted_key, value):
+        """Override a cfg key using dot-separated path before parsing."""
+        keys = dotted_key.split('.')
+        d = self.cfg
+        for k in keys[:-1]:
+            d = d.setdefault(k, {})
+        try:
+            d[keys[-1]] = yaml.safe_load(value)
+        except Exception:
+            d[keys[-1]] = value
 
-    def get_includes(self)->list:
-        return self.eval_conditionals(self.json['includes']) if 'includes' in self.json.keys() else list()
+    def get(self, dotted_key):
+        """Return a cfg value by dot-separated path. Mirror of set();
+        raises KeyError if the path is absent."""
+        val = self.cfg
+        for k in dotted_key.split('.'):
+            if not isinstance(val, dict) or k not in val:
+                raise KeyError(dotted_key)
+            val = val[k]
+        return val
 
-    def get_attr(self, attr)->any:
-        return self.eval_conditionals(self.json[attr]) if attr in self.json.keys() else None
-
-    def eval_conditionals(self, ds:str or list or dict):
+    # ---- parsing -----------------------------------------------------------
+    def parse(self):
         """
-            Evaluates non nested conditional statements in str, list, dict(not in key)
-            fmt: [cond?A:B]
-            cond can by a python style condition which can contain veriables 
-            from the param field provided in the same json file. Depending on the condition 
-            the whole conditonal block i.e. [?:] is replaced by either A or B
+        1. Resolve import chains and deep-merge into a single flat config.
+        2. Evaluate derived params in declaration order.
+        3. Substitute $[...] in all remaining string fields.
         """
-        def __eval(txt:str):
-            while '[' in txt:
-                # get expr bounds
-                expr_strt = txt.find('[')
-                expr_end = txt.find(']', expr_strt)
-                assert expr_end != -1, "malformed expression"
+        self.cfg    = self._resolve_imports(self.cfg)
+        self.params = self._eval_params(self.cfg.get('params', {}))
+        self.cfg    = self._sub_tree(self.cfg)
+        fired = self.cfg.get('assert', [])
+        if fired:
+            raise ValueError(f"Config assertion failed: {fired[0]}")
 
-                # Get fields
-                expr_que = txt.find('?', expr_strt)
-                if expr_que == -1: # ? not found: just evaluate expr and emplace
-                    condn = txt[expr_strt+1:expr_end]
-                    res = str(eval(condn, self.get_params()))
-                    txt = txt[0:expr_strt]+res+txt[expr_end+1:]
-                    continue
-                
-                expr_col = txt.find(':', expr_que)
-                if expr_strt == -1 or expr_que == -1 or expr_col == -1 or expr_end == -1:
-                    raise f'Malformed expr in {self.jsonfile}:{txt}'
-                condn = txt[expr_strt+1:expr_que]
-                res = txt[expr_que+1:expr_col] if eval(condn, self.get_params()) else txt[expr_col+1:expr_end]
-                txt = txt[0:expr_strt]+res+txt[expr_end+1:]                    
-            return txt
+    # ---- generators --------------------------------------------------------
+    def vsrcs(self, base_dir=None):
+        """Verilog source files, env vars expanded, deduped.
 
-        if isinstance(ds, str):
-            ds = __eval(ds)
-        elif isinstance(ds, list):
-            tmp = []
-            for l in ds:
-                res = __eval(l)
-                tmp += [res] if len(res.strip())>0 else [] # cleanup any blank entries
-            ds = tmp
-        elif isinstance(ds, dict):
-            for k in ds.keys():
-                ds[k] = __eval(ds[k])
+        If base_dir is given, each path is rewritten to base_dir/basename so the
+        output references staged files (symlinks/copies) rather than originals."""
+        seen, out = set(), []
+        for s in self._collect(self.cfg.get('design', {}), 'vsrcs'):
+            s = os.path.expandvars(s)
+            if base_dir:
+                s = os.path.join(base_dir, os.path.basename(s))
+            if s and s not in seen:
+                seen.add(s); out.append(s)
+        return out
+
+    def vincdirs(self):
+        """Verilog include directories, env vars expanded, deduped."""
+        seen, out = set(), []
+        for s in self._collect(self.cfg.get('design', {}), 'vincdirs'):
+            s = os.path.expandvars(s)
+            if s and s not in seen:
+                seen.add(s); out.append(s)
+        return out
+
+    def defines(self, style):
+        """Preprocessor defines for `style`: common 'defines' plus the language
+        bucket (verilator/iverilog -> vdefines, gcc -> cdefines). Raw (no -D
+        prefix), env vars expanded, empty entries removed."""
+        d = self.cfg.get('design', {})
+        common = d.get('defines', []) or []
+        if style in ('verilator', 'iverilog'):
+            extra = d.get('vdefines', []) or []
+        elif style == 'gcc':
+            extra = d.get('cdefines', []) or []
         else:
-            raise f'cannot resolve expession in type {type(ds)}'
-        return ds
+            raise ValueError(f"unknown style '{style}' (expected verilator|iverilog|gcc)")
+        return [os.path.expandvars(x) for x in common + extra if x]
+
+    def _vcomposite(self, define_prefix, base_dir):
+        """Verilog defines + include dirs + sources, in that order. The verilog
+        define bucket (common + vdefines) is used; only the define prefix varies
+        between the CLI ('-D') and filelist ('+define+') conventions."""
+        out  = [f'{define_prefix}{d}' for d in self.defines('verilator')]
+        out += [f'+incdir+{p}' for p in self.vincdirs()]
+        out += self.vsrcs(base_dir)
+        return out
+
+    def vflags(self, base_dir=None):
+        """CLI-style verilog invocation: '-D' defines, '+incdir+' dirs, sources.
+        For inline use on a verilator/iverilog command line."""
+        return self._vcomposite('-D', base_dir)
+
+    def filelist(self, base_dir=None):
+        """Standard verilog filelist (command-file): '+define+' macros, '+incdir+'
+        dirs and sources -- one per line, for consumption via '-f'. Portable
+        across verilator and iverilog."""
+        return self._vcomposite('+define+', base_dir)
+
+    # ---- private -----------------------------------------------------------
+
+    def _add_inc(self, path):
+        if path not in self.include_paths:
+            self.include_paths.append(path)
+
+    def _find_import(self, name):
+        for d in self.include_paths:
+            for ext in ('.yml', '.yaml'):
+                p = d / (name + ext)
+                if p.exists():
+                    return p
+        raise FileNotFoundError(
+            f"Import '{name}' not found in: {[str(d) for d in self.include_paths]}")
+
+    def _resolve_imports(self, cfg):
+        """Pop 'import', load+merge each recursively. Imports are base; cfg overrides."""
+        imports = cfg.pop('import', None) or []
+        if isinstance(imports, str):
+            imports = [imports]
+        base = {}
+        for name in imports:
+            path = self._find_import(name)
+            self._add_inc(path.parent)
+            with open(path) as f:
+                imported = yaml.safe_load(f) or {}
+            base = self._deep_merge(base, self._resolve_imports(imported))
+        return self._deep_merge(base, cfg)
+
+    def _eval_params(self, raw):
+        """Evaluate params in declaration order; derived params may use prior ones."""
+        params = {}
+        for k, v in raw.items():
+            if isinstance(v, str):
+                v = evaluate_conditionals(v, params, self.strict)
+                if   v.lower() in ('true',  'yes'): v = True
+                elif v.lower() in ('false', 'no'):  v = False
+                else:
+                    try: v = int(v)
+                    except ValueError: pass
+            params[k] = v
+        return params
+
+    def _sub_tree(self, obj):
+        """Recursively substitute $[...] in every string in obj."""
+        if isinstance(obj, str):  return evaluate_conditionals(obj, self.params, self.strict)
+        if isinstance(obj, dict): return {k: self._sub_tree(v) for k, v in obj.items()}
+        if isinstance(obj, list): return [r for r in (self._sub_tree(i) for i in obj) if r != '']
+        return obj
+
+    @staticmethod
+    def _deep_merge(base, override):
+        """Layer override on base: dicts merged recursively, lists concatenated
+        (base first, deduped), scalars replaced. Lists extend rather than replace
+        so a child config adds to the base's defines/sources instead of clobbering them."""
+        out = dict(base)
+        for k, v in override.items():
+            if k in out and isinstance(out[k], dict) and isinstance(v, dict):
+                out[k] = Config._deep_merge(out[k], v)
+            elif k in out and isinstance(out[k], list) and isinstance(v, list):
+                out[k] = Config._merge_lists(out[k], v)
+            else:
+                out[k] = v
+        return out
+
+    @staticmethod
+    def _merge_lists(a, b):
+        """Concatenate a + b, dropping later duplicates when items are hashable."""
+        merged = list(a) + list(b)
+        try:
+            seen, out = set(), []
+            for x in merged:
+                if x not in seen:
+                    seen.add(x); out.append(x)
+            return out
+        except TypeError:
+            return merged
+
+    @staticmethod
+    def _collect(obj, key):
+        """Recursively collect all list values stored under key anywhere in obj."""
+        found = []
+        if isinstance(obj, dict):
+            if key in obj and isinstance(obj[key], list):
+                found.extend(obj[key])
+            for v in obj.values():
+                found.extend(Config._collect(v, key))
+        return found
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
 
-class ConfigParser:
-    def __init__(self, cfg:Config, disable_resolve_env=True) -> None:
-        assert isinstance(cfg, Config), f'Unknown type for config {type(cfg)}'
-        self.cfg = cfg
-        self.search_dirs = []
-        self.disable_resolve_env = disable_resolve_env
+def main():
+    SUPPORTED_STYLES=['verilator', 'iverilog', 'gcc']
+    SUPPORTED_OUTPUTS=['yml', 'vsrcs', 'defines', 'vflags', 'filelist']
+
+    import argparse
+    parser = argparse.ArgumentParser(description='RISC-V Atom YAML config parser')
+    parser.add_argument('-c', '--config', help='Top-level YAML config file', 
+                        required=True, metavar='FILE')
+    parser.add_argument('-I', '--include', help='Add directory to import search path (repeatable)', 
+                        action='append', default=[], metavar='DIR')
+    parser.add_argument('-s', '--set', help='Override a config key before parsing, e.g. -s params.ext_csr=true',
+                        action='append', default=[], metavar='KEY=VAL')
+    parser.add_argument('-g', '--get', help='Print a single config value by dotted key, e.g. -g params.isa',
+                        default=None, metavar='KEY')
+    parser.add_argument('-t', '--type', help=f'Output type: [{" | ".join(SUPPORTED_OUTPUTS)}]',
+                        choices=SUPPORTED_OUTPUTS, default=None, metavar='TYPE')
+    parser.add_argument('--style', help=f'Output style: [{"| ".join(SUPPORTED_STYLES)}]',
+                        default=None, metavar='STYLE', choices=SUPPORTED_STYLES)
+    parser.add_argument('--base-dir', help='Rewrite vsrc paths to DIR/basename (use with staged build dirs)',
+                        default=None, metavar='DIR')
+    parser.add_argument('-o', '--output', help='Write output to file instead of stdout',
+                        default=None, metavar='FILE')
+    parser.add_argument('--allow-undefined', help='Silently expand undefined parameters to empty string instead of erroring', 
+                        action='store_true')
+    parser.add_argument('--fno-newlines', help='Drop newlines in output', 
+                        action='store_true')
     
-    def add_searchdir(self, dir: str):
-        dir = process_path(dir)
-        if dir not in self.search_dirs:
-            self.search_dirs = [dir] + self.search_dirs
-
-    def parse(self, override_params=[]):
-        # check if extends
-        def chk_extends(cfg:Config):
-            if 'extends' in cfg.json.keys():
-                import copy
-                bak = copy.deepcopy(cfg)
-                parent_cfg = cfg.json['extends']
-                parent_cfg_file = search_file(parent_cfg+'.json', self.search_dirs)
-                assert parent_cfg_file is not None, f'Cannot find parent "{parent_cfg}" for "{cfg.get_name()}"\n\tSearched in {str(self.search_dirs)}'
-                with open(parent_cfg_file, 'r') as cf:
-                    cfg.json = json.load(cf)
-                # override name
-                cfg.json['name'] = bak.get_name()
-                # override params
-                for param in bak.get_params().keys():
-                    cfg.json['params'][param] = bak.get_params()[param] # updates, adds if not presents
-            for dep in cfg.deps:
-                chk_extends(dep)
-        chk_extends(self.cfg)
-
-        # override params
-        if len(override_params) > 0:
-            for param in override_params:
-                pname, pvalue = param.split('=')
-                if pname in self.cfg.json['params']:
-                    self.cfg.json['params'][pname] = pvalue
-
-        def resolve_config_deps(cfg: Config):
-            # resolve deps in current config
-            for inc_cfg_name in cfg.get_includes():
-                assert inc_cfg_name != cfg.get_name(), f'Cannot resolve circular dependency: "{inc_cfg_name}" in {cfg.get_name()}'                
-                inc_cfg_file = search_file(inc_cfg_name+'.json', self.search_dirs)
-                assert inc_cfg_file is not None, f'Cannot find dependency "{inc_cfg_name}" for "{cfg.get_name()}"\n\tSearched in {str(self.search_dirs)}'
-                
-                cfg.deps += [Config(inc_cfg_file)]
-
-            # resolve deps of in current config's deps
-            for cfg_dep in cfg.deps:
-                resolve_config_deps(cfg_dep)
-
-        # Resolve dependencies recursively
-        resolve_config_deps(self.cfg)
-
-    def get_hierarcy(self):
-        def print_cfg(cfg:Config, tab, ntabs=0):
-            txt = f'{tab * ntabs}- {cfg.get_name()}\n'
-            for inc_cfg in cfg.deps:
-                txt += print_cfg(inc_cfg, tab, ntabs+1)
-            return txt
-        return print_cfg(self.cfg, '   ')
-
-    def get_name(self):
-        return self.cfg.get_name()
-    
-    def get_type(self):
-        return self.cfg.get_type()
-
-    def get_verilog_topmodule(self):
-        return self.cfg.get_vtopmodule()
-    
-    def get_verilog_defines(self)->list:
-        def get_vdefines_recursively(cfg:Config):
-            vdefs = list()
-            vdefs += cfg.get_vdefines()
-            for dep in cfg.deps:
-                vdefs += get_vdefines_recursively(dep)
-            return vdefs
-        return process_path(remove_dups(get_vdefines_recursively(self.cfg)), self.disable_resolve_env)
-    
-    def get_verilog_srcs(self)->list:
-        def get_vsrcs_recursively(cfg:Config):
-            vsrcs = list()
-            vsrcs += cfg.get_vsrcs()
-            for dep in cfg.deps:
-                vsrcs += get_vsrcs_recursively(dep)
-            return vsrcs
-        return process_path(remove_dups(get_vsrcs_recursively(self.cfg)), self.disable_resolve_env)
-
-    def get_verilog_incdirs(self)->list:
-        def get_vincdirs_recursively(cfg:Config):
-            vincdirs = list()
-            vincdirs += cfg.get_vincdirs()
-            for dep in cfg.deps:
-                vincdirs += get_vincdirs_recursively(dep)
-            return vincdirs
-        return process_path(remove_dups(get_vincdirs_recursively(self.cfg)), self.disable_resolve_env)
-
-    def gen_tcl(self, tool='yosys')->str:
-        txt  =  '#'*80+'\n'
-        txt += f'# Autogenerated TCL for "{self.cfg.get_name()}"\n'
-        txt +=  '#'*80+'\n\n'
-
-        txt += 'set defines [list \\\n'
-        for dfn in self.get_verilog_defines():
-            txt += f'\t"{dfn}" \\\n'
-        txt += ']\n\n'
-
-        txt += 'set include_dirs [list \\\n'
-        for idir in self.get_verilog_incdirs():
-            txt += f'\t"{idir}" \\\n'
-        txt += ']\n\n'
-
-        txt += 'set design_sources [list \\\n'
-        for vsrc in self.get_verilog_srcs():
-            txt += f'\t"{vsrc}" \\\n'
-        txt += ']\n\n'
-
-        txt += f'set topmodule {self.get_verilog_topmodule()}\n'
-        return txt
-    
-    def gen_filelist(self, tool='verilator'):
-        txt  =  '//'*40+'\n'
-        txt += f'// Autogenerated File list for "{self.get_name()}"\n'
-        txt +=  '//'*40+'\n\n'
-
-        for dfn in self.get_verilog_defines():
-            txt += f'-D{dfn}\n'
-
-        for idir in self.get_verilog_incdirs():
-            txt += f'+incdir+{idir}\n'
-
-        if tool == 'verilator':
-            txt += f'--set-topmodule {self.get_verilog_topmodule()}\n'
-        elif tool == 'iverilog':
-            txt += f'-s {self.get_verilog_topmodule()}\n'
-        else:
-            raise f'Unsupported tool "{tool}"'
-        
-        for vsrc in self.get_verilog_srcs():
-            txt += f'{vsrc}\n'
-        return txt
-
-    def get_vflags(self, tool='verilator') -> list:
-        flags = list()
-        flags += prefixlist(self.get_verilog_defines(), '-D')
-        flags += prefixlist(self.get_verilog_incdirs(), '-I')
-        vtop = self.get_verilog_topmodule()
-        if tool == 'verilator':
-            flags += [f'--top-module {vtop}']
-        elif tool == 'iverilog':
-            flags += [f'-s {vtop}']
-        else:
-            raise f'Unsupported tool "{tool}"'
-        flags += self.get_verilog_srcs()
-        return flags
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parses RISCV-Atom JSON config files and dumps requested info to stdout / file')
-    parser.add_argument('json', type=str, help='JSON config file')
-    parser.add_argument('-l', '--one-per-line', help='Print one entry per line', action='store_true')
-    parser.add_argument('-o', '--output', help='Dump output to file', type=str)
-    parser.add_argument('-n', '--no-resolve', help='Do not resolve environment variables in path', action='store_true')
-    parser.add_argument('-T', '--tool', help='Specify tool', type=str, default='generic')
-    parser.add_argument('-p', '--param', action='append', help='override a parameter', type=str)
-
-    mutex_group = parser.add_mutually_exclusive_group()
-    mutex_group.add_argument('-t', '--top', help='get verilog topmodule', action='store_true')
-    mutex_group.add_argument('-i', '--incdirs', help='get verilog include directories', action='store_true')
-    mutex_group.add_argument('-v', '--vsrcs', help='get verilog sources', action='store_true')
-    mutex_group.add_argument('-d', '--defines', help='get verilog defines', action='store_true')
-    mutex_group.add_argument('-f', '--vflags', help='get verilog sim flags', action='store_true')
-    mutex_group.add_argument('-c', '--tcl', help='generate tcl script', action='store_true')
-    mutex_group.add_argument('-F', '--filelist', help='generate filelist', action='store_true')
-    mutex_group.add_argument('-a', '--get-attr', help='get raw attribute', type=str)
-    mutex_group.add_argument('-H', '--hierarchy', help='print module hierarchy', action='store_true')
-
-    # Parse args
     args = parser.parse_args()
+    if not args.get and not args.type:
+        parser.error("nothing to do: specify -g/--get KEY or -t/--type TYPE")
+
+    cfg = Config()
+    for d in args.include:
+        cfg._add_inc(Path(d).resolve())
+
+    cfg.strict = not args.allow_undefined
+    try:
+        cfg.from_file(args.config)
+    except (OSError, yaml.YAMLError) as e:
+        sys.exit(f"cfgparse: error loading '{args.config}': {e}")
+
+    for kv in args.set:
+        if '=' not in kv:
+            parser.error(f'--set requires KEY=VALUE, got: {kv!r}')
+        k, _, v = kv.partition('=')
+        cfg.set(k.strip(), v.strip())
 
     try:
-        # Create Config from json
-        cfg = Config(args.json)
-        cfgp = ConfigParser(cfg, args.no_resolve)
-        
-        # add default search path
-        rvatom_root = os.getenv('RVATOM')
-        if rvatom_root is None:
-            throwerr('"RVATOM" environment variable not defined, did you forget to source sourceme file?')
-        else:
-            cfgp.add_searchdir(rvatom_root+'/rtl/config')       
-        
-        # parse
-        cfgp.parse(override_params=args.param if args.param else [])
-        
-        # obtain
-        txt = ''
-        if args.top:
-            txt += cfgp.get_verilog_topmodule()
+        cfg.parse()
+    except (KeyError, ValueError, FileNotFoundError) as e:
+        sys.exit(f"cfgparse: error: {e}")
 
-        if args.incdirs:
-            txt = list2str(cfgp.get_verilog_incdirs(), args.one_per_line)
+    if args.get:
+        try:
+            val = cfg.get(args.get)
+        except KeyError:
+            sys.exit(f"cfgparse: key not found: '{args.get}'")
+        print(val if not isinstance(val, bool) else str(val).lower())
+        return
 
-        if args.vsrcs:
-            txt = list2str(cfgp.get_verilog_srcs(), args.one_per_line)
+    base_dir = os.path.abspath(args.base_dir) if args.base_dir else None
 
-        if args.defines:
-            txt = list2str(prefixlist(cfgp.get_verilog_defines(), '-D'), args.one_per_line) 
+    # Only 'defines' is language-specific (picks vdefines vs cdefines); the
+    # verilog composites (vflags/filelist) always use the verilog bucket.
+    if args.type == 'defines' and not args.style:
+        parser.error("--type defines requires --style (verilator|iverilog|gcc)")
 
-        if args.vflags:
-            txt = list2str(cfgp.get_vflags('verilator' if args.tool == 'generic' else args.tool))
-        
-        if args.tcl:
-            txt = cfgp.gen_tcl('verilator' if args.tool == 'generic' else args.tool)
-
-        if args.filelist:
-            txt = cfgp.gen_filelist('verilator' if args.tool == 'generic' else args.tool)
-        
-        if args.hierarchy:
-            txt = cfgp.get_hierarcy()
-        
-        if args.get_attr:
-            txt = str(cfgp.cfg.get_attr(args.get_attr))
-
-        # Dump requested info
+    out = open(args.output, 'w') if args.output else sys.stdout
+    sep = ' ' if args.fno_newlines else '\n'
+    try:
+        match args.type:
+            case 'yml':         # Resolved config
+                cfg.to_file(out)
+            case 'vsrcs':       # Verilog sources only
+                out.write(sep.join(cfg.vsrcs(base_dir)) + sep)
+            case 'defines':     # -D defines for the given style
+                out.write(sep.join(f'-D{d}' for d in cfg.defines(args.style)) + sep)
+            case 'vflags':      # CLI-style verilog invocation (-D defines + incdirs + sources)
+                out.write(sep.join(cfg.vflags(base_dir)) + sep)
+            case 'filelist':    # Standard verilog filelist (+define+ macros + incdirs + sources)
+                out.write(sep.join(cfg.filelist(base_dir)) + sep)
+            case _:
+                raise ValueError(f"Invalid output type: {args.type}")
+    except OSError as e:
+        sys.exit(f"cfgparse: error writing output: {e}")
+    finally:
         if args.output:
-            with open(args.output, 'w') as f:
-                f.write(txt)
-        else:
-            print(txt)
-    
-    except AssertionError as e:
-        throwerr(e)
-    except FileNotFoundError as e:
-        throwerr(e)
-    except Exception as e:
-        raise e
+            out.close()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, yaml.YAMLError) as e:
+        sys.exit(f"cfgparse: {e}")

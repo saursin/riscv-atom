@@ -26,13 +26,14 @@ debug?=0
 
 
 # Flags to the makefiles
-MKFLAGS := -s 
+MKFLAGS:= -s
 
 _mk_check_env:=1
 include common.mk
 #######################################################################
 
 # Directories
+rtl_dir         := rtl
 sim_dir  		:= sim
 scar_dir 		:= test/scar
 elfdump_dir 	:= tools/elfdump
@@ -83,11 +84,22 @@ clean-boot:							#t# Clean bootloader build files
 	$(call print_msg_root,Cleaning bootloader build files)
 	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) clean
 
+# ======== RTL ========
+.PHONY: rtl
+rtl:								#t# Stage RTL files into rtl/build (use MODE=copy to copy instead of symlink)
+	$(call print_msg_root,Building RTL)
+	$(MAKE) $(MKFLAGS) -C $(rtl_dir) soctarget=$(soctarget) MODE=$(MODE)
+
+.PHONY: clean-rtl
+clean-rtl:							#t# Clean rtl build directory
+	$(call print_msg_root,Cleaning RTL build files)
+	$(MAKE) $(MKFLAGS) -C $(rtl_dir) soctarget=$(soctarget) clean
+
 # ======== Lint ========
 .PHONY: lint
 lint:								#t# Run lint on the project
 	$(call print_msg_root,Running Lint)
-	$(MAKE) $(MKFLAGS) -C $(sim_dir) lint
+	$(MAKE) $(MKFLAGS) -C $(rtl_dir) soctarget=$(soctarget) lint
 
 # ======== SCAR ========
 .PHONY: scar     			
@@ -148,8 +160,8 @@ clean-doxy:							#t# Clean build files for Atomsim docs
 
 # ======== clean ========
 .PHONY: clean						
-clean: clean-sim clean-boot clean-lib					#t# Alias for clean-sim, clean-lib
+clean: clean-sim clean-boot clean-rtl clean-lib					#t# Alias for clean-sim, clean-lib
 
 
 .PHONY: clean-all					
-clean-all: clean-sim clean-boot clean-scar clean-elfdump clean-lib clean-doxy  #t# Clean all build files
+clean-all: clean-sim clean-boot clean-rtl clean-scar clean-elfdump clean-lib clean-doxy  #t# Clean all build files

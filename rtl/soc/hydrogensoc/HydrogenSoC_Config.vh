@@ -26,25 +26,25 @@
     `define SOC_EN_XYZ macro or define the same on CLI while invoking the tool
 */
 
+`define DEF_IFNDEF(macro, value) \
+    `ifndef macro \
+    `define macro value \
+    `endif
 
 /*
     -------------------------------------------------------
     BootROM: Initialized with bootloader hex code
 */
-`define SOC_BOOTROM_ADDR        32'h0001_0000
-`define SOC_BOOTROM_SIZE        (8*1024)
-
-`ifndef SOC_BOOTROM_INIT_FILE
-    `define SOC_BOOTROM_INIT_FILE ""
-`endif
-
+`DEF_IFNDEF(SOC_BOOTROM_ADDR, 32'h0001_0000)
+`DEF_IFNDEF(SOC_BOOTROM_SIZE, (8*1024))
+`DEF_IFNDEF(SOC_BOOTROM_INIT_FILE, "")
 
 /*
     -------------------------------------------------------
     RAM
 */
-`define SOC_RAM_ADDR            32'h2000_0000
-`define SOC_RAM_SIZE            (48*1024)
+`DEF_IFNDEF(SOC_RAM_ADDR, 32'h2000_0000)
+`DEF_IFNDEF(SOC_RAM_SIZE, (48*1024))
 
 
 /*
@@ -52,10 +52,10 @@
     UART Peripheral (Optional)
 */
 // `define SOC_EN_UART
-`define SOC_UART_ADDR           32'h4000_0000
-`define SOC_UART_SIZE           16              // 4 words
-`define SOC_UART_FIFO_EN        1
-`define SOC_UART_FIFO_DEPTH     4
+`DEF_IFNDEF(SOC_UART_ADDR, 32'h4000_0000)
+`DEF_IFNDEF(SOC_UART_SIZE, 16)              // 4 words
+`DEF_IFNDEF(SOC_UART_FIFO_EN, 1)
+`DEF_IFNDEF(SOC_UART_FIFO_DEPTH, 4)
 
 
 /*
@@ -63,21 +63,17 @@
     GPIO Peripheral (Optional)
 */
 // `define SOC_EN_GPIO
-`define SOC_GPIO_ADDR           32'h4000_2000
-`define SOC_GPIO_SIZE           12              // 3 words
-
-`ifndef SOC_GPIO_NUM_PINS
-    `define SOC_GPIO_NUM_PINS   32
-`endif
-
+`DEF_IFNDEF(SOC_GPIO_ADDR, 32'h4000_2000)
+`DEF_IFNDEF(SOC_GPIO_SIZE, 16)              // 4 words
+`DEF_IFNDEF(SOC_GPIO_NUM_PINS, 32)
 
 /*
     -------------------------------------------------------
     SPI Peripheral (Optional)
 */
 // `define SOC_EN_SPI
-`define SOC_SPI_ADDR            32'h4000_3000
-`define SOC_SPI_SIZE            32              // 8 words
+`DEF_IFNDEF(SOC_SPI_ADDR, 32'h4000_3000)
+`DEF_IFNDEF(SOC_SPI_SIZE, 32)              // 8 words
 
 `ifndef SOC_SPI_NUM_CS
     `define SOC_SPI_NUM_CS      1
@@ -89,17 +85,15 @@
     TIMER Peripheral (Optional)
 */
 // `define SOC_EN_TIMER
-`define SOC_TIMER_ADDR          32'h4000_4000
-`define SOC_TIMER_SIZE          16              // 4 words
+`DEF_IFNDEF(SOC_TIMER_ADDR, 32'h4000_4000)
+`DEF_IFNDEF(SOC_TIMER_SIZE, 16)             // 4 words
 
 
 /*
     -------------------------------------------------------
     Reset address for SOC. Upon Reset, PC jumps to the defined address
 */
-`ifndef SOC_RESET_ADDRESS
-`define SOC_RESET_ADDRESS       `SOC_BOOTROM_ADDR
-`endif
+`DEF_IFNDEF(SOC_RESET_ADDRESS, `SOC_BOOTROM_ADDR)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper macros

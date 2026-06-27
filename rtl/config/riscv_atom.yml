@@ -1,0 +1,54 @@
+name: riscv_atom
+
+# Config parameters
+params:
+  # ISA Extenstions
+  ext_embedded:       false   # RVE
+  ext_muldiv:         false   # Multiply divide extenstion
+  ext_compressed:     false   # Compressed ISA extension
+  ext_csr:            true    # Zicsr extension
+
+  # Other features
+  xlen:               32      # 32 | 64
+  en_exceptions:      false   # Support for interrupts and exceptions
+
+  # derived params
+  isa: rv32$[ext_embedded?e:i]$[ext_muldiv?m:]$[ext_compressed?c:]$[ext_csr?_zicsr:]
+  abi: ilp32$[ext_embedded?e:]
+
+# Assertions
+assert:
+  - $[en_exceptions and not ext_csr?Exceptions support requires CSR extension:]
+
+# Design specification
+design:
+  topmodule: AtomRV
+
+  # Common defines (passed to both Verilog and C builds)
+  defines:
+    - XLEN=$[xlen]
+
+  # Verilog-only defines (RTL feature macros; C uses -march/-mabi instead)
+  vdefines:
+    - $[ext_embedded?EN_RVE=1:]
+    - $[ext_muldiv?EN_RVM:]
+    - $[ext_compressed?EN_RVC=1:]
+    - $[ext_csr?EN_RVZICSR:]
+    - $[en_exceptions?EN_EXCEPT:]
+
+  sources:
+    # RISC-V Atom core
+    core:
+      vsrcs:
+        - $[env.RVATOM]/rtl/core/Alu.v
+        - $[env.RVATOM]/rtl/core/AtomRV.v
+        - $[env.RVATOM]/rtl/core/CSR_Unit.v
+        - $[env.RVATOM]/rtl/core/Decode.v
+        - $[env.RVATOM]/rtl/core/RegisterFile.v
+        - $[env.RVATOM]/rtl/core/RVC_Aligner.v
+        - $[env.RVATOM]/rtl/core/RVC_Decoder.v
+        - $[env.RVATOM]/rtl/core/AtomRV_wb.v
+
+      vincdirs:
+        - $[env.RVATOM]/rtl/common
+        - $[env.RVATOM]/rtl/core
