@@ -84,13 +84,13 @@ design:
       vsrcs:
         - $[env.RVATOM]/rtl/uncore/uart/UART.v
         - $[env.RVATOM]/rtl/uncore/uart/UART_core.v
-        - $[env.RVATOM]/rtl/uncore/uart/FIFO_sync.v
+        - $[env.RVATOM]/rtl/lib/FIFO_sync.v
 
     # Wishbone GPIO
     gpio:
       vsrcs:
         - $[env.RVATOM]/rtl/uncore/gpio/GPIO.v
-        - $[env.RVATOM]/rtl/uncore/gpio/IOBuf.v
+        - $[env.RVATOM]/rtl/lib/IOBuf.v
         - $[env.RVATOM]/rtl/uncore/gpio/IOBank.v
 
     # Wishbone SPI
@@ -107,8 +107,8 @@ design:
     # Wishbone bus components
     wishbone:
       vsrcs:
-        - $[env.RVATOM]/rtl/uncore/wishbone/Arbiter.v
+        - $[env.RVATOM]/rtl/lib/Arbiter.v
         - $[env.RVATOM]/rtl/uncore/wishbone/Arbiter2_wb.v
         - $[env.RVATOM]/rtl/uncore/wishbone/Crossbar_wb.v
-        - $[env.RVATOM]/rtl/uncore/wishbone/Priority_encoder.v
+        - $[env.RVATOM]/rtl/lib/Priority_encoder.v
 
