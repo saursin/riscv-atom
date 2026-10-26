@@ -237,7 +237,7 @@ proc add_source_files {} {
    xfile add "HydrogenSoC.ucf"
 
    # Set the Top Module as well...
-   project set top "HydrogenSoC"
+   project set top "spartan6mini_shell"
 
    puts "$myScript: project sources reloaded."
 

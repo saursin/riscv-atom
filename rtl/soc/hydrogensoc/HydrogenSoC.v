@@ -3,6 +3,11 @@
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
 //  Description : HydrogenSoC is an FPGA ready SoC, it consists of
 //      a single atom core with memories and communication modules.
+//
+//      The SoC is board-agnostic: rst_i is a synchronous, active-high
+//      reset and GPIO is exposed as separate input/output/direction
+//      signals. Pads, tri-states, reset polarity/synchronization and
+//      clocking belong to the board shell (synth/<vendor>/<board>/).
 ///////////////////////////////////////////////////////////////////
 `include "Utils.vh"
 `include "HydrogenSoC_Config.vh"
@@ -21,7 +26,9 @@ module HydrogenSoC(
 
 `ifdef SOC_EN_GPIO
     ,
-    inout   wire [`SOC_GPIO_NUM_PINS-1:0]   gpio_io
+    input   wire [`SOC_GPIO_NUM_PINS-1:0]   gpio_inp_i,
+    output  wire [`SOC_GPIO_NUM_PINS-1:0]   gpio_out_o,
+    output  wire [`SOC_GPIO_NUM_PINS-1:0]   gpio_dir_o      // 1: input, 0: output
 `endif
 
 `ifdef SOC_EN_SPI
@@ -33,7 +40,7 @@ module HydrogenSoC(
 `endif
 );
     wire wb_clk_i = clk_i;
-    wire wb_rst_i = `INLINE_IFDEF(SOC_INVERT_RST, ~rst_i, rst_i);
+    wire wb_rst_i = rst_i;
 
     // ******************** Core ********************
     wire    [31:0]  core_iport_wb_adr_o;
@@ -367,10 +374,7 @@ module HydrogenSoC(
     wire            gpio_wb_stb_i;
     wire 		    gpio_wb_ack_o;
     wire            gpio_wb_err_o = 0;
-    
-    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_inp_i;
-    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_out_o;
-    wire [`SOC_GPIO_NUM_PINS-1:0] gpio_dir_o;
+
 
     GPIO #(
         .NUM_PINS(`SOC_GPIO_NUM_PINS)
@@ -389,15 +393,6 @@ module HydrogenSoC(
         .inp_i      (gpio_inp_i),
         .out_o      (gpio_out_o),
         .oe_o       (gpio_dir_o)
-    );
-
-    IOBank #(
-        .NUM_PINS(`SOC_GPIO_NUM_PINS)
-    ) iob (
-        .dat_i      (gpio_out_o),
-        .dir_i      (gpio_dir_o),
-        .out_o      (gpio_inp_i),
-        .pins_io    (gpio_io)
     );
     `endif
 

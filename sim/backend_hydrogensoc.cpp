@@ -148,7 +148,7 @@ int Backend_atomsim::tick()
     }
 
     // Force the bootmode switch value
-    tb->m_core->gpio_io = (0b11 & config_.bootmode) << BOOTMODE_PIN_OFFSET;
+    tb->m_core->gpio_inp_i = (0b11 & config_.bootmode) << BOOTMODE_PIN_OFFSET;
 
     // perform uart transaction (if any)
     UART();

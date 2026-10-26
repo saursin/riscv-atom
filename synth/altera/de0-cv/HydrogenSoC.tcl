@@ -57,6 +57,7 @@ if {$make_assignments} {
 	set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 	set_global_assignment -name SDC_FILE HydrogenSoC.sdc
 	set_global_assignment -name VERILOG_FILE HydrogenSoC.v
+	set_global_assignment -name TOP_LEVEL_ENTITY de0cv_shell
 
 	###########################################################################
 	# clock and reset

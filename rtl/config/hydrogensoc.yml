@@ -90,8 +90,6 @@ design:
     gpio:
       vsrcs:
         - $[env.RVATOM]/rtl/uncore/gpio/GPIO.v
-        - $[env.RVATOM]/rtl/lib/IOBuf.v
-        - $[env.RVATOM]/rtl/uncore/gpio/IOBank.v
 
     # Wishbone SPI
     spi:

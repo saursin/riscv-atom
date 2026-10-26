@@ -18,7 +18,9 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
-VTOPMODULE := $(RVATOM_TOPMODULE)
+# board shell (pads, reset) around the SoC
+VTOPMODULE := tangprimer20k_shell
+BOARD_VSRCS := tangprimer20k_shell.v tangprimer20k_pll.v $(RVATOM)/rtl/uncore/gpio/IOBank.v $(RVATOM)/rtl/lib/IOBuf.v $(RVATOM)/rtl/lib/reset_sync.v
 
 default: build
 
@@ -30,8 +32,8 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 
 $(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' -DSOC_INVERT_RST > $@
-	verilator --lint-only $@ -top-module $(VTOPMODULE)
+	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
+	verilator --lint-only $@ $(shell yosys-config --datdir)/gowin/cells_sim.v -top-module $(VTOPMODULE)
 
 .PHONY: build
 build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v	#t# Build FPGA Bitstream
@@ -41,7 +43,7 @@ build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v	#t# Build FPGA Bit
 ################################################################################
 # Programming flow
 .PHONY: prog
-prog: $(build_dir)/HydrogenSoC_pack.fs	#t# Program FPGA
+prog: $(build_dir)/$(VTOPMODULE)_pack.fs	#t# Program FPGA
 	$(call print_msg_root,Programming FPGA)
 	bash run.sh --build-dir=$(build_dir) --steps=prog
 

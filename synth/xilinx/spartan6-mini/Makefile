@@ -18,7 +18,9 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
-VTOPMODULE := $(RVATOM_TOPMODULE)
+# board shell (pads, reset) around the SoC
+VTOPMODULE := spartan6mini_shell
+BOARD_VSRCS := spartan6mini_shell.v $(RVATOM)/rtl/uncore/gpio/IOBank.v $(RVATOM)/rtl/lib/IOBuf.v $(RVATOM)/rtl/lib/reset_sync.v
 
 default: build
 
@@ -31,7 +33,7 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 $(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
 	@printf "$(CLR_GR)>> Generating verilog$(CLR_NC)\n"
-	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
+	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
 	verilator --lint-only $@ -top-module $(VTOPMODULE)
 
 build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v		#t# Build FPGA Bitstream

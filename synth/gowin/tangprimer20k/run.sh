@@ -1,9 +1,12 @@
 BUILD_DIR=build
 FLOW_STEPS='none'
 
-TOPMODULE="HydrogenSoC"
+TOPMODULE="tangprimer20k_shell"
 
-CONSTRAINT_FILE="${TOPMODULE}.cst"
+# board constraints, resolved relative to this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONSTRAINT_FILE="$SCRIPT_DIR/${TOPMODULE}.cst"
+SDC_FILE="$SCRIPT_DIR/${TOPMODULE}.sdc"
 
 FAMILY='GW2A-18'                # change to your device family
 DEVICE='GW2A-LV18PG256C8/I7'    # change to your device
@@ -64,6 +67,7 @@ function pnr() {
                            --write $out_json \
                            --device $DEVICE \
                            --vopt cst=$CONSTRAINT_FILE \
+                           --sdc $SDC_FILE \
                            --vopt family=$FAMILY
         if [ $? -ne 0 ]; then
             echo ">> Place and Route failed"
