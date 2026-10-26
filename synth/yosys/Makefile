@@ -27,7 +27,11 @@ asic_pdk?=freepdk45
 asic_synth_tcl_script?=synth_asic.tcl
 asic_pdk_file:=$(build_dir)/$(asic_pdk)_stdcells.lib
 
+# keep synth (sim=0) lib/bootloader out of the sim workspace
+RVATOM_BUILD ?= $(abspath $(build_dir))
+
 _mk_check_env=1
+_mk_check_soctarget=1
 include ../../common.mk
 
 # Flags to the makefiles
@@ -35,21 +39,19 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
-CFGPARSE   := $(RVATOM)/scripts/cfgparse.py
-YMLCONFIG  := $(RVATOM)/rtl/config/$(soctarget).yml
-VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+VTOPMODULE := $(RVATOM_TOPMODULE)
 
 default: fpga										#t# alias for fpga target
 
-$(build_dir)/bootloader.hex:
+$(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(call print_msg_root,Rebuilding libcatom and bootloader)
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) sim=0 clean build
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) sim=0 clean build
-	cp $(RVATOM)/sw/bootloader/bootloader.hex $@
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
+	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
-$(build_dir)/HydrogenSoC.v:
+$(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
+	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
 	verilator --lint-only $@ -top-module $(VTOPMODULE)
 	
 	$(call print_msg_root,Dumping buildinfo,$(build_info_file))

@@ -2,24 +2,15 @@
 #h# ******* Makefile for Building AtomSim *******
 ####################################################
 
-#v# Specify soctarget
-soctarget ?= None
-
 #v# Enable debug build
 DEBUG ?= 0
 
 #v# Enable DPI support in RTL
 DPI ?= 0
 
+_mk_check_soctarget := 1
 include ../common.mk
 ####################################################
-
-# use default soctarget if not specified
-DEFAULT_SOCTARGET := atombones
-ifeq ($(soctarget), None)
-    soctarget := $(DEFAULT_SOCTARGET)
-    $(warning No soctarget specified, building for default: $(DEFAULT_SOCTARGET))
-endif
 
 # check verilator include directory
 VERILATOR_INCLUDE_PATH=$(VERILATOR_PATH)/share/verilator/include
@@ -27,13 +18,10 @@ ifeq ("$(wildcard $(VERILATOR_INCLUDE_PATH)/verilated_vcd_c.cpp)","")
     $(error Verilator include path invalid)
 endif
 
-CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
-YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
-
 ####################################################
 # Directories
 RTL_DIR := ../rtl
-BUILD_DIR := build
+BUILD_DIR := $(RVATOM_BUILD)/sim
 OBJ_DIR := $(BUILD_DIR)/obj
 VERILATED_DIR := $(BUILD_DIR)/verilated
 BIN_DIR := $(BUILD_DIR)/bin
@@ -46,9 +34,9 @@ $(shell mkdir -p $(OBJ_DIR) $(VERILATED_DIR) $(BIN_DIR) $(DEPDIR))
 # RTL / Verilator configs
 VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
-VFLAGS += -DSOC_BOOTROM_INIT_FILE=\"$(RVATOM)/sw/bootloader/bootloader.hex\"
-VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
-VFILELIST:= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t vflags)
+VFLAGS += -DSOC_BOOTROM_INIT_FILE=\"$(RVATOM_BUILD)/sw/bootloader/bootloader.hex\"
+VTOPMODULE := $(RVATOM_TOPMODULE)
+VFILELIST:= $(shell $(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags)
 
 ####################################################
 # CPP configs
@@ -87,7 +75,7 @@ DEPS_ := $(patsubst %.cpp, %.Td, $(SRCS))			# change .cpp -> .Td
 DEPS__ := $(notdir $(DEPS_))						# extract filename, discard full path
 DEPS := $(patsubst %, $(DEPDIR)/%, $(DEPS__))		# prefix with directory path
 
-LDFLAGS += -L build/verilated
+LDFLAGS += -L $(VERILATED_DIR)
 LDLIBS += -l:V$(VTOPMODULE)__ALL.a -lverilated -lpthread
 
 # Append DPI objects & add DPI flags 	(if DPI is defined)
@@ -99,11 +87,13 @@ endif
 # Append debugigng flags
 ifeq ($(DEBUG), 1)
     CFLAGS += -g -O0 -DDEBUG_LEVEL=$(DEBUG)
-else    
+else
     CFLAGS += -O3 -DNDEBUG
 endif
 
-VSRCS := $(shell $(CFGPARSE) -c $(YMLCONFIG) -t vsrcs)
+CFLAGS += -DDEFAULT_BOOTROM_IMAGE='"$(RVATOM_BUILD)/sw/bootloader/bootloader.hex"'
+
+VSRCS := $(shell $(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vsrcs)
 ####################################################
 # Recepies
 
@@ -112,7 +102,7 @@ sim: lib_verilated $(EXE)					#t# Build atomsim simulator
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 # Verilate RTL
-$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS)
+$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS) $(RVATOM_VARS_MK)
 	$(call print_msg,Verilating Verilog)
 	$(VC) $(VFLAGS) $(VFILELIST) --top-module $(VTOPMODULE)
 	$(call print_msgt,Generating library)
@@ -151,6 +141,6 @@ $(DEPDIR)/%.Td: ;
 
 .PHONY: clean
 clean:									#t# Clean build files
-	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/* $(VERILATED_DIR)/* $(DEPDIR)/*
+	rm -rf $(BUILD_DIR)
 
 -include $(DEPS)

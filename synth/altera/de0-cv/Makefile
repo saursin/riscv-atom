@@ -6,7 +6,11 @@ soctarget?=hydrogensoc
 #v# Specify build directory
 build_dir?=build
 
+# keep synth (sim=0) lib/bootloader out of the sim workspace
+RVATOM_BUILD ?= $(abspath $(build_dir))
+
 _mk_check_env=1
+_mk_check_soctarget=1
 include ../../../common.mk
 
 # Flags to the makefiles
@@ -14,27 +18,25 @@ MKFLAGS := -s
 
 $(shell mkdir -p $(build_dir))
 
-CFGPARSE   := $(RVATOM)/scripts/cfgparse.py
-YMLCONFIG  := $(RVATOM)/rtl/config/$(soctarget).yml
-VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+VTOPMODULE := $(RVATOM_TOPMODULE)
 
 default: build
 
-$(build_dir)/bootloader.hex:
+$(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(call print_msg_root,Rebuilding libcatom and bootloader)
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) sim=0 clean build
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) sim=0 clean build
-	cp $(RVATOM)/sw/bootloader/bootloader.hex $@
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
+	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
-$(build_dir)/HydrogenSoC.v:
+$(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' -DSOC_INVERT_RST > $@
+	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' -DSOC_INVERT_RST > $@
 	verilator --lint-only $@ -top-module $(VTOPMODULE)
 
 build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v	#t# Build FPGA Bitstream
 	$(call print_msg_root,Starting FPGA Flow)
 	cp -f HydrogenSoC.tcl $(build_dir)/
-	verilator -E -P `$(CFGPARSE) -c $(YMLCONFIG) -t defines --style verilator` HydrogenSoC.sdc > $(build_dir)/HydrogenSoC.sdc
+	verilator -E -P $(RVATOM_VDEFINES) HydrogenSoC.sdc > $(build_dir)/HydrogenSoC.sdc
 	cd $(build_dir) && time quartus_sh -t HydrogenSoC.tcl 2>&1 > build.log
 
 .PHONY: prog

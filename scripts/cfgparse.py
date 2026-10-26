@@ -128,6 +128,7 @@ class Config:
         self.cfg = {}
         self.params = {}
         self.include_paths = []
+        self.files = []     # every YAML file loaded (top-level + imports)
         self.strict = True  # raise on undefined params; disable with --allow-undefined
 
     # ---- loading / saving --------------------------------------------------
@@ -137,6 +138,7 @@ class Config:
         p = Path(yml_file).resolve()
         with open(p) as f:
             self.cfg = yaml.safe_load(f) or {}
+        self.files.append(p)
         self._add_inc(p.parent)
 
     def to_file(self, out=None):
@@ -266,6 +268,7 @@ class Config:
         for name in imports:
             path = self._find_import(name)
             self._add_inc(path.parent)
+            self.files.append(path.resolve())
             with open(path) as f:
                 imported = yaml.safe_load(f) or {}
             base = self._deep_merge(base, self._resolve_imports(imported))
@@ -338,7 +341,7 @@ class Config:
 
 def main():
     SUPPORTED_STYLES=['verilator', 'iverilog', 'gcc']
-    SUPPORTED_OUTPUTS=['yml', 'vsrcs', 'defines', 'vflags', 'filelist']
+    SUPPORTED_OUTPUTS=['yml', 'vsrcs', 'defines', 'vflags', 'filelist', 'make-vars']
 
     import argparse
     parser = argparse.ArgumentParser(description='RISC-V Atom YAML config parser')
@@ -400,6 +403,7 @@ def main():
 
     # Only 'defines' is language-specific (picks vdefines vs cdefines); the
     # verilog composites (vflags/filelist) always use the verilog bucket.
+    # 'make-vars' is self-contained and needs neither --style nor --fno-newlines.
     if args.type == 'defines' and not args.style:
         parser.error("--type defines requires --style (verilator|iverilog|gcc)")
 
@@ -417,6 +421,15 @@ def main():
                 out.write(sep.join(cfg.vflags(base_dir)) + sep)
             case 'filelist':    # Standard verilog filelist (+define+ macros + incdirs + sources)
                 out.write(sep.join(cfg.filelist(base_dir)) + sep)
+            case 'make-vars':  # Make variable assignments for all build-relevant values
+                cdefs = ' '.join(f'-D{d}' for d in cfg.defines('gcc'))
+                vdefs = ' '.join(f'-D{d}' for d in cfg.defines('verilator'))
+                out.write(f'RVATOM_ISA       := {cfg.get("params.isa")}\n')
+                out.write(f'RVATOM_ABI       := {cfg.get("params.abi")}\n')
+                out.write(f'RVATOM_TOPMODULE := {cfg.get("design.topmodule")}\n')
+                out.write(f'RVATOM_CDEFINES  := {cdefs}\n')
+                out.write(f'RVATOM_VDEFINES  := {vdefs}\n')
+                out.write(f'RVATOM_YMLDEPS   := {" ".join(str(p) for p in cfg.files)}\n')
             case _:
                 raise ValueError(f"Invalid output type: {args.type}")
     except OSError as e:

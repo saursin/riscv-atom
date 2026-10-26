@@ -70,7 +70,7 @@ with open(SCAR_DIR / "tests.json") as _f:
 
 
 @pytest.mark.parametrize("test_case", _TESTS, ids=lambda t: t["name"])
-def test_instruction(test_case, soctarget, linker_script, work_dir):
+def test_instruction(test_case, atomsim, soctarget, linker_script, work_dir):
     name = test_case["name"]
     src_files = [SCAR_DIR / s for s in test_case["srcs"]]
     elf_file  = work_dir / f"{name}.elf"
@@ -95,7 +95,7 @@ def test_instruction(test_case, soctarget, linker_script, work_dir):
     dump_file.unlink(missing_ok=True)  # ensure stale dump is not reused
     result = subprocess.run(
         [
-            "atomsim",
+            atomsim,
             "--ebreak-dump", "--no-banner",
             "--maxitr", "100000",
             "--dump-file", str(dump_file),

@@ -35,10 +35,42 @@ ifeq ($(_mk_check_env), 1)
     endif
 endif
 
-# Check if soctarget is correct
+# Default soctarget, persisted by 'make config' (gitignored). It uses '?=', so a
+# soctarget from the command line or the environment takes precedence.
+-include $(RVATOM)/config.mk
+
+ifneq ($(strip $(soctarget)),)
+    RVATOM_YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
+endif
+
+# RVATOM_BUILD: root of all build artifacts, one tree per soctarget by default.
+RVATOM_BUILD ?= $(RVATOM)/build/$(soctarget)
+
+# For targets that need it: require a valid soctarget and include the build
+# parameters derived from its YAML (RVATOM_ISA, RVATOM_CDEFINES, ...).
+# Goals that are all 'help' skip the check; goals that are all clean goals need
+# only the soctarget (to locate RVATOM_BUILD), not the derived config.
 ifeq ($(_mk_check_soctarget), 1)
-    ifeq ($(wildcard $(RVATOM)/rtl/config/$(soctarget).yml),)
-        $(error Invalid soctarget=$(soctarget); config not found)
+    _mk_goals_except = $(filter-out $(1),$(MAKECMDGOALS))
+    _mk_help_only  := $(if $(MAKECMDGOALS),$(if $(call _mk_goals_except,help),,1),)
+    _mk_clean_only := $(if $(MAKECMDGOALS),$(if $(call _mk_goals_except,clean clean-% %-clean help),,1),)
+    ifneq ($(_mk_help_only), 1)
+        ifeq ($(strip $(soctarget)),)
+            $(error No soctarget set; run 'make config soctarget=<target>' or pass soctarget=<target>)
+        endif
+        ifeq ($(wildcard $(RVATOM_YMLCONFIG)),)
+            $(error Invalid soctarget '$(soctarget)'; rtl/config/$(soctarget).yml not found)
+        endif
+    endif
+    ifneq ($(_mk_clean_only), 1)
+        # Named per soctarget so a shared RVATOM_BUILD override never reuses
+        # another target's config. Make regenerates it when any YAML it was
+        # derived from (RVATOM_YMLDEPS) or cfgparse changes, then restarts.
+        RVATOM_VARS_MK := $(RVATOM_BUILD)/vars.$(soctarget).mk
+        include $(RVATOM_VARS_MK)
+        $(RVATOM_VARS_MK): $(RVATOM_YMLCONFIG) $(RVATOM_YMLDEPS) $(CFGPARSE)
+		@mkdir -p $(@D)
+		$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t make-vars > $@.$$$$ && mv $@.$$$$ $@ || { rm -f $@.$$$$; exit 1; }
     endif
 endif
 

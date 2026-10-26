@@ -1,20 +1,15 @@
 #h# ***** RTL Build Makefile *****
 
-#v# Specify soctarget
-soctarget ?= atombones
-
 #v# Stage mode: symlink (default) or copy
 MODE ?= symlink
 
-#v# Build directory (soctarget-specific to avoid stale filelists across targets)
-BUILD_DIR ?= build/$(soctarget)
-
 _mk_check_env := 1
+_mk_check_soctarget := 1
 include ../common.mk
 
-CFGPARSE   := $(RVATOM)/scripts/cfgparse.py
-YMLCONFIG  := $(RVATOM)/rtl/config/$(soctarget).yml
-VTOPMODULE := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g design.topmodule)
+BUILD_DIR := $(RVATOM_BUILD)/rtl
+
+VTOPMODULE := $(RVATOM_TOPMODULE)
 
 VC     := verilator
 VFLAGS := -Wall --top-module $(VTOPMODULE)
@@ -28,12 +23,12 @@ default: build
 .PHONY: build
 build: $(BUILD_DIR)/filelist.f					#t# Generate filelist and stage RTL files in build dir
 
-$(BUILD_DIR)/filelist.f: $(YMLCONFIG)
+$(BUILD_DIR)/filelist.f: $(RVATOM_VARS_MK)
 	@mkdir -p $(BUILD_DIR)
 	$(call print_msg,Generating filelist,$(BUILD_DIR)/filelist.f)
-	@$(CFGPARSE) -c $(YMLCONFIG) -t filelist --base-dir $(abspath $(BUILD_DIR)) -o $@
+	@$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t filelist --base-dir $(abspath $(BUILD_DIR)) -o $@
 	$(call print_msg,Staging RTL files (MODE=$(MODE)))
-	@for f in $$($(CFGPARSE) -c $(YMLCONFIG) -t vsrcs); do \
+	@for f in $$($(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vsrcs); do \
 		if [ "$(MODE)" = "copy" ]; then \
 			cp -f $$f $(BUILD_DIR)/; \
 		else \
@@ -52,6 +47,6 @@ lint: $(BUILD_DIR)/filelist.f					#t# Run verilator lint-only on RTL
 	fi
 
 .PHONY: clean
-clean:											#t# Remove all soctarget build directories
+clean:											#t# Remove RTL build directory
 	$(call print_msg,Cleaning RTL build files)
-	rm -rf build/
+	rm -rf $(BUILD_DIR)

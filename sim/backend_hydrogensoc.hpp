@@ -1,7 +1,7 @@
 #pragma once
 
 #include "backend.hpp"
-#include "build/verilated/VHydrogenSoC.h"
+#include "VHydrogenSoC.h"
 
 #include <memory>
 

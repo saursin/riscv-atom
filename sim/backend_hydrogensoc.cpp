@@ -7,7 +7,7 @@
 #include "except.hpp"
 #include "rvdefs.hpp"
 
-#include "build/verilated/VHydrogenSoC_headers.h"
+#include "VHydrogenSoC_headers.h"
 
 #ifdef DBG
 #define D(x) x

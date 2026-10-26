@@ -1,9 +1,6 @@
 #h# ***** Makefile for Building libcatom *****
 
 #v# Compile for simulation
-soctarget?= atombones
-
-#v# Compile for simulation
 sim?= 1
 
 #v# Enable debug build
@@ -19,21 +16,19 @@ debug?= 0
 optimizable?= 1
 
 _mk_check_env=1
-# _mk_check_soctarget=1
+_mk_check_soctarget=1
 include ../../common.mk
 ##################################################
 
 SRC_DIR = libcatom
-OBJ_DIR = obj
+OBJ_DIR = $(RVATOM_BUILD)/sw/lib/obj
 $(shell mkdir -p $(OBJ_DIR))
 
-CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
-YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
 RVPREFIX  := riscv64-unknown-elf
-CFLAGS    := -march=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.isa)
-CFLAGS    += -mabi=$(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.abi)
-CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include 
-CFLAGS+= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t defines --style gcc)
+CFLAGS    := -march=$(RVATOM_ISA)
+CFLAGS    += -mabi=$(RVATOM_ABI)
+CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include
+CFLAGS+= $(RVATOM_CDEFINES)
 ifeq ($(optimizable), 1)	# For optimizable code
     CFLAGS+= -fdata-sections -ffunction-sections
 endif
@@ -65,7 +60,7 @@ SRCS := $(C_SRCS) $(S_SRCS)
 OBJS := $(C_OBJS) $(S_OBJS)
 
 # Output library
-LIB = libcatom.a
+LIB = $(RVATOM_BUILD)/sw/lib/libcatom.a
 
 default: build
 build: $(LIB)						#t# Build libcatom
@@ -77,26 +72,26 @@ $(LIB): $(OBJS)
 	$(RVPREFIX)-objdump -htd $@ > $(basename $@).lst
 
 # Compile all c files
-$(OBJ_DIR)/%.o: $(TARGET_SPECIFIC_SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(TARGET_SPECIFIC_SRC_DIR)/%.c $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
 	$(RVPREFIX)-gcc -c $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
 	$(RVPREFIX)-gcc -c $(CFLAGS) $< -o $@
 
 	
 # Compile S files
-$(OBJ_DIR)/%.o: $(TARGET_SPECIFIC_SRC_DIR)/%.S
+$(OBJ_DIR)/%.o: $(TARGET_SPECIFIC_SRC_DIR)/%.S $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
 	$(RVPREFIX)-gcc -c $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.S $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
 	$(RVPREFIX)-gcc -c $(CFLAGS) $< -o $@
 
 	
 .PHONY: clean
 clean:								#t# Clean Build files
-	rm -rf $(OBJ_DIR)/* $(LIB) *.lst
+	rm -rf $(OBJ_DIR)/* $(LIB) $(basename $(LIB)).lst
 

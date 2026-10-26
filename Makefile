@@ -15,9 +15,6 @@
 #====================================================================#
 #h# ***** RISC-V Atom Root Makefile *****
 
-#v# Specify soctarget
-soctarget?= atombones
-
 #v# Build for simulation
 sim?=1
 
@@ -53,6 +50,33 @@ default: sim lib boot  				#t# Build atomsim, libcatom and bootloader
 
 all : doxy-pdf default				#t# Build default with docs
 
+# ======== Config ========
+.PHONY: config
+config:								#t# Set default soctarget, saved in config.mk (usage: make config soctarget=<t>)
+ifeq ($(origin soctarget), command line)
+	@test -f $(RVATOM)/rtl/config/$(soctarget).yml \
+		|| { printf "$(CLR_RD)$(CLR_B)ERROR:$(CLR_NC) invalid soctarget '$(soctarget)' (no rtl/config/$(soctarget).yml)\n"; exit 1; }
+	@echo "soctarget ?= $(soctarget)" > $(RVATOM)/config.mk
+	$(call print_msg_root,Default soctarget,$(soctarget) (build dir: build/$(soctarget)))
+else
+	@printf "Current soctarget: $(if $(soctarget),$(soctarget) (from $(origin soctarget)),<not set>)\n"
+	@printf "Usage: make config soctarget=<target>\n"
+endif
+
+.PHONY: show-config
+show-config:						#t# Print the resolved build configuration
+	@test -n "$(soctarget)" \
+		|| { printf "No soctarget configured; run 'make config soctarget=<target>'\n"; exit 1; }
+	@y=$(RVATOM)/rtl/config/$(soctarget).yml; \
+	 printf "soctarget : %s\n" "$(soctarget)"; \
+	 printf "build_dir : %s\n" "$(RVATOM_BUILD)"; \
+	 printf "yml       : %s\n" "$$y"; \
+	 printf "isa       : %s\n" "$$($(CFGPARSE) -c $$y -g params.isa)"; \
+	 printf "abi       : %s\n" "$$($(CFGPARSE) -c $$y -g params.abi)"; \
+	 printf "topmodule : %s\n" "$$($(CFGPARSE) -c $$y -g design.topmodule)"; \
+	 printf "cdefines  : %s\n" "$$($(CFGPARSE) -c $$y -t defines --style gcc --fno-newlines)"; \
+	 printf "vdefines  : %s\n" "$$($(CFGPARSE) -c $$y -t defines --style verilator --fno-newlines)"
+
 # ======== AtomSim ========
 .PHONY : sim
 sim: boot                      		#t# Build atomsim for given soctarget
@@ -86,7 +110,7 @@ clean-boot:							#t# Clean bootloader build files
 
 # ======== RTL ========
 .PHONY: rtl
-rtl:								#t# Stage RTL files into rtl/build (use MODE=copy to copy instead of symlink)
+rtl:								#t# Stage RTL files into $(RVATOM_BUILD)/rtl (use MODE=copy to copy instead of symlink)
 	$(call print_msg_root,Building RTL)
 	$(MAKE) $(MKFLAGS) -C $(rtl_dir) soctarget=$(soctarget) MODE=$(MODE)
 
@@ -105,7 +129,7 @@ lint:								#t# Run lint on the project
 .PHONY: scar     			
 scar: sim 		 					#t# Verify target using scar
 	$(call print_msg_root,Running SCAR)
-	$(MAKE) $(MKFLAGS) -C $(scar_dir)
+	$(MAKE) $(MKFLAGS) -C $(scar_dir) ATOMSIM=$(RVATOM_BUILD)/sim/bin/atomsim
 
 
 .PHONY: clean-scar
@@ -164,4 +188,5 @@ clean: clean-sim clean-boot clean-rtl clean-lib					#t# Alias for clean-sim, cle
 
 
 .PHONY: clean-all					
-clean-all: clean-sim clean-boot clean-rtl clean-scar clean-elfdump clean-lib clean-doxy  #t# Clean all build files
+clean-all: clean-scar clean-elfdump clean-doxy	#t# Clean all build files (every soctarget)
+	rm -rf $(RVATOM)/build

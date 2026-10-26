@@ -1,14 +1,14 @@
 #pragma once
 
 #include "backend.hpp"
-#include "build/verilated/VAtomBones.h"
+#include "VAtomBones.h"
 
 #include <memory>
 
 #define ATOMSIM_TARGETNAME  "atombones"
 #define TARGET_ATOMBONES
 
-#define DEFAULT_BOOTROM_IMAGE "${RVATOM}/sw/bootloader/bootloader.hex"
+// DEFAULT_BOOTROM_IMAGE is defined via -D at compile time (see sim/Makefile)
 
 class Memory;
 class Vuart;

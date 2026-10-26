@@ -1,8 +1,5 @@
 #h# ***** RISC-V Atom Examples Makefile *****
 
-#v# Specify soctarget (autodetected if not provided)
-soctarget?= None
-
 #v# Specify example to build (compulsory)
 ex?= None
 
@@ -51,6 +48,9 @@ ifeq ($(MAKECMDGOALS),run-all)
 endif
 
 _mk_check_env = 1
+ifeq ($(__check_soctarget), true)
+    _mk_check_soctarget = 1
+endif
 include ../../common.mk
 ########################################################################
 RVPREFIX := riscv64-unknown-elf
@@ -59,28 +59,12 @@ LINKERSCRIPT := None
 
 #### check soctarget ####
 ifeq ($(__check_soctarget), true)
-
-    ifeq (${soctarget},None)  # if soctarget not overridden
-        # check if atomsim exists
-        ifeq ("$(wildcard $(RVATOM)/sim/build/bin/atomsim)", "")
-            $(error soctarget not defined (failed to autodetect, need to build atomsim first))
-        endif
-
-        # autodetect soctarget from atomsim
-        soctarget := $(shell atomsim --soctarget)
-        $(info Autodetected soctarget from atomsim: $(soctarget))
-    endif
-
-    CFGPARSE  := $(RVATOM)/scripts/cfgparse.py
-    YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
-    LINKERSCRIPT:= $(RVATOM_LIB)/link/link_$(soctarget).ld
-    ISA       := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.isa)
-    ABI       := $(shell $(CFGPARSE) -c $(YMLCONFIG) -g params.abi)
-    CFLAGS+= $(shell $(CFGPARSE) -c $(YMLCONFIG) -t defines --style gcc)
+    LINKERSCRIPT := $(RVATOM_LIB)/link/link_$(soctarget).ld
+    CFLAGS += $(RVATOM_CDEFINES)
 endif
 
-CFLAGS += -march=$(ISA) -mabi=$(ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
-CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_LIB)
+CFLAGS += -march=$(RVATOM_ISA) -mabi=$(RVATOM_ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
+CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_BUILD)/sw/lib
 LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
 
 #### check ex ####
@@ -110,6 +94,10 @@ endif
 EXAMPLE_DIRS = $(sort $(dir $(wildcard */)))
 SRC_FILES = $(patsubst %, $(ex)/%, $(src_files))
 
+# atomsim binary from the current workspace (a bare 'atomsim' would resolve via
+# PATH to the default workspace's build, which may be a different soctarget)
+ATOMSIM := $(RVATOM_BUILD)/sim/bin/atomsim
+
 # atomsim args
 ATOMSIM_ARGS = --maxitr=999999999 -uv
 
@@ -130,7 +118,7 @@ endif
 .PHONY: compile
 compile: $(ex)/$(executable)    			#t# Compile specified example
 
-$(ex)/$(executable): $(SRC_FILES)
+$(ex)/$(executable): $(SRC_FILES) $(RVATOM_VARS_MK)
 	$(call print_msgt,Building)
 	cd $(ex) && $(RVPREFIX)-gcc $(CFLAGS) $(src_files) -o $(executable) $(LFLAGS)
 	$(RVPREFIX)-objdump -Shtd $@ > $(basename $@).lst
@@ -140,7 +128,8 @@ $(ex)/$(executable): $(SRC_FILES)
 .PHONY: run
 run: $(ex)/$(executable)					#t# Run example
 	$(call print_msg,Running, $<)
-	atomsim $(ATOMSIM_ARGS) $^
+	@test -x $(ATOMSIM) || { printf "$(CLR_RD)$(CLR_B)ERROR:$(CLR_NC) atomsim not built at $(ATOMSIM)\n"; exit 1; }
+	$(ATOMSIM) $(ATOMSIM_ARGS) $^
 
 
 .PHONY: dism

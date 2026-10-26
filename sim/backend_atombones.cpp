@@ -7,7 +7,7 @@
 #include "util.hpp"
 #include "rvdefs.hpp"
 
-#include "build/verilated/VAtomBones_headers.h"
+#include "VAtomBones_headers.h"
 
 #include "elfio/elfio.hpp"
 

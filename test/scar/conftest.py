@@ -9,10 +9,19 @@ WORK_DIR = SCAR_DIR / "work"
 
 
 @pytest.fixture(scope="session")
-def soctarget():
-    result = subprocess.run(["atomsim", "--soctarget"], capture_output=True, text=True)
-    if result.returncode != 0:
-        pytest.skip("atomsim not available — build it first with `make sim`")
+def atomsim():
+    # `make scar` sets ATOMSIM to the soctarget's build; else fall back to PATH
+    return os.environ.get("ATOMSIM", "atomsim")
+
+
+@pytest.fixture(scope="session")
+def soctarget(atomsim):
+    try:
+        result = subprocess.run([atomsim, "--soctarget"], capture_output=True, text=True)
+    except FileNotFoundError:
+        result = None
+    if result is None or result.returncode != 0:
+        pytest.skip(f"atomsim not found ({atomsim}) — build it with `make sim` and set ATOMSIM")
     return result.stdout.strip()
 
 

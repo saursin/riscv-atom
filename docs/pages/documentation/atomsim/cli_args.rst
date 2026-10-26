@@ -52,7 +52,7 @@ Following are the arguments that may be passed to the AtomSim executable.
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 |        | --bootrom-size arg  | Specify size of bootrom to simulate (in KB)    | 8                                      |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
-|        | --bootrom-image arg | Specify bootrom hex image                      | ${RVATOM}/sw/bootloader/bootloader.hex |
+|        | --bootrom-image arg | Specify bootrom hex image                      | <build>/sw/bootloader/bootloader.hex   |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 |        | --ram-size arg      | Specify size of RAM memory to simulate (in KB) | 81920                                  |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
