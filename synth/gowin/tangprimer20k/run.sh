@@ -1,12 +1,11 @@
 BUILD_DIR=build
 FLOW_STEPS='none'
 
-VERILOG_FILES="$BUILD_DIR/*.v"
 TOPMODULE="HydrogenSoC"
 
 CONSTRAINT_FILE="${TOPMODULE}.cst"
 
-FAMILY=
+FAMILY='GW2A-18'                # change to your device family
 DEVICE='GW2A-LV18PG256C8/I7'    # change to your device
 BOARD='tangprimer20k'           # change to your board
 
@@ -33,6 +32,8 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+VERILOG_FILES="$BUILD_DIR/*.v"
 
 
 function synth() {

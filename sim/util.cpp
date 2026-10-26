@@ -269,8 +269,8 @@ void getDisassembly(std::map<uint32_t, DisassembledLine> *dis, std::string filen
         while (ss >> tmp)
             tok.push_back(tmp);
 
-        // Dism if tok 0's last char == ':'
-        if(tok[0].back() == ':')
+        // Dism if tok 0's last char == ':' (skip lines without a mnemonic, e.g. data in .text)
+        if(tok.size() >= 3 && tok[0].back() == ':')
         {
             // remove colon from 1st token
             tok[0] = tok[0].substr(0, tok[0].length()-1);
