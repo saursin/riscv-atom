@@ -168,10 +168,11 @@ module AtomRV # (
     */
 
     /*
-        Stall Stage2 in case it has made a memory request and the result has't arrived yet.
+        Stall Stage2 in case it has made a memory request and the result has't arrived yet,
+        or it is waiting for a multi-cycle MulDiv operation.
     */
     wire waiting_for_dbus_response = (!dmem_handshake && dport_valid_o);
-    wire stall_stage2 = waiting_for_dbus_response;
+    wire stall_stage2 = waiting_for_dbus_response || waiting_for_muldiv;
 
     /*
         Stall Stage1 in case:
@@ -395,7 +396,11 @@ module AtomRV # (
         case(d_rf_din_sel)
             3'd0:   rf_rd_data = d_imm;
             3'd1:   rf_rd_data = link_address;
+            `ifdef EN_RVM
+            3'd2:   rf_rd_data = is_muldiv ? muldiv_result : alu_out;
+            `else
             3'd2:   rf_rd_data = alu_out;
+            `endif // EN_RVM
             3'd3:   rf_rd_data = {31'd0, comparison_result};
             3'd4:   rf_rd_data = memload;
             `ifdef EN_RVZICSR
@@ -458,6 +463,32 @@ module AtomRV # (
         .sel_i      (d_alu_op_sel),
         .result_o   (alu_out)
     );
+
+
+    /*
+        ////// MulDiv //////
+        M-extension unit. Division is multi-cycle: stage2 stalls on stall_o.
+    */
+    `ifdef EN_RVM
+    wire            is_muldiv = d_alu_op_sel[3];    // ALU_FUNC_MUL .. ALU_FUNC_REMU
+    wire    [31:0]  muldiv_result;
+    wire            waiting_for_muldiv;
+
+    MulDiv muldiv
+    (
+        .clk_i      (clk_i),
+        .rst_i      (rst_i),
+        .valid_i    (is_muldiv),
+        .op_i       (d_alu_op_sel),
+        .kill_i     (jump_decision),
+        .a_i        (rf_rs1),
+        .b_i        (rf_rs2),
+        .result_o   (muldiv_result),
+        .stall_o    (waiting_for_muldiv)
+    );
+    `else
+    wire waiting_for_muldiv = 1'b0;
+    `endif // EN_RVM
 
 
 

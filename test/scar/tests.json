@@ -45,5 +45,8 @@
     {"name":"div", "srcs":["tests/div.S"], "assertion_file": "tests/div.asrt"},
     {"name":"divu", "srcs":["tests/divu.S"], "assertion_file": "tests/divu.asrt"},
     {"name":"rem", "srcs":["tests/rem.S"], "assertion_file": "tests/rem.asrt"},
-    {"name":"remu", "srcs":["tests/remu.S"], "assertion_file": "tests/remu.asrt"}
+    {"name":"remu", "srcs":["tests/remu.S"], "assertion_file": "tests/remu.asrt"},
+    {"name":"mul_edge", "srcs":["tests/mul_edge.S"], "assertion_file": "tests/mul_edge.asrt"},
+    {"name":"div_edge", "srcs":["tests/div_edge.S"], "assertion_file": "tests/div_edge.asrt"},
+    {"name":"divu_edge", "srcs":["tests/divu_edge.S"], "assertion_file": "tests/divu_edge.asrt"}
 ]

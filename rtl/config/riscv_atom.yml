@@ -44,9 +44,11 @@ design:
         - $[env.RVATOM]/rtl/core/AtomRV.v
         - $[env.RVATOM]/rtl/core/CSR_Unit.v
         - $[env.RVATOM]/rtl/core/Decode.v
+        - $[env.RVATOM]/rtl/core/MulDiv.v
         - $[env.RVATOM]/rtl/core/RegisterFile.v
         - $[env.RVATOM]/rtl/core/RVC_Aligner.v
         - $[env.RVATOM]/rtl/core/RVC_Decoder.v
+        - $[env.RVATOM]/rtl/lib/Divider.v
         - $[env.RVATOM]/rtl/core/AtomRV_wb.v
 
       vincdirs:

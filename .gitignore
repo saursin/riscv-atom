@@ -12,6 +12,9 @@ docs/_build/
 python/
 __pycache__/
 .pytest_cache/
+.venv/
+sim_build_*/
+results.xml
 .atomsim_history
 simport
 userport
