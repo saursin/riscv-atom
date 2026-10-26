@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////   
-//  File        : simpleuart_wb.v
+//  File        : UART.v
 //  Author      : Saurabh Singh (saurabh.s99100@gmail.com)
-//  Description : Wishbone wrapper for simpleuart.v by clifford wolf
+//  Description : Wishbone UART (UART_core with optional rx/tx FIFOs)
 ////////////////////////////////////////////////////////////////////   
 
 `default_nettype none

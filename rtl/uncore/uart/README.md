@@ -83,7 +83,5 @@ Yosys was used to analyze Logic utilization for Xilinx 7 series FPGAs
 
 | **Design**    | **LUTS** |
 |---------------|----------|
-| simpleuart    | 410      |
-| simpleuart_wb | 428      |
 | UART_core     | 411      |
 | UART          | 506      |
