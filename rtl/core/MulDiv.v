@@ -1,12 +1,14 @@
 ////////////////////////////////////////////////////////////////////
 //  File        : MulDiv.v
 //  Description : M-extension execution unit for Atom core.
-//      MUL/MULH/MULHSU/MULHU : single cycle (33x33 signed multiply)
-//      DIV/DIVU/REM/REMU     : iterative divider (rtl/lib/Divider.v);
-//                              stall_o stays high until the result is ready
+//      MUL/MULH/MULHSU/MULHU : 2 cycles (33x33 signed multiply with a
+//                              registered product, which FPGA flows can
+//                              absorb into the DSP output register)
+//      DIV/DIVU/REM/REMU     : iterative divider (rtl/lib/Divider.v)
+//      stall_o stays high until the result is ready.
 //
-//      kill_i abandons an in-flight division (its instruction was
-//      flushed by a trap); the late result is ignored.
+//      kill_i abandons an in-flight operation (its instruction was
+//      flushed by a trap); a late division result is ignored.
 ////////////////////////////////////////////////////////////////////
 `include "Defs.vh"
 `default_nettype none
@@ -49,7 +51,26 @@ module MulDiv
     /* verilator lint_off UNUSED */
     wire signed [65:0] mul_full = mul_a_ext * mul_b_ext;
     /* verilator lint_on UNUSED */
-    wire [31:0] mul_result = use_high_result ? mul_full[63:32] : mul_full[31:0];
+
+    // Cycle 1 computes and registers the full product (stalling); cycle 2
+    // writes it back. The register sits directly on the multiplier output.
+    wire is_mul = valid_i & (sel_mul | sel_mulh | sel_mulhsu | sel_mulhu);
+
+    reg [63:0]  mul_product;
+    reg         mul_done;       // product register holds this instruction's result
+
+    always @(posedge clk_i) begin
+        mul_product <= mul_full[63:0];
+    end
+
+    always @(posedge clk_i) begin
+        if (rst_i || kill_i)
+            mul_done <= 1'b0;
+        else
+            mul_done <= is_mul && !mul_done;
+    end
+
+    wire [31:0] mul_result = use_high_result ? mul_product[63:32] : mul_product[31:0];
 
     ////////////////////////////////////////////////////////////////
     // Divide
@@ -96,6 +117,6 @@ module MulDiv
     ////////////////////////////////////////////////////////////////
     // Outputs
     assign result_o = is_div_op ? div_result : mul_result;
-    assign stall_o  = is_div && !div_valid;
+    assign stall_o  = (is_div && !div_valid) || (is_mul && !mul_done);
 
 endmodule
