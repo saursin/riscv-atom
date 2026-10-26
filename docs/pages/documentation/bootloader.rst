@@ -55,12 +55,18 @@ In this mode, the bootloader obtains the program binary image from UART using th
 
 Transferring files over UART
 -----------------------------
-RISC-V Atom project provides the ``xmsend.py`` python script that can be used to transmit binary files over UART. *xmsend*
-can be used as follows. 
+RISC-V Atom provides ``atomterm``, a serial console (similar to *litex_term*) that also uploads binaries to the
+bootloader. With ``--bin``, the file is sent automatically when the bootloader asks for it, and the session continues
+as a console, so the program's output appears in the same terminal.
 
 .. code-block:: bash
 
-    $ xmsend.py -b 115200 -p /dev/ttyUSB0 firmware.bin
+    $ atomterm /dev/ttyUSB0 -b 115200 --bin firmware.bin
+
+Press ``Ctrl-]`` to exit and ``Ctrl-U`` to upload the ``--bin`` file manually. ``atomterm`` requires *pyserial*.
 
 .. tip::
-    Make sure that no other process (like screen) is using the serial port before invoking the xmsend script. 
+    Make sure that no other process (like screen) is using the serial port before starting atomterm.
+
+    In simulation (AtomSim with a virtual UART), the bootloader cannot keep up with an unpaced upload; add
+    ``--byte-delay 0.005``.

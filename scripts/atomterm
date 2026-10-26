@@ -1,0 +1,339 @@
+#!/usr/bin/env python3
+"""atomterm: serial console for RISC-V Atom (in the spirit of litex_term).
+
+Connects a terminal to the SoC UART and uploads binaries to the bootloader
+over XMODEM-CRC. With --bin, the file is sent automatically when the
+bootloader asks for it (uartboot), and the session continues as a console.
+
+Keys:  Ctrl-]  exit
+       Ctrl-U  upload a file now (XMODEM). The prompt has line editing, history
+               and Tab completion of paths; '!cmd' runs a shell command
+               (e.g. !ls, !pwd); empty input picks --bin, Ctrl-C cancels.
+
+The port is reopened automatically if it disappears (e.g. USB re-plug).
+"""
+import argparse
+import binascii
+import glob
+import os
+import select
+import subprocess
+import sys
+import termios
+import threading
+import time
+
+try:
+    import serial
+except ImportError:
+    sys.exit("atomterm: pyserial is required (pip install pyserial)")
+
+try:
+    import readline     # line editing, history and Tab completion for the upload prompt
+except ImportError:
+    readline = None
+
+KEY_EXIT = 0x1D     # Ctrl-]
+KEY_UPLOAD = 0x15   # Ctrl-U
+
+# printed by the bootloader before it starts the XMODEM handshake (uartboot.c)
+UARTBOOT_PROMPT = b"Send a binary file using xmodem"
+
+SOH, EOT, ACK, NAK, CAN, CRC_REQ, PAD = b"\x01", b"\x04", b"\x06", b"\x15", b"\x18", b"C", b"\x1a"
+
+
+def info(msg):
+    sys.stdout.write(f"\r\n\033[36m[atomterm] {msg}\033[0m\r\n")
+    sys.stdout.flush()
+
+
+def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10):
+    """Send data with XMODEM (128-byte blocks, CRC-16 or checksum). Returns True on success.
+    byte_delay paces the bytes for slow receivers (e.g. the bootloader in simulation)."""
+    def write(buf):
+        if not byte_delay:
+            ser.write(buf)
+            return
+        for b in buf:
+            ser.write(bytes([b]))
+            time.sleep(byte_delay)
+
+    deadline = time.time() + handshake_timeout
+    use_crc = None
+    while time.time() < deadline:
+        c = ser.read(1)
+        if c == CRC_REQ:
+            use_crc = True
+            break
+        if c == NAK:
+            use_crc = False
+            break
+        if c == CAN:
+            info("xmodem: cancelled by receiver")
+            return False
+    if use_crc is None:
+        info("xmodem: no handshake from receiver")
+        return False
+
+    data += PAD * (-len(data) % 128)
+    nblocks = len(data) // 128
+    for i in range(nblocks):
+        blk = data[128 * i:128 * (i + 1)]
+        seq = (i + 1) & 0xFF
+        chk = binascii.crc_hqx(blk, 0).to_bytes(2, "big") if use_crc else bytes([sum(blk) & 0xFF])
+        pkt = SOH + bytes([seq, 0xFF - seq]) + blk + chk
+        for _ in range(retries):
+            write(pkt)
+            r = ser.read(1)
+            if r == ACK:
+                break
+            if r == CAN:
+                info("xmodem: cancelled by receiver")
+                return False
+        else:
+            ser.write(CAN * 3)
+            info(f"xmodem: block {i + 1} not acknowledged, giving up")
+            return False
+        sys.stdout.write(f"\r\033[36m[atomterm] xmodem: {i + 1}/{nblocks} blocks\033[0m")
+        sys.stdout.flush()
+
+    for _ in range(retries):
+        ser.write(EOT)
+        if ser.read(1) == ACK:
+            info(f"xmodem: sent {len(data)} bytes")
+            return True
+    info("xmodem: EOT not acknowledged")
+    return False
+
+
+def open_port(port, baud):
+    return serial.Serial(port, baud, timeout=0.05)
+
+
+def looks_like_text(data):
+    """True if most bytes are printable ASCII or line control (used for the baud hint)."""
+    ok = sum(1 for b in data if 32 <= b < 127 or b in (9, 10, 13))
+    return ok >= len(data) * 0.7
+
+
+def complete_path(text, state):
+    """readline completer for file paths (directories get a trailing '/')."""
+    matches = sorted(glob.glob(os.path.expanduser(text) + "*"))
+    matches = [m + "/" if os.path.isdir(m) else m for m in matches]
+    return matches[state] if state < len(matches) else None
+
+
+class Console:
+    def __init__(self, ser, port, baud, binfile, hexmode, byte_delay, log, enter_after_upload):
+        self.ser = ser
+        self.port = port
+        self.baud = baud
+        self.binfile = binfile
+        self.hexmode = hexmode
+        self.byte_delay = byte_delay
+        self.log = log
+        self.enter_after_upload = enter_after_upload
+        self.lock = threading.Lock()        # owner of serial reads (reader thread or upload)
+        self.upload_req = threading.Event()
+        self.stop = threading.Event()
+        self.connected = threading.Event()
+        self.connected.set()
+        self.prompting = threading.Event()  # upload prompt open: hold back serial output
+        self.held = []
+
+    def reconnect(self):
+        """Wait for the port to come back (e.g. USB re-plug); returns False if stopping."""
+        info(f"serial port lost, waiting for {self.port} (Ctrl-] exits)")
+        self.connected.clear()
+        try:
+            self.ser.close()
+        except Exception:
+            pass
+        while not self.stop.is_set():
+            try:
+                self.ser = open_port(self.port, self.baud)
+                self.connected.set()
+                info(f"reconnected to {self.port}")
+                return True
+            except serial.SerialException:
+                time.sleep(0.5)
+        return False
+
+    def reader(self):
+        window = b""
+        sample = b""        # first bytes after (re)connect, for the wrong-baud hint
+        while not self.stop.is_set():
+            try:
+                with self.lock:
+                    data = self.ser.read(self.ser.in_waiting or 1)
+            except (serial.SerialException, OSError):
+                if not self.reconnect():
+                    return
+                window = sample = b""
+                continue
+            if not data:
+                continue
+            if self.prompting.is_set():
+                self.held.append(data)
+            else:
+                self.show(data)
+            if self.log:
+                self.log.write(data)
+                self.log.flush()
+            if sample is not None:
+                sample += data
+                if len(sample) >= 32:
+                    if not looks_like_text(sample):
+                        info(f"received data does not look like text: check --baud (now {self.baud})")
+                    sample = None
+            window = (window + data)[-len(UARTBOOT_PROMPT) * 2:]
+            if self.binfile and UARTBOOT_PROMPT in window:
+                window = b""
+                self.upload_req.set()
+
+    def show(self, data):
+        if self.hexmode:
+            out = "".join(f"{b:02x} {chr(b) if 32 <= b < 127 else '.'}\r\n" for b in data)
+            sys.stdout.write(out)
+        else:
+            sys.stdout.buffer.write(data)
+        sys.stdout.flush()
+
+    def upload(self, path=None):
+        path = path or self.binfile
+        if not path:
+            info("no file to upload (give --bin, or a path at the Ctrl-U prompt)")
+            return
+        try:
+            data = open(path, "rb").read()
+        except OSError as e:
+            info(f"cannot read {path}: {e}")
+            return
+        info(f"uploading {path} ({len(data)} bytes)")
+        old_timeout = self.ser.timeout
+        with self.lock:
+            self.ser.timeout = 5
+            try:
+                ok = xmodem_send(self.ser, data, self.byte_delay)
+            finally:
+                self.ser.timeout = old_timeout
+        if ok and self.enter_after_upload:
+            self.ser.write(b"\r")       # bootloader waits for ENTER after uartboot
+
+    def ask_path(self, fd, cooked, raw):
+        """Prompt for a file to upload; returns the path, or None if cancelled."""
+        default = f" [{self.binfile}]" if self.binfile else ""
+        prompt = f"\001\033[36m\002[atomterm] upload file{default}: \001\033[0m\002"
+        if readline:
+            readline.set_completer_delims(" \t\n")
+            readline.parse_and_bind("tab: complete")
+            readline.set_completer(complete_path)
+        self.prompting.set()
+        termios.tcsetattr(fd, termios.TCSANOW, cooked)
+        try:
+            sys.stdout.write("\r\n")
+            while True:
+                line = input(prompt).strip()
+                if not line.startswith("!"):
+                    break
+                subprocess.run(line[1:], shell=True)
+        except (EOFError, KeyboardInterrupt):
+            line = None
+        finally:
+            termios.tcsetattr(fd, termios.TCSANOW, raw)
+            self.prompting.clear()
+            for data in self.held:
+                self.show(data)
+            self.held.clear()
+        if line is None:
+            info("upload cancelled")
+            return None
+        path = os.path.expanduser(line) if line else self.binfile
+        if not path:
+            info("upload cancelled (no file given)")
+            return None
+        if not self.binfile:
+            self.binfile = path     # remembered as the default (and for auto-upload)
+        return path
+
+    def run(self):
+        fd = sys.stdin.fileno()
+        interactive = os.isatty(fd)     # otherwise output only (stdin piped or /dev/null)
+        if interactive:
+            old = termios.tcgetattr(fd)
+            new = termios.tcgetattr(fd)
+            # keys straight through: no line buffering, echo, signals or CR->NL mapping;
+            # output processing (NL->CRNL) stays on
+            new[0] &= ~(termios.ICRNL | termios.IXON)
+            new[3] &= ~(termios.ICANON | termios.ECHO | termios.ISIG | termios.IEXTEN)
+            termios.tcsetattr(fd, termios.TCSANOW, new)
+        thr = threading.Thread(target=self.reader, daemon=True)
+        thr.start()
+        try:
+            while not self.stop.is_set():
+                if self.upload_req.is_set():
+                    self.upload_req.clear()
+                    self.upload()
+                if not interactive:
+                    time.sleep(0.05)
+                    continue
+                if not select.select([fd], [], [], 0.05)[0]:
+                    continue
+                keys = os.read(fd, 64)
+                if KEY_EXIT in keys:
+                    break
+                if KEY_UPLOAD in keys:
+                    path = self.ask_path(fd, old, new)
+                    if path is not None:
+                        self.upload(path)
+                    keys = keys.replace(bytes([KEY_UPLOAD]), b"")
+                if keys and self.connected.is_set():
+                    try:
+                        self.ser.write(keys)
+                    except (serial.SerialException, OSError):
+                        pass                # reader thread handles the reconnect
+        except KeyboardInterrupt:       # non-interactive: Ctrl-C / SIGINT exits
+            pass
+        finally:
+            self.stop.set()
+            thr.join(timeout=1)
+            if interactive:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+            info("bye")
+
+
+def main():
+    p = argparse.ArgumentParser(description="Serial console for RISC-V Atom; uploads binaries "
+                                "to the bootloader over XMODEM. Ctrl-] exits, Ctrl-U uploads.")
+    p.add_argument("port", nargs="?", help="serial port, e.g. /dev/ttyUSB1")
+    p.add_argument("-p", "--port", dest="port_opt", metavar="PORT", help="serial port (alternative to the positional argument)")
+    p.add_argument("-b", "--baud", type=int, default=115200, help="baud rate (default: 115200)")
+    p.add_argument("--bin", help="binary to upload when the bootloader requests it (uartboot)")
+    p.add_argument("--hex", action="store_true", help="show received bytes as hex")
+    p.add_argument("--byte-delay", type=float, default=0.0, metavar="SEC",
+                   help="delay between uploaded bytes, for slow receivers such as atomsim "
+                        "(e.g. 0.005); default: 0")
+    p.add_argument("--log", metavar="FILE", help="also append everything received to FILE")
+    p.add_argument("--enter-after-upload", action="store_true",
+                   help="send ENTER after a successful upload (the bootloader waits for it)")
+    args = p.parse_args()
+    port = args.port_opt or args.port
+    if not port:
+        p.error("a serial port is required")
+
+    try:
+        ser = open_port(port, args.baud)
+    except serial.SerialException as e:
+        sys.exit(f"atomterm: {e}")
+    log = open(args.log, "ab") if args.log else None
+    info(f"connected to {port} at {args.baud} baud (Ctrl-] exit, Ctrl-U upload)")
+    con = Console(ser, port, args.baud, args.bin, args.hex, args.byte_delay, log,
+                  args.enter_after_upload)
+    con.run()
+    con.ser.close()
+    if log:
+        log.close()
+
+
+if __name__ == "__main__":
+    main()
