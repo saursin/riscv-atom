@@ -11,7 +11,7 @@ _start:
     li a4, 0x1b0b1d0d
     nop
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 subr:
     add a0, a0, 1

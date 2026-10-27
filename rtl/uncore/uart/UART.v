@@ -42,7 +42,7 @@ wire    [3:0]   we  = {4{wb_we_i & wb_stb_i}} & wb_sel_i;
 
 // registers
 reg     [7:0]   reg_lcr = 0;
-reg     [31:0]  reg_div = 0;
+reg     [31:0]  reg_div /*verilator public*/ = 0;   // read by atomsim's UART model
 
 wire reg_data_we = (wb_adr_i == 2'b00) && wb_we_i && wb_stb_i && wb_sel_i[0];
 wire reg_data_re = (wb_adr_i == 2'b00) && !wb_we_i && wb_stb_i;
@@ -119,7 +119,7 @@ always @(*) /* COMBINATORIAL */ begin
     case(wb_adr_i)
         2'b00: /* THR-RBR */    wb_dat_o = {24'd0, FIFO_EN ? rxfifo_data_o: core_reg_data};
         2'b01: /* LCR */        wb_dat_o = {24'd0, reg_lcr};
-        2'b10: /* LSR */        wb_dat_o = {27'd0, core_rx_parity_bit, core_err_parity, core_err_framing, 
+        2'b10: /* LSR */        wb_dat_o = {26'd0, tx_idle, core_rx_parity_bit, core_err_parity, core_err_framing, 
                                                 (FIFO_EN ? ~txfifo_full_o : core_send_buf_empty), 
                                                 (FIFO_EN ? ~rxfifo_empty_o: core_recv_buf_valid)
                                             };
@@ -129,6 +129,9 @@ end
 
 wire    [7:0]   core_reg_data;
 wire            core_send_buf_empty;
+
+// transmitter idle: nothing queued and the last character fully sent
+wire            tx_idle = (FIFO_EN ? txfifo_empty_o : 1'b1) & core_send_buf_empty;
 wire            core_recv_buf_valid;
 wire            core_err_framing;
 wire            core_err_parity;

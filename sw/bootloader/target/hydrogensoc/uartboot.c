@@ -12,11 +12,10 @@
 #define XMODEM_WAIT_TIMEOUT_SEC 120
 
 // Getchar timeout
-#ifdef SIM
-#define GETCHAR_TIMEOUT_MS 10
-#else
 #define GETCHAR_TIMEOUT_MS 50
-#endif
+
+// Wait for the sender after each 'C'
+#define C_INTERVAL_MS 1000
 
 #define XMODEM_PACKET_SZ 128
 
@@ -146,11 +145,9 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
     clock_t t_end = cycle() + (((clock_t) XMODEM_WAIT_TIMEOUT_SEC)*((clock_t) CLK_FREQ));
     while (cycle() < t_end)
     {
-        #ifndef SIM
-            sleep_ms(1000);
-        #endif
         _outbyte('C');
-        int c = _inbyte(GETCHAR_TIMEOUT_MS);
+        bootled_toggle();   // blink while waiting for the sender
+        int c = _inbyte(C_INTERVAL_MS);
         if (c == (int)-1)
             continue;   // not heard from sender
       
@@ -203,6 +200,7 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
         
         // acknowledge
         _outbyte(s==SUCCESS ? ACK : NAK);
+        bootled_toggle();
 
         packetnum++;
     }

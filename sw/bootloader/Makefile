@@ -1,8 +1,5 @@
 #h# ***** Makefile to build RISC-V Atom bootloader *****
 
-#v# Build for simulation
-sim?=1
-
 #v# Enable prints in bootloader
 prints?=1
 
@@ -24,9 +21,6 @@ CFLAGS    += -mabi=$(RVATOM_ABI)
 CFLAGS    += -Wall -nostartfiles -ffreestanding -g -Os
 CFLAGS    += -I $(RVATOM_LIB)/include -I include -I target/$(soctarget)
 CFLAGS    += $(RVATOM_CDEFINES)
-ifeq ($(sim), 1)
-    CFLAGS+= -DSIM
-endif
 
 ifeq ($(prints), 1)
     CFLAGS+= -DEN_PRINTS

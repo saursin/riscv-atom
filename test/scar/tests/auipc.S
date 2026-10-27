@@ -21,7 +21,7 @@ sub x6, x6, x9
 sub x7, x7, x9
 sub x8, x8, x9
 
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # x1 == 0x00433000

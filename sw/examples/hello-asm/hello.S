@@ -1,16 +1,12 @@
 .global main
 .text
 
-#ifdef TARGET_ATOMBONES
-.equ TX_ADDRESS, 0x08000000
-#else
 .equ TX_ADDRESS, 0x40000000
-#endif
 
 main:
     la a0, msg
     jal putstr
-    ebreak
+    j _exit             # libcatom: flush UART, exit hint, then spin
 
 putstr:
     # s0 = a0 = base address of string
@@ -43,6 +39,11 @@ putchar:
 
     # t1 = tx_address
     li t1, TX_ADDRESS
+
+    # wait for space in the TX FIFO (LSR bit 1)
+1:  lw t2, 8(t1)
+    andi t2, t2, 2
+    beqz t2, 1b
 
     # store character
     sb  a0, 0(t1)

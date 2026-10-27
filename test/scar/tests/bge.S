@@ -5,7 +5,7 @@ _start:
     li x2, 0
 
     bge x1,x2,L1
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 L1:
     li x10, 0x00000001
 
@@ -21,7 +21,7 @@ L1:
     li x2, -3
 
     bge x1,x2,L2
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 L2:
     li x12, 0x00000003
 
@@ -37,7 +37,7 @@ L2:
     li x2, 0
 
     bge x1,x2,L3
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 L3:
     li x14, 0x00000005
 
@@ -51,10 +51,10 @@ L3:
 
 
 exit:
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # x10 == 0x00000001

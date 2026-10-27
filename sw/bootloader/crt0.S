@@ -48,6 +48,6 @@ _start:
 
 
 _exit:
-    // Exit simulation
-    ebreak
-    j _exit
+    jal serial_flush        // let the UART finish sending
+    slti x0, x0, 1          // exit hint: atomsim stops here, NOP on hardware
+1:  j 1b

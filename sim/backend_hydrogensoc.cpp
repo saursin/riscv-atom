@@ -136,6 +136,9 @@ void Backend_atomsim::UART()
             bb_uart_->tx_fifo.push(rchar);
     }
 
+    // decode at the UART's programmed rate: divisor + 2 cycles per bit (see UART_core)
+    bb_uart_->set_ratio(tb->m_core->HydrogenSoC->uart->reg_div + 2);
+
     // evaluate bbuart state machine for current cycle
     bb_uart_->eval();
 }

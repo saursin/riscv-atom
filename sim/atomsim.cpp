@@ -3,7 +3,7 @@
 #include "util.hpp"
 
 #include TARGET_HEADER
-#define RV_INSTR_EBREAK 0x100073
+#define RV_INSTR_EXIT_HINT 0x00102013   // slti x0, x0, 1: custom HINT (NOP on hardware), libcatom exit
 
 Atomsim::Atomsim(Atomsim_config sim_config, Backend_config bk_config):
     sim_config_(sim_config),
@@ -79,11 +79,11 @@ int Atomsim::run()
                 pending_steps = 0;
             }
 
-            // check ebreak
-            if(backend_.read_reg("ir") == RV_INSTR_EBREAK) {
-                printf("EBreak hit at %ld ticks, PC=%s0x%08lx%s\n", backend_.get_total_tick_count() , ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
+            // check the exit hint
+            if(backend_.read_reg("ir") == RV_INSTR_EXIT_HINT) {
+                printf("Exit hit at %ld ticks, PC=%s0x%08lx%s\n", backend_.get_total_tick_count() , ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
 
-                if(sim_config_.dump_on_ebreak_flag){  // For SCAR
+                if(sim_config_.dump_on_exit_flag){  // For SCAR
                     // Save original stdout fd before redirecting
                     int saved_stdout_fd = dup(fileno(stdout));
                     if(saved_stdout_fd == -1)
@@ -104,7 +104,7 @@ int Atomsim::run()
                         printf("State dumped to: %s\n", sim_config_.dump_file.c_str());
                 }
 
-                // ebreak hit while debug mode was enabled through cli
+                // exit hint hit while debug mode was enabled through cli
                 if(sim_config_.debug_flag) {
                     // back to interactive mode
                     in_debug_mode_ = true;

@@ -36,7 +36,7 @@ _start:
     la x12, var12
     lw x12, 0(x12)
 
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 
 

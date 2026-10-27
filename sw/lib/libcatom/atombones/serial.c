@@ -26,6 +26,11 @@ void serial_init(uint32_t baud_rate)
     stddev[DEV_STDOUT].write=__serial_write;
 }
 
+void serial_flush()
+{
+    // Not required for BFM UART (writes are taken by the simulator directly)
+}
+
 void serial_set_config(Serial_Config *cfg)
 {
     // Not Required for BFM URT

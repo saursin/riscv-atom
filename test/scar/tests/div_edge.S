@@ -36,7 +36,7 @@ _start:
 
     nop
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # s1  == 0x80000000    # INT_MIN / -1 = INT_MIN

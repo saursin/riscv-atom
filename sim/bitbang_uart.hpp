@@ -15,6 +15,9 @@ class BitbangUART
 
     BitbangUART(bool * rx_pin, bool * tx_pin, unsigned FR);
 
+    // cycles per bit; follows the SoC UART's programmed divisor
+    void set_ratio(unsigned fr) { FR = fr; }
+
     // needs to be called every cycle
     void eval() {
         rx_eval();

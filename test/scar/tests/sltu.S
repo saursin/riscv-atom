@@ -12,7 +12,7 @@ sltu a3, t3, t0
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a0 == 0x00000001

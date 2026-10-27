@@ -27,7 +27,7 @@ struct Atomsim_config
     bool verbose_flag       = false;    // set verbosity
     bool debug_flag         = false;    // start in debug mode
     bool trace_flag         = false;    // enable tracing
-    bool dump_on_ebreak_flag= false;    // Dump registers at ebreak (Used by SCAR)
+    bool dump_on_exit_flag= false;      // Dump registers at the exit hint (Used by SCAR)
     bool no_color_flag      = false;    // Disable colored output
     bool no_banner_flag     = false;    // Disable banner flag
 

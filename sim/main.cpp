@@ -103,7 +103,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		("t,trace", "Enable VCD tracing ", cxxopts::value<bool>(sim_config.trace_flag)->default_value(default_sim_config.trace_flag?"true":"false"))
 		("trace-file", "Specify trace file", cxxopts::value<std::string>(sim_config.trace_file)->default_value(default_sim_config.trace_file))
 		("dump-file", "Specify dump file", cxxopts::value<std::string>(sim_config.dump_file)->default_value(default_sim_config.dump_file))
-		("ebreak-dump", "Enable processor state dump at hault", cxxopts::value<bool>(sim_config.dump_on_ebreak_flag)->default_value(default_sim_config.dump_on_ebreak_flag?"true":"false"))
+		("exit-dump", "Enable processor state dump at exit", cxxopts::value<bool>(sim_config.dump_on_exit_flag)->default_value(default_sim_config.dump_on_exit_flag?"true":"false"))
 		("signature", "Enable signature dump at hault (Used for riscv compliance tests)", cxxopts::value<std::string>(sim_config.signature_file)->default_value(default_sim_config.signature_file))
 		;
 

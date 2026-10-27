@@ -20,7 +20,7 @@ xor a7, a4, a5
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a0 == 0x1d0c0054

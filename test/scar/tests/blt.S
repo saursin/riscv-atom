@@ -44,7 +44,7 @@ blt x1, x2, pass6
 li x15, 0
 
 pass6:
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # x10 == 0x00000001

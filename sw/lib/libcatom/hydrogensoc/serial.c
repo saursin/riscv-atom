@@ -30,6 +30,7 @@
 #define UART_REG_LCR_TEMT 0b00000010
 #define UART_REG_LCR_FERR 0b00000100
 #define UART_REG_LCR_PERR 0b00001000
+#define UART_REG_LSR_TXIDLE 0b00100000
 
 int __serial_read(char * bf, uint32_t sz){
     assert(sz==1);
@@ -96,6 +97,14 @@ void serial_write(char c)
     while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
         asm volatile("");
     REG8(UART_ADDR, UART_REG_THR) = c;
+}
+
+
+void serial_flush()
+{
+    // Wait till the TX FIFO is empty and the last character has been sent
+    while(!(REG32(UART_ADDR, UART_REG_LSR) & UART_REG_LSR_TXIDLE))
+        asm volatile("");
 }
 
 

@@ -12,7 +12,7 @@ slli t3, t3, 31
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # t0 == 0xdeadbeef

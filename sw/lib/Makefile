@@ -1,8 +1,5 @@
 #h# ***** Makefile for Building libcatom *****
 
-#v# Compile for simulation
-sim?= 1
-
 #v# Enable debug build
 debug?= 0
 
@@ -31,10 +28,6 @@ CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include
 CFLAGS+= $(RVATOM_CDEFINES)
 ifeq ($(optimizable), 1)	# For optimizable code
     CFLAGS+= -fdata-sections -ffunction-sections
-endif
-
-ifeq ($(sim), 1)
-    CFLAGS+= -DSIM
 endif
 
 ifeq ($(debug), 1)

@@ -8,7 +8,7 @@ _start:
 
     addi a0, a0, 89
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 function:
     add a0, a0, a1

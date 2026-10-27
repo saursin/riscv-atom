@@ -31,7 +31,7 @@ Following are the arguments that may be passed to the AtomSim executable.
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 |        | --dump-file arg     | Specify dump file                              | dump.txt                               |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
-|        | --ebreak-dump       | Enable processor state dump at hault           |                                        |
+|        | --exit-dump         | Enable processor state dump at exit            |                                        |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 |        | --signature arg     | Enable signature dump at hault                 |                                        |
 |        |                     | (Used for riscv compliance tests)              | ""                                     |

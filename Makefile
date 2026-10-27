@@ -15,9 +15,6 @@
 #====================================================================#
 #h# ***** RISC-V Atom Root Makefile *****
 
-#v# Build for simulation
-sim?=1
-
 #v# Enable debug build of atomsim
 debug?=0
 
@@ -46,7 +43,7 @@ default: sim lib boot  				#t# Build atomsim, libcatom and bootloader
 	@printf "\n$(CLR_GR)==============================\n"
 	@printf "       Build Succesful!\n"
 	@printf "==============================$(CLR_NC)\n"
-	@printf " soctarget: $(soctarget), sim: $(sim), debug: $(debug)\n"
+	@printf " soctarget: $(soctarget), debug: $(debug)\n"
 
 all : doxy-pdf default				#t# Build default with docs
 
@@ -93,14 +90,14 @@ clean-sim:							#t# Clean atomsim build files
 .PHONY: test
 test: sim lib						#t# Test the build using banner example
 	$(call print_msg_root,Running example on Atomsim)
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner sim=1 clean compile run
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner clean compile run
 
 
 # ======== Bootloader ========
 .PHONY : boot
 boot: lib                     		#t# Build bootloader for given target
 	$(call print_msg_root,Building bootloader)
-	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget) sim=$(sim)
+	$(MAKE) $(MKFLAGS) -C $(bootloader_dir) soctarget=$(soctarget)
 
 
 .PHONY: clean-boot
@@ -154,7 +151,7 @@ clean-elfdump:					    #t# Clean elfdump directory
 .PHONY: lib
 lib:								#t# compile software libraries
 	$(call print_msg_root,Building libcatom)
-	$(MAKE) $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget) sim=$(sim)
+	$(MAKE) $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget)
 
 
 .PHONY: clean-lib

@@ -17,7 +17,7 @@ _start:
     lbu a2, 1(t0)
 
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # t1 == 0x00000071

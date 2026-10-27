@@ -594,6 +594,14 @@ module Decode
 
         `endif // EN_RVM
 
+            /* OPCODE: MISC-MEM */
+            17'b???????_000_0001111,                            /* FENCE */
+            17'b???????_001_0001111:                            /* FENCE.I */
+            begin
+                // NOP: in-order core, blocking bus, no caches
+                instr_scope = "FENCE";
+            end
+
             /* OPCODE: SYSTEM */
             17'b???????_???_1110011:
             begin

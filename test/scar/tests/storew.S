@@ -21,7 +21,7 @@ lw a4, 12(t0)        # Store the word in t1 to the second word slot of address s
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a1 == 0x9b7a7971

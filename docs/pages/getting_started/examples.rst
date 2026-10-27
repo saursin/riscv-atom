@@ -20,7 +20,7 @@ provided makefile as following.
 
 .. code-block:: bash
 
-  $ make soctarget=atombones ex=hello-asm sim=1 compile
+  $ make soctarget=atombones ex=hello-asm compile
 
 The above command should generate a ``hello.elf`` file in the ``hello-asm`` directory.
 
@@ -46,7 +46,7 @@ Now fire up AtomSim and provide the generated elf file as argument.
   Hello World!
         -- from Assembly
 
-  EBreak hit at 0x2000014a
+  Exit hit at 0x2000014a
   Exiting..
 
 You should see *Hello world* message on the screen.
@@ -66,7 +66,7 @@ We can compile other examples also in the similar fashion by using the following
 
 .. code-block:: bash
 
-  $ make soctarget=<TARGET> ex=<EXAMPLE> sim=1 compile
+  $ make soctarget=<TARGET> ex=<EXAMPLE> compile
   $ make soctarget=<TARGET> ex=<EXAMPLE> run
 
 .. note::
@@ -122,7 +122,7 @@ Banner Example
   CODE RAM : 0x20000000 (40960 bytes)
   DATA RAM : 0x2000a000 (8192 bytes)
   Exiting...
-  EBreak hit at 0x2000007c
+  Exit hit at 0x2000007c
   Exiting..
 
 

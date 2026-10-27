@@ -3,19 +3,6 @@
 #include <stdint.h>
 
 // Baud Rates
-#ifdef SIM
-/* CLKfreq/3 Gives highest possible baud rate, for sim (div=1) 
- */
-#define UART_BAUD_4800      CLK_FREQ/3
-#define UART_BAUD_9600      CLK_FREQ/3
-#define UART_BAUD_14400     CLK_FREQ/3
-#define UART_BAUD_19200     CLK_FREQ/3
-#define UART_BAUD_28800     CLK_FREQ/3
-#define UART_BAUD_38400     CLK_FREQ/3
-#define UART_BAUD_57600     CLK_FREQ/3
-#define UART_BAUD_115200    CLK_FREQ/3
-#define UART_BAUD_DEFAULT   CLK_FREQ/3
-#else
 #define UART_BAUD_4800      4800
 #define UART_BAUD_9600      9600
 #define UART_BAUD_14400     14400
@@ -25,7 +12,6 @@
 #define UART_BAUD_57600     57600
 #define UART_BAUD_115200    115200
 #define UART_BAUD_DEFAULT   115200
-#endif
 
 /**
  * @brief Serial configuration struct
@@ -92,3 +78,9 @@ void serial_write(char c);
  * @return char 
  */
 char serial_read();
+
+/**
+ * @brief Wait until every character written so far has been sent
+ * (TX FIFO empty and transmitter idle)
+ */
+void serial_flush();

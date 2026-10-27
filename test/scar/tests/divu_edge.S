@@ -32,7 +32,7 @@ _start:
 
     nop
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # s1 == 0xFFFFFFFF    # x / 0 = all ones

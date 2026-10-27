@@ -16,7 +16,7 @@ _start:
 
     nop
     nop
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a4 == 0x2468acf0

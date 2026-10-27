@@ -14,7 +14,7 @@ Libcatom can be built as follows.
 
 .. code-block:: bash
 
-  $ make soctarget=hydrogensoc sim=1
+  $ make soctarget=hydrogensoc lib
 
 
 .. tip::
@@ -22,5 +22,5 @@ Libcatom can be built as follows.
     while building AtomSim.
 
 .. note::
-    You must use ``sim=1`` option to build the library for simulation. If you see framing errors in UART output during 
-    simulation, most likely you haven't built the library and anything that uses it with ``sim=1``.
+    The same library and programs run in AtomSim and on hardware. AtomSim decodes UART output at the baud rate set in the
+    UART divisor register.

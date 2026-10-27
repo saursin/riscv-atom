@@ -90,7 +90,7 @@ _start:
     addi x31, x31, 4
 
 
-    ebreak
+    slti x0, x0, 1    # exit hint: atomsim stops here
 
 
 .data

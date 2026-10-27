@@ -138,7 +138,7 @@ def execute_test(test:dict, compile_outputs:dict, mute=True):
     DUMP_FILE = WORKDIR+f'/{test["name"]}.dump'
 
     EXEC = 'atomsim'
-    EXEC_FLAGS = ['--ebreak-dump', '--no-banner', '--maxitr', '100000', '--trace-file', VCD_FILE, '--dump-file', DUMP_FILE, '-v']
+    EXEC_FLAGS = ['--exit-dump', '--no-banner', '--maxitr', '100000', '--trace-file', VCD_FILE, '--dump-file', DUMP_FILE, '-v']
     # -----------------------------------
 
     # Execute test

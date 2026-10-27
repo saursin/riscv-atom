@@ -96,16 +96,16 @@ def test_instruction(test_case, atomsim, soctarget, linker_script, work_dir):
     result = subprocess.run(
         [
             atomsim,
-            "--ebreak-dump", "--no-banner",
-            "--maxitr", "100000",
+            "--exit-dump", "--no-banner",
+            "--maxitr", "1000000",   # boot ROM prints at the real baud first
             "--dump-file", str(dump_file),
             str(elf_file),
         ],
         capture_output=True, text=True,
     )
     assert result.returncode == 0, f"Simulation failed:\n{result.stderr or result.stdout}"
-    assert "EBreak hit" in result.stdout, \
-        f"ebreak was never reached (maxitr exceeded or early exit):\n{result.stdout}"
+    assert "Exit hit" in result.stdout, \
+        f"exit hint was never reached (maxitr exceeded or early exit):\n{result.stdout}"
     assert dump_file.exists() and dump_file.stat().st_size > 0, \
         "Dump file was not written"
 

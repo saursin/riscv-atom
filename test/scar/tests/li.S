@@ -11,7 +11,7 @@ li t2, 0xFFFFF343 # Load a 32-bit number to t2
 li x3, 0x01234567
 
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # t0 == 0x000000ff

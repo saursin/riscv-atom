@@ -21,7 +21,7 @@ additional useful information. Checkout :doc:`cli_args` for information on CLI o
   soctarget: hydrogensoc
   Initializing ram
   Initialization complete!
-  EBreak hit at 0x2000007c
+  Exit hit at 0x2000007c
   Exiting..
 
 

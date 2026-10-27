@@ -155,6 +155,10 @@ void Backend_atomsim::service_mem_req()
                 else
                     data_w.word = (uint32_t) -1;
             }
+            else if(daddr == UART_ADDR + 8) // UART LSR: TX always has space and is idle
+            {
+                data_w.word = 0b100010;
+            }
             else                    // Handle reads
             {
                 

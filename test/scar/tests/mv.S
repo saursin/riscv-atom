@@ -11,7 +11,7 @@ mv t2, t1 # Copy contents of register t0 to register t1
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # t0 == 0x00ff4a1a

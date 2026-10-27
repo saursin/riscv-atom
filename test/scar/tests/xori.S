@@ -18,7 +18,7 @@ xori a5, t5, 0x00f
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a0 == 0x00d0110a

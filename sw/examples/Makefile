@@ -3,9 +3,6 @@
 #v# Specify example to build (compulsory)
 ex?= None
 
-#v# Build for simulation
-sim?= 1
-
 #v# Vuart for make run example
 vuart?= None
 
@@ -110,10 +107,6 @@ ifeq ($(map), 1)
     LFLAGS += -Xlinker -Map $(executable).map
 endif
 
-ifeq ($(sim), 1)
-    CFLAGS += -DSIM
-endif
-
 
 .PHONY: compile
 compile: $(ex)/$(executable)    			#t# Compile specified example
@@ -150,11 +143,11 @@ clean:										#t# Clean executable
 
 
 all:										#t# Build all examples
-	@$(patsubst %/, make -s ex=% sim=1 compile;,${EXAMPLE_DIRS})
+	@$(patsubst %/, make -s ex=% compile;,${EXAMPLE_DIRS})
 
 
 run-all:									#t# Build & run all examples
-	@$(patsubst %/, printf "${CLR_CY}----------------------------------------------------${CLR_NC}\n"; make -s ex=% sim=1 run;,${EXAMPLE_DIRS})
+	@$(patsubst %/, printf "${CLR_CY}----------------------------------------------------${CLR_NC}\n"; make -s ex=% run;,${EXAMPLE_DIRS})
 
 
 .PHONY: clean-all

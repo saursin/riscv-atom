@@ -20,7 +20,7 @@ lui t6, 0x96dad
 
 nop
 nop
-ebreak
+slti x0, x0, 1    # exit hint: atomsim stops here
 
 #>>>ASSERT
 # a0 == 0xfffff000

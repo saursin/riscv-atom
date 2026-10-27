@@ -78,7 +78,7 @@ Once you're finished building the RISC-V Atom project, SCAR can be invoked from 
 How to Create Your Own Tests?
 ******************************
 #. Assembly file containing the test source code must have a ``_start`` label before the start of code.
-#. Assembly file must have a ``ebreak`` instraction after the end of code, this triggers the simulation to terminate.
+#. Assembly file must have the exit hint ``slti x0, x0, 1`` after the end of code, this triggers the simulation to terminate.
 #. Each test file must have a corresponding assertion file (``*.asrt``) both of which need to be specified in the JSON
    config file.
 #. The assertion file uses a python like syntax to specify one expressions per line; which could use physical register

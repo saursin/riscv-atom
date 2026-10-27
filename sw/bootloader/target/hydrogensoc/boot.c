@@ -1,7 +1,6 @@
 #include <platform.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 #include <gpio.h>
 
 #include "common.h"
@@ -19,15 +18,6 @@ extern uint32_t __approm_size;
 // Address offset at which image resides
 #define FLASH_IMG_OFFSET    0x000c0000
 
-// number of flashes to indicate entering of bootloader
-#define START_LED_FLASHES   3
-
-// number of flashes to indicate entering of user application
-#define END_LED_FLASHES   1
-
-// Time period of LED flashes
-#define LED_FLASH_TIMEPERIOD 100
-
 // Bootmodes
 #define BOOTMODE_FLASHBOOT      0
 #define BOOTMODE_JUMP_TO_RAM    1
@@ -38,26 +28,15 @@ extern uint32_t __approm_size;
 //-------------------------------------------------------
 
 /**
- * @brief Blink BOOTLED
- * 
- * @param pin led pin
- * @param count number of times to blink
- * @param period_ms time_period in of one ON & OFF
+ * @brief Toggle BOOTLED (progress indicator)
  */
-void led_blink(int pin, int count, int period_ms)
+void bootled_toggle()
 {
-    int halfperiod = period_ms >> 1;
-    #ifdef SIM
-    halfperiod = 0;
-    #endif
-
-    for(int i=0; i<count; i++) 
-    {
-        gpio_write(pin, HIGH);
-        sleep_ms(halfperiod);
-        gpio_write(pin, LOW);
-        sleep_ms(halfperiod);
-    }
+#ifdef SOC_EN_GPIO
+    static gpio_state_t state = HIGH;
+    state = (state == HIGH) ? LOW : HIGH;
+    gpio_write(BOOTLED_PIN, state);
+#endif
 }
 
 void * platform_init(){
@@ -69,8 +48,8 @@ void * platform_init(){
     gpio_setmode(BOOTMODE_PIN0, INPUT);
     gpio_setmode(BOOTMODE_PIN1, INPUT);
 
-    // Blink LED START_LED_FLASHES times (signal entering of bootloader)
-    led_blink(BOOTLED_PIN, START_LED_FLASHES, LED_FLASH_TIMEPERIOD);
+    // BOOTLED stays on while in the bootloader
+    gpio_write(BOOTLED_PIN, HIGH);
 
     // get bootmode
     uint8_t pin0_val = (uint8_t)gpio_read(BOOTMODE_PIN0);
@@ -118,10 +97,6 @@ void * platform_init(){
             }
     }
 
-    #ifdef SIM
-    wait_for_keypress = false;
-    #endif
-
     if(wait_for_keypress){
         puts("\nPress ENTER to continue...\n");
         while(serial_read()!='\r')
@@ -129,8 +104,8 @@ void * platform_init(){
     }
     
     #ifdef SOC_EN_GPIO
-    // Blink single (signal jump to user code)
-    led_blink(BOOTLED_PIN, END_LED_FLASHES, LED_FLASH_TIMEPERIOD);
+    // BOOTLED off: jumping to user code
+    gpio_write(BOOTLED_PIN, LOW);
     #endif
     
     // return start address of approm

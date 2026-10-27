@@ -6,7 +6,7 @@ soctarget?=hydrogensoc
 #v# Specify build directory
 build_dir?=build
 
-# keep synth (sim=0) lib/bootloader out of the sim workspace
+# keep synth lib/bootloader out of the sim workspace
 RVATOM_BUILD ?= $(abspath $(build_dir))
 
 _mk_check_env=1
@@ -26,8 +26,8 @@ default: build
 
 $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(call print_msg_root,Rebuilding libcatom and bootloader)
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) sim=0 clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/lib soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) clean build
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) clean build
 	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
 $(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)

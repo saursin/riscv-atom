@@ -23,5 +23,8 @@ typedef enum {
 
 xmod_status xmodemReceive(uint8_t * bf, uint32_t len);
 
+// Toggle the boot LED (progress indicator), defined in boot.c
+void bootled_toggle();
+
 // UART Boot: Copies data from uart stream to memory using XMODEM protocol
 void uartboot(uint8_t *dest, uint32_t len);
