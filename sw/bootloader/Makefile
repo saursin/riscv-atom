@@ -39,8 +39,9 @@ default: build
 .PHONY: build
 build: $(EXEC).elf			#t# Build bootloader
 
-$(EXEC).elf: $(SRCS) $(RVATOM_VARS_MK)
+$(EXEC).elf: $(SRCS) $(RVATOM_BUILD)/sw/lib/libcatom.a $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
+	$(CC) $(CFLAGS) -MM -MP -MT $@ $(SRCS) > $(EXEC).d	# header dependencies
 	$(CC) $(CFLAGS) -o $@ $(SRCS) $(LFLAGS)
 	$(OBJDUMP) -htD $@ > $(basename $@).lst
 	$(call print_msg,Generating hex,$(basename $@).hex)
@@ -49,3 +50,5 @@ $(EXEC).elf: $(SRCS) $(RVATOM_VARS_MK)
 .PHONY: clean
 clean:						#t# Clean build files
 	rm -f $(EXEC).*
+
+-include $(EXEC).d

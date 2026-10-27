@@ -26,6 +26,7 @@ CFLAGS    := -march=$(RVATOM_ISA)
 CFLAGS    += -mabi=$(RVATOM_ABI)
 CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include
 CFLAGS+= $(RVATOM_CDEFINES)
+CFLAGS+= -MMD -MP	# header dependencies (.d next to each object)
 ifeq ($(optimizable), 1)	# For optimizable code
     CFLAGS+= -fdata-sections -ffunction-sections
 endif
@@ -87,4 +88,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S $(RVATOM_VARS_MK)
 .PHONY: clean
 clean:								#t# Clean Build files
 	rm -rf $(OBJ_DIR)/* $(LIB) $(basename $(LIB)).lst
+
+-include $(OBJS:.o=.d)
 
