@@ -95,11 +95,11 @@ static int __fltprint(FILE *f, double flt, char padc, int padd, int padf)
     if(padf>0){
         __fputc(f, '.');
 	    ret++;
-        while(padf--) {
+        for(int i = 0; i < padf; i++) {
             frac *= 10.0;
         }
         d = (unsigned long long) frac;
-        ret += __fprint_ull(f, d, 10, '0', 0);
+        ret += __fprint_ull(f, d, 10, '0', padf);   // keep leading zeros of the fraction
     }
 	return ret;
 }
