@@ -19,7 +19,7 @@ void print_arr(int arr[], int n){
 #include "tests/crypto.c"
 
 void print_info() {
-    printf("core(s):    %s @ %d Hz\n", CORE, CLK_FREQ);
+    printf("core(s):    %s @ %d Hz\n", CORE, (int)platform_clk());
     printf("arch:       %s\n", ARCH);
     printf("misa:       0x%x\n", CSR_read(CSR_MISA));
     printf("vend id:    0x%x\n", CSR_read(CSR_MVENDORID));

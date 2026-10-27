@@ -99,7 +99,7 @@ void run_pattern(uint8_t * pat, int len, uint32_t delay, bool reverse)
 
 void soft_pwm(uint8_t dutycycle, uint32_t duration)
 {
-    clock_t tend = cycle() + (duration * (CLK_FREQ/1000));
+    clock_t tend = cycle() + (duration * (platform_clk()/1000));
     while(cycle() < tend) {
         gpio_writew(0x1ff);
         for(uint16_t i=0; i<255; i++)

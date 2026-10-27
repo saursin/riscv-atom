@@ -39,16 +39,21 @@ default: build
 .PHONY: build
 build: $(EXEC).elf			#t# Build bootloader
 
-$(EXEC).elf: $(SRCS) $(RVATOM_BUILD)/sw/lib/libcatom.a $(RVATOM_VARS_MK)
+# Platform table (clock, ...) from the soctarget/board config
+PLATFORM_SRC:= $(_BOOT_DIR)/platform_table.c
+$(PLATFORM_SRC): $(RVATOM_VARS_MK)
+	$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t platform -o $@
+
+$(EXEC).elf: $(SRCS) $(PLATFORM_SRC) $(RVATOM_BUILD)/sw/lib/libcatom.a $(RVATOM_VARS_MK)
 	$(call print_msgt,Compiling)
 	$(CC) $(CFLAGS) -MM -MP -MT $@ $(SRCS) > $(EXEC).d	# header dependencies
-	$(CC) $(CFLAGS) -o $@ $(SRCS) $(LFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(SRCS) $(PLATFORM_SRC) $(LFLAGS)
 	$(OBJDUMP) -htD $@ > $(basename $@).lst
 	$(call print_msg,Generating hex,$(basename $@).hex)
 	convelf.py -t elf -c -m="BOOTROM:0x00010000:8192:h:$(basename $@).hex" $@
 
 .PHONY: clean
 clean:						#t# Clean build files
-	rm -f $(EXEC).*
+	rm -f $(EXEC).* $(PLATFORM_SRC)
 
 -include $(EXEC).d

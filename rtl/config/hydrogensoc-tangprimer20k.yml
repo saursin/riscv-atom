@@ -1,0 +1,8 @@
+name: hydrogensoc-tangprimer20k
+
+# TangPrimer 20K: 27 MHz oscillator -> PLL (synth/gowin/tangprimer20k)
+import:
+  - hydrogensoc
+
+params:
+  clk_freq: 45000000

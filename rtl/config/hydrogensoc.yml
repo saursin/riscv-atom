@@ -10,6 +10,7 @@ params:
   ext_compressed: true
   ext_csr: true
   en_exceptions: true   # interrupt/exception support
+  clk_freq: 50000000    # Hz (platform table, SDC); boards override it in <soc>-<board>.yml
 
   peripherals:
     bootrom:
@@ -35,7 +36,7 @@ params:
 
     spi:
       enable: true
-      addr: 0x40004000
+      addr: 0x40003000
       size: 32
       cs_pins: 1
 

@@ -2,8 +2,6 @@
 #include <csr.h>
 #include <time.h>
 
-#define CLOCKS_PER_SEC CLK_FREQ
-
 clock_t cycle()
 {
     union 
@@ -33,7 +31,7 @@ clock_t cycle()
 
 void sleep_ms(clock_t ms)
 {
-    clock_t tend = cycle() + (ms * (CLOCKS_PER_SEC/1000));
+    clock_t tend = cycle() + (ms * (platform_clk()/1000));
     while(cycle() < tend) {
         asm volatile("");
     }
@@ -42,7 +40,7 @@ void sleep_ms(clock_t ms)
 
 void sleep_us(clock_t ms)
 {
-    clock_t tend = cycle() + (ms * (CLOCKS_PER_SEC/1000000));
+    clock_t tend = cycle() + (ms * (platform_clk()/1000000));
     while(cycle() < tend) {
         asm volatile("");
     }

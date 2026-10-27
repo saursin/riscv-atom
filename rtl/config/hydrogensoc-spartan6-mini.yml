@@ -1,0 +1,8 @@
+name: hydrogensoc-spartan6-mini
+
+# Spartan6-mini: 12 MHz oscillator (synth/xilinx/spartan6-mini)
+import:
+  - hydrogensoc
+
+params:
+  clk_freq: 12000000

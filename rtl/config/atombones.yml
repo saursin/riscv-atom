@@ -5,6 +5,7 @@ import:
 
 params:
   en_exceptions: true   # interrupt/exception support (RV32I_Zicsr + traps)
+  clk_freq: 12000000    # Hz (platform table)
 
 design:
   topmodule: AtomBones

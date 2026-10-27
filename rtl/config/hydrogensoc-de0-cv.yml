@@ -1,0 +1,8 @@
+name: hydrogensoc-de0-cv
+
+# Terasic DE0-CV: 50 MHz oscillator (synth/altera/de0-cv)
+import:
+  - hydrogensoc
+
+params:
+  clk_freq: 50000000

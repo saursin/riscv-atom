@@ -71,7 +71,7 @@ barebones_clock()
 #define TIMER_RES_DIVIDER          1
 #define SAMPLE_TIME_IMPLEMENTATION 1
 #ifdef RVATOM
-#define CLOCKS_PER_SEC CLK_FREQ
+#define CLOCKS_PER_SEC platform_clk()
 #endif // RVATOM
 #define EE_TICKS_PER_SEC           (CLOCKS_PER_SEC / TIMER_RES_DIVIDER)
 

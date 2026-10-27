@@ -4,7 +4,7 @@
 #include <serial.h>
 #include <csr.h>
 
-typedef void (*fnc_ptr)(void);
+typedef void (*fnc_ptr)(long hartid, const uint32_t *platform);
 
 void puthex(unsigned val) {
     if(val == 0)
@@ -33,6 +33,9 @@ void boot_panic(int code, char * msg){
 
 int main(){
     // ********* Platform agnostic initialization **********
+    // Platform table (clock, ...) for libcatom, here and in the program
+    __platform = atom_platform_table;
+
     // Uart initialization
     P(serial_init(UART_BAUD_115200);)
 
@@ -55,7 +58,7 @@ int main(){
     // Jump to target
     P(puts("--------------------------------\n");)
     fnc_ptr app_main = (fnc_ptr) jump_addr;
-    app_main();
+    app_main(0, atom_platform_table);  // a0: hart id, a1: platform table
 
     // Unreachable
     boot_panic(RCODE_UNREACHABLE, "Unreachable");

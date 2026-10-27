@@ -437,7 +437,7 @@ for (i = 0; i < MULTITHREAD; i++)
 #endif
     /* And last call any target specific code for finalizing */
 #ifdef RVATOM
-    ee_printf("\nAtom Clk Freq    : %d Hz\n", CLK_FREQ);
+    ee_printf("\nAtom Clk Freq    : %d Hz\n", (int)platform_clk());
     ee_printf("Atom Inst retired: %d\n", get_instret());
 #ifdef HAS_FLOAT
     ee_printf("Atom CPI         : %f\n", (double)total_time / (double)get_instret());

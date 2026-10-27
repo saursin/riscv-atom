@@ -31,7 +31,7 @@
 // Get a char from uart (with timeout)
 static int _inbyte(uint64_t timeout_ms)
 {
-    clock_t t_end = cycle() + ((timeout_ms*CLK_FREQ)/1000);
+    clock_t t_end = cycle() + ((timeout_ms*platform_clk())/1000);
 	while (!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0)) {
 		if (cycle() > t_end)
 			return -1;  // Timeout
@@ -142,7 +142,7 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
 
     // SPAM till SOH
     bool got_soh = false;
-    clock_t t_end = cycle() + (((clock_t) XMODEM_WAIT_TIMEOUT_SEC)*((clock_t) CLK_FREQ));
+    clock_t t_end = cycle() + (((clock_t) XMODEM_WAIT_TIMEOUT_SEC)*((clock_t) platform_clk()));
     while (cycle() < t_end)
     {
         _outbyte('C');

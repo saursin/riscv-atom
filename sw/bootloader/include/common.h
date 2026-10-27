@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 #ifdef SOC_EN_UART
 #ifdef EN_PRINTS
@@ -31,6 +32,9 @@
 // UARTBOOT
 #define RCODE_UARTBOOT_NOUART           20
 #define RCODE_UARTBOOT_FAILED           21
+
+// Generated from the soctarget/board config (cfgparse.py -t platform)
+extern const uint32_t atom_platform_table[];
 
 void puthex(unsigned val);
 void __attribute__((noreturn)) boot_panic(int code, char *msg);

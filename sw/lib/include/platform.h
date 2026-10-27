@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 // ============== Target Independent Definitions ==============
 #define N_STDDEV 4
@@ -37,13 +38,6 @@
     // --------- TIMER -----------
     #define TIMER_ADDR      0x40004000
 
-    // ------ CLOCK FREQUENCY --------
-    // Spartan6-mini
-    // #define CLK_FREQ 12000000
-    
-    // DE0-CV
-    #define CLK_FREQ 50000000
-
 #else
 #ifdef TARGET_ATOMBONES
     extern int __coderam_start;
@@ -61,9 +55,29 @@
     // ---------- UART ------------
     #define UART_ADDR 0x40000000
 
-    // ------ CLOCK FREQUENCY --------
-    #define CLK_FREQ 12000000
 #else
     #warning Must define a target for platform.h
 #endif
 #endif
+
+// ============== Platform table ==============
+// Board facts generated from the soctarget/board config (cfgparse.py -t platform) into
+// the boot ROM; the bootloader passes its address to the program in a1.
+// Layout (little-endian u32 words):
+//   header: magic "ATOM", version, size (bytes, header and tags included)
+//   tags:   fourcc, size (bytes, tag header included, multiple of 4), payload
+// Readers skip unknown tags; tags only grow at the end, so check a tag's size
+// before reading a field. The version changes only on an incompatible change.
+#define PLATFORM_MAGIC      0x4d4f5441      // "ATOM"
+#define PLATFORM_VERSION    1
+#define PLATFORM_TAG(a, b, c, d) \
+    ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
+#define PLATFORM_TAG_CLK    PLATFORM_TAG('C', 'L', 'K', ' ')   // clock (Hz)
+
+extern const uint32_t *__platform;          // the table, or NULL (set at startup)
+
+// n-th tag (0 = first) with the given fourcc, or NULL
+const uint32_t *platform_find(uint32_t tag, unsigned n);
+
+// SoC clock in Hz from the platform table, or 0 without one
+uint32_t platform_clk(void);

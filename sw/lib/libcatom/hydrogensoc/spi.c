@@ -19,7 +19,7 @@ int spi_init(struct SPI_Config * cfg) {
     }
     
     // set divisor reg
-    uint32_t fratio = (CLK_FREQ/cfg->baudrate);
+    uint32_t fratio = (platform_clk()/cfg->baudrate);
     REG32(cfg->base_addr, SPI_REG_SCKDIV_OFFSET) = fratio - 1;
 
     // set sctrl reg

@@ -57,7 +57,7 @@ void serial_init(uint32_t baud_rate)
 void serial_set_config(Serial_Config *cfg)
 {
     // Set Baud 
-    uint32_t fratio = (CLK_FREQ/cfg->baud);
+    uint32_t fratio = (platform_clk()/cfg->baud);
     REG32(UART_ADDR, UART_REG_DIV) = fratio - 2;
     
     // Initialize UART

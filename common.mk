@@ -39,12 +39,15 @@ endif
 # soctarget from the command line or the environment takes precedence.
 -include $(RVATOM)/config.mk
 
+# Optional board: rtl/config/<soctarget>-<board>.yml imports the SoC config and
+# overrides board facts (e.g. clk_freq); without a board the SoC config is used.
 ifneq ($(strip $(soctarget)),)
-    RVATOM_YMLCONFIG := $(RVATOM)/rtl/config/$(soctarget).yml
+    RVATOM_CFGNAME   := $(soctarget)$(if $(strip $(board)),-$(board))
+    RVATOM_YMLCONFIG := $(RVATOM)/rtl/config/$(RVATOM_CFGNAME).yml
 endif
 
-# RVATOM_BUILD: root of all build artifacts, one tree per soctarget by default.
-RVATOM_BUILD ?= $(RVATOM)/build/$(soctarget)
+# RVATOM_BUILD: root of all build artifacts, one tree per config by default.
+RVATOM_BUILD ?= $(RVATOM)/build/$(RVATOM_CFGNAME)
 
 # For targets that need it: require a valid soctarget and include the build
 # parameters derived from its YAML (RVATOM_ISA, RVATOM_CDEFINES, ...).
@@ -59,14 +62,14 @@ ifeq ($(_mk_check_soctarget), 1)
             $(error No soctarget set; run 'make config soctarget=<target>' or pass soctarget=<target>)
         endif
         ifeq ($(wildcard $(RVATOM_YMLCONFIG)),)
-            $(error Invalid soctarget '$(soctarget)'; rtl/config/$(soctarget).yml not found)
+            $(error Invalid soctarget/board '$(RVATOM_CFGNAME)'; rtl/config/$(RVATOM_CFGNAME).yml not found)
         endif
     endif
     ifneq ($(_mk_clean_only), 1)
-        # Named per soctarget so a shared RVATOM_BUILD override never reuses
-        # another target's config. Make regenerates it when any YAML it was
+        # Named per config so a shared RVATOM_BUILD override never reuses
+        # another config's values. Make regenerates it when any YAML it was
         # derived from (RVATOM_YMLDEPS) or cfgparse changes, then restarts.
-        RVATOM_VARS_MK := $(RVATOM_BUILD)/vars.$(soctarget).mk
+        RVATOM_VARS_MK := $(RVATOM_BUILD)/vars.$(RVATOM_CFGNAME).mk
         include $(RVATOM_VARS_MK)
         $(RVATOM_VARS_MK): $(RVATOM_YMLCONFIG) $(RVATOM_YMLDEPS) $(CFGPARSE)
 		@mkdir -p $(@D)

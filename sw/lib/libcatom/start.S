@@ -9,6 +9,8 @@
 
 _start:
 .option norvc
+    mv s1, a1                   # platform table from the bootloader (kept across the calls below)
+
     # ===== initialization =====
     # initialize sp & gp
     la sp, _stack_pointer       # set stack pointer
@@ -33,6 +35,10 @@ _start:
 
 	// Initialize heap
 	jal heap_init
+
+    // after the bss clear: save the platform table pointer
+    la t0, __platform
+    sw s1, 0(t0)
 
 	/* Disable and clear all interrupt sources */
     li   a3, -1

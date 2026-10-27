@@ -44,7 +44,7 @@ int main()
 {
     serial_init(UART_BAUD_115200);
     puts(banner);
-    printf("CPU      : RISC-V Atom @ %d Hz\n", CLK_FREQ);
+    printf("CPU      : RISC-V Atom @ %d Hz\n", (int)platform_clk());
     puts("Arch     : "); print_isastring(); puts(" - little endian\n");
     printf("CODE RAM : 0x%08x (%d bytes)\n", (unsigned)CODERAM_BASE, (unsigned)CODERAM_SIZE);
     printf("DATA RAM : 0x%08x (%d bytes)\n", (unsigned)DATARAM_BASE, (unsigned)DATARAM_SIZE);
