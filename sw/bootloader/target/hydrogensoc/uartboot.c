@@ -218,7 +218,7 @@ void uartboot(uint8_t *dest, uint32_t len){
     P(puts("\nuartboot: ");)
     switch(status){
         case S_EOT:
-            P(puts("Successful!");)
+            P(puts("Successful!\n");)
             return;
 
         case S_TERM:

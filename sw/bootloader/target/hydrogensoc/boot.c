@@ -65,7 +65,6 @@ void * platform_init(){
     P(putchar('\n');)
     
     // Perform action according to bootmode
-    bool wait_for_keypress = false;
     switch (bootmode)
     {
         case BOOTMODE_FLASHBOOT:
@@ -81,7 +80,6 @@ void * platform_init(){
             break;
         
         case BOOTMODE_UARTBOOT:
-            wait_for_keypress = true;
         #ifdef SOC_EN_UART
             uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size);
         #else
@@ -97,12 +95,6 @@ void * platform_init(){
             }
     }
 
-    if(wait_for_keypress){
-        puts("\nPress ENTER to continue...\n");
-        while(serial_read()!='\r')
-            asm volatile ("");
-    }
-    
     #ifdef SOC_EN_GPIO
     // BOOTLED off: jumping to user code
     gpio_write(BOOTLED_PIN, LOW);

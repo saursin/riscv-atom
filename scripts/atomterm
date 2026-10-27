@@ -47,9 +47,10 @@ def info(msg):
     sys.stdout.flush()
 
 
-def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10):
+def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10, got_crc_req=False):
     """Send data with XMODEM (128-byte blocks, CRC-16 or checksum). Returns True on success.
-    byte_delay paces the bytes for slow receivers (e.g. the bootloader in simulation)."""
+    byte_delay paces the bytes for slow receivers (e.g. the bootloader in simulation).
+    got_crc_req: the receiver's 'C' was already read, so start without waiting for another."""
     def write(buf):
         if not byte_delay:
             ser.write(buf)
@@ -59,8 +60,8 @@ def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10):
             time.sleep(byte_delay)
 
     deadline = time.time() + handshake_timeout
-    use_crc = None
-    while time.time() < deadline:
+    use_crc = True if got_crc_req else None
+    while use_crc is None and time.time() < deadline:
         c = ser.read(1)
         if c == CRC_REQ:
             use_crc = True
@@ -124,7 +125,7 @@ def complete_path(text, state):
 
 
 class Console:
-    def __init__(self, ser, port, baud, binfile, hexmode, byte_delay, log, enter_after_upload):
+    def __init__(self, ser, port, baud, binfile, hexmode, byte_delay, log):
         self.ser = ser
         self.port = port
         self.baud = baud
@@ -132,7 +133,6 @@ class Console:
         self.hexmode = hexmode
         self.byte_delay = byte_delay
         self.log = log
-        self.enter_after_upload = enter_after_upload
         self.lock = threading.Lock()        # owner of serial reads (reader thread or upload)
         self.upload_req = threading.Event()
         self.stop = threading.Event()
@@ -140,6 +140,8 @@ class Console:
         self.connected.set()
         self.prompting = threading.Event()  # upload prompt open: hold back serial output
         self.held = []
+        self.uploading = threading.Event()  # upload owns the port: reader stays off it
+        self.got_crc_req = False            # reader already consumed the bootloader's 'C'
 
     def reconnect(self):
         """Wait for the port to come back (e.g. USB re-plug); returns False if stopping."""
@@ -163,6 +165,9 @@ class Console:
         window = b""
         sample = b""        # first bytes after (re)connect, for the wrong-baud hint
         while not self.stop.is_set():
+            if self.uploading.is_set():
+                time.sleep(0.01)
+                continue
             try:
                 with self.lock:
                     data = self.ser.read(self.ser.in_waiting or 1)
@@ -188,7 +193,10 @@ class Console:
                     sample = None
             window = (window + data)[-len(UARTBOOT_PROMPT) * 2:]
             if self.binfile and UARTBOOT_PROMPT in window:
+                # the bootloader sends 'C' right after the prompt: it may be in this chunk
+                self.got_crc_req = CRC_REQ in window.split(UARTBOOT_PROMPT)[-1]
                 window = b""
+                self.uploading.set()        # stop reading so the uploader gets what follows
                 self.upload_req.set()
 
     def show(self, data):
@@ -200,6 +208,14 @@ class Console:
         sys.stdout.flush()
 
     def upload(self, path=None):
+        self.uploading.set()
+        try:
+            self._upload(path)
+        finally:
+            self.got_crc_req = False
+            self.uploading.clear()
+
+    def _upload(self, path):
         path = path or self.binfile
         if not path:
             info("no file to upload (give --bin, or a path at the Ctrl-U prompt)")
@@ -214,11 +230,9 @@ class Console:
         with self.lock:
             self.ser.timeout = 5
             try:
-                ok = xmodem_send(self.ser, data, self.byte_delay)
+                xmodem_send(self.ser, data, self.byte_delay, got_crc_req=self.got_crc_req)
             finally:
                 self.ser.timeout = old_timeout
-        if ok and self.enter_after_upload:
-            self.ser.write(b"\r")       # bootloader waits for ENTER after uartboot
 
     def ask_path(self, fd, cooked, raw):
         """Prompt for a file to upload; returns the path, or None if cancelled."""
@@ -314,8 +328,6 @@ def main():
                    help="delay between uploaded bytes, for slow receivers such as atomsim "
                         "(e.g. 0.005); default: 0")
     p.add_argument("--log", metavar="FILE", help="also append everything received to FILE")
-    p.add_argument("--enter-after-upload", action="store_true",
-                   help="send ENTER after a successful upload (the bootloader waits for it)")
     args = p.parse_args()
     port = args.port_opt or args.port
     if not port:
@@ -327,8 +339,7 @@ def main():
         sys.exit(f"atomterm: {e}")
     log = open(args.log, "ab") if args.log else None
     info(f"connected to {port} at {args.baud} baud (Ctrl-] exit, Ctrl-U upload)")
-    con = Console(ser, port, args.baud, args.bin, args.hex, args.byte_delay, log,
-                  args.enter_after_upload)
+    con = Console(ser, port, args.baud, args.bin, args.hex, args.byte_delay, log)
     con.run()
     con.ser.close()
     if log:
