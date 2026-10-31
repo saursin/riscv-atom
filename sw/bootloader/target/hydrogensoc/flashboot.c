@@ -48,7 +48,7 @@ static int flashcpy(struct SPI_Config *cfg, uint8_t *dest, uint32_t src_addr, ui
     return 0;
 }
 
-void flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
+int flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
     // Init
     struct SPI_Config cfg = {
         cfg.base_addr = SOC_SPI_ADDR,
@@ -71,7 +71,8 @@ void flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
     P(putnum(manufacturer_id, 16, 1);)
     P(putchar('\n');)
     if(manufacturer_id == 0x00 || manufacturer_id == 0xff){
-        boot_panic(RCODE_FLASHBOOT_INVALID_DEVICE, "Invalid FLASH Device");
+        P(puts("flashboot: no flash device\n");)
+        return RCODE_FLASHBOOT_INVALID_DEVICE;
     }
 
     // Copy
@@ -82,4 +83,5 @@ void flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
     // Deinit
     cfg.cs_mode = CSMODE_AUTO;
     spi_init(&cfg);
+    return 0;
 }

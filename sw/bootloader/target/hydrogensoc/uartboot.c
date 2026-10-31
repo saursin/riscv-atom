@@ -20,8 +20,7 @@
 //////////////////////////////////////////////////////////////
 // CRC Functions
 
-// CRC-16/XMODEM (poly 0x1021)
-static uint16_t crc16_ccitt(const uint8_t *buf, int len)
+uint16_t crc16_ccitt(const uint8_t *buf, int len)
 {
     uint16_t crc = 0;
     while(len--) {
@@ -140,7 +139,7 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
 }
 
 // UART Boot
-void uartboot(uint8_t *dest, uint32_t len){
+int uartboot(uint8_t *dest, uint32_t len){
     P(puts("uartboot: waiting for a program (XMODEM)\n");)
     puts(UARTBOOT_MARKER);
 
@@ -150,7 +149,7 @@ void uartboot(uint8_t *dest, uint32_t len){
     switch(status){
         case S_EOT:
             P(puts("Successful!\n");)
-            return;
+            return 0;
 
         case S_TERM:
             P(puts("Terminated by host");)
@@ -170,5 +169,5 @@ void uartboot(uint8_t *dest, uint32_t len){
     }
     
     P(putchar('\n');)
-    boot_panic(RCODE_UARTBOOT_FAILED, "Uartboot failed");
+    return RCODE_UARTBOOT_FAILED;
 }

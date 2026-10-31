@@ -27,8 +27,11 @@ typedef enum {
 
 xmod_status xmodemReceive(uint8_t * bf, uint32_t len);
 
+// CRC-16/XMODEM (poly 0x1021) of len bytes
+uint16_t crc16_ccitt(const uint8_t *buf, int len);
+
 // Toggle the boot LED (progress indicator), defined in boot.c
 void bootled_toggle();
 
-// UART Boot: Copies data from uart stream to memory using XMODEM protocol
-void uartboot(uint8_t *dest, uint32_t len);
+// UART Boot: copies data from the uart stream to memory using XMODEM; 0 on success
+int uartboot(uint8_t *dest, uint32_t len);

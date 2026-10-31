@@ -6,6 +6,7 @@
 #include "common.h"
 #include "flashboot.h"
 #include "uartboot.h"
+#include "console.h"
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
@@ -15,14 +16,11 @@ extern uint32_t __approm_size;
 #define BOOTMODE_PIN0 8
 #define BOOTMODE_PIN1 9
 
-// Address offset at which image resides
-#define FLASH_IMG_OFFSET    0x000c0000
-
 // Bootmodes
 #define BOOTMODE_FLASHBOOT      0
 #define BOOTMODE_JUMP_TO_RAM    1
 #define BOOTMODE_UARTBOOT       2
-#define BOOTMODE_INF_LOOP       3
+#define BOOTMODE_CONSOLE        3
 #define BOOTMODE_DEFAULT        BOOTMODE_JUMP_TO_RAM
 
 //-------------------------------------------------------
@@ -41,6 +39,7 @@ void bootled_toggle()
 
 void * platform_init(){
     uint8_t bootmode = BOOTMODE_DEFAULT;
+    void *jump_addr = &__approm_start;
 
 #ifdef SOC_EN_GPIO
     // Initialize GPIO
@@ -69,9 +68,10 @@ void * platform_init(){
     {
         case BOOTMODE_FLASHBOOT:
         #ifdef SOC_EN_SPI
-            flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, (unsigned)&__approm_size);
+            if(flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, (unsigned)&__approm_size))
+                jump_addr = console();
         #else
-            boot_panic(RCODE_FLASHBOOT_NOSPI, "No SPI IP");
+            jump_addr = console();
         #endif
             break;
 
@@ -81,18 +81,16 @@ void * platform_init(){
         
         case BOOTMODE_UARTBOOT:
         #ifdef SOC_EN_UART
-            uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size);
+            if(uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size))
+                jump_addr = console();      // failed: let the user retry or look around
         #else
-            boot_panic(RCODE_UARTBOOT_NOUART, "No UART IP");  // TODO: fixme
+            boot_panic(RCODE_UARTBOOT_NOUART, "No UART IP");
         #endif
             break;
-    
-        case BOOTMODE_INF_LOOP:
+
+        case BOOTMODE_CONSOLE:
         default:
-            P(puts("Infinite loop\n");)
-            while(1){
-                asm volatile("");
-            }
+            jump_addr = console();
     }
 
     #ifdef SOC_EN_GPIO
@@ -100,6 +98,5 @@ void * platform_init(){
     gpio_write(BOOTLED_PIN, LOW);
     #endif
     
-    // return start address of approm
-    return (void *) &__approm_start;
+    return jump_addr;
 }

@@ -39,14 +39,40 @@ RISC-V Atom bootloader mainly supports 4 boot modes:
 +----------+---------------+----------------------------------------------------------------------+
 | ``0b10`` | UARTBoot      | Loads a binary image into RAM from UART stream using XMODEM protocol |
 +----------+---------------+----------------------------------------------------------------------+
-| ``0b11`` | Infinite Loop | Executes an infinite loop                                            |
+| ``0b11`` | Console       | Interactive console (see below)                                      |
 +----------+---------------+----------------------------------------------------------------------+
+
+If FLASHBoot or UARTBoot fails (no flash device, XMODEM timeout or error), the bootloader falls back to the console
+instead of stopping.
 
 FLASHBoot
 ==========
 In this bootmode, user must write the binary image for the program directly in FLASH memory at a predefined offset value.
-During boot, this binary image will be copied as it is to the RAM and will be executed. FLASHBoot requires the SPI IP to
-communicate with FLASH memory and will give an boot-panic error if its missing.
+During boot, this binary image will be copied as it is to the RAM and will be executed. Without the SPI IP, or without
+a flash device, the bootloader falls back to the console.
+
+Console
+========
+A small console in the boot ROM. On entry it prints a SoC summary (ISA from ``misa``, clock, memories, peripherals)
+and then takes commands:
+
+.. code-block:: text
+
+    atom-boot: help
+    help                  this list
+    info                  SoC summary
+    clear                 clear the screen
+    md <addr> [words]     dump memory
+    mw <addr> <value>     write a word
+    fill <addr> <len> <v> fill memory with a word
+    crc <addr> <len>      CRC-16/XMODEM of memory
+    memtest <addr> <len>  address-in-address test
+    uartboot              receive a program (XMODEM) and run it
+    flashboot             load a program from flash and run it
+    boot [addr]           run the program in RAM (or at addr)
+    reboot
+
+Numbers are decimal, or hex with ``0x``. Connect with ``atomterm`` (below) or any serial terminal.
 
 UARTBoot
 =========
