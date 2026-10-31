@@ -9,6 +9,9 @@
 #define CAN  0x18
 #define CTRLZ 0x1A
 
+// Printed right before the XMODEM handshake; scripts/atomterm starts an upload when it sees it
+#define UARTBOOT_MARKER "![XMODREQ]!"
+
 typedef enum {
     OK      = 0,
     NOK     = 1,

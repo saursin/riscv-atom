@@ -36,8 +36,9 @@ except ImportError:
 KEY_EXIT = 0x1D     # Ctrl-]
 KEY_UPLOAD = 0x15   # Ctrl-U
 
-# printed by the bootloader before it starts the XMODEM handshake (uartboot.c)
-UARTBOOT_PROMPT = b"Send a binary file using xmodem"
+# printed by the bootloader right before the XMODEM handshake
+# (UARTBOOT_MARKER in sw/bootloader/target/hydrogensoc/uartboot.h)
+UARTBOOT_MARKER = b"![XMODREQ]!"
 
 SOH, EOT, ACK, NAK, CAN, CRC_REQ, PAD = b"\x01", b"\x04", b"\x06", b"\x15", b"\x18", b"C", b"\x1a"
 
@@ -191,10 +192,10 @@ class Console:
                     if not looks_like_text(sample):
                         info(f"received data does not look like text: check --baud (now {self.baud})")
                     sample = None
-            window = (window + data)[-len(UARTBOOT_PROMPT) * 2:]
-            if self.binfile and UARTBOOT_PROMPT in window:
-                # the bootloader sends 'C' right after the prompt: it may be in this chunk
-                self.got_crc_req = CRC_REQ in window.split(UARTBOOT_PROMPT)[-1]
+            window = (window + data)[-len(UARTBOOT_MARKER) * 2:]
+            if self.binfile and UARTBOOT_MARKER in window:
+                # the bootloader sends 'C' right after the marker: it may be in this chunk
+                self.got_crc_req = CRC_REQ in window.split(UARTBOOT_MARKER)[-1]
                 window = b""
                 self.uploading.set()        # stop reading so the uploader gets what follows
                 self.upload_req.set()

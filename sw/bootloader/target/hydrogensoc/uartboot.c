@@ -141,7 +141,8 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
 
 // UART Boot
 void uartboot(uint8_t *dest, uint32_t len){
-    P(puts("uartboot: Send a binary file using xmodem...\n");)
+    P(puts("uartboot: waiting for a program (XMODEM)\n");)
+    puts(UARTBOOT_MARKER);
 
     xmod_status status = xmodemReceive(dest, len);
 
