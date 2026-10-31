@@ -32,35 +32,35 @@
 static int _inbyte(uint64_t timeout_ms)
 {
     clock_t t_end = cycle() + ((timeout_ms*platform_clk())/1000);
-	while (!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0)) {
+	while (!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0)) {
 		if (cycle() > t_end)
 			return -1;  // Timeout
 	}
-	return (int) REG8(UART_ADDR, UART_REG_RBR);
+	return (int) REG8(SOC_UART_ADDR, UART_REG_RBR);
 }
 
 // Sends a char to uart
 static void _outbyte(unsigned char c)
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1)) {
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 1)) {
         asm volatile("");
         // udelay(1000);
     }
-    REG8(UART_ADDR, UART_REG_THR) = c;
+    REG8(SOC_UART_ADDR, UART_REG_THR) = c;
 }
 
 // Flushes uart rxbuf
 static void flush_input()
 {
-    while(bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
-        REG8(UART_ADDR, UART_REG_RBR);
+    while(bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0))
+        REG8(SOC_UART_ADDR, UART_REG_RBR);
 }
 
 
 // Flushes uart txbuf
 static void flush_output()
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LCR), 1))
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LCR), 1))
         asm volatile("");
 }
 

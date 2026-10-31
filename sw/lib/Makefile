@@ -25,7 +25,7 @@ RVPREFIX  := riscv64-unknown-elf
 CFLAGS    := -march=$(RVATOM_ISA)
 CFLAGS    += -mabi=$(RVATOM_ABI)
 CFLAGS+= -Wall -ffreestanding -nostartfiles -nostdlib -I include
-CFLAGS+= $(RVATOM_CDEFINES)
+CFLAGS+= -include $(RVATOM_CONFIG_H)	# config defines (memory map, target) from the YAML
 CFLAGS+= -MMD -MP	# header dependencies (.d next to each object)
 ifeq ($(optimizable), 1)	# For optimizable code
     CFLAGS+= -fdata-sections -ffunction-sections
@@ -56,8 +56,15 @@ OBJS := $(C_OBJS) $(S_OBJS)
 # Output library
 LIB = $(RVATOM_BUILD)/sw/lib/libcatom.a
 
+# Linker scripts for this config: link/*.ld through the preprocessor with atom_config.h
+LDSCRIPTS := $(addprefix $(RVATOM_BUILD)/sw/lib/,link_$(soctarget).ld link_bootloader.ld)
+
 default: build
-build: $(LIB)						#t# Build libcatom
+build: $(LIB) $(LDSCRIPTS)			#t# Build libcatom and its linker scripts
+
+$(RVATOM_BUILD)/sw/lib/%.ld: link/%.ld $(RVATOM_CONFIG_H) $(RVATOM_VARS_MK)
+	$(call print_msgt,Preprocessing)
+	$(RVPREFIX)-gcc -E -P -x c -undef -include $(RVATOM_CONFIG_H) $< -o $@
 
 # Create libcatom.a
 $(LIB): $(OBJS)
@@ -87,7 +94,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S $(RVATOM_VARS_MK)
 	
 .PHONY: clean
 clean:								#t# Clean Build files
-	rm -rf $(OBJ_DIR)/* $(LIB) $(basename $(LIB)).lst
+	rm -rf $(OBJ_DIR)/* $(LIB) $(basename $(LIB)).lst $(LDSCRIPTS)
 
 -include $(OBJS:.o=.d)
 

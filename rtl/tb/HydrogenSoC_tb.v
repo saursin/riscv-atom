@@ -1,6 +1,6 @@
 `default_nettype none
 
-`include "HydrogenSoC_Config.vh"
+`include "atom_config.vh"
 
 module isim_tb;
     reg clk_i = 0;

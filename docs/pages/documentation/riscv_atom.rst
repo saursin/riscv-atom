@@ -83,9 +83,8 @@ instantiate these hardware modules in their implementations.
 SoC directory
 ==============
 The top level Verilog modules for SoCs (such as AtomBones & HydrogenSoC) are present in the ``rtl/soc`` directory in the
-corresponding subdirectories. Each of these top level modules are configured by their respective configuration headers
-(<name>_Config.vh file). These configuration headers contain the macros used in the top-module definitions to control the
-generation of SoC, various sub-components and their parameters.
+corresponding subdirectories. Each top level module includes ``atom_config.vh``, generated from the target's YAML config
+(see Building), whose macros control the memory map, the peripherals present and their parameters.
 
 
 RTL Features

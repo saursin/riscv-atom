@@ -11,7 +11,7 @@
 
 #include "elfio/elfio.hpp"
 
-#define UART_ADDR 0x40000000
+#define UART_ADDR SOC_UART_ADDR  // from the soctarget config
 
 Backend_atomsim::Backend_atomsim(Atomsim * sim, Backend_config config):
     Backend(sim),

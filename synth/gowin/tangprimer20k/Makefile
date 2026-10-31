@@ -33,9 +33,9 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) board=$(board) RVATOM_BUILD=$(RVATOM_BUILD) clean build
 	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
-$(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
+$(build_dir)/HydrogenSoC.v: $(RVATOM_VDEPS) $(BOARD_VSRCS) $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
+	verilator -E -P $(RVATOM_VFLAGS) -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
 	verilator --lint-only $@ $(shell yosys-config --datdir)/gowin/cells_sim.v -top-module $(VTOPMODULE)
 
 # Timing constraints from the board config: the PLL output must match clk_freq

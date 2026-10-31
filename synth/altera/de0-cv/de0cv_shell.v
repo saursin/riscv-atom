@@ -5,6 +5,7 @@
 //      the pin constraints (HydrogenSoC.tcl).
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "atom_config.vh"
 
 module de0cv_shell (
     input   wire                            clk_i,

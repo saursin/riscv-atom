@@ -102,11 +102,21 @@ which you can also invoke directly, e.g. ``make -C sw/examples ex=banner compile
    ``RVATOM_BUILD ?= RVATOM/build/<soctarget>``;
 #. generates ``vars.<soctarget>.mk`` in the build directory by running
    ``scripts/cfgparse.py -t make-vars`` on the target's YAML config, and includes it. It defines ``RVATOM_ISA``,
-   ``RVATOM_ABI``, ``RVATOM_TOPMODULE``, ``RVATOM_CDEFINES`` and ``RVATOM_VDEFINES``.
+   ``RVATOM_ABI``, ``RVATOM_TOPMODULE``, ``RVATOM_CLK_FREQ`` and the RTL sources (``RVATOM_VFLAGS``,
+   ``RVATOM_VDEPS``);
+#. generates the config headers ``include/atom_config.h`` and ``include/atom_config.vh`` in the build directory
+   from the config: every ``params.peripherals.<x>.<key>`` becomes ``SOC_<X>_<KEY>`` (``enable: true`` becomes
+   ``SOC_EN_<X>``; a disabled peripheral emits nothing), followed by the config's ``defines`` lists (core feature
+   macros, ``SOC_RESET_ADDR``, ``TARGET_<SOC>``). Adding a peripheral to the YAML is enough to get its macros. Every C, assembly and atomsim compile force-includes
+   ``atom_config.h`` (``-include``); the RTL includes ``atom_config.vh`` explicitly; the linker scripts
+   (``sw/lib/link/*.ld``) are run through the C preprocessor with it.
 
-The generated file is regenerated whenever the target's YAML, any YAML it imports, or ``cfgparse.py`` changes, and
-the library, bootloader, RTL filelist, simulator and examples depend on it. Editing a config therefore rebuilds
+These files are regenerated whenever the target's YAML, any YAML it imports, or ``cfgparse.py`` changes, and
+the library, bootloader, RTL filelist, simulator and examples depend on them. Editing a config therefore rebuilds
 exactly what it affects; no ``make clean`` is needed. ``make show-config`` prints the resolved values.
+
+For editor support (e.g. VS Code IntelliSense), point the editor at the generated header of the config you work
+on, e.g. ``"C_Cpp.default.forcedInclude": ["${workspaceFolder}/build/hydrogensoc/include/atom_config.h"]``.
 
 Useful targets (run ``make help`` for the full list):
 

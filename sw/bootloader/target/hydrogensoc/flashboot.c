@@ -38,7 +38,7 @@ static int flashcpy(struct SPI_Config *cfg, uint8_t *dest, uint32_t src_addr, ui
 
     while(len--) {
         REG8(cfg->base_addr, SPI_REG_TDATA_OFFSET) = 0x0;
-        while(REG32(SPI_ADDR, SPI_REG_SCTRL_OFFSET) >> 31)
+        while(REG32(SOC_SPI_ADDR, SPI_REG_SCTRL_OFFSET) >> 31)
             asm volatile("");
         *(dest++) = REG8(cfg->base_addr, SPI_REG_RDATA_OFFSET);
     }
@@ -51,7 +51,7 @@ static int flashcpy(struct SPI_Config *cfg, uint8_t *dest, uint32_t src_addr, ui
 void flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
     // Init
     struct SPI_Config cfg = {
-        cfg.base_addr = SPI_ADDR,
+        cfg.base_addr = SOC_SPI_ADDR,
         cfg.enable = true,
         cfg.pha = false,
         cfg.pol = false,

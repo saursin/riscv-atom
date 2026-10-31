@@ -5,6 +5,7 @@
 //      the pin constraints (HydrogenSoC.ucf).
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "atom_config.vh"
 
 module spartan6mini_shell (
     input   wire                            clk_i,

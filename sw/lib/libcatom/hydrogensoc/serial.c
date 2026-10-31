@@ -58,7 +58,7 @@ void serial_set_config(Serial_Config *cfg)
 {
     // Set Baud 
     uint32_t fratio = (platform_clk()/cfg->baud);
-    REG32(UART_ADDR, UART_REG_DIV) = fratio - 2;
+    REG32(SOC_UART_ADDR, UART_REG_DIV) = fratio - 2;
     
     // Initialize UART
     uint32_t lcr = 0;
@@ -68,10 +68,10 @@ void serial_set_config(Serial_Config *cfg)
     lcr |= cfg->enable_parity_bit ? UART_REG_LCR_PARB: 0;
     lcr |= cfg->even_parity ? UART_REG_LCR_EPAR: 0;
     lcr |= cfg->loopback_enable ? UART_REG_LCR_LPBK: 0;
-    REG32(UART_ADDR, UART_REG_LCR) = lcr;
+    REG32(SOC_UART_ADDR, UART_REG_LCR) = lcr;
 
     // clear any garbage from data register by reading it once
-    REG32(UART_ADDR, UART_REG_RBR);
+    REG32(SOC_UART_ADDR, UART_REG_RBR);
 }
 
 Serial_Config serial_get_config()
@@ -79,8 +79,8 @@ Serial_Config serial_get_config()
     Serial_Config cfg;
 
     // Read LCR
-    uint32_t lcr = REG32(UART_ADDR, UART_REG_LCR);
-    cfg.baud = REG32(UART_ADDR, UART_REG_DIV);
+    uint32_t lcr = REG32(SOC_UART_ADDR, UART_REG_LCR);
+    cfg.baud = REG32(SOC_UART_ADDR, UART_REG_DIV);
     cfg.rx_enable = lcr & UART_REG_LCR_RXEN;
     cfg.tx_enable = lcr & UART_REG_LCR_TXEN;
     cfg.dual_stop_bits = lcr & UART_REG_LCR_STPB;
@@ -94,16 +94,16 @@ Serial_Config serial_get_config()
 void serial_write(char c)
 {
     // Wait till THR is clear
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 1))
         asm volatile("");
-    REG8(UART_ADDR, UART_REG_THR) = c;
+    REG8(SOC_UART_ADDR, UART_REG_THR) = c;
 }
 
 
 void serial_flush()
 {
     // Wait till the TX FIFO is empty and the last character has been sent
-    while(!(REG32(UART_ADDR, UART_REG_LSR) & UART_REG_LSR_TXIDLE))
+    while(!(REG32(SOC_UART_ADDR, UART_REG_LSR) & UART_REG_LSR_TXIDLE))
         asm volatile("");
 }
 
@@ -111,7 +111,7 @@ void serial_flush()
 char serial_read()
 {
     // Wait till RBR has anything
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0))
         asm volatile("");
-    return REG8(UART_ADDR, UART_REG_RBR);
+    return REG8(SOC_UART_ADDR, UART_REG_RBR);
 }

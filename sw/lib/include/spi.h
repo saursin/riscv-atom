@@ -37,7 +37,7 @@ struct SPI_Config {
 
 
 #define SPI_Config_defaults  { \
-    .base_addr = SPI_ADDR,  \
+    .base_addr = SOC_SPI_ADDR,  \
     .enable = true,         \
     .pha = false,           \
     .pol = false,           \

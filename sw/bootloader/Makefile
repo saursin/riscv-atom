@@ -20,7 +20,7 @@ CFLAGS    := -march=$(RVATOM_ISA)
 CFLAGS    += -mabi=$(RVATOM_ABI)
 CFLAGS    += -Wall -nostartfiles -ffreestanding -g -Os
 CFLAGS    += -I $(RVATOM_LIB)/include -I include -I target/$(soctarget)
-CFLAGS    += $(RVATOM_CDEFINES)
+CFLAGS    += -include $(RVATOM_CONFIG_H)	# config defines (memory map, target) from the YAML
 
 ifeq ($(prints), 1)
     CFLAGS+= -DEN_PRINTS
@@ -30,7 +30,7 @@ endif
 # -Wl,--gc-sections linker flag to remove unused code
 CFLAGS+= -fdata-sections -ffunction-sections
 
-LFLAGS:= -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_LIB)/link/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
+LFLAGS:= -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_BUILD)/sw/lib/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
 
 ##############################################################################
 # Targets
@@ -50,7 +50,7 @@ $(EXEC).elf: $(SRCS) $(PLATFORM_SRC) $(RVATOM_BUILD)/sw/lib/libcatom.a $(RVATOM_
 	$(CC) $(CFLAGS) -o $@ $(SRCS) $(PLATFORM_SRC) $(LFLAGS)
 	$(OBJDUMP) -htD $@ > $(basename $@).lst
 	$(call print_msg,Generating hex,$(basename $@).hex)
-	convelf.py -t elf -c -m="BOOTROM:0x00010000:8192:h:$(basename $@).hex" $@
+	convelf.py -t elf -c -m="BOOTROM:$(RVATOM_BOOTROM_ADDR):$(RVATOM_BOOTROM_SIZE):h:$(basename $@).hex" $@
 
 .PHONY: clean
 clean:						#t# Clean build files

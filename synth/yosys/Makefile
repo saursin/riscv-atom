@@ -49,9 +49,9 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) RVATOM_BUILD=$(RVATOM_BUILD) clean build
 	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
-$(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
+$(build_dir)/HydrogenSoC.v: $(RVATOM_VDEPS) $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
-	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
+	verilator -E -P $(RVATOM_VFLAGS) -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' > $@
 	verilator --lint-only $@ -top-module $(VTOPMODULE)
 	
 	$(call print_msg_root,Dumping buildinfo,$(build_info_file))

@@ -11,7 +11,7 @@
 #define SPI_REG_CSCTRL_OFFSET   0x10
 #define SPI_REG_DCTRL_OFFSET    0x14
 
-#define _spi_busy() (REG32(SPI_ADDR, SPI_REG_SCTRL_OFFSET) >> 31)
+#define _spi_busy() (REG32(SOC_SPI_ADDR, SPI_REG_SCTRL_OFFSET) >> 31)
 
 int spi_init(struct SPI_Config * cfg) {
     while(_spi_busy()) {

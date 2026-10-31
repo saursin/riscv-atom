@@ -12,6 +12,9 @@ params:
   en_exceptions: true   # interrupt/exception support
   clk_freq: 50000000    # Hz (platform table, SDC); boards override it in <soc>-<board>.yml
 
+  # Memory map and peripherals: the only source. Each <x>.<key> becomes SOC_<X>_<KEY> in the
+  # generated config headers (RTL, C, asm, atomsim, linker scripts); 'enable: true' becomes
+  # SOC_EN_<X>, and a disabled peripheral emits nothing.
   peripherals:
     bootrom:
       addr: 0x00010000
@@ -32,13 +35,13 @@ params:
       enable: true
       addr: 0x40002000
       size: 16
-      pins: 16
+      num_pins: 16
 
     spi:
       enable: true
       addr: 0x40003000
       size: 32
-      cs_pins: 1
+      num_cs: 1
 
     timer:
       enable: true
@@ -48,17 +51,12 @@ params:
 design:
   topmodule: HydrogenSoC
 
-  # Common defines (peripheral enables are used by both RTL and the bootloader C)
-  defines:
-    - $[peripherals.uart.enable?SOC_EN_UART=1:]
-    - $[peripherals.gpio.enable?SOC_EN_GPIO=1:]
-    - $[peripherals.spi.enable?SOC_EN_SPI=1:]
-    - $[peripherals.timer.enable?SOC_EN_TIMER=1:]
-
-  # Verilog-only defines (RTL config sizing)
+  # Common defines (RTL, libcatom, bootloader, examples and atomsim)
+  defines: []
+  
+  # Verilog-only defines
   vdefines:
-    - SOC_GPIO_NUM_PINS=$[peripherals.gpio.pins]
-    - SOC_SPI_NUM_CS=$[peripherals.spi.cs_pins]
+    - SOC_RESET_ADDR=$[peripherals.bootrom.addr]
 
   # C-only defines (target selection in libcatom / bootloader)
   cdefines:
@@ -69,9 +67,6 @@ design:
     hydrogensoc:
       vsrcs:
         - $[env.RVATOM]/rtl/soc/hydrogensoc/HydrogenSoC.v
-
-      vincdirs:
-        - $[env.RVATOM]/rtl/soc/hydrogensoc
 
     # Wishbone Memory
     mem:

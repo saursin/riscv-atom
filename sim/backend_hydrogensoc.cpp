@@ -17,13 +17,11 @@
 
 #include "elfio/elfio.hpp"
 
-// ROM
-#define ROM_ADDR 0x00010000
-#define ROM_SIZE 8192   // 8 KB
-
-// RAM
-#define RAM_ADDR 0x20000000
-#define RAM_SIZE 49152  // 48 KB
+// Memory map from the soctarget config (SOC_<X>_ADDR/SIZE defines)
+#define ROM_ADDR SOC_BOOTROM_ADDR
+#define ROM_SIZE SOC_BOOTROM_SIZE
+#define RAM_ADDR SOC_RAM_ADDR
+#define RAM_SIZE SOC_RAM_SIZE
 
 #define BBUART_FRATIO 3
 #define BOOTMODE_PIN_OFFSET 8

@@ -11,6 +11,7 @@
 //      Button S0 is the reset.
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "atom_config.vh"
 
 module tangprimer20k_shell (
     input   wire            clk_27mhz_i,

@@ -23,10 +23,11 @@ default: build
 .PHONY: build
 build: $(BUILD_DIR)/filelist.f					#t# Generate filelist and stage RTL files in build dir
 
-$(BUILD_DIR)/filelist.f: $(RVATOM_VARS_MK)
+$(BUILD_DIR)/filelist.f: $(RVATOM_VARS_MK) $(RVATOM_CONFIG_VH)
 	@mkdir -p $(BUILD_DIR)
 	$(call print_msg,Generating filelist,$(BUILD_DIR)/filelist.f)
 	@$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t filelist --base-dir $(abspath $(BUILD_DIR)) -o $@
+	@echo "+incdir+$(dir $(RVATOM_CONFIG_VH))" >> $@
 	$(call print_msg,Staging RTL files (MODE=$(MODE)))
 	@for f in $$($(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vsrcs); do \
 		if [ "$(MODE)" = "copy" ]; then \

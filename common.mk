@@ -50,7 +50,7 @@ endif
 RVATOM_BUILD ?= $(RVATOM)/build/$(RVATOM_CFGNAME)
 
 # For targets that need it: require a valid soctarget and include the build
-# parameters derived from its YAML (RVATOM_ISA, RVATOM_CDEFINES, ...).
+# parameters derived from its YAML (RVATOM_ISA, RVATOM_ABI, ...).
 # Goals that are all 'help' skip the check; goals that are all clean goals need
 # only the soctarget (to locate RVATOM_BUILD), not the derived config.
 ifeq ($(_mk_check_soctarget), 1)
@@ -69,11 +69,20 @@ ifeq ($(_mk_check_soctarget), 1)
         # Named per config so a shared RVATOM_BUILD override never reuses
         # another config's values. Make regenerates it when any YAML it was
         # derived from (RVATOM_YMLDEPS) or cfgparse changes, then restarts.
+        # The config headers are written with it: C/C++/asm builds force-include
+        # atom_config.h (-include); RTL includes atom_config.vh explicitly.
         RVATOM_VARS_MK := $(RVATOM_BUILD)/vars.$(RVATOM_CFGNAME).mk
+        RVATOM_CONFIG_H  := $(RVATOM_BUILD)/include/atom_config.h
+        RVATOM_CONFIG_VH := $(RVATOM_BUILD)/include/atom_config.vh
         include $(RVATOM_VARS_MK)
-        $(RVATOM_VARS_MK): $(RVATOM_YMLCONFIG) $(RVATOM_YMLDEPS) $(CFGPARSE)
-		@mkdir -p $(@D)
-		$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t make-vars > $@.$$$$ && mv $@.$$$$ $@ || { rm -f $@.$$$$; exit 1; }
+        # RTL: verilator flags (include dirs + sources) and every file they read
+        RVATOM_VFLAGS += +incdir+$(RVATOM_BUILD)/include
+        RVATOM_VDEPS  += $(RVATOM_CONFIG_VH)
+        $(RVATOM_VARS_MK) $(RVATOM_CONFIG_H) $(RVATOM_CONFIG_VH) &: $(RVATOM_YMLCONFIG) $(RVATOM_YMLDEPS) $(CFGPARSE)
+		@mkdir -p $(RVATOM_BUILD)/include
+		$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t header --style gcc -o $(RVATOM_CONFIG_H)
+		$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t header --style verilator -o $(RVATOM_CONFIG_VH)
+		$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t make-vars > $(RVATOM_VARS_MK).$$$$ && mv $(RVATOM_VARS_MK).$$$$ $(RVATOM_VARS_MK) || { rm -f $(RVATOM_VARS_MK).$$$$; exit 1; }
     endif
 endif
 

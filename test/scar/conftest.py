@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -26,13 +27,12 @@ def soctarget(atomsim):
 
 
 @pytest.fixture(scope="session")
-def linker_script(soctarget):
-    rvatom = os.environ.get("RVATOM")
-    if not rvatom:
-        pytest.skip("RVATOM not set — run `source sourceme` first")
-    ld = Path(rvatom) / "sw" / "lib" / "link" / f"link_{soctarget}.ld"
+def linker_script(atomsim, soctarget):
+    # preprocessed by the libcatom build: <build>/sw/lib/, next to <build>/sim/bin/atomsim
+    build = Path(shutil.which(atomsim)).resolve().parents[2]
+    ld = build / "sw" / "lib" / f"link_{soctarget}.ld"
     if not ld.exists():
-        pytest.skip(f"Linker script not found: {ld}")
+        pytest.skip(f"Linker script not found: {ld} — build libcatom (`make lib`)")
     return str(ld)
 
 

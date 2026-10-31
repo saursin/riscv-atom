@@ -7,8 +7,30 @@ params:
   en_exceptions: true   # interrupt/exception support (RV32I_Zicsr + traps)
   clk_freq: 12000000    # Hz (platform table)
 
+  # Memory map: the only source; each <x>.<key> becomes SOC_<X>_<KEY> in the generated config
+  # headers. Memory sizes are atomsim defaults (--bootrom-size, --ram-size).
+  peripherals:
+    bootrom:
+      addr: 0x00010000
+      size: 8KB
+
+    ram:
+      addr: 0x20000000
+      size: 80MB
+
+    uart:
+      addr: 0x40000000
+      size: 16
+
 design:
   topmodule: AtomBones
+
+  # Common defines (RTL, libcatom, bootloader, examples and atomsim)
+  defines: []
+
+  # Verilog-only defines
+  vdefines:
+    - SOC_RESET_ADDR=$[peripherals.bootrom.addr]
 
   # C-only defines (target selection in libcatom / bootloader)
   cdefines:
@@ -18,8 +40,5 @@ design:
     atombones:
       vsrcs:
         - $[env.RVATOM]/rtl/soc/atombones/AtomBones.v
-
-      vincdirs:
-        - $[env.RVATOM]/rtl/soc/atombones
 
 

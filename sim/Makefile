@@ -36,7 +36,7 @@ VC := verilator
 VFLAGS := -cc -Wall --trace -D__ATOMSIM_SIMULATION__ --Mdir $(VERILATED_DIR)
 VFLAGS += -DSOC_BOOTROM_INIT_FILE=\"$(RVATOM_BUILD)/sw/bootloader/bootloader.hex\"
 VTOPMODULE := $(RVATOM_TOPMODULE)
-VFILELIST:= $(shell $(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags)
+VFILELIST:= $(RVATOM_VFLAGS)
 
 ####################################################
 # CPP configs
@@ -60,6 +60,7 @@ COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 SIM_BACKEND_FILE := backend_$(soctarget).cpp
 CFLAGS += -DTARGET_HEADER='"backend_$(soctarget).hpp"'
+CFLAGS += -include $(RVATOM_CONFIG_H)	# memory map (SOC_<X>_ADDR/SIZE) from the config
 
 # Since we have the target specific backend file-name now, append it to list of srcs
 SRCS += $(SIM_BACKEND_FILE)
@@ -93,7 +94,6 @@ endif
 
 CFLAGS += -DDEFAULT_BOOTROM_IMAGE='"$(RVATOM_BUILD)/sw/bootloader/bootloader.hex"'
 
-VSRCS := $(shell $(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vsrcs)
 ####################################################
 # Recepies
 
@@ -102,7 +102,7 @@ sim: lib_verilated $(EXE)					#t# Build atomsim simulator
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 # Verilate RTL
-$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(VSRCS) $(RVATOM_VARS_MK)
+$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(RVATOM_VDEPS) $(RVATOM_VARS_MK)
 	$(call print_msg,Verilating Verilog)
 	$(VC) $(VFLAGS) $(VFILELIST) --top-module $(VTOPMODULE)
 	$(call print_msgt,Generating library)

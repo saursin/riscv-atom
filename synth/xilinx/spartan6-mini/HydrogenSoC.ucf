@@ -18,6 +18,8 @@
 # 	- 1 RGB LED
 #
 ####################################################################
+`include "atom_config.vh"
+
 NET "clk_i" LOC = P87 |IOSTANDARD = LVCMOS33;
 #NET CLOCK_100MHZ LOC = P84 | IOSTANDARD = LVCMOS33; 
 

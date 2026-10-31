@@ -1,7 +1,7 @@
 .global main
 .text
 
-.equ TX_ADDRESS, 0x40000000
+.equ TX_ADDRESS, SOC_UART_ADDR
 
 main:
     la a0, msg

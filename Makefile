@@ -64,15 +64,19 @@ endif
 show-config:						#t# Print the resolved build configuration
 	@test -n "$(soctarget)" \
 		|| { printf "No soctarget configured; run 'make config soctarget=<target>'\n"; exit 1; }
-	@y=$(RVATOM)/rtl/config/$(soctarget).yml; \
+	@test -f "$(RVATOM_YMLCONFIG)" \
+		|| { printf "No config $(RVATOM_YMLCONFIG) (check soctarget/board)\n"; exit 1; }
+	@y=$(RVATOM_YMLCONFIG); \
 	 printf "soctarget : %s\n" "$(soctarget)"; \
+	 printf "board     : %s\n" "$(if $(board),$(board),<none>)"; \
 	 printf "build_dir : %s\n" "$(RVATOM_BUILD)"; \
 	 printf "yml       : %s\n" "$$y"; \
 	 printf "isa       : %s\n" "$$($(CFGPARSE) -c $$y -g params.isa)"; \
 	 printf "abi       : %s\n" "$$($(CFGPARSE) -c $$y -g params.abi)"; \
 	 printf "topmodule : %s\n" "$$($(CFGPARSE) -c $$y -g design.topmodule)"; \
-	 printf "cdefines  : %s\n" "$$($(CFGPARSE) -c $$y -t defines --style gcc --fno-newlines)"; \
-	 printf "vdefines  : %s\n" "$$($(CFGPARSE) -c $$y -t defines --style verilator --fno-newlines)"
+	 printf "clk_freq  : %s Hz\n" "$$($(CFGPARSE) -c $$y -g params.clk_freq)"; \
+	 printf "\natom_config.h (C, asm, atomsim):\n"; $(CFGPARSE) -c $$y -t header --style gcc; \
+	 printf "\natom_config.vh (RTL):\n"; $(CFGPARSE) -c $$y -t header --style verilator
 
 # ======== AtomSim ========
 .PHONY : sim

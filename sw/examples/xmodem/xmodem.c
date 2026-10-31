@@ -14,31 +14,31 @@ void udelay(unsigned tick)
 // IO Functions
 static int _inbyte(int msec)
 {
-	while (!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0)) {
+	while (!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0)) {
 		if (msec-- <= 0)
 			return -1;
         udelay(1000);
 	}
-	return (int) REG8(UART_ADDR, UART_REG_RBR);
+	return (int) REG8(SOC_UART_ADDR, UART_REG_RBR);
 }
 
 static void _outbyte(unsigned char c)
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LSR), 1))
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 1))
         udelay(1000);
-    REG8(UART_ADDR, UART_REG_THR) = c;
+    REG8(SOC_UART_ADDR, UART_REG_THR) = c;
 }
 
 
 void flush_input()
 {
-    while(bitcheck(REG32(UART_ADDR, UART_REG_LSR), 0))
-        REG8(UART_ADDR, UART_REG_RBR);
+    while(bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0))
+        REG8(SOC_UART_ADDR, UART_REG_RBR);
 }
 
 void flush_output()
 {
-    while(!bitcheck(REG32(UART_ADDR, UART_REG_LCR), 1))
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LCR), 1))
         udelay(10);
 }
 

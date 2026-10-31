@@ -15,12 +15,12 @@ class Vuart;
 
 struct Backend_config
 {
-    uint32_t bootrom_offset     = 0x00010000;
-    uint32_t bootrom_size_kb    = 8;            // default: 8 KB
+    uint32_t bootrom_offset     = SOC_BOOTROM_ADDR;
+    uint32_t bootrom_size_kb    = SOC_BOOTROM_SIZE / 1024;
     std::string bootrom_img     = DEFAULT_BOOTROM_IMAGE;
     
-    uint32_t ram_offset         = 0x20000000;
-    uint32_t ram_size_kb        = (80*1024);    // default: 80 MB
+    uint32_t ram_offset         = SOC_RAM_ADDR;
+    uint32_t ram_size_kb        = SOC_RAM_SIZE / 1024;
 
     std::string vuart_portname  = "";
     uint32_t vuart_baudrate     = 115200;

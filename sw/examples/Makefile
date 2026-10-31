@@ -56,8 +56,10 @@ LINKERSCRIPT := None
 
 #### check soctarget ####
 ifeq ($(__check_soctarget), true)
-    LINKERSCRIPT := $(RVATOM_LIB)/link/link_$(soctarget).ld
-    CFLAGS += $(RVATOM_CDEFINES)
+    # preprocessed by the libcatom build
+    LINKERSCRIPT := $(RVATOM_BUILD)/sw/lib/link_$(soctarget).ld
+    # config defines (memory map, target) from the YAML
+    CFLAGS += -include $(RVATOM_CONFIG_H)
 endif
 
 CFLAGS += -march=$(RVATOM_ISA) -mabi=$(RVATOM_ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
@@ -134,6 +136,7 @@ dism: $(ex)/$(executable)				    #t# Dump disassembly
 # .PHONY: prog
 # prog: $(ex)/$(executable).bin               #t# Program fpga flash
 # 	prog_firmware.sh $^
+
 
 
 .PHONY: clean

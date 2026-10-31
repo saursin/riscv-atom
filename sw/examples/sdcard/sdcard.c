@@ -8,7 +8,7 @@ int main(){
     serial_init(UART_BAUD_115200);
     
     struct SPI_Config cfg = {
-        cfg.base_addr = SPI_ADDR,
+        cfg.base_addr = SOC_SPI_ADDR,
         cfg.enable = true,
         cfg.pha = false,
         cfg.pol = false,

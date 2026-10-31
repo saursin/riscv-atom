@@ -5,6 +5,7 @@
 //      to read and write to the CSR registers
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "Defs.vh"
 `include "Utils.vh"
 `include  "CSR_defs.vh"
 

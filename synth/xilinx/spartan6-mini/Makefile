@@ -33,16 +33,16 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/bootloader soctarget=$(soctarget) board=$(board) RVATOM_BUILD=$(RVATOM_BUILD) clean build
 	cp $(RVATOM_BUILD)/sw/bootloader/bootloader.hex $@
 
-$(build_dir)/HydrogenSoC.v: $(RVATOM_VARS_MK)
+$(build_dir)/HydrogenSoC.v: $(RVATOM_VDEPS) $(BOARD_VSRCS) $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
 	@printf "$(CLR_GR)>> Generating verilog$(CLR_NC)\n"
-	verilator -E -P `$(CFGPARSE) -c $(RVATOM_YMLCONFIG) -t vflags` -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
+	verilator -E -P $(RVATOM_VFLAGS) -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
 	verilator --lint-only $@ -top-module $(VTOPMODULE)
 
 build: $(build_dir)/bootloader.hex $(build_dir)/HydrogenSoC.v		#t# Build FPGA Bitstream
 	$(call print_msg_root,Starting FPGA Flow)
 	cp -f spartan6-mini.tcl $(build_dir)/
-	verilator -E -P $(RVATOM_VDEFINES) HydrogenSoC.ucf > $(build_dir)/HydrogenSoC.ucf
+	verilator -E -P +incdir+$(dir $(RVATOM_CONFIG_VH)) HydrogenSoC.ucf > $(build_dir)/HydrogenSoC.ucf
 	cd $(build_dir) && time xtclsh spartan6-mini.tcl rebuild_project 2>&1 > build.log
 
 .PHONY: prog

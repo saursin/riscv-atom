@@ -9,11 +9,12 @@ OUTPUT_FORMAT("elf32-littleriscv")
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
 
-/* MEMORY LAYOUT */
+/* MEMORY LAYOUT: ROM/RAM from the config (atom_config.h). This file is run through the C
+   preprocessor by the libcatom build (into $(RVATOM_BUILD)/sw/lib/); do not pass it to ld directly. */
 MEMORY
 {
-    BOOT_ROM (rx):  ORIGIN = 0x00010000, LENGTH = 8K
-    RAM (rx):       ORIGIN = 0x20000000, LENGTH = 48K
+    BOOT_ROM (rx):  ORIGIN = SOC_BOOTROM_ADDR, LENGTH = SOC_BOOTROM_SIZE
+    RAM (rx):       ORIGIN = SOC_RAM_ADDR,     LENGTH = SOC_RAM_SIZE
 }
 
 __bootrom_start = ORIGIN(BOOT_ROM);

@@ -53,7 +53,7 @@ Serial_Config serial_get_config()
 
 void serial_write(char c)
 {
-    REG8(UART_ADDR, 0x0) = c;
+    REG8(SOC_UART_ADDR, 0x0) = c;
 }
 
 
@@ -61,7 +61,7 @@ char serial_read()
 {
     while(1)
     {
-        uint32_t v = REG32(UART_ADDR, UART_REG_THR);
+        uint32_t v = REG32(SOC_UART_ADDR, UART_REG_THR);
         if(v != (uint32_t)-1)
             return (char) (v & 0xff);
     }

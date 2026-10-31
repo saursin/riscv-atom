@@ -4,6 +4,7 @@
 //  Description : Wishbone wrapper for Atom core
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
+`include "Defs.vh"
 
 /*
     Wishbone wrapper for the atom cpu.
