@@ -12,8 +12,9 @@ params:
   clk_freq: 50000000    # Hz (platform table, SDC); boards override it in <soc>-<board>.yml
 
   # Memory map and peripherals: the only source. Each <x>.<key> becomes SOC_<X>_<KEY> in the
-  # generated config headers (RTL, C, asm, atomsim, linker scripts); 'enable: true' becomes
-  # SOC_EN_<X>, and a disabled peripheral emits nothing.
+  # generated config headers (RTL, C, asm, atomsim, linker scripts); 'enable: true' adds
+  # SOC_EN_<X>. A disabled peripheral keeps its keys (its address slot is part of the map)
+  # but has no SOC_EN_<X>, so no hardware.
   peripherals:
     bootrom:
       addr: 0x00010000
@@ -46,6 +47,16 @@ params:
       enable: true
       addr: 0x40004000
       size: 16
+
+    # DDR3 (rtl/uncore/ddr): memory at addr, registers at ctrl_addr. A board with a DDR3 chip
+    # enables it and gives the chip geometry (dq_bits, row_bits, col_bits, bank_bits);
+    # software finds the size in the platform table ('DDR ' tag).
+    ddr:
+      enable: false
+      addr: 0x80000000
+      ctrl_addr: 0x40005000
+      ctrl_size: 16
+      clk_freq: $[clk_freq]     # controller timing and refresh
 
 design:
   topmodule: HydrogenSoC
@@ -91,6 +102,14 @@ design:
       vsrcs:
         - $[env.RVATOM]/rtl/uncore/spi/SPI_wb.v
         - $[env.RVATOM]/rtl/uncore/spi/SPI_core.v
+
+    # DDR3 (only with peripherals.ddr.enable: SystemVerilog, which not every flow reads).
+    # DDR3_wb.v includes the vendored controller from the include dir.
+    ddr:
+      vsrcs:
+        - $[peripherals.ddr.enable?$[env.RVATOM]/rtl/uncore/ddr/DDR3_wb.v:]
+      vincdirs:
+        - $[peripherals.ddr.enable?$[env.RVATOM]/rtl/uncore/ddr/gowin-ddr3:]
 
     # Wishbone Timer
     timer:

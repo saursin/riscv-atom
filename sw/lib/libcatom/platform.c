@@ -27,3 +27,9 @@ uint32_t platform_clk(void)
     const uint32_t *t = platform_find(PLATFORM_TAG_CLK, 0);
     return (t && t[1] >= 12) ? t[2] : 0;
 }
+
+uint32_t platform_ddr_size(void)
+{
+    const uint32_t *t = platform_find(PLATFORM_TAG_DDR, 0);
+    return (t && t[1] >= 12) ? t[2] : 0;
+}

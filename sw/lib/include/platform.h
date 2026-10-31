@@ -34,6 +34,7 @@ extern int __dataram_size;
 #define PLATFORM_TAG(a, b, c, d) \
     ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
 #define PLATFORM_TAG_CLK    PLATFORM_TAG('C', 'L', 'K', ' ')   // clock (Hz)
+#define PLATFORM_TAG_DDR    PLATFORM_TAG('D', 'D', 'R', ' ')   // DDR memory size (bytes), at SOC_DDR_ADDR
 
 extern const uint32_t *__platform;          // the table, or NULL (set at startup)
 
@@ -42,3 +43,6 @@ const uint32_t *platform_find(uint32_t tag, unsigned n);
 
 // SoC clock in Hz from the platform table, or 0 without one
 uint32_t platform_clk(void);
+
+// DDR memory size in bytes (at SOC_DDR_ADDR), or 0 if the board has none
+uint32_t platform_ddr_size(void);

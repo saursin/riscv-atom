@@ -44,6 +44,29 @@ module HydrogenSoC(
     output  wire                            spi_sck_o,
     output  wire [`SOC_SPI_NUM_CS-1:0]      spi_cs_o
 `endif
+
+`ifdef SOC_EN_DDR
+    ,
+    // DDR3 PHY, controller side (the PHY is in the board shell): see rtl/uncore/ddr/DDR3_wb.v
+    input   wire                                    ddr_phy_ce_i,
+    output  wire                                    ddr_phy_reset_n_o,
+    output  wire                                    ddr_phy_cke_o,
+    output  wire                                    ddr_phy_odt_o,
+    output  wire [2:0]                              ddr_phy_cmd_o,
+    output  wire [`SOC_DDR_ROW_BITS-1:0]            ddr_phy_addr_o,
+    output  wire [`SOC_DDR_BANK_BITS-1:0]           ddr_phy_ba_o,
+    output  wire                                    ddr_phy_wr_o,
+    output  wire [1:0]                              ddr_phy_wr_ph_o,
+    output  wire [8*`SOC_DDR_DQ_BITS-1:0]           ddr_phy_wdata_o,
+    output  wire [`SOC_DDR_DQ_BITS-1:0]             ddr_phy_wmask_o,
+    output  wire                                    ddr_phy_rd_o,
+    output  wire [1:0]                              ddr_phy_rd_ph_o,
+    output  wire [`SOC_DDR_DQ_BITS/8*3-1:0]         ddr_phy_rd_delay_o,
+    output  wire [1:0]                              ddr_phy_wr_shift_o,
+    input   wire                                    ddr_phy_rvalid_i,
+    input   wire [8*`SOC_DDR_DQ_BITS-1:0]           ddr_phy_rdata_i,
+    input   wire                                    ddr_phy_ready_i
+`endif
 );
     wire wb_clk_i = clk_i;
     wire wb_rst_i = rst_i;
@@ -161,7 +184,13 @@ module HydrogenSoC(
     `define IS_DEFINED(X) `ifdef X 1 `else 0 `endif
 
     // Counts the number of peripherals to be connected to crossbar's master interface
-    `define SOC_XBAR_SLAVE_COUNT ( 2 + `IS_DEFINED(SOC_EN_UART) + `IS_DEFINED(SOC_EN_GPIO) + `IS_DEFINED(SOC_EN_SPI) + `IS_DEFINED(SOC_EN_TIMER))
+    // DDR3: memory and registers are two slaves
+    `define SOC_XBAR_SLAVE_COUNT ( 2 + `IS_DEFINED(SOC_EN_UART) + `IS_DEFINED(SOC_EN_GPIO) + `IS_DEFINED(SOC_EN_SPI) + `IS_DEFINED(SOC_EN_TIMER) + 2 * `IS_DEFINED(SOC_EN_DDR))
+
+    `ifdef SOC_EN_DDR
+    // DDR byte address bits, from the chip geometry
+    localparam DDR_AW = `SOC_DDR_BANK_BITS + `SOC_DDR_ROW_BITS + `SOC_DDR_COL_BITS + $clog2(`SOC_DDR_DQ_BITS / 8);
+    `endif
 
     Crossbar_wb #(
         .NSLAVES        (`SOC_XBAR_SLAVE_COUNT),
@@ -174,6 +203,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, `SOC_GPIO_ADDR)
             `listappend(SOC_EN_SPI, `SOC_SPI_ADDR)
             `listappend(SOC_EN_TIMER, `SOC_TIMER_ADDR)
+            `listappend(SOC_EN_DDR, `SOC_DDR_ADDR)
+            `listappend(SOC_EN_DDR, `SOC_DDR_CTRL_ADDR)
         }),
         .DEVICE_MASK    ({
             `size_to_mask32(`SOC_BOOTROM_SIZE),
@@ -182,6 +213,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, `size_to_mask32(`SOC_GPIO_SIZE))
             `listappend(SOC_EN_SPI, `size_to_mask32(`SOC_SPI_SIZE))
             `listappend(SOC_EN_TIMER, `size_to_mask32(`SOC_TIMER_SIZE))
+            `listappend(SOC_EN_DDR, (-32'h1 << DDR_AW))
+            `listappend(SOC_EN_DDR, `size_to_mask32(`SOC_DDR_CTRL_SIZE))
         })
     ) xbar (
         .wb_clk_i       (wb_clk_i),
@@ -203,6 +236,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_adr_i)
             `listappend(SOC_EN_SPI, spi_wb_adr_i)
             `listappend(SOC_EN_TIMER, timer_wb_adr_i)
+            `listappend(SOC_EN_DDR, ddr_wb_adr_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_adr_i)
         }),
         .wbs_dat_i      ({
             bootrom_wb_dat_o,
@@ -211,6 +246,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_dat_o)
             `listappend(SOC_EN_SPI, spi_wb_dat_o)
             `listappend(SOC_EN_TIMER, timer_wb_dat_o)
+            `listappend(SOC_EN_DDR, ddr_wb_dat_o)
+            `listappend(SOC_EN_DDR, ddrc_wb_dat_o)
         }),
         .wbs_dat_o      ({
             bootrom_wb_dat_i,
@@ -219,6 +256,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_dat_i)
             `listappend(SOC_EN_SPI, spi_wb_dat_i)
             `listappend(SOC_EN_TIMER, timer_wb_dat_i)
+            `listappend(SOC_EN_DDR, ddr_wb_dat_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_dat_i)
         }),
         .wbs_we_o       ({
             bootrom_wb_we_i,
@@ -227,6 +266,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_we_i)
             `listappend(SOC_EN_SPI, spi_wb_we_i)
             `listappend(SOC_EN_TIMER, timer_wb_we_i)
+            `listappend(SOC_EN_DDR, ddr_wb_we_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_we_i)
         }),
         .wbs_sel_o      ({
             bootrom_wb_sel_i,
@@ -235,6 +276,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_sel_i)
             `listappend(SOC_EN_SPI, spi_wb_sel_i)
             `listappend(SOC_EN_TIMER, timer_wb_sel_i)
+            `listappend(SOC_EN_DDR, ddr_wb_sel_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_sel_i)
         }),
         .wbs_cyc_o      ({
             bootrom_wb_cyc_i,
@@ -243,6 +286,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_cyc_i)
             `listappend(SOC_EN_SPI, spi_wb_cyc_i)
             `listappend(SOC_EN_TIMER, timer_wb_cyc_i)
+            `listappend(SOC_EN_DDR, ddr_wb_cyc_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_cyc_i)
         }),
         .wbs_stb_o      ({
             bootrom_wb_stb_i,
@@ -251,6 +296,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_stb_i)
             `listappend(SOC_EN_SPI, spi_wb_stb_i)
             `listappend(SOC_EN_TIMER, timer_wb_stb_i)
+            `listappend(SOC_EN_DDR, ddr_wb_stb_i)
+            `listappend(SOC_EN_DDR, ddrc_wb_stb_i)
         }),
         .wbs_ack_i      ({
             bootrom_wb_ack_o,
@@ -259,6 +306,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_ack_o)
             `listappend(SOC_EN_SPI, spi_wb_ack_o)
             `listappend(SOC_EN_TIMER, timer_wb_ack_o)
+            `listappend(SOC_EN_DDR, ddr_wb_ack_o)
+            `listappend(SOC_EN_DDR, ddrc_wb_ack_o)
         }),
         .wbs_err_i      ({
             bootrom_wb_err_o,
@@ -267,6 +316,8 @@ module HydrogenSoC(
             `listappend(SOC_EN_GPIO, gpio_wb_err_o)
             `listappend(SOC_EN_SPI, spi_wb_err_o)
             `listappend(SOC_EN_TIMER, timer_wb_err_o)
+            `listappend(SOC_EN_DDR, ddr_wb_err_o)
+            `listappend(SOC_EN_DDR, ddrc_wb_err_o)
         })
     );
 
@@ -467,6 +518,77 @@ module HydrogenSoC(
     `UNUSED_VAR(timer_int_o)
     `endif // EN_EXCEPT
     
+    `endif
+
+    // ******************* DDR3 *******************
+    `ifdef SOC_EN_DDR
+    wire  [31:0]    ddr_wb_adr_i;
+    `UNUSED_VAR(ddr_wb_adr_i)
+    wire  [31:0]    ddr_wb_dat_o;
+    wire  [31:0]    ddr_wb_dat_i;
+    wire 		    ddr_wb_we_i;
+    wire  [3:0]     ddr_wb_sel_i;
+    wire            ddr_wb_cyc_i;
+    wire            ddr_wb_stb_i;
+    wire 		    ddr_wb_ack_o;
+    wire            ddr_wb_err_o = 0;
+
+    wire  [31:0]    ddrc_wb_adr_i;
+    `UNUSED_VAR(ddrc_wb_adr_i)
+    wire  [31:0]    ddrc_wb_dat_o;
+    wire  [31:0]    ddrc_wb_dat_i;
+    wire 		    ddrc_wb_we_i;
+    wire  [3:0]     ddrc_wb_sel_i;
+    wire            ddrc_wb_cyc_i;
+    wire            ddrc_wb_stb_i;
+    wire 		    ddrc_wb_ack_o;
+    wire            ddrc_wb_err_o = 0;
+
+    DDR3_wb #(
+        .CLK_FREQ   (`SOC_DDR_CLK_FREQ),
+        .DQ_W       (`SOC_DDR_DQ_BITS),
+        .ROW_W      (`SOC_DDR_ROW_BITS),
+        .COL_W      (`SOC_DDR_COL_BITS),
+        .BA_W       (`SOC_DDR_BANK_BITS)
+    ) ddr (
+        .wb_clk_i       (wb_clk_i),
+        .wb_rst_i       (wb_rst_i),
+
+        .mem_wb_adr_i   (ddr_wb_adr_i[DDR_AW-1:2]),
+        .mem_wb_dat_o   (ddr_wb_dat_o),
+        .mem_wb_dat_i   (ddr_wb_dat_i),
+        .mem_wb_we_i    (ddr_wb_we_i),
+        .mem_wb_sel_i   (ddr_wb_sel_i),
+        .mem_wb_stb_i   (ddr_wb_stb_i & ddr_wb_cyc_i),
+        .mem_wb_ack_o   (ddr_wb_ack_o),
+
+        .ctrl_wb_adr_i  (ddrc_wb_adr_i[3:2]),
+        .ctrl_wb_dat_o  (ddrc_wb_dat_o),
+        .ctrl_wb_dat_i  (ddrc_wb_dat_i),
+        .ctrl_wb_we_i   (ddrc_wb_we_i),
+        .ctrl_wb_sel_i  (ddrc_wb_sel_i),
+        .ctrl_wb_stb_i  (ddrc_wb_stb_i & ddrc_wb_cyc_i),
+        .ctrl_wb_ack_o  (ddrc_wb_ack_o),
+
+        .phy_ce         (ddr_phy_ce_i),
+        .phy_reset_n    (ddr_phy_reset_n_o),
+        .phy_cke        (ddr_phy_cke_o),
+        .phy_odt        (ddr_phy_odt_o),
+        .phy_cmd        (ddr_phy_cmd_o),
+        .phy_addr       (ddr_phy_addr_o),
+        .phy_ba         (ddr_phy_ba_o),
+        .phy_wr         (ddr_phy_wr_o),
+        .phy_wr_ph      (ddr_phy_wr_ph_o),
+        .phy_wdata      (ddr_phy_wdata_o),
+        .phy_wmask      (ddr_phy_wmask_o),
+        .phy_rd         (ddr_phy_rd_o),
+        .phy_rd_ph      (ddr_phy_rd_ph_o),
+        .phy_rd_delay   (ddr_phy_rd_delay_o),
+        .phy_wr_shift   (ddr_phy_wr_shift_o),
+        .phy_rvalid     (ddr_phy_rvalid_i),
+        .phy_rdata      (ddr_phy_rdata_i),
+        .phy_ready      (ddr_phy_ready_i)
+    );
     `endif
 
 endmodule

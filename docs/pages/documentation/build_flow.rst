@@ -14,7 +14,8 @@ Structure of the YAML config files
 #. ``params`` holds parameters. Derived parameters may use earlier ones, and size strings such as ``8KB`` or
    ``80MB`` become byte counts.
 #. ``params.peripherals`` holds the memory map and peripherals. Every ``<x>.<key>`` becomes ``SOC_<X>_<KEY>`` in the
-   generated config headers; ``enable: true`` becomes ``SOC_EN_<X>``, and a disabled peripheral emits nothing.
+   generated config headers; ``enable: true`` becomes ``SOC_EN_<X>``. A disabled peripheral keeps its keys (its
+   address slot is part of the map) but gets no ``SOC_EN_<X>``, so no hardware.
 #. ``design`` holds the top module, extra defines (``defines`` for all languages, ``vdefines`` for Verilog,
    ``cdefines`` for C) and the RTL sources (``vsrcs``, ``vincdirs``).
 #. String values may use templates: ``$[param]`` (dotted paths for nested values), ``$[env.VAR]``,

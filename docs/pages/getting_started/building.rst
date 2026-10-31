@@ -106,7 +106,8 @@ which you can also invoke directly, e.g. ``make -C sw/examples ex=banner compile
    ``RVATOM_VDEPS``);
 #. generates the config headers ``include/atom_config.h`` and ``include/atom_config.vh`` in the build directory
    from the config: every ``params.peripherals.<x>.<key>`` becomes ``SOC_<X>_<KEY>`` (``enable: true`` becomes
-   ``SOC_EN_<X>``; a disabled peripheral emits nothing), followed by the config's ``defines`` lists (core feature
+   ``SOC_EN_<X>``; a disabled peripheral keeps its keys, since its address slot is part of the map, but gets no
+   ``SOC_EN_<X>``), followed by the config's ``defines`` lists (core feature
    macros, ``SOC_RESET_ADDR``, ``TARGET_<SOC>``). Adding a peripheral to the YAML is enough to get its macros. Every C, assembly and atomsim compile force-includes
    ``atom_config.h`` (``-include``); the RTL includes ``atom_config.vh`` explicitly; the linker scripts
    (``sw/lib/link/*.ld``) are run through the C preprocessor with it.
