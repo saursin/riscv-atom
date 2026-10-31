@@ -18,7 +18,8 @@ typedef enum {
     UNKCHAR = 5,
     TIMEOUT = 6,
     SUCCESS = 7,
-    FAILURE = 8
+    FAILURE = 8,
+    REPEAT  = 9     // the previous packet again (the sender missed our ACK)
 } xmod_status;
 
 xmod_status xmodemReceive(uint8_t * bf, uint32_t len);

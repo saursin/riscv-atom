@@ -114,6 +114,8 @@ static uint16_t crc16_ccitt(const void *buf, register int len)
 //////////////////////////////////////////////////////////////
 // Xmodem Functions
 
+// Receives the rest of a packet (after SOH) into buf. SUCCESS: packet pkt_num; REPEAT: an
+// intact copy of the previous packet; FAILURE: corrupted, or out of sequence.
 static int get_packet(uint8_t pkt_num, uint8_t *buf)
 {
     uint8_t n = _inbyte(GETCHAR_TIMEOUT_MS);
@@ -124,11 +126,13 @@ static int get_packet(uint8_t pkt_num, uint8_t *buf)
     uint16_t chk_got = ((_inbyte(GETCHAR_TIMEOUT_MS)) << 8)
                         | (_inbyte(GETCHAR_TIMEOUT_MS));
     uint16_t chk_calc = crc16_ccitt(buf, 128);
-    
-    // check crc
-    if((n == pkt_num) && (ni == (255-n))
-     && (chk_got == chk_calc))
+
+    if((ni != (uint8_t)(255-n)) || (chk_got != chk_calc))
+        return FAILURE;
+    if(n == pkt_num)
         return SUCCESS;
+    if(n == (uint8_t)(pkt_num-1))
+        return REPEAT;
     return FAILURE;
 }
 
@@ -159,9 +163,7 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
             return S_EOT;   // normal end of transmission
         else if(c==CAN)
             return S_TERM;  // terminated by host
-        else {
-           return UNKCHAR;   // unknown char
-        }
+        // anything else is line noise (e.g. from a terminal connecting): keep waiting
     }
 
     if(!got_soh) {
@@ -173,9 +175,10 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
 
 
     int packetnum = 0;
+    bool have_soh = true;   // the first packet's SOH ended the handshake
     while(packetnum<len/128)
     {
-        if(packetnum!=0)
+        if(!have_soh)
         {
             // check for start
             int c = _inbyte(GETCHAR_TIMEOUT_MS);
@@ -195,14 +198,21 @@ xmod_status xmodemReceive(uint8_t * bf, uint32_t len)
         
         uint8_t *pkt_ptr = (bf+packetnum*128);
 
-        // get packet
+        // get packet; only a good one advances. A bad one is asked for again (NAK) once the
+        // line is quiet; a repeat of the previous one, sent because our ACK got lost, is
+        // acknowledged again and dropped (the next packet overwrites it).
         xmod_status s = get_packet(packetnum+1, pkt_ptr);
-        
-        // acknowledge
-        _outbyte(s==SUCCESS ? ACK : NAK);
+        have_soh = false;
+        if(s == FAILURE) {
+            while(_inbyte(GETCHAR_TIMEOUT_MS) != -1)    // until the line is quiet
+                ;
+            _outbyte(NAK);
+        } else {
+            _outbyte(ACK);
+            if(s == SUCCESS)
+                packetnum++;
+        }
         bootled_toggle();
-
-        packetnum++;
     }
 
     boot_panic(RCODE_UNREACHABLE, "Unreachable");
