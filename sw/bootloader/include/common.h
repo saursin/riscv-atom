@@ -36,6 +36,7 @@
 // Generated from the soctarget/board config (cfgparse.py -t platform)
 extern const uint32_t atom_platform_table[];
 
-void puthex(unsigned val);
+// val in base 10 or 16, at least `digits` digits (zero-padded)
+void putnum(unsigned val, unsigned base, int digits);
 void __attribute__((noreturn)) boot_panic(int code, char *msg);
 void * platform_init();

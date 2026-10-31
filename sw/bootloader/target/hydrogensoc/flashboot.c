@@ -68,7 +68,7 @@ void flashboot(uint8_t *dest, uint32_t src_addr, uint32_t len) {
     // Check ID
     uint8_t manufacturer_id = flashgetid(&cfg);
     P(puts("flashboot: manuf id = 0x");)
-    P(puthex(manufacturer_id);)
+    P(putnum(manufacturer_id, 16, 1);)
     P(putchar('\n');)
     if(manufacturer_id == 0x00 || manufacturer_id == 0xff){
         boot_panic(RCODE_FLASHBOOT_INVALID_DEVICE, "Invalid FLASH Device");

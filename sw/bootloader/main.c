@@ -6,17 +6,16 @@
 
 typedef void (*fnc_ptr)(long hartid, const uint32_t *platform);
 
-void puthex(unsigned val) {
-    if(val == 0)
-        return;
-    puthex(val / 16);
-    putchar("0123456789abcdef"[val % 16]);
+void putnum(unsigned val, unsigned base, int digits) {
+    if(val >= base || digits > 1)
+        putnum(val / base, base, digits - 1);
+    putchar("0123456789abcdef"[val % base]);
 }
 
 void boot_panic_handler(){
     #ifdef __EN_PRINTS
-    puts("Boot Exception: cause=0x"); puthex(CSR_read(CSR_MCAUSE));
-    puts(", addr=0x"); puthex(CSR_read(CSR_MEPC));
+    puts("Boot Exception: cause=0x"); putnum(CSR_read(CSR_MCAUSE), 16, 1);
+    puts(", addr=0x"); putnum(CSR_read(CSR_MEPC), 16, 1);
     putchar('\n');
     #endif
     exit(RCODE_EXCEPTION);

@@ -5,6 +5,7 @@
 #include <mmio.h>
 #include <assert.h>
 #include <serial.h>
+#include <time.h>
 
 
 #define UART_REG_THR 0x0
@@ -65,4 +66,16 @@ char serial_read()
         if(v != (uint32_t)-1)
             return (char) (v & 0xff);
     }
+}
+
+
+int serial_read_timeout(uint32_t timeout_ms)
+{
+    clock_t t_end = cycle() + (clock_t)(platform_clk() / 1000) * timeout_ms;
+    do {
+        uint32_t v = REG32(SOC_UART_ADDR, UART_REG_THR);
+        if(v != (uint32_t)-1)
+            return v & 0xff;
+    } while(cycle() <= t_end);
+    return -1;
 }

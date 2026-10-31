@@ -29,6 +29,8 @@ endif
 # This creates new section for each function which can be used with 
 # -Wl,--gc-sections linker flag to remove unused code
 CFLAGS+= -fdata-sections -ffunction-sections
+# keep CRC loops bitwise (GCC 15+ would turn them into a lookup table); older GCCs lack the flag
+CFLAGS+= $(shell $(CC) -fno-optimize-crc -E -x c /dev/null >/dev/null 2>&1 && echo -fno-optimize-crc)
 
 LFLAGS:= -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_BUILD)/sw/lib/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
 

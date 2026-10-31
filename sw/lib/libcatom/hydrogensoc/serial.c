@@ -115,3 +115,13 @@ char serial_read()
         asm volatile("");
     return REG8(SOC_UART_ADDR, UART_REG_RBR);
 }
+
+
+int serial_read_timeout(uint32_t timeout_ms)
+{
+    clock_t t_end = cycle() + (clock_t)(platform_clk() / 1000) * timeout_ms;
+    while(!bitcheck(REG32(SOC_UART_ADDR, UART_REG_LSR), 0))
+        if(cycle() > t_end)
+            return -1;
+    return REG8(SOC_UART_ADDR, UART_REG_RBR);
+}

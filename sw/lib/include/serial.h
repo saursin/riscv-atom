@@ -80,6 +80,14 @@ void serial_write(char c);
 char serial_read();
 
 /**
+ * @brief Read a character, waiting at most timeout_ms (0: only if one is waiting).
+ * Uses the platform clock (platform_clk()).
+ *
+ * @return the character, or -1 on timeout
+ */
+int serial_read_timeout(uint32_t timeout_ms);
+
+/**
  * @brief Wait until every character written so far has been sent
  * (TX FIFO empty and transmitter idle)
  */
