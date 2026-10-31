@@ -5,7 +5,6 @@ import:
 
 params:
   # Use rv32imc_zicsr
-  xlen: 32
   ext_muldiv: true
   ext_compressed: true
   ext_csr: true

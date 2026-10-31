@@ -6,7 +6,6 @@
 #include <memory>
 
 #define ATOMSIM_TARGETNAME  "atombones"
-#define TARGET_ATOMBONES
 
 // DEFAULT_BOOTROM_IMAGE is defined via -D at compile time (see sim/Makefile)
 

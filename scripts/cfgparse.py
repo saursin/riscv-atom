@@ -406,8 +406,6 @@ def main():
                         default=None, metavar='FILE')
     parser.add_argument('--allow-undefined', help='Silently expand undefined parameters to empty string instead of erroring', 
                         action='store_true')
-    parser.add_argument('--fno-newlines', help='Drop newlines in output', 
-                        action='store_true')
     
     args = parser.parse_args()
     if not args.get and not args.type:
@@ -449,19 +447,18 @@ def main():
         parser.error("--type header requires --style (verilator|iverilog|gcc)")
 
     out = open(args.output, 'w') if args.output else sys.stdout
-    sep = ' ' if args.fno_newlines else '\n'
     try:
         match args.type:
             case 'yml':         # Resolved config
                 cfg.to_file(out)
             case 'vsrcs':       # Verilog sources only
-                out.write(sep.join(cfg.vsrcs(base_dir)) + sep)
+                out.write('\n'.join(cfg.vsrcs(base_dir)) + '\n')
             case 'header':      # Config header (atom_config.h / atom_config.vh) for the given style
                 out.write('\n'.join(cfg.header(args.style, os.path.basename(args.config))) + '\n')
             case 'vflags':      # CLI-style verilog invocation (incdirs + sources)
-                out.write(sep.join(cfg.vflags(base_dir)) + sep)
+                out.write('\n'.join(cfg.vflags(base_dir)) + '\n')
             case 'filelist':    # Standard verilog filelist (incdirs + sources)
-                out.write(sep.join(cfg.filelist(base_dir)) + sep)
+                out.write('\n'.join(cfg.filelist(base_dir)) + '\n')
             case 'make-vars':  # Make variable assignments for all build-relevant values
                 out.write(f'RVATOM_ISA       := {cfg.get("params.isa")}\n')
                 out.write(f'RVATOM_ABI       := {cfg.get("params.abi")}\n')

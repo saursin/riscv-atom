@@ -133,11 +133,6 @@ dism: $(ex)/$(executable)				    #t# Dump disassembly
 	riscv64-unknown-elf-objdump -htd $^ > $(basename $^).lst
 
 
-# .PHONY: prog
-# prog: $(ex)/$(executable).bin               #t# Program fpga flash
-# 	prog_firmware.sh $^
-
-
 
 .PHONY: clean
 clean:										#t# Clean executable

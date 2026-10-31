@@ -6,7 +6,6 @@
 #include <memory>
 
 #define ATOMSIM_TARGETNAME  "hydrogensoc"
-#define TARGET_HYDROGENSOC
 
 class Vuart;
 class BitbangUART;

@@ -9,7 +9,6 @@ params:
   ext_csr:            true    # Zicsr extension
 
   # Other features
-  xlen:               32      # 32 | 64
   en_exceptions:      false   # Support for interrupts and exceptions
 
   # derived params
@@ -23,10 +22,6 @@ assert:
 # Design specification
 design:
   topmodule: AtomRV
-
-  # Common defines (passed to both Verilog and C builds)
-  defines:
-    - XLEN=$[xlen]
 
   # Verilog-only defines (RTL feature macros; C uses -march/-mabi instead)
   vdefines:

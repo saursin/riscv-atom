@@ -150,16 +150,6 @@ module HydrogenSoC(
 
 
     // ******************** Crossbar ********************
-    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_adr_o;
-    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_dat_i;
-    // wire [32*`SOC_XBAR_SLAVE_COUNT-1:0]  xbar_wb_dat_o;
-    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_we_o;
-    // wire [4*`SOC_XBAR_SLAVE_COUNT-1:0]   xbar_wb_sel_o;
-    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_cyc_o;
-    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_stb_o;
-    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_ack_i;
-    // wire [`SOC_XBAR_SLAVE_COUNT-1:0]     xbar_wb_err_i;
-
     `define listappend(macro, x) \
             `ifdef macro \
             , x \
