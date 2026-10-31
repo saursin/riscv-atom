@@ -45,7 +45,7 @@ function synth() {
     # if srcs are newr than out_json, run synthesis
     if [ ! -f $out_json ] || [ ${rtl_srcs[@]} -nt $out_json ]; then
         echo ">> Running synthesis..."
-        yosys -p "read_verilog ${rtl_srcs[@]}; synth_gowin -top $TOPMODULE -json $out_json"
+        yosys -p "read_verilog -sv ${rtl_srcs[@]}; synth_gowin -top $TOPMODULE -json $out_json"     # -sv: DDR3 controller and PHY
         if [ $? -ne 0 ]; then
             echo ">> Synthesis failed"
             exit 1

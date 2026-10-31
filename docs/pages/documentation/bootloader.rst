@@ -67,6 +67,7 @@ and then takes commands:
     fill <addr> <len> <v> fill memory with a word
     crc <addr> <len>      CRC-16/XMODEM of memory
     memtest <addr> <len>  address-in-address test
+    ddr                   DDR size and calibration (boards with DDR)
     uartboot              receive a program (XMODEM) and run it
     flashboot             load a program from flash and run it
     boot [addr]           run the program in RAM (or at addr)

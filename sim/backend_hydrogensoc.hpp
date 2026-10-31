@@ -1,7 +1,7 @@
 #pragma once
 
 #include "backend.hpp"
-#include "VHydrogenSoC.h"
+#include "VHydrogenSoC_sim.h"
 
 #include <memory>
 
@@ -19,7 +19,7 @@ struct Backend_config
 };
 
 
-class Backend_atomsim: public Backend<VHydrogenSoC>
+class Backend_atomsim: public Backend<VHydrogenSoC_sim>
 {
 public:
     /**

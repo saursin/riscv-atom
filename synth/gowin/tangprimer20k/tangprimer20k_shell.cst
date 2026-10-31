@@ -50,10 +50,10 @@ IO_LOC  "btn_n_i[2]" T2;   # S2
 IO_LOC  "btn_n_i[3]" D7;   # S3
 IO_LOC  "btn_n_i[4]" C7;   # S4
 IO_PORT "btn_n_i[0]" IO_TYPE=LVCMOS33;
-IO_PORT "btn_n_i[1]" IO_TYPE=LVCMOS33;
-IO_PORT "btn_n_i[2]" IO_TYPE=LVCMOS33;
-IO_PORT "btn_n_i[3]" IO_TYPE=LVCMOS33;
-IO_PORT "btn_n_i[4]" IO_TYPE=LVCMOS33;
+IO_PORT "btn_n_i[1]" IO_TYPE=LVCMOS15;   # 1.5 V bank (shared with DDR3)
+IO_PORT "btn_n_i[2]" IO_TYPE=LVCMOS15;   # 1.5 V bank (shared with DDR3)
+IO_PORT "btn_n_i[3]" IO_TYPE=LVCMOS15;   # 1.5 V bank (shared with DDR3)
+IO_PORT "btn_n_i[4]" IO_TYPE=LVCMOS15;   # 1.5 V bank (shared with DDR3)
 
 ################################################################################
 # Switches (drive high when ON, float when OFF: need pull-downs)
@@ -61,10 +61,10 @@ IO_LOC  "sw_i[0]" E9;  # DIP switch 1
 IO_LOC  "sw_i[1]" E8;  # DIP switch 2
 IO_LOC  "sw_i[2]" T4;  # DIP switch 3
 IO_LOC  "sw_i[3]" T5;  # DIP switch 4
-IO_PORT "sw_i[0]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
-IO_PORT "sw_i[1]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
-IO_PORT "sw_i[2]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
-IO_PORT "sw_i[3]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "sw_i[0]" IO_TYPE=LVCMOS15 PULL_MODE=DOWN;   # 1.5 V bank (shared with DDR3)
+IO_PORT "sw_i[1]" IO_TYPE=LVCMOS15 PULL_MODE=DOWN;   # 1.5 V bank (shared with DDR3)
+IO_PORT "sw_i[2]" IO_TYPE=LVCMOS15 PULL_MODE=DOWN;   # 1.5 V bank (shared with DDR3)
+IO_PORT "sw_i[3]" IO_TYPE=LVCMOS15 PULL_MODE=DOWN;   # 1.5 V bank (shared with DDR3)
 
 ################################################################################
 # PMOD 0
@@ -133,97 +133,101 @@ IO_PORT "flash_spi_miso_i" IO_TYPE=LVCMOS33;
 # IO_PORT "sdio_dat3_io" IO_TYPE=LVCMOS33;
 
 ########################################################################################
-# DDR3 64M x 16 (8M x 8Banks x 16Bits)
-# IO_LOC "ddram_a[0]" F7;
-# IO_LOC "ddram_a[1]" A4;
-# IO_LOC "ddram_a[2]" D6;
-# IO_LOC "ddram_a[3]" F8;
-# IO_LOC "ddram_a[4]" C4;
-# IO_LOC "ddram_a[5]" E6;
-# IO_LOC "ddram_a[6]" B1;
-# IO_LOC "ddram_a[7]" D8;
-# IO_LOC "ddram_a[8]" A5;
-# IO_LOC "ddram_a[9]" F9;
-# IO_LOC "ddram_a[10]" K3;
-# IO_LOC "ddram_a[11]" B7;
-# IO_LOC "ddram_a[12]" A3;
-# IO_LOC "ddram_a[13]" C8;
-# IO_LOC "ddram_ba[0]" H4;
-# IO_LOC "ddram_ba[1]" D3;
-# IO_LOC "ddram_ba[2]" H5;
-# IO_LOC "ddram_ras_n" R4;
-# IO_LOC "ddram_cas_n" R6;
-# IO_LOC "ddram_we_n" L2;
-# IO_LOC "ddram_cs_n" P5;
-# IO_LOC "ddram_dm[0]" G1;
-# IO_LOC "ddram_dm[1]" K5;
-# IO_LOC "ddram_dq[0]" G5;
-# IO_LOC "ddram_dq[1]" F5;
-# IO_LOC "ddram_dq[2]" F4;
-# IO_LOC "ddram_dq[3]" F3;
-# IO_LOC "ddram_dq[4]" E2;
-# IO_LOC "ddram_dq[5]" C1;
-# IO_LOC "ddram_dq[6]" E1;
-# IO_LOC "ddram_dq[7]" B3;
-# IO_LOC "ddram_dq[8]" M3;
-# IO_LOC "ddram_dq[9]" K4;
-# IO_LOC "ddram_dq[10]" N2;
-# IO_LOC "ddram_dq[11]" L1;
-# IO_LOC "ddram_dq[12]" P4;
-# IO_LOC "ddram_dq[13]" H3;
-# IO_LOC "ddram_dq[14]" R1;
-# IO_LOC "ddram_dq[15]" M2;
-# IO_LOC "ddram_dqs_p[0]" G2,G3;
-# IO_LOC "ddram_dqs_p[1]" J5,K6;
-# IO_LOC "ddram_clk_p" J1,J3;
-# IO_LOC "ddram_cke" J2;
-# IO_LOC "ddram_odt" R3;
-# IO_LOC "ddram_reset_n" B9;
-# IO_PORT "ddram_a[0]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[1]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[2]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[3]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[4]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[5]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[6]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[7]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[8]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[9]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[10]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[11]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[12]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_a[13]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_ba[0]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_ba[1]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_ba[2]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_ras_n" IO_TYPE=SSTL15;
-# IO_PORT "ddram_cas_n" IO_TYPE=SSTL15;
-# IO_PORT "ddram_we_n" IO_TYPE=SSTL15;
-# IO_PORT "ddram_cs_n" IO_TYPE=SSTL15;
-# IO_PORT "ddram_dm[0]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_dm[1]" IO_TYPE=SSTL15;
-# IO_PORT "ddram_dq[0]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[1]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[2]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[3]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[4]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[5]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[6]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[7]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[8]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[9]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[10]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[11]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[12]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[13]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[14]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dq[15]" IO_TYPE=SSTL15 VREF=INTERNAL;
-# IO_PORT "ddram_dqs_p[0]" IO_TYPE=SSTL15D;
-# IO_PORT "ddram_dqs_p[1]" IO_TYPE=SSTL15D;
-# IO_PORT "ddram_clk_p" IO_TYPE=SSTL15D;
-# IO_PORT "ddram_cke" IO_TYPE=SSTL15;
-# IO_PORT "ddram_odt" IO_TYPE=SSTL15;
-# IO_PORT "ddram_reset_n" IO_TYPE=SSTL15;
-
-
-
+# DDR3, one 16-bit 1Gb chip (gowin-ddr3 ddr3_phy_slow, as in its tang-primer-20k example).
+# CK and DQS pairs are LVCMOS15D for the ELVDS buffers; no ODT, so plain LVCMOS15.
+IO_LOC "ddr_addr[0]"     IOL45A;
+IO_LOC "ddr_addr[1]"     IOB02A;
+IO_LOC "ddr_addr[2]"     IOB03A;
+IO_LOC "ddr_addr[3]"     IOL35A;
+IO_LOC "ddr_addr[4]"     IOL47A;
+IO_LOC "ddr_addr[5]"     IOL53A;
+IO_LOC "ddr_addr[6]"     IOB08A;
+IO_LOC "ddr_addr[7]"     IOL38A;
+IO_LOC "ddr_addr[8]"     IOB07A;
+IO_LOC "ddr_addr[9]"     IOL31A;
+IO_LOC "ddr_addr[10]"    IOB36A;
+IO_LOC "ddr_addr[11]"    IOL40A;
+IO_LOC "ddr_addr[12]"    IOB04A;
+IO_LOC "ddr_addr[13]"    IOL29A;
+IO_LOC "ddr_ba[0]"    IOB26A;
+IO_LOC "ddr_ba[1]"    IOB09A;
+IO_LOC "ddr_ba[2]"    IOB35A;
+IO_LOC "ddr_ras_n"    IOB52A;
+IO_LOC "ddr_cas_n"    IOB54A;
+IO_LOC "ddr_we_n"     IOB30A;
+IO_LOC "ddr_cs_n"     IOB50A;
+IO_LOC "ddr_dm[0]"    IOB24A;
+IO_LOC "ddr_dm[1]"    IOB40A;
+IO_LOC "ddr_dq[0]"    IOB20A;
+IO_LOC "ddr_dq[1]"    IOB22A;
+IO_LOC "ddr_dq[2]"    IOB18A;
+IO_LOC "ddr_dq[3]"    IOB19A;
+IO_LOC "ddr_dq[4]"    IOB12A;
+IO_LOC "ddr_dq[5]"    IOB14A;
+IO_LOC "ddr_dq[6]"    IOB16A;
+IO_LOC "ddr_dq[7]"    IOB13A;
+IO_LOC "ddr_dq[8]"    IOB42A;
+IO_LOC "ddr_dq[9]"    IOB39A;
+IO_LOC "ddr_dq[10]"   IOB41A;
+IO_LOC "ddr_dq[11]"   IOB38A;
+IO_LOC "ddr_dq[12]"   IOB45A;
+IO_LOC "ddr_dq[13]"   IOB32A;
+IO_LOC "ddr_dq[14]"   IOB44A;
+IO_LOC "ddr_dq[15]"   IOB43A;
+IO_LOC "ddr_dqs[0]" IOB21A;
+IO_LOC "ddr_dqs_n[0]" IOB21B;
+IO_LOC "ddr_dqs[1]" IOB37A;
+IO_LOC "ddr_dqs_n[1]" IOB37B;
+IO_LOC "ddr_ck"       IOB27A;
+IO_LOC "ddr_ck_n"     IOB27B;
+IO_LOC "ddr_cke"      IOB34A;
+IO_LOC "ddr_odt"      IOB48A;
+IO_LOC "ddr_reset_n"  IOL33A;
+IO_PORT "ddr_addr[0]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[1]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[2]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[3]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[4]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[5]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[6]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[7]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[8]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[9]"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[10]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[11]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[12]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_addr[13]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_ba[0]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_ba[1]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_ba[2]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_ras_n"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_cas_n"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_we_n"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_cs_n"     IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dm[0]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dm[1]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[0]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[1]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[2]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[3]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[4]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[5]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[6]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[7]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[8]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[9]"    IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[10]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[11]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[12]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[13]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[14]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dq[15]"   IO_TYPE=LVCMOS15;
+IO_PORT "ddr_dqs[0]" IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_dqs_n[0]" IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_dqs[1]" IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_dqs_n[1]" IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_ck"       IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_ck_n"     IO_TYPE=LVCMOS15D;
+IO_PORT "ddr_cke"      IO_TYPE=LVCMOS15;
+IO_PORT "ddr_odt"      IO_TYPE=LVCMOS15;
+IO_PORT "ddr_reset_n"  IO_TYPE=LVCMOS15;

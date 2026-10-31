@@ -6,3 +6,12 @@ import:
 
 params:
   clk_freq: 45000000
+
+  # DDR3: one 16-bit 1Gb chip (128 MB): 8 banks, 8192 rows, 1024 columns
+  peripherals:
+    ddr:
+      enable: true
+      dq_bits: 16
+      row_bits: 13
+      col_bits: 10
+      bank_bits: 3

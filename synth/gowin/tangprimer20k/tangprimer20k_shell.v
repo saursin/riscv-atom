@@ -29,6 +29,26 @@ module tangprimer20k_shell (
     input   wire            flash_spi_miso_i,
 
     inout   wire [1:0]      pmod0_io
+
+`ifdef SOC_EN_DDR
+    ,
+    // DDR3 chip (16-bit, 1Gb): pins and IO standards in tangprimer20k_shell.cst
+    output  wire            ddr_ck,
+    output  wire            ddr_ck_n,
+    output  wire            ddr_reset_n,
+    output  wire            ddr_cke,
+    output  wire            ddr_cs_n,
+    output  wire            ddr_ras_n,
+    output  wire            ddr_cas_n,
+    output  wire            ddr_we_n,
+    output  wire            ddr_odt,
+    output  wire [2:0]      ddr_ba,
+    output  wire [13:0]     ddr_addr,
+    output  wire [1:0]      ddr_dm,
+    inout   wire [1:0]      ddr_dqs,
+    inout   wire [1:0]      ddr_dqs_n,
+    inout   wire [15:0]     ddr_dq
+`endif
 );
     // Clock: 27 MHz oscillator -> PLL -> 45 MHz (tangprimer20k_pll.v, generated)
     wire clk;
@@ -69,6 +89,72 @@ module tangprimer20k_shell (
     assign gpio_inp[11:8]   = sw_i;
     assign gpio_inp[15:12]  = ~btn_n_i[4:1];
 
+`ifdef SOC_EN_DDR
+    // DDR3 PHY (gowin-ddr3 ddr3_phy_slow): every pin from a register on the SoC clock,
+    // CK = clk / 2, DLL-off DRAM; CK and DQS through ELVDS buffers (LVCMOS15D pins)
+    localparam DDR_DQ_W = `SOC_DDR_DQ_BITS;
+
+    wire                            ddr_ce, ddr_phy_reset_n, ddr_phy_cke, ddr_phy_odt;
+    wire                            ddr_phy_wr, ddr_phy_rd, ddr_phy_rvalid, ddr_phy_ready;
+    wire [2:0]                      ddr_phy_cmd;
+    wire [`SOC_DDR_ROW_BITS-1:0]    ddr_phy_addr;
+    wire [`SOC_DDR_BANK_BITS-1:0]   ddr_phy_ba;
+    wire [1:0]                      ddr_phy_wr_ph, ddr_phy_rd_ph, ddr_phy_wr_shift;
+    wire [8*DDR_DQ_W-1:0]           ddr_phy_wdata, ddr_phy_rdata;
+    wire [DDR_DQ_W-1:0]             ddr_phy_wmask;
+    wire [DDR_DQ_W/8*3-1:0]         ddr_phy_rd_delay;
+
+    // the 1Gb chip has 13 row bits; the unused address pins stay low
+    wire [`SOC_DDR_ROW_BITS-1:0]    ddr_row_addr;
+    assign ddr_addr = {{(14-`SOC_DDR_ROW_BITS){1'b0}}, ddr_row_addr};
+
+    ddr3_phy_slow #(
+        .DQ_W   (DDR_DQ_W),
+        .ROW_W  (`SOC_DDR_ROW_BITS),
+        .BA_W   (`SOC_DDR_BANK_BITS),
+        .CL     (6),
+        .CWL    (6),
+        .DW     (3),
+        .ELVDS  (1)
+    ) ddr_phy (
+        .clk            (clk),
+        .ce             (ddr_ce),
+        .phy_reset_n    (ddr_phy_reset_n),
+        .phy_cke        (ddr_phy_cke),
+        .phy_odt        (ddr_phy_odt),
+        .phy_cmd        (ddr_phy_cmd),
+        .phy_addr       (ddr_phy_addr),
+        .phy_ba         (ddr_phy_ba),
+        .phy_wr         (ddr_phy_wr),
+        .phy_wr_ph      (ddr_phy_wr_ph),
+        .phy_wdata      (ddr_phy_wdata),
+        .phy_wmask      (ddr_phy_wmask),
+        .phy_rd         (ddr_phy_rd),
+        .phy_rd_ph      (ddr_phy_rd_ph),
+        .phy_rd_delay   (ddr_phy_rd_delay),
+        .phy_wr_shift   (ddr_phy_wr_shift),
+        .phy_rvalid     (ddr_phy_rvalid),
+        .phy_rdata      (ddr_phy_rdata),
+        .phy_ready      (ddr_phy_ready),
+        .dqs_in         (),
+        .ddr_ck         (ddr_ck),
+        .ddr_ck_n       (ddr_ck_n),
+        .ddr_reset_n    (ddr_reset_n),
+        .ddr_cke        (ddr_cke),
+        .ddr_cs_n       (ddr_cs_n),
+        .ddr_ras_n      (ddr_ras_n),
+        .ddr_cas_n      (ddr_cas_n),
+        .ddr_we_n       (ddr_we_n),
+        .ddr_odt        (ddr_odt),
+        .ddr_ba         (ddr_ba),
+        .ddr_addr       (ddr_row_addr),
+        .ddr_dm         (ddr_dm),
+        .ddr_dqs        (ddr_dqs),
+        .ddr_dqs_n      (ddr_dqs_n),
+        .ddr_dq         (ddr_dq)
+    );
+`endif
+
     HydrogenSoC soc (
         .clk_i      (clk),
         .rst_i      (rst),
@@ -81,6 +167,27 @@ module tangprimer20k_shell (
         .spi_mosi_o (flash_spi_mosi_o),
         .spi_sck_o  (flash_spi_sck_o),
         .spi_cs_o   (flash_spi_cs_o)
+`ifdef SOC_EN_DDR
+        ,
+        .ddr_phy_ce_i       (ddr_ce),
+        .ddr_phy_reset_n_o  (ddr_phy_reset_n),
+        .ddr_phy_cke_o      (ddr_phy_cke),
+        .ddr_phy_odt_o      (ddr_phy_odt),
+        .ddr_phy_cmd_o      (ddr_phy_cmd),
+        .ddr_phy_addr_o     (ddr_phy_addr),
+        .ddr_phy_ba_o       (ddr_phy_ba),
+        .ddr_phy_wr_o       (ddr_phy_wr),
+        .ddr_phy_wr_ph_o    (ddr_phy_wr_ph),
+        .ddr_phy_wdata_o    (ddr_phy_wdata),
+        .ddr_phy_wmask_o    (ddr_phy_wmask),
+        .ddr_phy_rd_o       (ddr_phy_rd),
+        .ddr_phy_rd_ph_o    (ddr_phy_rd_ph),
+        .ddr_phy_rd_delay_o (ddr_phy_rd_delay),
+        .ddr_phy_wr_shift_o (ddr_phy_wr_shift),
+        .ddr_phy_rvalid_i   (ddr_phy_rvalid),
+        .ddr_phy_rdata_i    (ddr_phy_rdata),
+        .ddr_phy_ready_i    (ddr_phy_ready)
+`endif
     );
 
 endmodule

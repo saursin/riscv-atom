@@ -9,6 +9,7 @@
 #include "console.h"
 #include "uartboot.h"
 #include "flashboot.h"
+#include "ddr.h"
 
 extern uint32_t __approm_start;
 extern uint32_t __approm_size;
@@ -31,6 +32,9 @@ static void info() {
     puts(" @ "); putnum(platform_clk() / 1000000, 10, 1); puts(" MHz\n");
     region("BOOTROM: ", SOC_BOOTROM_ADDR, SOC_BOOTROM_SIZE);
     region("RAM:     ", SOC_RAM_ADDR, SOC_RAM_SIZE);
+#ifdef SOC_EN_DDR
+    region("DDR:     ", SOC_DDR_ADDR, platform_ddr_size());
+#endif
     puts("IO:     ");
 #ifdef SOC_EN_UART
     puts(" UART");
@@ -88,6 +92,9 @@ static const char help[] =
     "fill <addr> <len> <v> fill memory with a word\n"
     "crc <addr> <len>      CRC-16/XMODEM of memory\n"
     "memtest <addr> <len>  address-in-address test\n"
+#ifdef SOC_EN_DDR
+    "ddr                   DDR size and calibration\n"
+#endif
     "uartboot              receive a program (XMODEM) and run it\n"
 #ifdef SOC_EN_SPI
     "flashboot             load a program from flash and run it\n"
@@ -151,6 +158,10 @@ void *console() {
                 if(p[i] != ~(uint32_t)(p + i) && !errors++) { puts("first error @0x"); putnum((uint32_t)(p + i), 16, 8); putchar('\n'); }
             if(errors) { putnum(errors, 10, 1); puts(" errors\n"); }
             else puts("OK\n");
+#ifdef SOC_EN_DDR
+        } else if(streq(cmd, "ddr")) {
+            ddr_info();
+#endif
         } else if(streq(cmd, "uartboot")) {
             if(uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size) == 0)
                 return &__approm_start;

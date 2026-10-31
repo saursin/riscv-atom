@@ -7,7 +7,7 @@
 #include "except.hpp"
 #include "rvdefs.hpp"
 
-#include "VHydrogenSoC_headers.h"
+#include "VHydrogenSoC_sim_headers.h"
 
 #ifdef DBG
 #define D(x) x
@@ -51,14 +51,14 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     }
 
     // Construct Testbench object
-    tb = new Testbench<VHydrogenSoC>();
+    tb = new Testbench<VHydrogenSoC_sim>();
 
     // Construct reg map
-    regs_.push_back({.name="pc", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->ProgramCounter_Old, .is_arch_reg=false});
-    regs_.push_back({.name="ir", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->InstructionRegister, .is_arch_reg=false});
+    regs_.push_back({.name="pc", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC_sim->soc->atom_wb_core->atom_core->ProgramCounter_Old, .is_arch_reg=false});
+    regs_.push_back({.name="ir", .alt_name="", .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC_sim->soc->atom_wb_core->atom_core->InstructionRegister, .is_arch_reg=false});
     for (int i=0; i<32; i++) {
         std::string regname = "x"+std::to_string(i);
-        regs_.push_back({.name=regname, .alt_name=rv_abi_regnames[i], .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC->atom_wb_core->atom_core->rf->regs[i], .is_arch_reg=true});
+        regs_.push_back({.name=regname, .alt_name=rv_abi_regnames[i], .width=R32, .ptr=(void *)&tb->m_core->HydrogenSoC_sim->soc->atom_wb_core->atom_core->rf->regs[i], .is_arch_reg=true});
     }
 
     // ====== Initialize ========
@@ -135,7 +135,7 @@ void Backend_atomsim::UART()
     }
 
     // decode at the UART's programmed rate: divisor + 2 cycles per bit (see UART_core)
-    bb_uart_->set_ratio(tb->m_core->HydrogenSoC->uart->reg_div + 2);
+    bb_uart_->set_ratio(tb->m_core->HydrogenSoC_sim->soc->uart->reg_div + 2);
 
     // evaluate bbuart state machine for current cycle
     bb_uart_->eval();
@@ -171,7 +171,7 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
             uint32_t mem_addr = start_addr + buf_indx;
             uint32_t mem_indx = (mem_addr-ROM_ADDR) / 4;
             uint32_t line_offset = 8 * ((mem_addr-ROM_ADDR) % 4);
-            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] >> line_offset);
+            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC_sim->soc->bootrom->mem[mem_indx] >> line_offset);
         }
     }
     else if (start_addr >= RAM_ADDR && start_addr < (RAM_ADDR + RAM_SIZE)) 
@@ -184,7 +184,7 @@ void Backend_atomsim::fetch(const uint32_t start_addr, uint8_t *buf, const uint3
             uint32_t mem_addr = start_addr + buf_indx;
             uint32_t mem_indx = (mem_addr-RAM_ADDR) / 4;
             uint32_t line_offset = 8 * ((mem_addr-RAM_ADDR) % 4);
-            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC->ram->mem[mem_indx] >> line_offset);
+            buf[buf_indx] = 0xff & (tb->m_core->HydrogenSoC_sim->soc->ram->mem[mem_indx] >> line_offset);
         }
     }
     else {
@@ -206,7 +206,7 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
             uint32_t mem_addr = start_addr + buf_indx;
             uint32_t mem_indx = (mem_addr-ROM_ADDR) / 4;
             uint32_t line_offset = 8 * ((mem_addr-ROM_ADDR) % 4);
-            tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] = (tb->m_core->HydrogenSoC->bootrom->mem[mem_indx] & ~(0xff << line_offset)) 
+            tb->m_core->HydrogenSoC_sim->soc->bootrom->mem[mem_indx] = (tb->m_core->HydrogenSoC_sim->soc->bootrom->mem[mem_indx] & ~(0xff << line_offset)) 
                                                             | (((uint32_t) buf[buf_indx]) << line_offset);
         }
     }
@@ -220,7 +220,7 @@ void Backend_atomsim::store(const uint32_t start_addr, uint8_t *buf, const uint3
             uint32_t mem_addr = start_addr + buf_indx;
             uint32_t mem_indx = (mem_addr-RAM_ADDR) / 4;
             uint32_t line_offset = 8 * ((mem_addr-RAM_ADDR) % 4);
-            tb->m_core->HydrogenSoC->ram->mem[mem_indx] = (tb->m_core->HydrogenSoC->ram->mem[mem_indx] & ~(0xff << line_offset)) 
+            tb->m_core->HydrogenSoC_sim->soc->ram->mem[mem_indx] = (tb->m_core->HydrogenSoC_sim->soc->ram->mem[mem_indx] & ~(0xff << line_offset)) 
                                                         | (((uint32_t) buf[buf_indx]) << line_offset);
         }
     }

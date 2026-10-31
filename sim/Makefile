@@ -38,6 +38,16 @@ VFLAGS += -DSOC_BOOTROM_INIT_FILE=\"$(RVATOM_BUILD)/sw/bootloader/bootloader.hex
 VTOPMODULE := $(RVATOM_TOPMODULE)
 VFILELIST:= $(RVATOM_VFLAGS)
 
+# <top>_sim.v, if present, wraps the SoC with the board parts atomsim models in RTL
+# (e.g. the DDR3 PHY and chip, rtl/uncore/ddr/ddr3_phy_model.sv) and becomes the top
+SIM_TOP_V := $(wildcard $(RVATOM_TOPMODULE)_sim.v)
+SIM_TOP_DEPS :=
+ifneq ($(SIM_TOP_V),)
+    VTOPMODULE := $(RVATOM_TOPMODULE)_sim
+    VFILELIST += +incdir+$(abspath $(RTL_DIR)/uncore/ddr) $(abspath $(SIM_TOP_V))
+    SIM_TOP_DEPS := $(SIM_TOP_V) $(RTL_DIR)/uncore/ddr/ddr3_phy_model.sv
+endif
+
 ####################################################
 # CPP configs
 CC := g++
@@ -102,8 +112,9 @@ sim: lib_verilated $(EXE)					#t# Build atomsim simulator
 lib_verilated: $(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a
 
 # Verilate RTL
-$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(RVATOM_VDEPS) $(RVATOM_VARS_MK)
+$(VERILATED_DIR)/V$(VTOPMODULE)__ALL.a: $(RVATOM_VDEPS) $(RVATOM_VARS_MK) $(SIM_TOP_DEPS)
 	$(call print_msg,Verilating Verilog)
+	rm -rf $(VERILATED_DIR)/*       # stale files of another top would end up in the combined header
 	$(VC) $(VFLAGS) $(VFILELIST) --top-module $(VTOPMODULE)
 	$(call print_msgt,Generating library)
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOPMODULE).mk > /dev/null

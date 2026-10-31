@@ -6,6 +6,7 @@
 #include "common.h"
 #include "flashboot.h"
 #include "uartboot.h"
+#include "ddr.h"
 #include "console.h"
 
 extern uint32_t __approm_start;
@@ -56,6 +57,10 @@ void * platform_init(){
     bootmode = pin0_val | pin1_val << 1;
 #else
     P(puts("no gpio: using default bootmode\n");)
+#endif
+
+#ifdef SOC_EN_DDR
+    ddr_check();
 #endif
 
     // Print Bootmode

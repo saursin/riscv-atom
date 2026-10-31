@@ -24,6 +24,7 @@ $(shell mkdir -p $(build_dir))
 # board shell (pads, reset) around the SoC
 VTOPMODULE := tangprimer20k_shell
 BOARD_VSRCS := tangprimer20k_shell.v tangprimer20k_pll.v $(RVATOM)/rtl/uncore/gpio/IOBank.v $(RVATOM)/rtl/lib/IOBuf.v $(RVATOM)/rtl/lib/reset_sync.v
+BOARD_VSRCS += $(RVATOM)/rtl/uncore/ddr/gowin-ddr3/ddr3/ddr3_phy_slow.sv	# DDR3 PHY (SystemVerilog)
 
 default: build
 
@@ -36,7 +37,7 @@ $(build_dir)/bootloader.hex: $(RVATOM_VARS_MK)
 $(build_dir)/HydrogenSoC.v: $(RVATOM_VDEPS) $(BOARD_VSRCS) $(RVATOM_VARS_MK)
 	$(call print_msgt_root,Generating verilog)
 	verilator -E -P $(RVATOM_VFLAGS) -DSOC_BOOTROM_INIT_FILE='"bootloader.hex"' $(BOARD_VSRCS) > $@
-	verilator --lint-only $@ $(shell yosys-config --datdir)/gowin/cells_sim.v -top-module $(VTOPMODULE)
+	verilator --lint-only $@ $(addprefix $(shell yosys-config --datdir)/gowin/,cells_sim.v cells_xtra_gw2a.v) -top-module $(VTOPMODULE)
 
 # Timing constraints from the board config: the PLL output must match clk_freq
 $(build_dir)/$(VTOPMODULE).sdc: tangprimer20k_pll.v $(RVATOM_VARS_MK)
