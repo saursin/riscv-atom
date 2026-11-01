@@ -10,6 +10,7 @@
 _start:
 .option norvc
     mv s1, a1                   # platform table from the bootloader (kept across the calls below)
+    mv s2, ra                   # where the bootloader wants us back on exit (see _exit)
 
     # ===== initialization =====
     # initialize sp & gp
@@ -36,9 +37,11 @@ _start:
 	// Initialize heap
 	jal heap_init
 
-    // after the bss clear: save the platform table pointer
+    // after the bss clear: save the platform table pointer and the return address
     la t0, __platform
     sw s1, 0(t0)
+    la t0, boot_return
+    sw s2, 0(t0)
 
 	/* Disable and clear all interrupt sources */
     li   a3, -1
@@ -58,9 +61,20 @@ _start:
     li  a1, 0
     jal main
 
+# Back to the bootloader (its console) if it started us, i.e. ra pointed into the boot ROM;
+# otherwise stay here. a0: the exit code, passed on.
 _exit:
+    mv s1, a0
     jal serial_flush        # let the UART finish sending
     slti x0, x0, 1          # exit hint: atomsim stops here, NOP on hardware
+    mv a0, s1
+    la t0, boot_return
+    lw t0, 0(t0)
+    li t1, SOC_BOOTROM_ADDR
+    sub t1, t0, t1
+    li t2, SOC_BOOTROM_SIZE
+    bgeu t1, t2, 1f
+    jr t0
 1:  j 1b
 
 
@@ -126,3 +140,11 @@ trap_handler_base:
 # .weak trap_handler 			# Can be overridden
 # trap_handler:
 #     ret
+
+
+# ra at _start: where the bootloader wants the program back (_exit). In .bss, so written after
+# the bss clear.
+.section .bss
+.p2align 2
+boot_return:
+    .zero 4

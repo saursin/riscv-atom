@@ -38,9 +38,12 @@ void bootled_toggle()
 #endif
 }
 
-void * platform_init(){
+void * platform_boot(int kind, int arg){
+    if(kind == BOOT_REENTRY)
+        return console();   // a program exited: let the user pick what runs next
+
     uint8_t bootmode = BOOTMODE_DEFAULT;
-    void *jump_addr = &__approm_start;
+    void *entry = &__approm_start;
 
 #ifdef SOC_EN_GPIO
     // Initialize GPIO
@@ -74,9 +77,9 @@ void * platform_init(){
         case BOOTMODE_FLASHBOOT:
         #ifdef SOC_EN_SPI
             if(flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, (unsigned)&__approm_size))
-                jump_addr = console();
+                entry = console();
         #else
-            jump_addr = console();
+            entry = console();
         #endif
             break;
 
@@ -87,7 +90,7 @@ void * platform_init(){
         case BOOTMODE_UARTBOOT:
         #ifdef SOC_EN_UART
             if(uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size))
-                jump_addr = console();      // failed: let the user retry or look around
+                entry = console();      // failed: let the user retry or look around
         #else
             boot_panic(RCODE_UARTBOOT_NOUART, "No UART IP");
         #endif
@@ -95,7 +98,7 @@ void * platform_init(){
 
         case BOOTMODE_CONSOLE:
         default:
-            jump_addr = console();
+            entry = console();
     }
 
     #ifdef SOC_EN_GPIO
@@ -103,5 +106,5 @@ void * platform_init(){
     gpio_write(BOOTLED_PIN, LOW);
     #endif
     
-    return jump_addr;
+    return entry;
 }

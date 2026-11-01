@@ -80,7 +80,7 @@ int Atomsim::run()
             }
 
             // check the exit hint
-            if(backend_.read_reg("ir") == RV_INSTR_EXIT_HINT) {
+            if(!sim_config_.no_exit_hint_flag && backend_.read_reg("ir") == RV_INSTR_EXIT_HINT) {
                 printf("Exit hit at %ld ticks, PC=%s0x%08lx%s\n", backend_.get_total_tick_count() , ansicode(FG_BLUE), backend_.read_reg("pc"), ansicode(FG_RESET));
 
                 if(sim_config_.dump_on_exit_flag){  // For SCAR

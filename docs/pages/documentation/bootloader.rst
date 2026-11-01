@@ -76,6 +76,9 @@ and then takes commands:
 
 Numbers are decimal, or hex with ``0x``. Connect with ``atomterm`` (below) or any serial terminal.
 
+When a program started by the bootloader exits, the bootloader takes over again and opens the console (memory,
+including DDR, is left as the program left it), so its results can be read with ``md`` or sent with ``save``.
+
 UARTBoot
 =========
 In this mode, the bootloader obtains the program binary image from UART using the 

@@ -1,10 +1,22 @@
 // ===== Startup code for bootloader =====
 .section .boot, "ax", @progbits
 .global _start
+.global _reenter
 .global _exit
 
 _start:
 .option norvc
+    li  s0, 0               // main(BOOT_POWERON, 0)
+    li  s1, 0
+    j   init
+
+// A program started by the bootloader returns here from its _exit (ra), with its exit code in
+// a0. The program used the bootloader's RAM, so set it up again, then main(BOOT_REENTRY, code).
+_reenter:
+    li  s0, 1               // main(BOOT_REENTRY, return code)
+    mv  s1, a0
+
+init:
     // Initialize sp & gp
     la sp, _stack_pointer
 .option push
@@ -41,9 +53,9 @@ _start:
     csrw mstatus, t0
 #endif
 
-    // Call main function
-    li  a0, 0
-    li  a1, 0
+    // Call main(boot kind, parameter): see BOOT_* in common.h
+    mv  a0, s0
+    mv  a1, s1
     jal main
 
 

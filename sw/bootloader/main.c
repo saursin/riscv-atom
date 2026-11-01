@@ -4,7 +4,16 @@
 #include <serial.h>
 #include <csr.h>
 
-typedef void (*fnc_ptr)(long hartid, const uint32_t *platform);
+extern void _reenter(void);
+
+// Jumps to a program: a0 = hart id, a1 = platform table, ra = _reenter (where its _exit returns)
+static void __attribute__((noreturn)) start_program(void *entry) {
+    register long a0 asm("a0") = 0;
+    register const uint32_t *a1 asm("a1") = atom_platform_table;
+    asm volatile("la ra, _reenter\n"
+                 "jr %0" :: "r"(entry), "r"(a0), "r"(a1) : "ra", "memory");
+    __builtin_unreachable();
+}
 
 void putnum(unsigned val, unsigned base, int digits) {
     if(val >= base || digits > 1)
@@ -30,7 +39,8 @@ void boot_panic(int code, char * msg){
     exit(code);
 }
 
-int main(){
+// kind: BOOT_* (common.h), the kind of boot; arg: a parameter for that kind
+int main(int kind, int arg){
     // ********* Platform agnostic initialization **********
     // Platform table (clock, ...) for libcatom, here and in the program
     __platform = atom_platform_table;
@@ -38,27 +48,31 @@ int main(){
     // Uart initialization
     P(serial_init(UART_BAUD_115200);)
 
-    // Clear screen at start
-    #ifdef CLS_AT_START
-        P(putchar(0x1b); putchar('c');)  // clear screen
-    #else
-        P(putchar('\n'));
-    #endif
+    if(kind == BOOT_REENTRY) {
+        // arg: the program's exit code, in decimal
+        P(puts("\n--------------------------------\nprogram exited (");)
+        P(if(arg < 0) putchar('-');)
+        P(putnum(arg < 0 ? -(unsigned)arg : (unsigned)arg, 10, 1);)
+        P(puts(")\n");)
+    } else {
+        // Clear screen at start
+        #ifdef CLS_AT_START
+            P(putchar(0x1b); putchar('c');)  // clear screen
+        #else
+            P(putchar('\n'));
+        #endif
 
-    // Print header
-    P(puts("**** RISC-V Atom Bootloader ****\n");)
+        // Print header
+        P(puts("**** RISC-V Atom Bootloader ****\n");)
+    }
 
-    // ********** Platform specific initialization **********
-    void * jump_addr = platform_init();
-    if(jump_addr == NULL) {
-        boot_panic(RCODE_PLATFORM_INIT_FAIL, "Platform init failure");
+    // ********** Platform specific part **********
+    void * entry = platform_boot(kind, arg);
+    if(entry == NULL) {
+        boot_panic(RCODE_PLATFORM_INIT_FAIL, "Nothing to run");
     }
 
     // Jump to target
     P(puts("--------------------------------\n");)
-    fnc_ptr app_main = (fnc_ptr) jump_addr;
-    app_main(0, atom_platform_table);  // a0: hart id, a1: platform table
-
-    // Unreachable
-    boot_panic(RCODE_UNREACHABLE, "Unreachable");
+    start_program(entry);
 }

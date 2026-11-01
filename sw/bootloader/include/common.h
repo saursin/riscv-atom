@@ -39,4 +39,11 @@ extern const uint32_t atom_platform_table[];
 // val in base 10 or 16, at least `digits` digits (zero-padded)
 void putnum(unsigned val, unsigned base, int digits);
 void __attribute__((noreturn)) boot_panic(int code, char *msg);
-void * platform_init();
+
+// Kind of boot, main()'s first argument (crt0.S)
+#define BOOT_POWERON    0       // reset
+#define BOOT_REENTRY    1       // a program started by the bootloader exited; parameter: its exit code
+
+// Decides what to run after this kind of boot (loading it first if needed) and returns its entry
+// point, or NULL if there is nothing to run
+void * platform_boot(int kind, int arg);
