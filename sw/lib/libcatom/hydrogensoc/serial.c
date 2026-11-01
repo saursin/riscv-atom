@@ -3,7 +3,6 @@
 #include <time.h>
 #include <file.h>
 #include <utils.h>
-#include <assert.h>
 #include <serial.h>
 
 // Register Offsets
@@ -33,14 +32,14 @@
 #define UART_REG_LSR_TXIDLE 0b00100000
 
 int __serial_read(char * bf, uint32_t sz){
-    assert(sz==1);
-    bf[0] = serial_read();
+    while(sz--)
+        *bf++ = serial_read();
     return 0;
 }
 
 int __serial_write(char * bf, uint32_t sz){
-    assert(sz==1);
-    serial_write(bf[0]);
+    while(sz--)
+        serial_write(*bf++);
     return 0;
 }
 

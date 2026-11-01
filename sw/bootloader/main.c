@@ -6,6 +6,8 @@
 
 extern void _reenter(void);
 
+#define SEPARATOR "--------------------------------\n"
+
 // Jumps to a program: a0 = hart id, a1 = platform table, ra = _reenter (where its _exit returns)
 static void __attribute__((noreturn)) start_program(void *entry) {
     register long a0 asm("a0") = 0;
@@ -50,7 +52,7 @@ int main(int kind, int arg){
 
     if(kind == BOOT_REENTRY) {
         // arg: the program's exit code, in decimal
-        P(puts("\n--------------------------------\nprogram exited (");)
+        P(putchar('\n'); puts(SEPARATOR); puts("program exited (");)
         P(if(arg < 0) putchar('-');)
         P(putnum(arg < 0 ? -(unsigned)arg : (unsigned)arg, 10, 1);)
         P(puts(")\n");)
@@ -73,6 +75,6 @@ int main(int kind, int arg){
     }
 
     // Jump to target
-    P(puts("--------------------------------\n");)
+    P(puts(SEPARATOR);)
     start_program(entry);
 }

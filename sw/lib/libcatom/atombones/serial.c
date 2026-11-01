@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <file.h>
 #include <mmio.h>
-#include <assert.h>
 #include <serial.h>
 #include <time.h>
 
@@ -15,8 +14,8 @@ int __serial_read(char * bf, uint32_t sz){
 }
 
 int __serial_write(char * bf, uint32_t sz){
-    assert(sz==1);
-    serial_write(bf[0]);
+    while(sz--)
+        serial_write(*bf++);
     return 0;
 }
 

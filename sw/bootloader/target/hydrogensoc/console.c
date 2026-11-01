@@ -85,23 +85,22 @@ static void readline(char *buf, int n) {
 }
 
 static const char help[] =
-    "help                  this list\n"
-    "info                  SoC summary\n"
-    "clear                 clear the screen\n"
-    "md <addr> [words]     dump memory\n"
-    "mw <addr> <value>     write a word\n"
-    "fill <addr> <len> <v> fill memory with a word\n"
-    "crc <addr> <len>      CRC-16/XMODEM of memory\n"
-    "memtest <addr> <len>  address-in-address test\n"
+    "info                    SoC summary\n"
+    "clear\n"
+    "md <addr> [words]       dump\n"
+    "mw <addr> <val>         write\n"
+    "fill <addr> <len> <val>\n"
+    "crc <addr> <len>        CRC-16\n"
+    "memtest <addr> <len>\n"
 #ifdef SOC_EN_DDR
-    "ddr                   DDR size and calibration\n"
+    "ddr                     DDR state\n"
 #endif
-    "load [addr]           receive a file (XMODEM) at addr, default program RAM\n"
-    "save <addr> <len> [name] send memory as a file (XMODEM)\n"
+    "load [addr]             XMODEM in\n"
+    "save <addr> <len> [name] XMODEM out\n"
 #ifdef SOC_EN_SPI
-    "flashboot             load a program from flash and run it\n"
+    "flashboot\n"
 #endif
-    "boot [addr]           run the program in RAM (or at addr)\n"
+    "boot [addr]             run\n"
     "reboot\n";
 
 void *console() {

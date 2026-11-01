@@ -59,21 +59,22 @@ and then takes commands:
 .. code-block:: text
 
     atom-boot: help
-    help                  this list
-    info                  SoC summary
-    clear                 clear the screen
-    md <addr> [words]     dump memory
-    mw <addr> <value>     write a word
-    fill <addr> <len> <v> fill memory with a word
-    crc <addr> <len>      CRC-16/XMODEM of memory
-    memtest <addr> <len>  address-in-address test
-    ddr                   DDR size and calibration (boards with DDR)
-    load [addr]           receive a file (XMODEM) at addr, default program RAM
-    save <addr> <len> [name] send memory as a file (XMODEM)
-    flashboot             load a program from flash and run it
-    boot [addr]           run the program in RAM (or at addr)
+    info                    SoC summary
+    clear
+    md <addr> [words]       dump
+    mw <addr> <val>         write
+    fill <addr> <len> <val>
+    crc <addr> <len>        CRC-16
+    memtest <addr> <len>
+    ddr                     DDR state
+    load [addr]             XMODEM in
+    save <addr> <len> [name] XMODEM out
+    flashboot
+    boot [addr]             run
     reboot
 
+``load`` receives a file over XMODEM (default address: program RAM), ``save`` sends memory as a file, ``crc`` is
+CRC-16/XMODEM, ``memtest`` an address-in-address test, ``ddr`` the DDR calibration state (boards with DDR).
 Numbers are decimal, or hex with ``0x``. Connect with ``atomterm`` (below) or any serial terminal.
 
 When a program started by the bootloader exits, the bootloader takes over again and opens the console (memory,

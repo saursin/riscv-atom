@@ -29,6 +29,8 @@ endif
 # This creates new section for each function which can be used with 
 # -Wl,--gc-sections linker flag to remove unused code
 CFLAGS+= -fdata-sections -ffunction-sections
+# link-time optimization across the bootloader's files
+CFLAGS+= -flto
 
 LFLAGS:= -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_BUILD)/sw/lib/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
 
