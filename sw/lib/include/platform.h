@@ -21,6 +21,10 @@ extern int __dataram_size;
 #define DATARAM_BASE    &__dataram_start
 #define DATARAM_SIZE    &__dataram_size
 
+// Static data in DDR: `static uint8_t buf[N] DDR_NOINIT;`. Not initialized: the contents are
+// undefined until the program writes them. Only for boards with DDR (platform_ddr_size() != 0).
+#define DDR_NOINIT      __attribute__((section(".ddr_noinit")))
+
 // ============== Platform table ==============
 // Board facts generated from the soctarget/board config (cfgparse.py -t platform) into
 // the boot ROM; the bootloader passes its address to the program in a1.

@@ -1,2 +1,0 @@
-src_files = ddrtest.c
-executable = ddrtest.elf

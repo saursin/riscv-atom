@@ -15,6 +15,9 @@ MEMORY
 {
     CODE_RAM (rx):  ORIGIN = SOC_RAM_ADDR,                          LENGTH = SOC_RAM_SIZE - 12K
     DATA_RAM (rwx): ORIGIN = (ORIGIN(CODE_RAM) + LENGTH(CODE_RAM)), LENGTH = 12K
+#ifdef SOC_DDR_ADDR
+    DDR (rw):       ORIGIN = SOC_DDR_ADDR,                          LENGTH = 1024M   /* board's size: platform_ddr_size() */
+#endif
 }
 
 __coderam_start = ORIGIN(CODE_RAM);
@@ -87,6 +90,16 @@ SECTIONS
     } > DATA_RAM AT> CODE_RAM
 
     _end = .;
+
+#ifdef SOC_DDR_ADDR
+    /* ==== DDR ==== */
+    /* DDR_NOINIT data (platform.h): not loaded, not initialized */
+    .ddr_noinit (NOLOAD) :
+    {
+        *(.ddr_noinit)
+        *(.ddr_noinit.*)
+    } > DDR
+#endif
 }
 
 PROVIDE(_start_heap = _ebss);
