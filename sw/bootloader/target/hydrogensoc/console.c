@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <csr.h>
+#include <xmodem.h>
 
 #include "common.h"
 #include "console.h"
@@ -95,7 +96,8 @@ static const char help[] =
 #ifdef SOC_EN_DDR
     "ddr                   DDR size and calibration\n"
 #endif
-    "uartboot              receive a program (XMODEM) and run it\n"
+    "load [addr]           receive a file (XMODEM) at addr, default program RAM\n"
+    "save <addr> <len> [name] send memory as a file (XMODEM)\n"
 #ifdef SOC_EN_SPI
     "flashboot             load a program from flash and run it\n"
 #endif
@@ -125,7 +127,7 @@ void *console() {
         int ok = 1;
         uint32_t a1 = argc > 1 ? parse_num(argv[1], &ok) : 0;
         uint32_t a2 = argc > 2 ? parse_num(argv[2], &ok) : 0;
-        uint32_t a3 = argc > 3 ? parse_num(argv[3], &ok) : 0;
+        uint32_t a3 = argc > 3 && !streq(argv[0], "save") ? parse_num(argv[3], &ok) : 0;
         char *cmd = argv[0];
         if(!ok) {
             puts("bad number\n");
@@ -149,7 +151,7 @@ void *console() {
             volatile uint32_t *p = (volatile uint32_t *)(a1 & ~3u);
             for(uint32_t i = 0; i < a2 / 4; i++) p[i] = a3;
         } else if(streq(cmd, "crc") && argc > 2) {
-            putnum(crc16_ccitt((const uint8_t *)a1, a2), 16, 4); putchar('\n');
+            putnum(xmodem_crc16((const uint8_t *)a1, a2), 16, 4); putchar('\n');
         } else if(streq(cmd, "memtest") && argc > 2) {
             volatile uint32_t *p = (volatile uint32_t *)(a1 & ~3u);
             uint32_t n = a2 / 4, errors = 0;
@@ -162,9 +164,24 @@ void *console() {
         } else if(streq(cmd, "ddr")) {
             ddr_info();
 #endif
-        } else if(streq(cmd, "uartboot")) {
-            if(uartboot((uint8_t *)&__approm_start, (unsigned)&__approm_size) == 0)
-                return &__approm_start;
+        } else if(streq(cmd, "load")) {
+            uint32_t at = argc > 1 ? a1 : (uint32_t)&__approm_start, max = 0;
+            uint32_t ram = (uint32_t)&__approm_start, ram_end = ram + (uint32_t)&__approm_size;
+            uint32_t ddr_end = SOC_DDR_ADDR + platform_ddr_size();
+            if(at >= ram && at < ram_end) max = ram_end - at;
+            else if(at >= SOC_DDR_ADDR && at < ddr_end) max = ddr_end - at;
+            if(!max) {
+                puts("not in RAM or DDR\n");
+            } else {
+                int n = xmodem_recv((uint8_t *)at, max);
+                putchar('\n');
+                if(n < 0) { puts("load failed ("); putnum(-n, 10, 1); puts(")\n"); }
+                else { putnum(n, 10, 1); puts(" bytes at 0x"); putnum(at, 16, 8); putchar('\n'); }
+            }
+        } else if(streq(cmd, "save") && argc > 2) {
+            int r = xmodem_send(argc > 3 ? argv[3] : "blob.bin", (const void *)a1, a2);
+            putchar('\n');
+            puts(r ? (r == XMODEM_ERR_TIMEOUT ? "no receiver\n" : "save failed\n") : "saved\n");
 #ifdef SOC_EN_SPI
         } else if(streq(cmd, "flashboot")) {
             if(flashboot((uint8_t *)&__approm_start, FLASH_IMG_OFFSET, (unsigned)&__approm_size) == 0)

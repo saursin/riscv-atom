@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """atomterm: serial console for RISC-V Atom (in the spirit of litex_term).
 
-Connects a terminal to the SoC UART and uploads binaries to the bootloader
-over XMODEM-CRC. With --bin, the file is sent automatically when the
-bootloader asks for it (uartboot), and the session continues as a console.
+Connects a terminal to the SoC UART and moves files over XMODEM-CRC:
+- With --bin, the file is sent automatically when the bootloader asks for it
+  (uartboot), and the session continues as a console.
+- With --load/--run, it drives the bootloader console: loads each file at its
+  address, then boots.
+- Files the SoC sends (console 'save', or a program calling xmodem_send) are
+  received automatically and saved in --save-dir.
 
 Keys:  Ctrl-]  exit
        Ctrl-U  upload a file now (XMODEM). The prompt has line editing, history
@@ -16,6 +20,7 @@ import argparse
 import binascii
 import glob
 import os
+import re
 import select
 import subprocess
 import sys
@@ -36,11 +41,15 @@ except ImportError:
 KEY_EXIT = 0x1D     # Ctrl-]
 KEY_UPLOAD = 0x15   # Ctrl-U
 
-# printed by the bootloader right before the XMODEM handshake
-# (UARTBOOT_MARKER in sw/bootloader/target/hydrogensoc/uartboot.h)
-UARTBOOT_MARKER = b"![XMODREQ]!"
+# markers the SoC prints (sw/lib/include/xmodem.h): "![NAME]!", optionally followed at once by
+# "(p1,p2,...)". XMODREQ (1k: accepts 1024-byte blocks): it is about to receive, we send;
+# XMODSND (<len>,<name>): it sends.
+MARKER = re.compile(rb"!\[(\w+)\]!(?:\(([^)]*)\))?")
+# the bootloader console's prompt (sw/bootloader/target/hydrogensoc/console.c)
+CONSOLE_PROMPT = b"atom-boot: "
+TYPE_DELAY = 0.03   # between typed command characters: the SoC echoes each one
 
-SOH, EOT, ACK, NAK, CAN, CRC_REQ, PAD = b"\x01", b"\x04", b"\x06", b"\x15", b"\x18", b"C", b"\x1a"
+SOH, STX, EOT, ACK, NAK, CAN, CRC_REQ, PAD = b"\x01", b"\x02", b"\x04", b"\x06", b"\x15", b"\x18", b"C", b"\x1a"
 
 
 def info(msg):
@@ -48,7 +57,23 @@ def info(msg):
     sys.stdout.flush()
 
 
-def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10, got_crc_req=False):
+def block_sizes(length, use_1k):
+    """XMODEM-1K: 1024-byte blocks, then 128-byte blocks for the tail (both sides agree)."""
+    sizes = [1024] * (length // 1024) if use_1k else []
+    rest = length - 1024 * len(sizes)
+    return sizes + [128] * (-(-rest // 128))
+
+
+def progress(nblocks, total, nbytes, length):
+    """One line for both directions: blocks, bytes (without padding), percent."""
+    done = min(nbytes, length)
+    pct = 100 * done // length if length else 100
+    sys.stdout.write(f"\r\033[36m[atomterm] xmodem: {nblocks}/{total} blocks "
+                     f"({done}/{length} bytes, {pct}%)\033[0m")
+    sys.stdout.flush()
+
+
+def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10, got_crc_req=False, use_1k=True):
     """Send data with XMODEM (128-byte blocks, CRC-16 or checksum). Returns True on success.
     byte_delay paces the bytes for slow receivers (e.g. the bootloader in simulation).
     got_crc_req: the receiver's 'C' was already read, so start without waiting for another."""
@@ -77,13 +102,15 @@ def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10, got
         info("xmodem: no handshake from receiver")
         return False
 
-    data += PAD * (-len(data) % 128)
-    nblocks = len(data) // 128
-    for i in range(nblocks):
-        blk = data[128 * i:128 * (i + 1)]
+    length = len(data)
+    sizes = block_sizes(length, use_1k and use_crc)     # 1K blocks need CRC mode
+    off = 0
+    for i, size in enumerate(sizes):
+        blk = data[off:off + size].ljust(size, PAD)
+        off += size
         seq = (i + 1) & 0xFF
         chk = binascii.crc_hqx(blk, 0).to_bytes(2, "big") if use_crc else bytes([sum(blk) & 0xFF])
-        pkt = SOH + bytes([seq, 0xFF - seq]) + blk + chk
+        pkt = (STX if size == 1024 else SOH) + bytes([seq, 0xFF - seq]) + blk + chk
         for _ in range(retries):
             write(pkt)
             r = ser.read(1)
@@ -96,16 +123,78 @@ def xmodem_send(ser, data, byte_delay=0.0, handshake_timeout=60, retries=10, got
             ser.write(CAN * 3)
             info(f"xmodem: block {i + 1} not acknowledged, giving up")
             return False
-        sys.stdout.write(f"\r\033[36m[atomterm] xmodem: {i + 1}/{nblocks} blocks\033[0m")
-        sys.stdout.flush()
+        progress(i + 1, len(sizes), off, length)
 
     for _ in range(retries):
         ser.write(EOT)
         if ser.read(1) == ACK:
-            info(f"xmodem: sent {len(data)} bytes")
+            info(f"xmodem: sent {length} bytes")
             return True
     info("xmodem: EOT not acknowledged")
     return False
+
+
+def xmodem_recv(ser, length, retries=10):
+    """Receive an XMODEM-CRC transfer (the sender is waiting for 'C'); returns the first
+    length bytes, or None on failure."""
+    data = bytearray()
+    seq = 1
+    total = None                    # blocks expected, known from the first block's size
+    ser.write(CRC_REQ)
+    tries = 0
+    while True:
+        c = ser.read(1)
+        if not c:
+            tries += 1
+            if tries > retries:
+                info("xmodem: sender stopped")
+                return None
+            ser.write(CRC_REQ if not data else NAK)
+            continue
+        if c == EOT:
+            ser.write(ACK)
+            return bytes(data[:length])
+        if c == CAN:
+            info("xmodem: cancelled by sender")
+            return None
+        if c not in (SOH, STX):
+            continue
+        size = 1024 if c == STX else 128
+        if total is None:
+            total = len(block_sizes(length, c == STX))
+        pkt = b""                   # read on while bytes keep coming (the timeout is per gap)
+        while len(pkt) < size + 4:
+            chunk = ser.read(size + 4 - len(pkt))
+            if not chunk:
+                break
+            pkt += chunk
+        if len(pkt) == size + 4 and pkt[0] == 0xFF - pkt[1] and \
+                binascii.crc_hqx(pkt[2:-2], 0) == int.from_bytes(pkt[-2:], "big"):
+            if pkt[0] == seq & 0xFF:
+                data += pkt[2:-2]
+                progress(seq, total, len(data), length)
+                seq += 1
+            ser.write(ACK)          # a repeat of the previous block is acknowledged and dropped
+            tries = 0
+        else:
+            ser.reset_input_buffer()
+            ser.write(NAK)
+
+
+def save_blob(save_dir, name, data):
+    """Save under the basename of name in save_dir, never overwriting; returns the path."""
+    base = os.path.basename(name.replace("\\", "/")) or "blob.bin"
+    if base in (".", ".."):
+        base = "blob.bin"
+    stem, ext = os.path.splitext(base)
+    path = os.path.join(save_dir, base)
+    n = 1
+    while os.path.exists(path):
+        path = os.path.join(save_dir, f"{stem}-{n}{ext}")
+        n += 1
+    with open(path, "wb") as f:
+        f.write(data)
+    return path
 
 
 def open_port(port, baud):
@@ -126,8 +215,15 @@ def complete_path(text, state):
 
 
 class Console:
-    def __init__(self, ser, port, baud, binfile, hexmode, byte_delay, log):
+    def __init__(self, ser, port, baud, binfile, hexmode, byte_delay, log, steps=(), save_dir="."):
         self.ser = ser
+        self.steps = list(steps)            # (console command, file to upload or None)
+        self.step_req = threading.Event()   # console prompt seen: run the next step
+        self.pending = None                 # file for the next receive marker (from a step)
+        self.save_dir = save_dir
+        self.use_1k = False                 # the receiver accepts 1024-byte blocks (marker)
+        self.xmodem_128 = False             # send 128-byte blocks even then (e.g. a noisy line)
+        self.blob = None                    # (name, length) the SoC is about to send
         self.port = port
         self.baud = baud
         self.binfile = binfile
@@ -192,13 +288,29 @@ class Console:
                     if not looks_like_text(sample):
                         info(f"received data does not look like text: check --baud (now {self.baud})")
                     sample = None
-            window = (window + data)[-len(UARTBOOT_MARKER) * 2:]
-            if self.binfile and UARTBOOT_MARKER in window:
-                # the bootloader sends 'C' right after the marker: it may be in this chunk
-                self.got_crc_req = CRC_REQ in window.split(UARTBOOT_MARKER)[-1]
+            window = (window + data)[-256:]
+            m = next((m for m in MARKER.finditer(window) if m.group(1) == b"XMODSND" and m.group(2)), None)
+            if m:
+                params = m.group(2).decode(errors="replace").split(",")
+                name = params[1] if len(params) > 1 and params[1] else time.strftime("blob-%Y%m%d-%H%M%S.bin")
+                self.blob = (name, int(params[0]))
+                window = b""
+                self.uploading.set()        # stop reading so the receiver gets what follows
+                self.upload_req.set()
+            elif (self.pending or self.binfile) and (r := next((m for m in MARKER.finditer(window)
+                    if m.group(1) == b"XMODREQ" and m.end() < len(window)
+                    and window[m.end()] != ord("(")), None)):
+                # acted on once a byte other than '(' follows, i.e. after any parameters, so a
+                # marker split across reads is not misread; the bootloader sends 'C' right after
+                # it, which may be in this chunk
+                self.use_1k = b"1k" in (r.group(2) or b"").split(b",")
+                self.got_crc_req = CRC_REQ in window[r.end():]
                 window = b""
                 self.uploading.set()        # stop reading so the uploader gets what follows
                 self.upload_req.set()
+            elif self.steps and CONSOLE_PROMPT in window:
+                window = b""
+                self.step_req.set()
 
     def show(self, data):
         if self.hexmode:
@@ -211,10 +323,34 @@ class Console:
     def upload(self, path=None):
         self.uploading.set()
         try:
-            self._upload(path)
+            if self.blob:
+                self._receive(*self.blob)
+            else:
+                self._upload(path or self.pending)
         finally:
-            self.got_crc_req = False
+            self.blob = self.pending = None
+            self.got_crc_req = self.use_1k = False
             self.uploading.clear()
+
+    def _receive(self, name, length):
+        info(f"receiving {name} ({length} bytes)")
+        old_timeout = self.ser.timeout
+        with self.lock:
+            self.ser.timeout = 2
+            try:
+                data = xmodem_recv(self.ser, length)
+            finally:
+                self.ser.timeout = old_timeout
+        if data is not None:
+            info(f"saved {save_blob(self.save_dir, name, data)} ({len(data)} bytes)")
+
+    def run_step(self):
+        """Type the next console command; a load arms its file for the receive marker."""
+        cmd, path = self.steps.pop(0)
+        self.pending = path
+        for ch in cmd + "\r":
+            self.ser.write(ch.encode())
+            time.sleep(TYPE_DELAY)
 
     def _upload(self, path):
         path = path or self.binfile
@@ -231,7 +367,8 @@ class Console:
         with self.lock:
             self.ser.timeout = 5
             try:
-                xmodem_send(self.ser, data, self.byte_delay, got_crc_req=self.got_crc_req)
+                xmodem_send(self.ser, data, self.byte_delay, got_crc_req=self.got_crc_req,
+                            use_1k=self.use_1k and not self.xmodem_128)
             finally:
                 self.ser.timeout = old_timeout
 
@@ -289,6 +426,9 @@ class Console:
                 if self.upload_req.is_set():
                     self.upload_req.clear()
                     self.upload()
+                if self.step_req.is_set():
+                    self.step_req.clear()
+                    self.run_step()
                 if not interactive:
                     time.sleep(0.05)
                     continue
@@ -329,6 +469,14 @@ def main():
                    help="delay between uploaded bytes, for slow receivers such as atomsim "
                         "(e.g. 0.005); default: 0")
     p.add_argument("--log", metavar="FILE", help="also append everything received to FILE")
+    p.add_argument("--load", action="append", default=[], metavar="[ADDR:]FILE",
+                   help="at the bootloader console, load FILE at ADDR (default: program RAM); "
+                        "repeatable, in order")
+    p.add_argument("--run", action="store_true", help="after the loads, boot the program")
+    p.add_argument("--xmodem-128", action="store_true",
+                   help="send 128-byte blocks even if the receiver accepts 1024 (e.g. a noisy line)")
+    p.add_argument("--save-dir", default=".", metavar="DIR",
+                   help="where files sent by the SoC are saved (default: .)")
     args = p.parse_args()
     port = args.port_opt or args.port
     if not port:
@@ -340,7 +488,20 @@ def main():
         sys.exit(f"atomterm: {e}")
     log = open(args.log, "ab") if args.log else None
     info(f"connected to {port} at {args.baud} baud (Ctrl-] exit, Ctrl-U upload)")
-    con = Console(ser, port, args.baud, args.bin, args.hex, args.byte_delay, log)
+    steps = []
+    for item in args.load:
+        addr, sep, path = item.partition(":")
+        try:
+            int(addr, 0)
+        except ValueError:          # no address: the whole item is the file
+            addr, path = "", item
+        if not os.path.isfile(path):
+            sys.exit(f"atomterm: --load {item}: no such file")
+        steps.append((f"load {addr}".strip(), path))
+    if args.run:
+        steps.append(("boot", None))
+    con = Console(ser, port, args.baud, args.bin, args.hex, args.byte_delay, log, steps, args.save_dir)
+    con.xmodem_128 = args.xmodem_128
     con.run()
     con.ser.close()
     if log:

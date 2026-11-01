@@ -68,7 +68,8 @@ and then takes commands:
     crc <addr> <len>      CRC-16/XMODEM of memory
     memtest <addr> <len>  address-in-address test
     ddr                   DDR size and calibration (boards with DDR)
-    uartboot              receive a program (XMODEM) and run it
+    load [addr]           receive a file (XMODEM) at addr, default program RAM
+    save <addr> <len> [name] send memory as a file (XMODEM)
     flashboot             load a program from flash and run it
     boot [addr]           run the program in RAM (or at addr)
     reboot
@@ -91,6 +92,18 @@ as a console, so the program's output appears in the same terminal.
     $ atomterm /dev/ttyUSB0 -b 115200 --bin firmware.bin
 
 Press ``Ctrl-]`` to exit and ``Ctrl-U`` to upload the ``--bin`` file manually. ``atomterm`` requires *pyserial*.
+
+At the console, ``atomterm`` can load several files and start the program, e.g. an image into DDR and the program
+into RAM:
+
+.. code-block:: bash
+
+    $ atomterm /dev/ttyUSB0 --load 0x80000000:image.raw --load prog.bin --run
+
+Files the SoC sends (the console's ``save``, or a program calling ``xmodem_send()`` from ``xmodem.h``) are received
+automatically and saved under the name they were sent with, in ``--save-dir`` (an existing file is never
+overwritten). Both directions are announced with a marker on the console (``![XMODREQ]!(1k)``,
+``![XMODSND]!(<len>,<name>)``), which ``atomterm`` watches for.
 
 .. tip::
     Make sure that no other process (like screen) is using the serial port before starting atomterm.
