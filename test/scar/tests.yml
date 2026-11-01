@@ -1,0 +1,57 @@
+# SCAR tests, grouped by the ISA extension they need; a group whose extension the
+# target ISA lacks is skipped (e.g. m on atombones). Each test's source is tests/<name>.S.
+
+tests:
+  i:
+    - add64
+    - addi
+    - add
+    - andi
+    - and
+    - auipc
+    - beq
+    - bge
+    - bgeu
+    - blt
+    - bltu
+    - bne
+    - function_call
+    - jalr
+    - jal
+    - li
+    - load_store_byte
+    - load_store_hw
+    - lui
+    - lw
+    - mv
+    - ori
+    - or
+    - slli
+    - sll
+    - slti
+    - sltiu
+    - slt
+    - sltu
+    - srai
+    - sra
+    - srli
+    - srl
+    - stack
+    - storew
+    - sub
+    - sw
+    - xori
+    - xor
+
+  m:
+    - mul
+    - mulh
+    - mulhsu
+    - mulhu
+    - div
+    - divu
+    - rem
+    - remu
+    - mul_edge
+    - div_edge
+    - divu_edge

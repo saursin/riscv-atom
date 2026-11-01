@@ -1,6 +1,8 @@
 .directory
-build/
+.agent/
+build*/
 /config.mk
+/tools/riscvtoolkit/
 boards/
 bitstreams/
 .vscode/
@@ -11,6 +13,8 @@ docs/_build/
 *.vcd
 python/
 __pycache__/
+.venv/
+scratch/
 .pytest_cache/
 .venv/
 sim_build_*/

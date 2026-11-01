@@ -1,6 +1,6 @@
 # SCAR: instruction tests for Atom
 
-A pytest suite: `test_instructions.py` runs every test in `tests.json` on atomsim and checks the
+A pytest suite: `test_instructions.py` runs every test in `tests.yml` on atomsim and checks the
 assertion block at the end of each `tests/*.S`. Full description and how to write tests:
 [docs/pages/documentation/scar.rst](../../docs/pages/documentation/scar.rst).
 

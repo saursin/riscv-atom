@@ -1,9 +1,9 @@
-import json
 import re
 import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 from conftest import SCAR_DIR, WORK_DIR
 
@@ -65,13 +65,19 @@ def _extract_assertions(src_file: Path) -> list:
 # ---------------------------------------------------------------------------
 # Test parametrization
 # ---------------------------------------------------------------------------
-with open(SCAR_DIR / "tests.json") as _f:
-    _TESTS = json.load(_f)
+# tests.yml groups test names by the ISA extension they need; sources are tests/<name>.S
+with open(SCAR_DIR / "tests.yml") as _f:
+    _TESTS = [{"name": name, "ext": ext, "srcs": [f"tests/{name}.S"]}
+              for ext, names in yaml.safe_load(_f)["tests"].items() for name in names or []]
 
 
 @pytest.mark.parametrize("test_case", _TESTS, ids=lambda t: t["name"])
-def test_instruction(test_case, atomsim, soctarget, linker_script, work_dir):
+def test_instruction(test_case, atomsim, soctarget, linker_script, target_isa, work_dir):
     name = test_case["name"]
+    # tests for an ISA extension the target lacks (e.g. "m" on atombones) are skipped
+    ext = test_case["ext"]
+    if ext not in target_isa.split("_")[0][4:]:
+        pytest.skip(f"target ISA {target_isa} has no '{ext}' extension")
     src_files = [SCAR_DIR / s for s in test_case["srcs"]]
     elf_file  = work_dir / f"{name}.elf"
     dump_file = work_dir / f"{name}.dump"
@@ -80,7 +86,7 @@ def test_instruction(test_case, atomsim, soctarget, linker_script, work_dir):
     result = subprocess.run(
         [
             "riscv64-unknown-elf-gcc",
-            "-march=rv32im", "-mabi=ilp32", "-nostartfiles",
+            "-march=rv32im", "-mabi=ilp32", "-nostdlib",
             *[str(f) for f in src_files],
             "-o", str(elf_file),
             "-T", linker_script,

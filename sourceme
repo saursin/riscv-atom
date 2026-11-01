@@ -12,6 +12,24 @@ RVPREFIX="riscv64-unknown-elf"
 # RVATOM variable: points to root of riscv-atom directory (get dir containing this sourceme file)
 export RVATOM=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
 
+# riscvtoolkit locations, searched in order when the tools are not already on PATH
+TOOLKIT_PATHS=(
+    "$RISCVTOOLKIT"
+    "$RVATOM/tools/riscvtoolkit"
+    "$HOME/opt/riscvtoolkit"
+    "/opt/riscvtoolkit"
+)
+if ! command -v verilator &>/dev/null || ! command -v "$RVPREFIX-gcc" &>/dev/null; then
+    for tk in "${TOOLKIT_PATHS[@]}"; do
+        if [[ -n "$tk" && -f "$tk/env.sh" ]]; then
+            echo " - Using riscvtoolkit at: $tk"
+            source "$tk/env.sh"
+            break
+        fi
+    done
+    unset tk
+fi
+
 n_errors=0
 # VERILATOR_PATH: points to verilator installation
 if command -v "verilator" &>/dev/null; then
@@ -20,7 +38,7 @@ if command -v "verilator" &>/dev/null; then
     echo " - Found Verilator at: $VLP"
 	export VERILATOR_PATH=$VLP
 else
-    echo " ERROR: Verilator not found; please install verilator"
+    echo " ERROR: Verilator not found; run scripts/install-toolchain.sh"
     n_errors=$((n_errors + 1))
 fi
 
@@ -36,7 +54,7 @@ if command -v "$RVPREFIX-gcc" &>/dev/null; then
     RVP=$(dirname $(dirname `which $RVPREFIX-gcc`))
     echo " - Found RISCV toolchain at: $RVP"
 else
-    echo " ERROR: $RVPREFIX-gcc not found; please install riscv toolchain"
+    echo " ERROR: $RVPREFIX-gcc not found; run scripts/install-toolchain.sh"
     n_errors=$((n_errors + 1))
 fi
 

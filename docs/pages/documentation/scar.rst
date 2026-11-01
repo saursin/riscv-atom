@@ -2,7 +2,7 @@ SCAR: Search Compile Assert Run
 ################################
 
 SCAR unit-tests the processor one instruction at a time. It is a pytest suite in ``RVATOM/test/scar``:
-``test_instructions.py`` runs every test listed in ``tests.json``.
+``test_instructions.py`` runs every test listed in ``tests.yml``.
 
 SCAR Workflow
 **************
@@ -30,7 +30,9 @@ and the tests are skipped if there is none):
   $ pytest -v                 # all tests
   $ pytest -v -k add          # filter by name
 
-On atombones the M-extension tests fail by design (the target has no RV32M).
+``tests.yml`` groups the tests by the ISA extension they need (``i``, ``m``, ...). A group whose extension the target
+lacks is skipped; SCAR reads the target ISA from the build (``RVATOM_ISA`` in ``vars.<cfg>.mk``). On atombones
+the M-extension tests are skipped.
 
 How to Create Your Own Tests?
 ******************************
@@ -50,4 +52,10 @@ How to Create Your Own Tests?
       # x3 == 0x01234567
       #<<<END_ASSERT
 
-#. Add the test to ``tests.json``: ``{"name":"addi", "srcs":["tests/addi.S"]}``.
+#. Save it as ``tests/<name>.S`` and add the name to ``tests.yml``, under the extension it needs:
+
+   .. code-block:: yaml
+
+      tests:
+        i:
+          - addi

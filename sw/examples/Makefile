@@ -64,7 +64,8 @@ endif
 
 CFLAGS += -march=$(RVATOM_ISA) -mabi=$(RVATOM_ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
 CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_BUILD)/sw/lib
-LFLAGS := -T $(LINKERSCRIPT) -lcatom -Wl,--gc-sections
+# libcatom is the C library: no toolchain libc (-nostdlib), only libgcc helpers
+LFLAGS := -nostdlib -T $(LINKERSCRIPT) -lcatom -lgcc -Wl,--gc-sections
 
 #### check ex ####
 ifeq ($(__check_eg), true)

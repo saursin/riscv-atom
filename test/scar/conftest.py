@@ -27,13 +27,28 @@ def soctarget(atomsim):
 
 
 @pytest.fixture(scope="session")
-def linker_script(atomsim, soctarget):
-    # preprocessed by the libcatom build: <build>/sw/lib/, next to <build>/sim/bin/atomsim
-    build = Path(shutil.which(atomsim)).resolve().parents[2]
-    ld = build / "sw" / "lib" / f"link_{soctarget}.ld"
+def build_dir(atomsim, soctarget):
+    # the target's build directory: <build>/sim/bin/atomsim
+    return Path(shutil.which(atomsim)).resolve().parents[2]
+
+
+@pytest.fixture(scope="session")
+def linker_script(build_dir, soctarget):
+    # preprocessed by the libcatom build
+    ld = build_dir / "sw" / "lib" / f"link_{soctarget}.ld"
     if not ld.exists():
         pytest.skip(f"Linker script not found: {ld} — build libcatom (`make lib`)")
     return str(ld)
+
+
+@pytest.fixture(scope="session")
+def target_isa(build_dir):
+    # RVATOM_ISA from the build's vars.<cfg>.mk, e.g. rv32imc_zicsr
+    for vars_mk in build_dir.glob("vars.*.mk"):
+        for line in vars_mk.read_text().splitlines():
+            if line.startswith("RVATOM_ISA"):
+                return line.split(":=", 1)[1].strip()
+    pytest.skip(f"RVATOM_ISA not found in {build_dir}/vars.*.mk")
 
 
 @pytest.fixture(scope="session", autouse=True)

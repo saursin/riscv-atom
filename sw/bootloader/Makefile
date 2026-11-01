@@ -32,7 +32,8 @@ CFLAGS+= -fdata-sections -ffunction-sections
 # link-time optimization across the bootloader's files
 CFLAGS+= -flto
 
-LFLAGS:= -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_BUILD)/sw/lib/link_bootloader.ld -lcatom -Xlinker -Map $(EXEC).map -Wl,--gc-sections
+# libcatom is the C library: no toolchain libc (-nostdlib), only libgcc helpers
+LFLAGS:= -nostdlib -L $(RVATOM_BUILD)/sw/lib -T $(RVATOM_BUILD)/sw/lib/link_bootloader.ld -lcatom -lgcc -Xlinker -Map $(EXEC).map -Wl,--gc-sections
 
 ##############################################################################
 # Targets
