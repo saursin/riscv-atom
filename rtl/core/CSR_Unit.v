@@ -142,7 +142,7 @@ module CSR_Unit#
     // CSR Registers
 
     //===== MCYCLE & MCYCLEH ================================================
-    reg [63:0]  csr_cycle = 64'd0;
+    reg [63:0]  csr_cycle;
 
     always @(posedge clk_i) begin
         if(rst_i)
@@ -153,7 +153,7 @@ module CSR_Unit#
 
 
     //===== INSTRET & INSTRETH ==============================================
-    reg [63:0]  csr_instret = 64'd0;
+    reg [63:0]  csr_instret;
     always @(posedge clk_i) begin
         if(rst_i)
             csr_instret <= 64'd0;

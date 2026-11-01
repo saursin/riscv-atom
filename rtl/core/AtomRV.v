@@ -193,7 +193,7 @@ module AtomRV # (
     wire flush_pipeline = jump_decision || halted || (stall_stage2 ? 0 : stall_stage1);
 
 
-    reg ignore_imem_handshake = 0;
+    reg ignore_imem_handshake;
     always @(posedge clk_i) begin
         if(rst_i)
             ignore_imem_handshake <= 0;
@@ -294,7 +294,7 @@ module AtomRV # (
         This register is used to store current instruction that is being 
         executed
     */
-    reg [31:0] InstructionRegister  /*verilator public*/ = `RV_INSTR_NOP;
+    reg [31:0] InstructionRegister  /*verilator public*/;
     always @(posedge clk_i) begin
         if(rst_i)
             InstructionRegister <= `RV_INSTR_NOP;

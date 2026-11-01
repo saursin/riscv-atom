@@ -58,8 +58,8 @@ module UART_core
     reg         recv_parity_bit;
     reg         recv_stopbit;
 
-    reg         recv_framing_error = 0;
-    reg         recv_parity_error = 0;
+    reg         recv_framing_error;
+    reg         recv_parity_error;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -164,7 +164,7 @@ module UART_core
     reg [31:0] send_divcnt;
     reg send_stopbit;
    
-    reg send_tx = 1;
+    reg send_tx;
     assign ser_tx = send_tx;
     
 

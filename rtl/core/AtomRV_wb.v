@@ -98,7 +98,7 @@ module AtomRV_wb
     assign iport_ack_i = iport_wb_ack_i;
     assign iport_data_i = iport_wb_dat_i;
 
-    reg iport_state = WBIDLE;
+    reg iport_state;
 
     always @(posedge wb_clk_i) begin
         if(wb_rst_i) begin
@@ -139,7 +139,7 @@ module AtomRV_wb
     assign dport_ack_i = dport_wb_ack_i;
     assign dport_data_i = dport_wb_dat_i;
 
-    reg dport_state = WBIDLE;
+    reg dport_state;
 
     always @(posedge wb_clk_i) begin
         if(wb_rst_i) begin
