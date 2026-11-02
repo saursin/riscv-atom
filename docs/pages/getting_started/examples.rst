@@ -1,38 +1,33 @@
 Running Examples on AtomSim
 ############################
 
-The RISC-V Atom project consists of a wide range of examples programs out-of-the-box to test. These examples programs 
-reside in `RVATOM/sw/examples` directory.
-
-Switch to examples directory
-
-.. code-block:: bash
-
-  $ cd sw/examples
+The RISC-V Atom project consists of a wide range of examples programs out-of-the-box to test. These examples programs
+reside in `RVATOM/sw/examples` directory, one folder each, and each folder has its own Makefile.
 
 Lets run the classical "hello World!" example first!
 
 Hello World Example 
 ********************
 The source code for the *hello-world* example resides in the ``hello-asm`` directory. You can have a look at the source 
-code. First we need to compile the hello world example with our RISC-V gcc cross-compiler. For this purpose, use the 
-provided makefile as following.
+code. First we need to compile the hello world example with our RISC-V gcc cross-compiler, using the example's
+Makefile:
 
 .. code-block:: bash
 
-  $ make soctarget=atombones ex=hello-asm compile
+  $ cd sw/examples/hello-asm
+  $ make soctarget=atombones compile
 
 The above command should generate a ``hello.elf`` file in the ``hello-asm`` directory.
 
 .. tip::
-  ``soctarget=atombones`` in the above command can be skipped if AtomSim is already built. The SoC target will be automatically detected from 
-  the AtomSim executable.
+  ``soctarget=atombones`` can be skipped once a default is saved with ``make config soctarget=atombones`` (in the repo
+  root).
 
-Now fire up AtomSim and provide the generated elf file as argument.
+Now run it in AtomSim:
 
 .. code-block:: bash
 
-  $ atomsim -u hello-asm/hello.elf
+  $ make soctarget=atombones run
      ___  __             _____
     / _ |/ /____  __ _  / __(_)_ _
    / __ / __/ _ \/  ' \_\ \/ /  ' \
@@ -52,36 +47,21 @@ Now fire up AtomSim and provide the generated elf file as argument.
 You should see *Hello world* message on the screen.
 
 .. note::
-  Make sure to use ``-u`` flag to direct UART output from SoC to stdout. You can also use ``-t`` flag to generate a VCD
-  trace of the simulation.
+  ``make run`` runs AtomSim with the ``-u`` flag, which directs UART output from the SoC to stdout.
 
-Alternatively, use ``make run`` to run the example as follows
-
-.. code-block:: bash
-
-  $ make soctarget=atombones ex=hello-asm run
-
-
-We can compile other examples also in the similar fashion by using the following syntax:
+Other examples work the same way, in their own folders (or with ``make -C`` from anywhere):
 
 .. code-block:: bash
 
-  $ make soctarget=<TARGET> ex=<EXAMPLE> compile
-  $ make soctarget=<TARGET> ex=<EXAMPLE> run
-
-.. note::
-  Run ``$ make help`` to get more information about supported targets and examples.
+  $ make -C sw/examples/<EXAMPLE> soctarget=<TARGET> compile
+  $ make -C sw/examples/<EXAMPLE> soctarget=<TARGET> run
 
 Banner Example 
 ***************
 
-.. code-block:: bash
-
-  $ make target=atombones ex=banner compile
-
 .. code-block::
 
-  $ atomsim -u banner/banner.elf
+  $ make -C sw/examples/banner soctarget=atombones run
      ___  __             _____
     / _ |/ /____  __ _  / __(_)_ _
    / __ / __/ _ \/  ' \_\ \/ /  ' \
@@ -128,11 +108,11 @@ Banner Example
 
 How to compile and run all examples?
 *************************************
-Instead of testing all examples one-by-one, we can compile and run all examples as follows.
+Instead of testing all examples one-by-one, we can compile (``all``) or compile and run (``run-all``) all examples:
 
 .. code-block:: bash
 
-  $ make soctarget=atombones run-all
+  $ make -C sw/examples soctarget=atombones run-all
 
 Using Atomsim Vuart
 ********************
@@ -169,7 +149,7 @@ links it as ``$RVATOM/sim.tty`` and waits for a terminal. In another terminal, r
 
 .. code-block:: bash
 
-  $ make -C sw/examples ex=hello-c run vuart=pty
+  $ make -C sw/examples/banner run vuart=pty
   VUART on /home/user/riscv-atom/sim.tty (/dev/pts/6)
   waiting for a terminal: run atomterm
 
@@ -184,14 +164,13 @@ port instead.
 Adding New Examples
 ====================
 
-To add a new example to the existing framework, simply create a directory under the ``RVATOM/sw/examples`` directory.
+To add a new example, create a directory under ``RVATOM/sw/examples`` and put your source files in it.
 
 .. code-block:: bash
 
   $ mkdir myexample
 
 
-Next, put your source files under this directory. 
 
 .. code-block:: c
 
@@ -205,16 +184,14 @@ Next, put your source files under this directory.
   }
 
 
-Finally add a new file named ``Makefile.include`` in the same directory which defines the name of the source files and 
-executable file as follows.  
+Finally add a ``Makefile`` that names the source files and the executable, and includes the shared rules (add your
+own ``CFLAGS`` before the ``include`` if needed):
 
+.. code-block:: make
 
-.. code-block:: bash
-
-  $ cat Makefile.include
   src_files = myexample.c
   executable = myexample.elf
+  include ../example.mk
 
-
-That's it! Now you can use the same compile and run commands as discussed earlier to run this example.
+That's it! ``make run`` in that directory compiles and runs it. Copying an existing example's folder works too.
 

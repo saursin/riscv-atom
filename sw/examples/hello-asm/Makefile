@@ -1,0 +1,3 @@
+src_files = hello.S
+executable = hello.elf
+include ../example.mk

@@ -1,2 +1,0 @@
-src_files = factorial.c
-executable = factorial.elf

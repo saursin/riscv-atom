@@ -240,7 +240,8 @@ class Config:
             extra = d.get('cdefines', []) or []
         else:
             raise ValueError(f"unknown style '{style}' (expected verilator|iverilog|gcc)")
-        groups.append(('core and target', [os.path.expandvars(x) for x in common + extra if x]))
+        target = [f'SOC_CONFIG="{self.cfg["name"]}"'] if self.cfg.get('name') else []
+        groups.append(('core and target', target + [os.path.expandvars(x) for x in common + extra if x]))
         return [(t, defs) for t, defs in groups if defs]
 
     def header(self, style, src_name):

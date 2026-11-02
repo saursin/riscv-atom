@@ -95,7 +95,7 @@ atomsim, regardless of ``PATH``.
 How the build works
 ********************
 Each component (``rtl``, ``sim``, ``sw/lib``, ``sw/bootloader``, ``sw/examples``, ``synth/*``) has its own Makefile,
-which you can also invoke directly, e.g. ``make -C sw/examples ex=banner compile run``. All of them include
+which you can also invoke directly, e.g. ``make -C sw/examples/banner compile run``. All of them include
 ``RVATOM/common.mk``, which:
 
 #. resolves ``soctarget`` (command line, environment, then ``config.mk``) and sets

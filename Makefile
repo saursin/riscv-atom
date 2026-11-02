@@ -94,7 +94,7 @@ clean-sim:							#t# Clean atomsim build files
 .PHONY: test
 test: sim lib						#t# Test the build using banner example
 	$(call print_msg_root,Running example on Atomsim)
-	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/examples soctarget=$(soctarget) ex=banner clean compile run
+	$(MAKE) $(MKFLAGS) -C $(RVATOM)/sw/examples/banner soctarget=$(soctarget) clean compile run
 
 
 # ======== Bootloader ========

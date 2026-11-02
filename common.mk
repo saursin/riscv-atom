@@ -122,6 +122,9 @@ endef
 ##############################################################################
 # common targets
 
+# the Makefile whose #h#/#v#/#t# tags 'make help' shows
+HELP_MAKEFILE ?= Makefile
+
 .PHONY: help
-help: Makefile
+help: $(HELP_MAKEFILE)
 	@python3 $(RVATOM)/scripts/genmkhelp.py $<

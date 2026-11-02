@@ -1,2 +1,0 @@
-src_files = encode.c
-executable = encode.elf

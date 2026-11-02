@@ -1,2 +1,0 @@
-src_files = decode.c
-executable = decode.elf

@@ -30,24 +30,76 @@ char * banner =
 " /_/ |_/___//____/\\____/  |___/   \\__,_/\\__/\\____/_/ /_/ /_/  \n"
 "/=========By: Saurabh Singh (saurabh.s99100@gmail.com)====/\n\n";
 
-void print_isastring(){
-    uint32_t misa = CSR_read(CSR_MISA);
-    puts("RV32I");
-    if(bitcheck(misa, 12))  putchar('M');
-    if(bitcheck(misa, 0))   putchar('A');
-    if(bitcheck(misa, 5))   putchar('F');
-    if(bitcheck(misa, 3))   putchar('D');
-    if(bitcheck(misa, 2))   putchar('C');   
+extern int _etext, _sdata, _ebss;     // linker script: end of code, start of data, end of bss
+
+// prints a size as KiB or MiB
+static void print_size(uint32_t bytes) {
+    if(bytes >= (1 << 20))
+        printf("%d MiB", (int)(bytes >> 20));
+    else
+        printf("%d KiB", (int)(bytes >> 10));
 }
 
-int main()
-{
+static void print_region(const char *name, uint32_t addr, uint32_t size) {
+    printf("%s: 0x%08x  ", name, (unsigned)addr);
+    print_size(size);
+    putchar('\n');
+}
+
+// ISA string from misa: base, standard extensions in canonical order, then Zicsr (misa is a CSR)
+static void print_isa() {
+    uint32_t misa = CSR_read(CSR_MISA);
+    puts("rv32");
+    putchar(bitcheck(misa, 'E' - 'A') ? 'e' : 'i');
+    const char *ext = "MAFDC";
+    for(int i = 0; ext[i]; i++)
+        if(bitcheck(misa, ext[i] - 'A'))
+            putchar(ext[i] - 'A' + 'a');
+    puts("_zicsr");
+}
+
+int main() {
     serial_init(UART_BAUD_115200);
     puts(banner);
-    printf("CPU      : RISC-V Atom @ %d Hz\n", (int)platform_clk());
-    puts("Arch     : "); print_isastring(); puts(" - little endian\n");
-    printf("CODE RAM : 0x%08x (%d bytes)\n", (unsigned)CODERAM_BASE, (unsigned)CODERAM_SIZE);
-    printf("DATA RAM : 0x%08x (%d bytes)\n", (unsigned)DATARAM_BASE, (unsigned)DATARAM_SIZE);
-    puts("Exiting...\n");
-    return 134;
+
+    uint32_t clk = platform_clk();
+    puts("CPU      : RISC-V Atom");
+    if(clk)
+        printf(" @ %d MHz", (int)(clk / 1000000));
+    printf(" (hart %d)\n", (int)CSR_read(CSR_MHARTID));
+    puts("ISA      : "); print_isa(); putchar('\n');
+    printf("IDs      : vendor 0x%x, arch 0x%x, impl 0x%x\n", (unsigned)CSR_read(CSR_MVENDORID),
+           (unsigned)CSR_read(CSR_MARCHID), (unsigned)CSR_read(CSR_MIMPID));
+    printf("Config   : %s\n", SOC_CONFIG);
+
+    print_region("BOOTROM  ", SOC_BOOTROM_ADDR, SOC_BOOTROM_SIZE);
+    print_region("RAM      ", SOC_RAM_ADDR, SOC_RAM_SIZE);
+    print_region("  code   ", (uint32_t)CODERAM_BASE, (uint32_t)CODERAM_SIZE);
+    print_region("  data   ", (uint32_t)DATARAM_BASE, (uint32_t)DATARAM_SIZE);
+#ifdef SOC_DDR_ADDR
+    if(platform_ddr_size())
+        print_region("DDR      ", SOC_DDR_ADDR, platform_ddr_size());
+#endif
+
+#ifdef SOC_EN_UART
+    printf("UART     : 0x%08x  FIFO depth %d\n", (unsigned)SOC_UART_ADDR, SOC_UART_FIFO_DEPTH);
+#else
+    printf("UART     : 0x%08x\n", (unsigned)SOC_UART_ADDR);
+#endif
+#ifdef SOC_EN_GPIO
+    printf("GPIO     : 0x%08x  %d pins\n", (unsigned)SOC_GPIO_ADDR, SOC_GPIO_NUM_PINS);
+#endif
+#ifdef SOC_EN_SPI
+    printf("SPI      : 0x%08x  %d chip select(s)\n", (unsigned)SOC_SPI_ADDR, SOC_SPI_NUM_CS);
+#endif
+#ifdef SOC_EN_TIMER
+    printf("TIMER    : 0x%08x\n", (unsigned)SOC_TIMER_ADDR);
+#endif
+
+    printf("Program  : %d bytes code, %d bytes data\n",
+           (int)((uint32_t)&_etext - (uint32_t)CODERAM_BASE), (int)((uint32_t)&_ebss - (uint32_t)&_sdata));
+    printf("Cycles   : %d since reset\n", (int)cycle());
+    if(!clk)
+        puts("(no platform table: not started by the bootloader, so the clock is unknown)\n");
+    return 0;
 }

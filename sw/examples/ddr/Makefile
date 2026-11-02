@@ -1,2 +1,4 @@
 src_files = ddr.c
 executable = ddr.elf
+
+include ../example.mk
