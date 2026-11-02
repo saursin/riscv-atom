@@ -95,7 +95,8 @@ as a console, so the program's output appears in the same terminal.
 
     $ atomterm /dev/ttyUSB0 -b 115200 --bin firmware.bin
 
-Press ``Ctrl-]`` to exit, ``Ctrl-U`` to upload a file and ``Ctrl-T`` for this help. ``atomterm`` requires *pyserial*.
+Commands start with ``Ctrl-T``, followed by ``q`` (quit), ``u`` (upload a file), ``c`` (cancel a transfer) or ``h``
+(help); ``Ctrl-T Ctrl-T`` sends a ``Ctrl-T``. All other keys go to the SoC. ``atomterm`` requires *pyserial*.
 
 At the console, ``atomterm`` can load several files and start the program, e.g. an image into DDR and the program
 into RAM:
