@@ -239,6 +239,7 @@ class Console:
         self.held = []
         self.uploading = threading.Event()  # upload owns the port: reader stays off it
         self.got_crc_req = False            # reader already consumed the bootloader's 'C'
+        self.echo = None                    # typed command not echoed yet: output before it is old
 
     def reconnect(self):
         """Wait for the port to come back (e.g. USB re-plug); returns False if stopping."""
@@ -289,6 +290,12 @@ class Console:
                         info(f"received data does not look like text: check --baud (now {self.baud})")
                     sample = None
             window = (window + data)[-256:]
+            if self.echo:
+                i = window.find(self.echo)
+                if i < 0:
+                    continue
+                window = window[i + len(self.echo):]
+                self.echo = None
             m = next((m for m in MARKER.finditer(window) if m.group(1) == b"XMODSND" and m.group(2)), None)
             if m:
                 params = m.group(2).decode(errors="replace").split(",")
@@ -348,6 +355,7 @@ class Console:
         """Type the next console command; a load arms its file for the receive marker."""
         cmd, path = self.steps.pop(0)
         self.pending = path
+        self.echo = cmd.encode()
         for ch in cmd + "\r":
             self.ser.write(ch.encode())
             time.sleep(TYPE_DELAY)
@@ -421,6 +429,8 @@ class Console:
             termios.tcsetattr(fd, termios.TCSANOW, new)
         thr = threading.Thread(target=self.reader, daemon=True)
         thr.start()
+        if self.steps:
+            self.ser.write(b"\r")       # ask for a prompt: the console may be waiting at one already
         try:
             while not self.stop.is_set():
                 if self.upload_req.is_set():
@@ -437,6 +447,8 @@ class Console:
                 keys = os.read(fd, 64)
                 if KEY_EXIT in keys:
                     break
+                if self.steps:
+                    continue            # still typing --load/--run steps: keys would mix into them
                 if KEY_UPLOAD in keys:
                     path = self.ask_path(fd, old, new)
                     if path is not None:
