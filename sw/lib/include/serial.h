@@ -41,7 +41,8 @@ typedef struct {
 
 /**
  * @brief Initializes uart with default settings 
- * and provided baud rate
+ * and provided baud rate. The startup code (libc_start.c) calls it with UART_BAUD_115200 before main,
+ * so stdio works from the start; call it again only to change the baud rate.
  * 
  * @param baud_rate baud rate
  */

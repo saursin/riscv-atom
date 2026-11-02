@@ -34,9 +34,6 @@ _start:
     sub a2, t0, a0      // size = _sbss - _sbss
 	jal	memset
 
-	// Initialize heap
-	jal heap_init
-
     // after the bss clear: save the platform table pointer and the return address
     la t0, __platform
     sw s1, 0(t0)
@@ -56,10 +53,9 @@ _start:
     li t0, 0b1000
     csrw mstatus, t0
 
-    # ===== Call main =====
-    li  a0, 0
-    li  a1, 0
-    jal main
+    # ===== The rest in C (libc_start.c): heap, stdio, constructors, main, exit =====
+    la a0, main
+    j __libc_start_main
 
 # Back to the bootloader (its console) if it started us, i.e. ra pointed into the boot ROM;
 # otherwise stay here. a0: the exit code, passed on.

@@ -179,8 +179,6 @@ static unsigned test_memory(uint32_t base, uint32_t size)
 // exit code: 0 passed (or no DDR to test), 1 failed
 int main()
 {
-    serial_init(UART_BAUD_115200);
-
     uint32_t size = platform_ddr_size();
     if(!size) {
         puts("ddr: this board has no DDR\n");

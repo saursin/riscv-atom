@@ -38,7 +38,6 @@ static int button_pressed() {
 }
 
 int main() {
-    serial_init(UART_BAUD_115200);
     for(int i = 0; i < NUM_LEDS; i++)
         gpio_setmode(i, OUTPUT);
     puts("blink: press S1 for the next pattern\n");

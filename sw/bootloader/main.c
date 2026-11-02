@@ -29,7 +29,7 @@ void boot_panic_handler(){
     puts(", addr=0x"); putnum(CSR_read(CSR_MEPC), 16, 1);
     putchar('\n');
     #endif
-    exit(RCODE_EXCEPTION);
+    _exit(RCODE_EXCEPTION);
 }
 
 void boot_panic(int code, char * msg){
@@ -38,7 +38,7 @@ void boot_panic(int code, char * msg){
     puts(msg ? msg : "?");
     putchar('\n');
 #endif
-    exit(code);
+    _exit(code);
 }
 
 // kind: BOOT_* (common.h), the kind of boot; arg: a parameter for that kind

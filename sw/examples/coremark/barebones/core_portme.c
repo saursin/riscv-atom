@@ -162,7 +162,6 @@ void
 portable_init(core_portable *p, int *argc, char *argv[])
 {
 #ifdef RVATOM
-    serial_init(UART_BAUD_115200);
     printf("Starting Coremark...\n");
 #else
 #error \

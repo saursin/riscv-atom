@@ -24,7 +24,6 @@ void setup_timer_interrupt() {
 
 void main()
 {
-    serial_init(UART_BAUD_115200);
     puts("Before interrupt\n");
     
     setup_timer_interrupt();

@@ -59,7 +59,6 @@ static void print_isa() {
 }
 
 int main() {
-    serial_init(UART_BAUD_115200);
     puts(banner);
 
     uint32_t clk = platform_clk();

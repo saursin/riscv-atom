@@ -9,10 +9,24 @@
 #define RAND_MAX ((1U << 31) - 1)
 
 /**
- * @brief Exit normally
+ * @brief Exit normally: runs the atexit functions in reverse order, then returns to the
+ * bootloader
  * @param status exit status
  */
 void exit(int status) __attribute__((noreturn));
+
+/**
+ * @brief Exit at once, without the atexit functions (startup code: start.S)
+ * @param status exit status
+ */
+void _exit(int status) __attribute__((noreturn));
+
+/**
+ * @brief Register a function for exit() to call (at most 32)
+ * @param fn function
+ * @return 0, or -1 if the table is full
+ */
+int atexit(void (*fn)(void));
 
 /**
  * @brief Exit abnormally
