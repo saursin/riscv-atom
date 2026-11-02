@@ -1,5 +1,6 @@
 #include <iostream>
 #include <csignal>
+#include <climits>
 #include <cstdint>
 #include "include/cxxopts/cxxopts.hpp"
 #include "verilated.h"
@@ -82,7 +83,8 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		;
 
 		options.add_options("Backend Config")
-		("p,vuart-port", "serial port for virtual UART", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname))
+		("p,vuart-port", "Connect the UART to a terminal: alone, through a pseudo-terminal linked as $RVATOM/sim.tty (atomterm's default); or to the given serial port", cxxopts::value<std::string>(backend_config.vuart_portname)->default_value(default_backend_config.vuart_portname)->implicit_value("pty"))
+		("no-wait", "With -p alone: start without waiting for a terminal to connect", cxxopts::value<bool>(backend_config.vuart_no_wait)->default_value("false"))
 		("b,vuart-baud", "serial baud rate for virtual UART", cxxopts::value<uint32_t>(backend_config.vuart_baudrate)->default_value(std::to_string(default_backend_config.vuart_baudrate)))
 		("u,enable-uart-dump", "Enable dumping UART data (from soc) to stdout", cxxopts::value<bool>(backend_config.enable_uart_dump)->default_value(default_backend_config.enable_uart_dump?"true":"false"))
 		
@@ -145,6 +147,14 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		if (result.count("input")==0)
 		{
 			throwError("CLI2", "No input files specified", true);
+		}
+		// with a terminal attached, run as hardware does: a program that exits returns to the
+		// bootloader, and there is no iteration limit unless one is given
+		if (backend_config.vuart_portname != "")
+		{
+			sim_config.no_exit_hint_flag = true;
+			if (result.count("maxitr") == 0)
+				sim_config.maxitr = ULONG_MAX;
 		}
 	}
 	catch(const cxxopts::OptionException& e)

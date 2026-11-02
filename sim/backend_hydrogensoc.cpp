@@ -76,7 +76,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     // create a new vuart object
     if (using_vuart_)
     {
-        vuart_ = new Vuart(config_.vuart_portname, config_.vuart_baudrate);
+        vuart_ = new Vuart(config_.vuart_portname, config_.vuart_baudrate, !config_.vuart_no_wait);
 
         // Clean recieve buffer
         vuart_->clean_recieve_buffer();

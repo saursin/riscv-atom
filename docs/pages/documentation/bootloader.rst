@@ -95,7 +95,7 @@ as a console, so the program's output appears in the same terminal.
 
     $ atomterm /dev/ttyUSB0 -b 115200 --bin firmware.bin
 
-Press ``Ctrl-]`` to exit and ``Ctrl-U`` to upload the ``--bin`` file manually. ``atomterm`` requires *pyserial*.
+Press ``Ctrl-]`` to exit, ``Ctrl-U`` to upload a file and ``Ctrl-T`` for this help. ``atomterm`` requires *pyserial*.
 
 At the console, ``atomterm`` can load several files and start the program, e.g. an image into DDR and the program
 into RAM:
@@ -112,5 +112,5 @@ overwritten). Both directions are announced with a marker on the console (``![XM
 .. tip::
     Make sure that no other process (like screen) is using the serial port before starting atomterm.
 
-    In simulation (AtomSim with a virtual UART), the bootloader cannot keep up with an unpaced upload; add
-    ``--byte-delay 0.005``.
+    Without a port, ``atomterm`` connects to AtomSim run with ``-p`` (``$RVATOM/sim.tty``), so everything above works
+    the same in simulation.

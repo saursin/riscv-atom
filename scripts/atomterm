@@ -40,6 +40,8 @@ except ImportError:
 
 KEY_EXIT = 0x1D     # Ctrl-]
 KEY_UPLOAD = 0x15   # Ctrl-U
+KEY_HELP = 0x14     # Ctrl-T
+HELP = "Ctrl-] exit   Ctrl-U upload a file   Ctrl-T this help"
 
 # markers the SoC prints (sw/lib/include/xmodem.h): "![NAME]!", optionally followed at once by
 # "(p1,p2,...)". XMODREQ (1k: accepts 1024-byte blocks): it is about to receive, we send;
@@ -447,6 +449,9 @@ class Console:
                 keys = os.read(fd, 64)
                 if KEY_EXIT in keys:
                     break
+                if KEY_HELP in keys:
+                    info(HELP)
+                    keys = keys.replace(bytes([KEY_HELP]), b"")
                 if self.steps:
                     continue            # still typing --load/--run steps: keys would mix into them
                 if KEY_UPLOAD in keys:
@@ -470,9 +475,10 @@ class Console:
 
 
 def main():
-    p = argparse.ArgumentParser(description="Serial console for RISC-V Atom; uploads binaries "
-                                "to the bootloader over XMODEM. Ctrl-] exits, Ctrl-U uploads.")
-    p.add_argument("port", nargs="?", help="serial port, e.g. /dev/ttyUSB1")
+    p = argparse.ArgumentParser(description="Serial console for RISC-V Atom (a board, or atomsim "
+                                "run with -p); moves files over XMODEM. " + HELP + ".")
+    p.add_argument("port", nargs="?", help="serial port, e.g. /dev/ttyUSB1 (default: the simulator, "
+                   "$RVATOM/sim.tty)")
     p.add_argument("-p", "--port", dest="port_opt", metavar="PORT", help="serial port (alternative to the positional argument)")
     p.add_argument("-b", "--baud", type=int, default=115200, help="baud rate (default: 115200)")
     p.add_argument("--bin", help="binary to upload when the bootloader requests it (uartboot)")
@@ -491,15 +497,19 @@ def main():
                    help="where files sent by the SoC are saved (default: .)")
     args = p.parse_args()
     port = args.port_opt or args.port
+    sim_tty = os.path.join(os.environ.get("RVATOM", ""), "sim.tty")
     if not port:
-        p.error("a serial port is required")
+        if not os.path.exists(sim_tty):
+            p.error(f"no port given, and no simulator at {sim_tty} (start atomsim with -p)")
+        port = sim_tty
 
     try:
         ser = open_port(port, args.baud)
     except serial.SerialException as e:
         sys.exit(f"atomterm: {e}")
     log = open(args.log, "ab") if args.log else None
-    info(f"connected to {port} at {args.baud} baud (Ctrl-] exit, Ctrl-U upload)")
+    target = f"the simulator ({port})" if os.path.abspath(port) == os.path.abspath(sim_tty) else port
+    info(f"connected to {target} at {args.baud} baud\r\n[atomterm] {HELP}")
     steps = []
     for item in args.load:
         addr, sep, path = item.partition(":")

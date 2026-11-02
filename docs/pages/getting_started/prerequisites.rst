@@ -18,7 +18,7 @@ interactive console in AtomSim. We also want to install GTKWave to view VCD wave
 .. code-block:: bash
 
   $ sudo apt-get update
-  $ sudo apt-get install git python3 python3-pip build-essential libreadline8 libreadline-dev socat
+  $ sudo apt-get install git python3 python3-pip build-essential libreadline8 libreadline-dev
   $ sudo apt-get install gtkwave screen
   $ pip install -r requirements.txt
 

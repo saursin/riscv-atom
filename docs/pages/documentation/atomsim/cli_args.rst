@@ -44,7 +44,10 @@ Following are the arguments that may be passed to the AtomSim executable.
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 | -u     | --enable-uart-dump  | Enable dumping UART data (from soc) to stdout  |                                        |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
-| -p     | --vuart-port arg    | serial port for virtual UART                   | ""                                     |
+| -p     | --vuart-port[=arg]  | UART to a terminal: alone, via $RVATOM/sim.tty | ""                                     |
+|        |                     | (atomterm's default); =arg: that serial port   |                                        |
++--------+---------------------+------------------------------------------------+----------------------------------------+
+|        | --no-wait           | with -p alone: don't wait for a terminal       |                                        |
 +--------+---------------------+------------------------------------------------+----------------------------------------+
 | -b     | --vuart-baud arg    | serial baud rate for virtual UART              | 115200                                 |
 +--------+---------------------+------------------------------------------------+----------------------------------------+

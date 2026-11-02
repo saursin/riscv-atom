@@ -23,6 +23,7 @@ struct Backend_config
 
     std::string vuart_portname  = "";
     uint32_t vuart_baudrate     = 115200;
+    bool vuart_no_wait          = false;   // with a pseudo-terminal: start without waiting for a terminal
     bool enable_uart_dump       = false;
 };
 

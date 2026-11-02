@@ -16,10 +16,12 @@ class Vuart
 public:
     /**
      * @brief Construct a new Vuart object
-     * @param portname name of the port
+     * @param portname name of the port, or "pty" to create a pseudo-terminal, linked as
+     * $RVATOM/sim.tty, for a serial terminal to connect to
+     * @param wait with "pty": wait until a terminal connects
      * @param baud baud-rate (bps)
      */
-    Vuart(std::string portname, int baud=DEFAULT_BAUDRATE);
+    Vuart(std::string portname, int baud=DEFAULT_BAUDRATE, bool wait=false);
 
     /**
      * @brief Destroy the Vuart object
@@ -68,7 +70,7 @@ private:
     /**
      * @brief pointer to the serial port object
      */
-    mn::CppLinuxSerial::SerialPort * port;
+    mn::CppLinuxSerial::SerialPort * port = nullptr;
 
     /**
      * @brief Serial port Baudrate
@@ -79,6 +81,12 @@ private:
      * @brief current state of the port
      */
     bool isopen = false;
+
+    /**
+     * @brief master side of the pseudo-terminal created for portname "pty" (-1: a real port)
+     */
+    int pty_fd = -1;
+
 
     // Helper functions
 

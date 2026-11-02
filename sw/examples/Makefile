@@ -103,7 +103,7 @@ ATOMSIM_ARGS = --maxitr=999999999 -uv
 
 # VUART setting
 ifneq ($(vuart), None)
-    ATOMSIM_ARGS += --vuart=$(vuart)
+    ATOMSIM_ARGS += --vuart-port=$(vuart)
 endif
 
 ifeq ($(map), 1)

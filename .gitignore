@@ -20,5 +20,4 @@ scratch/
 sim_build_*/
 results.xml
 .atomsim_history
-simport
-userport
+sim.tty
