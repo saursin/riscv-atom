@@ -97,6 +97,7 @@ void parse_commandline_args(int argc, char**argv, Atomsim_config &sim_config, Ba
 		#ifdef TARGET_HYDROGENSOC
 		("bootmode", "Specify bootmode signal", cxxopts::value<int>(backend_config.bootmode)->default_value(std::to_string(default_backend_config.bootmode)))
 		("spi-flash", "Attach an SPI flash (W25Q64, 8 MiB) on SPI chip select 0, loaded with this image (/dev/null: erased)", cxxopts::value<std::string>(backend_config.spi_flash_image)->default_value(default_backend_config.spi_flash_image))
+		("sdcard", "Attach an SD card (SPI mode) on SPI chip select 0, with this image as its contents", cxxopts::value<std::string>(backend_config.sdcard_image)->default_value(default_backend_config.sdcard_image))
 		#endif
 		;
 

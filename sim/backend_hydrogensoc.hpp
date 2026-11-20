@@ -17,6 +17,7 @@ struct Backend_config
     bool enable_uart_dump       = false;
     int bootmode                = 1;    // Jump to RAM
     std::string spi_flash_image = "";   // attach an SPI flash with this image (SPI chip select 0)
+    std::string sdcard_image    = "";   // attach an SD card with this image (SPI chip select 0)
 };
 
 

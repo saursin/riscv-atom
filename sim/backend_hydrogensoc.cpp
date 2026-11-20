@@ -5,6 +5,7 @@
 #include "vuart.hpp"
 #include "bitbang_uart.hpp"
 #include "spi_flash.hpp"
+#include "sd_card.hpp"
 #include "except.hpp"
 #include "rvdefs.hpp"
 
@@ -88,18 +89,30 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
                                                      &tb->m_core->HydrogenSoC_sim->soc->uart->reg_div,
                                                      std::move(vuart), config_.enable_uart_dump));
 
+    // the SPI devices share the SoC's only chip select
+    if (!config_.spi_flash_image.empty() && !config_.sdcard_image.empty())
+        throw Atomsim_exception("--spi-flash and --sdcard both need SPI chip select 0; use one");
+#ifdef SOC_EN_SPI
     if (!config_.spi_flash_image.empty())
     {
-#ifdef SOC_EN_SPI
         devices_.push_back(std::make_unique<SPIFlash>(&tb->m_core->spi_sck_o, &tb->m_core->spi_mosi_o,
                                                       &tb->m_core->spi_cs_o, 0, &tb->m_core->spi_miso_i,
                                                       config_.spi_flash_image));
         if (sim_->sim_config_.verbose_flag)
             std::cout << "SPI flash on chip select 0: " << config_.spi_flash_image << std::endl;
-#else
-        throw Atomsim_exception("--spi-flash: this config has no SPI");
-#endif
     }
+    if (!config_.sdcard_image.empty())
+    {
+        devices_.push_back(std::make_unique<SDCard>(&tb->m_core->spi_sck_o, &tb->m_core->spi_mosi_o,
+                                                    &tb->m_core->spi_cs_o, 0, &tb->m_core->spi_miso_i,
+                                                    config_.sdcard_image));
+        if (sim_->sim_config_.verbose_flag)
+            std::cout << "SD card on chip select 0: " << config_.sdcard_image << std::endl;
+    }
+#else
+    if (!config_.spi_flash_image.empty() || !config_.sdcard_image.empty())
+        throw Atomsim_exception("--spi-flash/--sdcard: this config has no SPI");
+#endif
 
     if (sim_->sim_config_.verbose_flag)
         std::cout << "Initialization complete!\n";
