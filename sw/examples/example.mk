@@ -6,7 +6,9 @@
 #     include ../example.mk
 # An example that needs particular SoC targets (e.g. for GPIO) lists them before the include, as
 #     soctargets = hydrogensoc
-# and is skipped on other targets.
+# and is skipped on other targets. An example that uses a library from sw/lib besides libcatom
+# names it, also before the include:
+#     libs = fatfs
 
 #v# Connect the UART for run: pty (talk to the program with atomterm), or a serial port
 vuart ?=
@@ -24,9 +26,10 @@ RVPREFIX := riscv64-unknown-elf
 # before the example's own CFLAGS, so those win (e.g. -O2)
 ATOM_CFLAGS := -Wall -include $(RVATOM_CONFIG_H)
 ATOM_CFLAGS += -march=$(RVATOM_ISA) -mabi=$(RVATOM_ABI) -nostartfiles -ffreestanding -Os -fdata-sections -ffunction-sections
-ATOM_CFLAGS += -I $(RVATOM_LIB)/include -L $(RVATOM_BUILD)/sw/lib
-# libcatom is the C library: no toolchain libc (-nostdlib), only libgcc helpers
-LFLAGS := -nostdlib -T $(RVATOM_BUILD)/sw/lib/link_$(soctarget).ld -lcatom -lgcc -Wl,--gc-sections
+ATOM_CFLAGS += -I $(RVATOM_LIB)/include $(addprefix -I $(RVATOM_LIB)/,$(libs)) -L $(RVATOM_BUILD)/sw/lib
+# libcatom is the C library: no toolchain libc (-nostdlib), only libgcc helpers. Other libraries
+# come first, as they call into libcatom.
+LFLAGS := -nostdlib -T $(RVATOM_BUILD)/sw/lib/link_$(soctarget).ld $(addprefix -l,$(libs)) -lcatom -lgcc -Wl,--gc-sections
 ifeq ($(map), 1)
     LFLAGS += -Xlinker -Map $(basename $(executable)).map
 endif

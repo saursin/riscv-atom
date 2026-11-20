@@ -156,12 +156,15 @@ clean-elfdump:					    #t# Clean elfdump directory
 lib:								#t# compile software libraries
 	$(call print_msg_root,Building libcatom)
 	$(MAKE) $(MKFLAGS) -C $(lib_dir) soctarget=$(soctarget)
+	$(call print_msg_root,Building FatFs)
+	$(MAKE) $(MKFLAGS) -C $(lib_dir)/fatfs soctarget=$(soctarget)
 
 
 .PHONY: clean-lib
 clean-lib:							#t# Clean software libs
 	$(call print_msg_root,Cleaning libcatom build files)
 	$(MAKE) $(MKFLAGS) -C $(lib_dir) clean
+	$(MAKE) $(MKFLAGS) -C $(lib_dir)/fatfs clean
 
 
 # ======== Documentation ========

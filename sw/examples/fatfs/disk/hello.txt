@@ -1,0 +1,2 @@
+Hello from a FAT32 SD card!
+This file was copied into the image by tools/mkfatimg.
