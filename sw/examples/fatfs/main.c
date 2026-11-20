@@ -1,4 +1,4 @@
-// Read a FAT-formatted SD card with FatFs: list every file, then print HELLO.TXT
+// Read a FAT-formatted SD card with FatFs: list every file, then print hello.txt
 #include <stdio.h>
 #include <string.h>
 #include <ff.h>

@@ -9,9 +9,9 @@ CFLAGS = -O2 -Wall -I $(FATFS)
 
 default: $(EXE)							#t Build mkfatimg
 
-$(EXE): mkfatimg.c $(FATFS)/ff.c $(FATFS)/ff.h $(FATFS)/ffconf.h $(FATFS)/diskio.h
+$(EXE): mkfatimg.c $(FATFS)/ff.c $(FATFS)/ffunicode.c $(FATFS)/ff.h $(FATFS)/ffconf.h $(FATFS)/diskio.h
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) mkfatimg.c $(FATFS)/ff.c -o $@
+	$(CC) $(CFLAGS) mkfatimg.c $(FATFS)/ff.c $(FATFS)/ffunicode.c -o $@
 
 .PHONY: clean
 clean:									#t clean build files

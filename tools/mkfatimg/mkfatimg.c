@@ -1,6 +1,5 @@
 // mkfatimg: make a FAT32 disk image from a directory, using FatFs (sw/lib/fatfs) on the host.
-// The image has no partition table (the volume starts at sector 0). Names must be 8.3, as the
-// FatFs build has no long file names.
+// The image has no partition table (the volume starts at sector 0). Long file names are kept.
 //
 //     mkfatimg <dir> <image> [size]        size: e.g. 64M (default), 512K, or bytes
 #include <dirent.h>
@@ -65,7 +64,7 @@ static void fail(void) {
 
 static void die(const char *what, const char *path, FRESULT fr) {
     if(fr == FR_INVALID_NAME)
-        fprintf(stderr, "mkfatimg: %s: name is not 8.3 (at most 8 characters, a dot, 3 characters)\n", path);
+        fprintf(stderr, "mkfatimg: %s: name not allowed on FAT (characters such as : * ? \" < > | are not)\n", path);
     else
         fprintf(stderr, "mkfatimg: %s %s: FatFs error %d\n", what, path, fr);
     fail();
