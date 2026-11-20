@@ -20,7 +20,7 @@ MEMORY
 __bootrom_start = ORIGIN(BOOT_ROM);
 __bootrom_size  = LENGTH(BOOT_ROM);
 __approm_start  = ORIGIN(RAM);
-__approm_size   = LENGTH(RAM);
+__approm_size   = LENGTH(RAM) - 2K;   /* last 2K of RAM: bootloader stack and data */
 
 
 SECTIONS
@@ -53,7 +53,7 @@ SECTIONS
     
     /* Reserve for Approm */
     .appram_reserved (NOLOAD) : {
-        . = . + LENGTH(RAM) - 2K;   /* Use last 2K of RAM for bootloader stack and data */
+        . = . + __approm_size;
         . = ALIGN(16);
     } > RAM AT> BOOT_ROM
 
