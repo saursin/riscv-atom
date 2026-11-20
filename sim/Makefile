@@ -65,7 +65,7 @@ else
 endif
 
 EXE := $(BIN_DIR)/atomsim
-SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp
+SRCS := main.cpp atomsim.cpp vuart.cpp interactive.cpp memory.cpp util.cpp bitbang_uart.cpp spi_device.cpp spi_flash.cpp
 COMPILE_CPP_MACRO = $(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c -o $@
 
 SIM_BACKEND_FILE := backend_$(soctarget).cpp

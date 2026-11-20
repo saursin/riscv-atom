@@ -4,6 +4,7 @@
 #include "memory.hpp"
 #include "vuart.hpp"
 #include "bitbang_uart.hpp"
+#include "spi_flash.hpp"
 #include "except.hpp"
 #include "rvdefs.hpp"
 
@@ -90,6 +91,20 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
             std::cout << "Relaying uart-tx to stdout (Note: This mode does not support uart-rx)" << std::endl;
     }
 
+    // ====== Devices on the SoC's pins ========
+    if (!config_.spi_flash_image.empty())
+    {
+#ifdef SOC_EN_SPI
+        devices_.push_back(std::make_unique<SPIFlash>(&tb->m_core->spi_sck_o, &tb->m_core->spi_mosi_o,
+                                                      &tb->m_core->spi_cs_o, 0, &tb->m_core->spi_miso_i,
+                                                      config_.spi_flash_image));
+        if (sim_->sim_config_.verbose_flag)
+            std::cout << "SPI flash on chip select 0: " << config_.spi_flash_image << std::endl;
+#else
+        throw Atomsim_exception("--spi-flash: this config has no SPI");
+#endif
+    }
+
     if (sim_->sim_config_.verbose_flag)
         std::cout << "Initialization complete!\n";
     
@@ -153,6 +168,9 @@ int Backend_atomsim::tick()
 
     // perform uart transaction (if any)
     UART();
+
+    for (auto &d : devices_)
+        d->eval();
 
     // Tick clock once
     tb->tick();

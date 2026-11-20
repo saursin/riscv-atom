@@ -1,9 +1,11 @@
 #pragma once
 
 #include "backend.hpp"
+#include "device.hpp"
 #include "VHydrogenSoC_sim.h"
 
 #include <memory>
+#include <vector>
 
 #define ATOMSIM_TARGETNAME  "hydrogensoc"
 
@@ -17,6 +19,7 @@ struct Backend_config
     bool vuart_no_wait          = false;   // with a pseudo-terminal: start without waiting for a terminal
     bool enable_uart_dump       = false;
     int bootmode                = 1;    // Jump to RAM
+    std::string spi_flash_image = "";   // attach an SPI flash with this image (SPI chip select 0)
 };
 
 
@@ -70,4 +73,9 @@ private:
      * @brief UART btbang drver
      */
     BitbangUART *bb_uart_;
+
+    /**
+     * @brief Devices attached to the SoC's pins, evaluated every cycle (see device.hpp)
+     */
+    std::vector<std::unique_ptr<Device>> devices_;
 };
