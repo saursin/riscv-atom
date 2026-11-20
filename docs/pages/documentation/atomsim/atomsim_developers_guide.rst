@@ -23,8 +23,10 @@ Adding a New Backend to AtomSim
 - To allow AtomSim to *peek* and *poke* into SoC memory, user must override the ``fetch()`` and ``store()`` methods.
 - The backend may optioanlly use the testbench class from (``testbench.hpp``) to implement the low-level RTL facing 
   functionality.
-- Users can use the *BitbangUART* class is provided in the ``bitbang_uart.cpp`` to emulate a UART device being connected
-  to SoC. Additioanlly, the *Vuart* class is provided in ``vuart.cpp`` can be used to interface with linux serial ports.
+- Models of things wired to the SoC's pins are *Device* subclasses (``device.hpp``): the backend keeps a list of them
+  and calls ``eval()`` on each once per cycle. *BitbangUART* (``bitbang_uart.cpp``) is a terminal on the UART pins that
+  relays to a *Vuart* (``vuart.cpp``: a pseudo-terminal or a Linux serial port) and/or stdout; *SPIDevice*
+  (``spi_device.cpp``) is the base for SPI models such as *SPIFlash* (``spi_flash.cpp``).
 - Users may intend to not simulate the whole SoC in RTL and therefore they can create their own C++ modules to emulate 
   some functionality and call them from their backends. One example of this is the :ref:`AtomBones<soctarget-atombones>`
   soctarget which only simulates the processor in RTL, everything else like memories (implemented in ``memory.cpp``),

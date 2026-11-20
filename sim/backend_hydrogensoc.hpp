@@ -9,9 +9,6 @@
 
 #define ATOMSIM_TARGETNAME  "hydrogensoc"
 
-class Vuart;
-class BitbangUART;
-
 struct Backend_config
 {
     std::string vuart_portname  = "";
@@ -45,8 +42,6 @@ public:
 
 	void refresh_state();
 
-    void UART();
-
     int tick();
    
     void fetch(const uint32_t start_addr, uint8_t *buf, const uint32_t buf_sz);
@@ -58,21 +53,6 @@ private:
      * @brief Backend configuration parameters
      */
     Backend_config config_;
-
-    /**
-	 * @brief Pointer to Vuart object
-	 */
-	Vuart *vuart_ = nullptr;
-
-    /**
-     * @brief Are we using vuart?
-     */
-    bool using_vuart_ = false;
-
-    /**
-     * @brief UART btbang drver
-     */
-    BitbangUART *bb_uart_;
 
     /**
      * @brief Devices attached to the SoC's pins, evaluated every cycle (see device.hpp)

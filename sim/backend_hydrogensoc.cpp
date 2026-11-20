@@ -24,13 +24,11 @@
 #define RAM_ADDR SOC_RAM_ADDR
 #define RAM_SIZE SOC_RAM_SIZE
 
-#define BBUART_FRATIO 3
 #define BOOTMODE_PIN_OFFSET 8
 
 
 Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(sim),
-                                                                        config_(config),
-                                                                        using_vuart_(config.vuart_portname != "")
+                                                                        config_(config)
 {
     // generate image file by converting ELF file
     char *varval = getenv("RVATOM");
@@ -71,27 +69,25 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     // Initialize CPU state by resetting
     reset();
 
-    // ====== Initialize BBUart ========
-    bb_uart_ = new BitbangUART((bool *)&tb->m_core->uart_tx_o, (bool *)&tb->m_core->uart_rx_i, BBUART_FRATIO);
-
-    // create a new vuart object
-    if (using_vuart_)
+    // ====== Devices on the SoC's pins ========
+    // a terminal on the UART: the virtual UART (pty or serial port) and/or stdout
+    std::unique_ptr<Vuart> vuart;
+    if (!config_.vuart_portname.empty())
     {
-        vuart_ = new Vuart(config_.vuart_portname, config_.vuart_baudrate, !config_.vuart_no_wait);
-
-        // Clean recieve buffer
-        vuart_->clean_recieve_buffer();
+        vuart = std::make_unique<Vuart>(config_.vuart_portname, config_.vuart_baudrate, !config_.vuart_no_wait);
+        vuart->clean_recieve_buffer();
 
         if (sim_->sim_config_.verbose_flag)
             std::cout << "Connected to VUART (" + config_.vuart_portname + ") at " + std::to_string(config_.vuart_baudrate) + " bps" << std::endl;
     }
-    else
+    else if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
     {
-        if (config_.enable_uart_dump && sim_->sim_config_.verbose_flag)
-            std::cout << "Relaying uart-tx to stdout (Note: This mode does not support uart-rx)" << std::endl;
+        std::cout << "Relaying uart-tx to stdout (Note: This mode does not support uart-rx)" << std::endl;
     }
+    devices_.push_back(std::make_unique<BitbangUART>(&tb->m_core->uart_tx_o, &tb->m_core->uart_rx_i,
+                                                     &tb->m_core->HydrogenSoC_sim->soc->uart->reg_div,
+                                                     std::move(vuart), config_.enable_uart_dump));
 
-    // ====== Devices on the SoC's pins ========
     if (!config_.spi_flash_image.empty())
     {
 #ifdef SOC_EN_SPI
@@ -114,47 +110,10 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
 
 Backend_atomsim::~Backend_atomsim()
 {
-    if (using_vuart_)
-    {
-        // destroy vuart object
-        if (vuart_ != nullptr)
-            delete vuart_;
-    }
-
-    delete bb_uart_;
+    devices_.clear();   // before the testbench they are wired to
     delete tb;
 }
 
-
-void Backend_atomsim::UART()
-{
-    // RX
-    if (!bb_uart_->rx_fifo.empty())
-    {
-        char tchar = bb_uart_->rx_fifo.front();
-        if (using_vuart_)
-            vuart_->send(tchar); // Redirect to Virtual UART
-        
-        if (config_.enable_uart_dump)
-            std::cout << tchar << std::flush; // Echo on stdout
-
-        bb_uart_->rx_fifo.pop();
-    }
-
-    // TX
-    if (using_vuart_)
-    {
-        int rchar = vuart_->recieve();
-        if (rchar != (int)-1)
-            bb_uart_->tx_fifo.push(rchar);
-    }
-
-    // decode at the UART's programmed rate: divisor + 2 cycles per bit (see UART_core)
-    bb_uart_->set_ratio(tb->m_core->HydrogenSoC_sim->soc->uart->reg_div + 2);
-
-    // evaluate bbuart state machine for current cycle
-    bb_uart_->eval();
-}
 
 int Backend_atomsim::tick()
 {
@@ -165,9 +124,6 @@ int Backend_atomsim::tick()
 
     // Force the bootmode switch value
     tb->m_core->gpio_inp_i = (0b11 & config_.bootmode) << BOOTMODE_PIN_OFFSET;
-
-    // perform uart transaction (if any)
-    UART();
 
     for (auto &d : devices_)
         d->eval();
