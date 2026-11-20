@@ -17,7 +17,8 @@ Makefile:
   $ cd sw/examples/hello-asm
   $ make soctarget=atombones compile
 
-The above command should generate a ``hello.elf`` file in the ``hello-asm`` directory.
+The above command should generate ``hello.elf`` (with ``hello.bin``, the image to upload to a board) in
+``build/atombones/examples/hello-asm/``. Each soctarget has its own output folder.
 
 .. tip::
   ``soctarget=atombones`` can be skipped once a default is saved with ``make config soctarget=atombones`` (in the repo
@@ -159,6 +160,18 @@ links it as ``$RVATOM/sim.tty`` and waits for a terminal. In another terminal, r
 The program starts once ``atomterm`` connects, and when it exits you are at the bootloader console, as on a board.
 ``--no-wait`` starts without waiting, and ``vuart=<port>`` (atomsim's ``--vuart-port=<port>``) uses an existing serial
 port instead.
+
+Running on a Board
+******************
+With the board in UART boot mode (bootmode 2), ``load`` builds the example and uploads its ``.bin`` with ``atomterm``
+when the bootloader asks for it (press reset if it asked before ``atomterm`` connected):
+
+.. code-block:: bash
+
+  $ make -C sw/examples/banner load port=/dev/ttyUSB1
+
+``port`` defaults to ``$RVATOM_PORT``; set it once in your shell to just type ``make load``. Without a port, ``load``
+uploads to the simulator's ``sim.tty`` instead, e.g. to an atomsim started with ``--bootmode 2 -p``.
 
 
 Adding New Examples

@@ -9,9 +9,15 @@
 # and is skipped on other targets. An example that uses a library from sw/lib besides libcatom
 # names it, also before the include:
 #     libs = fatfs
+# Outputs go to $(RVATOM_BUILD)/examples/<example>/ (e.g. build/hydrogensoc/examples/banner/), one
+# folder per soctarget, so switching targets never reuses another target's build. The ELF is
+# rebuilt when its sources, the headers they include or the libraries change.
 
 #v# Connect the UART for run: pty (talk to the program with atomterm), or a serial port
 vuart ?=
+
+#v# Serial port for load (default: $RVATOM_PORT, else the simulator's sim.tty)
+port ?= $(RVATOM_PORT)
 
 #v# Save a map file while compiling
 map ?= 1
@@ -30,8 +36,12 @@ ATOM_CFLAGS += -I $(RVATOM_LIB)/include $(addprefix -I $(RVATOM_LIB)/,$(libs)) -
 # libcatom is the C library: no toolchain libc (-nostdlib), only libgcc helpers. Other libraries
 # come first, as they call into libcatom.
 LFLAGS := -nostdlib -T $(RVATOM_BUILD)/sw/lib/link_$(soctarget).ld $(addprefix -l,$(libs)) -lcatom -lgcc -Wl,--gc-sections
+
+OUT  := $(RVATOM_BUILD)/examples/$(notdir $(CURDIR))
+ELF  := $(OUT)/$(executable)
+LIBS := $(RVATOM_BUILD)/sw/lib/libcatom.a $(foreach l,$(libs),$(RVATOM_BUILD)/sw/lib/lib$(l).a)
 ifeq ($(map), 1)
-    LFLAGS += -Xlinker -Map $(basename $(executable)).map
+    LFLAGS += -Xlinker -Map $(basename $(ELF)).map
 endif
 
 # atomsim of the selected soctarget (each target has its own binary, none is on PATH)
@@ -49,34 +59,43 @@ endif
 
 
 ifeq ($(skip),1)
-.PHONY: compile run dism
-compile run dism:
+.PHONY: compile run load dism
+compile run load dism:
 	@printf "$(CLR_YL)  skipped:$(CLR_NC) $(notdir $(CURDIR)) needs soctarget $(soctargets)\n"
 else
 
 .PHONY: compile
-compile: $(executable)						#t# Compile the example
+compile: $(ELF)								#t# Compile the example
 
-$(executable): $(src_files) $(RVATOM_VARS_MK)
+$(ELF): $(src_files) $(LIBS) $(RVATOM_VARS_MK)
 	$(call print_msgt,Building)
+	@mkdir -p $(OUT)
+	$(RVPREFIX)-gcc $(ATOM_CFLAGS) $(CFLAGS) -MM -MP -MT $@ $(src_files) > $(OUT)/deps.d
 	$(RVPREFIX)-gcc $(ATOM_CFLAGS) $(CFLAGS) $(src_files) -o $@ $(LFLAGS)
 	$(RVPREFIX)-objdump -Shtd $@ > $(basename $@).lst
 	$(RVPREFIX)-objcopy -O binary $@ $(basename $@).bin
-	@printf "$(CLR_BL)$(CLR_B)  Binary size:$(CLR_NB) %s bytes$(CLR_NC)\n" $$(stat --format=%s "$(basename $@).bin")
+	@printf "$(CLR_BL)$(CLR_B)  Binary size:$(CLR_NB) %s bytes$(CLR_NC) ($(basename $@).bin)\n" $$(stat --format=%s "$(basename $@).bin")
+
+-include $(OUT)/deps.d
 
 .PHONY: run
-run: $(executable)							#t# Run the example in atomsim
+run: $(ELF)									#t# Run the example in atomsim
 	$(call print_msg,Running, $<)
 	@test -x $(ATOMSIM) || { printf "$(CLR_RD)$(CLR_B)ERROR:$(CLR_NC) atomsim not built at $(ATOMSIM)\n"; exit 1; }
 	$(ATOMSIM) $(ATOMSIM_ARGS) $<
 
+.PHONY: load
+load: $(ELF)								#t# Upload to a board in UART boot mode (port=..., or a simulator)
+	$(call print_msg,Loading, $(basename $<).bin)
+	atomterm --bin $(basename $<).bin $(port)
+
 .PHONY: dism
-dism: $(executable)							#t# Dump disassembly
+dism: $(ELF)								#t# Dump disassembly
 	$(call print_msg,Generating disassembly,$(basename $<).lst)
 	$(RVPREFIX)-objdump -htd $< > $(basename $<).lst
 endif
 
 .PHONY: clean
 clean:										#t# Clean build outputs
-	$(call print_msg,Cleaning,$(CURDIR))
-	rm -f $(executable) $(basename $(executable)).bin *.o *.map *.lst
+	$(call print_msg,Cleaning,$(OUT))
+	rm -rf $(OUT)

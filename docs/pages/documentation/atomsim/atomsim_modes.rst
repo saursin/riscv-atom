@@ -13,7 +13,7 @@ additional useful information. Checkout :doc:`cli_args` for information on CLI o
 
 .. code-block:: bash
   
-  $ atomsim sw/examples/banner/banner.elf -v
+  $ atomsim build/hydrogensoc/examples/banner/banner.elf -v
      ___  __             _____
     / _ |/ /____  __ _  / __(_)_ _
    / __ / __/ _ \/  ' \_\ \/ /  ' \
