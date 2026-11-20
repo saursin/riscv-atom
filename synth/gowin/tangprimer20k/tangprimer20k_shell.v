@@ -8,6 +8,8 @@
 //          GPIO[7:6]  <-> PMOD0[1:0] (bidirectional)
 //          GPIO[11:8] <-  DIP switches 1-4 (GPIO[9:8] = bootmode)
 //          GPIO[15:12]<-  buttons S1-S4 (active low)
+//          SPI chip select 0 -> SPI flash, 1 -> SD card slot (SCK and MOSI go to both;
+//          MISO comes from the selected one)
 //      Button S0 is the reset.
 ////////////////////////////////////////////////////////////////////
 `default_nettype none
@@ -27,6 +29,11 @@ module tangprimer20k_shell (
     output  wire            flash_spi_cs_o,
     output  wire            flash_spi_mosi_o,
     input   wire            flash_spi_miso_i,
+
+    output  wire            sd_spi_sck_o,
+    output  wire            sd_spi_cs_o,
+    output  wire            sd_spi_mosi_o,
+    input   wire            sd_spi_miso_i,
 
     inout   wire [1:0]      pmod0_io
 
@@ -155,6 +162,17 @@ module tangprimer20k_shell (
     );
 `endif
 
+    // SPI: one bus to the flash (chip select 0) and the SD card (chip select 1)
+    wire                        spi_sck, spi_mosi, spi_miso;
+    wire [`SOC_SPI_NUM_CS-1:0]  spi_cs;
+    assign flash_spi_sck_o  = spi_sck;
+    assign flash_spi_mosi_o = spi_mosi;
+    assign flash_spi_cs_o   = spi_cs[0];
+    assign sd_spi_sck_o     = spi_sck;
+    assign sd_spi_mosi_o    = spi_mosi;
+    assign sd_spi_cs_o      = spi_cs[1];
+    assign spi_miso         = !spi_cs[1] ? sd_spi_miso_i : flash_spi_miso_i;
+
     HydrogenSoC soc (
         .clk_i      (clk),
         .rst_i      (rst),
@@ -163,10 +181,10 @@ module tangprimer20k_shell (
         .gpio_inp_i (gpio_inp),
         .gpio_out_o (gpio_out),
         .gpio_dir_o (gpio_dir),
-        .spi_miso_i (flash_spi_miso_i),
-        .spi_mosi_o (flash_spi_mosi_o),
-        .spi_sck_o  (flash_spi_sck_o),
-        .spi_cs_o   (flash_spi_cs_o)
+        .spi_miso_i (spi_miso),
+        .spi_mosi_o (spi_mosi),
+        .spi_sck_o  (spi_sck),
+        .spi_cs_o   (spi_cs)
 `ifdef SOC_EN_DDR
         ,
         .ddr_phy_ce_i       (ddr_ce),

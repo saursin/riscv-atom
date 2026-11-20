@@ -89,9 +89,7 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
                                                      &tb->m_core->HydrogenSoC_sim->soc->uart->reg_div,
                                                      std::move(vuart), config_.enable_uart_dump));
 
-    // the SPI devices share the SoC's only chip select
-    if (!config_.spi_flash_image.empty() && !config_.sdcard_image.empty())
-        throw Atomsim_exception("--spi-flash and --sdcard both need SPI chip select 0; use one");
+    // SPI bus: the boot flash on chip select 0, the SD card on 1
 #ifdef SOC_EN_SPI
     if (!config_.spi_flash_image.empty())
     {
@@ -103,11 +101,13 @@ Backend_atomsim::Backend_atomsim(Atomsim *sim, Backend_config config) : Backend(
     }
     if (!config_.sdcard_image.empty())
     {
+        if (SOC_SPI_NUM_CS < 2)
+            throw Atomsim_exception("--sdcard: the SD card goes on SPI chip select 1; this config has one");
         devices_.push_back(std::make_unique<SDCard>(&tb->m_core->spi_sck_o, &tb->m_core->spi_mosi_o,
-                                                    &tb->m_core->spi_cs_o, 0, &tb->m_core->spi_miso_i,
+                                                    &tb->m_core->spi_cs_o, 1, &tb->m_core->spi_miso_i,
                                                     config_.sdcard_image));
         if (sim_->sim_config_.verbose_flag)
-            std::cout << "SD card on chip select 0: " << config_.sdcard_image << std::endl;
+            std::cout << "SD card on chip select 1: " << config_.sdcard_image << std::endl;
     }
 #else
     if (!config_.spi_flash_image.empty() || !config_.sdcard_image.empty())
@@ -138,6 +138,9 @@ int Backend_atomsim::tick()
     // Force the bootmode switch value
     tb->m_core->gpio_inp_i = (0b11 & config_.bootmode) << BOOTMODE_PIN_OFFSET;
 
+#ifdef SOC_EN_SPI
+    tb->m_core->spi_miso_i = 1;     // pull-up: a selected SPI device overrides it
+#endif
     for (auto &d : devices_)
         d->eval();
 

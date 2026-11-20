@@ -12,7 +12,7 @@ int main(){
         cfg.pol = false,
         cfg.lsb_first = false,
         cfg.baudrate = 1000000,
-        cfg.device_num = 0,
+        cfg.device_num = SD_SPI_DEVICE,
         cfg.cs_mode = CSMODE_DISABLE,
         cfg.post_cs_low_delay = 1,
         cfg.pre_cs_high_delay = 1,

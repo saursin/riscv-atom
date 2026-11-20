@@ -17,6 +17,8 @@
 #define SD_ERROR_TOKEN          0x00
 #define SD_BLOCK_LEN            512
 
+#define SD_SPI_DEVICE           1   // SPI chip select of the SD card (0 is the boot flash)
+
 /**
  * @brief Initialize SDCARD
  * 

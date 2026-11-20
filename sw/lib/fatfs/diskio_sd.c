@@ -1,4 +1,4 @@
-// FatFs disk interface: drive 0 is an SD card on SPI chip select 0 (libcatom SD driver)
+// FatFs disk interface: drive 0 is the SD card (libcatom SD driver, SPI chip select SD_SPI_DEVICE)
 #include <platform.h>
 #include <spi.h>
 #include <sd.h>
@@ -14,7 +14,7 @@ static struct SPI_Config cfg = {
     .pol = false,
     .lsb_first = false,
     .baudrate = 1000000,
-    .device_num = 0,
+    .device_num = SD_SPI_DEVICE,
     .cs_mode = CSMODE_DISABLE,
     .post_cs_low_delay = 1,
     .pre_cs_high_delay = 1,

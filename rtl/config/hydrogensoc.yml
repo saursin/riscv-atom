@@ -41,7 +41,7 @@ params:
       enable: true
       addr: 0x40003000
       size: 32
-      num_cs: 1
+      num_cs: 2         # 0: SPI flash (boot), 1: SD card
 
     timer:
       enable: true
