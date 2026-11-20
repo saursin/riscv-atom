@@ -1,0 +1,53 @@
+name: examples
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  Build:
+    name: examples
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout RISCV-Atom Repo
+        uses: actions/checkout@v3
+        with:
+          path: riscv-atom
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Prerequisites
+        run: |
+          pip install -r riscv-atom/requirements.txt
+
+      - name: Install riscvtoolkit (RISC-V GCC, Verilator)
+        working-directory: riscv-atom
+        run: scripts/install-toolchain.sh
+
+      - name: Setup Environment
+        working-directory: riscv-atom
+        run: |
+          echo "RVATOM=$GITHUB_WORKSPACE/riscv-atom" >> $GITHUB_ENV
+
+      - name: Build examples - atombones
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=atombones lib
+          make -C sw/examples soctarget=atombones all
+
+      - name: Build examples - hydrogensoc
+        working-directory: riscv-atom
+        run: |
+          source sourceme
+          make soctarget=hydrogensoc lib
+          make -C sw/examples soctarget=hydrogensoc all

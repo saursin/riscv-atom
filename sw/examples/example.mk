@@ -4,6 +4,9 @@
 #     src_files  = hello.c
 #     executable = hello.elf
 #     include ../example.mk
+# An example that needs particular SoC targets (e.g. for GPIO) lists them before the include, as
+#     soctargets = hydrogensoc
+# and is skipped on other targets.
 
 #v# Connect the UART for run: pty (talk to the program with atomterm), or a serial port
 vuart ?=
@@ -35,6 +38,18 @@ ifneq ($(vuart),)
     ATOMSIM_ARGS += --vuart-port=$(vuart)
 endif
 
+ifneq ($(soctargets),)
+    ifeq ($(filter $(soctarget),$(soctargets)),)
+        skip := 1
+    endif
+endif
+
+
+ifeq ($(skip),1)
+.PHONY: compile run dism
+compile run dism:
+	@printf "$(CLR_YL)  skipped:$(CLR_NC) $(notdir $(CURDIR)) needs soctarget $(soctargets)\n"
+else
 
 .PHONY: compile
 compile: $(executable)						#t# Compile the example
@@ -56,6 +71,7 @@ run: $(executable)							#t# Run the example in atomsim
 dism: $(executable)							#t# Dump disassembly
 	$(call print_msg,Generating disassembly,$(basename $<).lst)
 	$(RVPREFIX)-objdump -htd $< > $(basename $<).lst
+endif
 
 .PHONY: clean
 clean:										#t# Clean build outputs

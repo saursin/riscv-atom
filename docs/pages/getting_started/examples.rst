@@ -194,4 +194,6 @@ own ``CFLAGS`` before the ``include`` if needed):
   include ../example.mk
 
 That's it! ``make run`` in that directory compiles and runs it. Copying an existing example's folder works too.
+An example that needs particular SoC targets (e.g. for GPIO) adds ``soctargets = hydrogensoc`` before the ``include``;
+on other targets it is skipped.
 
