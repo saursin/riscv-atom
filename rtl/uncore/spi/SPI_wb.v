@@ -138,7 +138,7 @@ end
 // CS logic
 always @(*) /* COMBINATORIAL */ begin
     case(rg_csctrl_csmode)
-        2'b00:      cs_o = rg_csctrl_acs & {NCS{core_cs_o}};
+        2'b00:      cs_o = ~rg_csctrl_acs | {NCS{core_cs_o}};  // chosen devices follow the transfer
         2'b11:      cs_o = ~rg_csctrl_acs;
         default:    cs_o = {NCS{1'b1}};
     endcase
