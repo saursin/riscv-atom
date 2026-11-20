@@ -61,19 +61,39 @@ char *strtok(char *str, char *dptr)
 
 // memory manipulation
 
-char *memcpy(char *dptr, char *sptr, int len)
+void *memcpy(void *dptr, const void *sptr, size_t len)
 {
-    char *ret = dptr;
+    char *d = dptr;
+    const char *s = sptr;
     while(len--) 
-        *dptr++ = *sptr++;
-    return ret;
+        *d++ = *s++;
+    return dptr;
 }
 
 
-char *memset(char *dptr, int x, int len)
+void *memset(void *dptr, int x, size_t len)
 {
-    char *ret = dptr;
+    char *d = dptr;
     while(len--) 
-        *dptr++ = x;
-    return ret;
+        *d++ = x;
+    return dptr;
+}
+
+
+int memcmp(const void *s1, const void *s2, size_t len) {
+    const unsigned char *a = s1, *b = s2;
+    for(; len--; a++, b++)
+        if(*a != *b)
+            return *a - *b;
+    return 0;
+}
+
+
+char *strchr(const char *s, int c) {
+    for(;; s++) {
+        if(*s == (char)c)
+            return (char *)s;
+        if(!*s)
+            return NULL;
+    }
 }

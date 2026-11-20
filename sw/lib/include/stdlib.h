@@ -75,28 +75,6 @@ int rand();
 // Memory Related
 
 /**
- * @brief copy a block of memory from a location to another
- * 
- * @param dptr destintion pointer
- * @param sptr source pointer
- * @param len length of block (in bytes)
- * @return char* dptr
- */
-char *memcpy(char *dptr, char *sptr,int len);
-
-
-/**
- * @brief Fill a block of memory with given value
- * 
- * @param dptr destintion pointer
- * @param x value to be filled
- * @param len length of the block (in bytes)
- * @return char* 
- */
-char *memset(char *dptr, int x, int len);
-
-
-/**
  * @brief Dynamically allocate aa block of memory
  * 
  * @param block_size size of block to be allocated (in bytes)

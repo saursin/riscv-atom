@@ -59,9 +59,9 @@ char * strcpy (char *dest, char *src);
  * @param dptr destintion pointer
  * @param sptr source pointer
  * @param len length of block (in bytes)
- * @return char* dptr
+ * @return void* dptr
  */
-char *memcpy(char *dptr, char *sptr, int len);
+void *memcpy(void *dptr, const void *sptr, size_t len);
 
 
 /**
@@ -70,6 +70,27 @@ char *memcpy(char *dptr, char *sptr, int len);
  * @param dptr destintion pointer
  * @param x value to be filled
  * @param len length of the block (in bytes)
- * @return char* 
+ * @return void* dptr
  */
-char *memset(char *dptr, int x, int len);
+void *memset(void *dptr, int x, size_t len);
+
+
+/**
+ * @brief Compare two blocks of memory
+ *
+ * @param s1 block 1
+ * @param s2 block 2
+ * @param len length of the blocks (in bytes)
+ * @return int <0, 0 or >0 as the first differing byte of s1 is less than, equal to or greater than that of s2
+ */
+int memcmp(const void *s1, const void *s2, size_t len);
+
+
+/**
+ * @brief Find the first occurrence of a character in a string
+ *
+ * @param s string
+ * @param c character
+ * @return char* pointer to it in s (the terminating null counts), or NULL
+ */
+char *strchr(const char *s, int c);
