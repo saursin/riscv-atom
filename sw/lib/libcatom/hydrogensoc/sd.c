@@ -166,15 +166,16 @@ const SDCmd_attr sdcmds[7] = {
     spi_deselect(cfg); \
     spi_transfer(cfg, 0xFF); \
 
-void sdc_cmd(struct SPI_Config *cfg, SDCmd cmd, uint8_t * resp) {
+// send a command with the given argument (a block address for CMD17/CMD24)
+static void sdc_cmd_arg(struct SPI_Config *cfg, SDCmd cmd, uint32_t arg, uint8_t * resp) {
     // send command
     spi_transfer(cfg, sdcmds[cmd].cmd | 0x40);
 
     // send arg
-    spi_transfer(cfg, sdcmds[cmd].arg >> 24);
-	spi_transfer(cfg, sdcmds[cmd].arg >> 16);
-	spi_transfer(cfg, sdcmds[cmd].arg >> 8);
-    spi_transfer(cfg, sdcmds[cmd].arg);
+    spi_transfer(cfg, arg >> 24);
+	spi_transfer(cfg, arg >> 16);
+	spi_transfer(cfg, arg >> 8);
+    spi_transfer(cfg, arg);
     
     // send CRC
     spi_transfer(cfg, sdcmds[cmd].crc | 0x1);
@@ -194,6 +195,11 @@ void sdc_cmd(struct SPI_Config *cfg, SDCmd cmd, uint8_t * resp) {
             resp[0] = sdc_read_res1(cfg); 
             break;
     }
+}
+
+// send a command with its fixed argument
+void sdc_cmd(struct SPI_Config *cfg, SDCmd cmd, uint8_t * resp) {
+    sdc_cmd_arg(cfg, cmd, sdcmds[cmd].arg, resp);
 }
 
 uint8_t sdc_read_res1(struct SPI_Config *cfg) {
@@ -332,7 +338,7 @@ uint8_t sdc_read_block(struct SPI_Config *cfg, uint32_t addr, uint8_t *buf, uint
     _spi_select(cfg);
 
     // send command 17
-    sdc_cmd(cfg, SD_CMD17, &res1);
+    sdc_cmd_arg(cfg, SD_CMD17, addr, &res1);
 
     // if response received from card
     if(res1 != 0xFF)
@@ -374,7 +380,7 @@ uint8_t sdc_write_block(struct SPI_Config *cfg, uint32_t addr, uint8_t *buf, uin
     _spi_select(cfg)
 
     // send CMD24
-    sdc_cmd(cfg, SD_CMD24, &res1);
+    sdc_cmd_arg(cfg, SD_CMD24, addr, &res1);
 
     // if no error
     if(R1_CHECK_CARD_RDY(res1))
