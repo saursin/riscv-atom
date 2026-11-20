@@ -260,7 +260,7 @@ uint8_t sd_init(struct SPI_Config *cfg)
         _spi_deselect(cfg)
     } while ((res[0] != 0x01) && (ntries-- > 0));
 
-    if(ntries==0)   
+    if(res[0] != 0x01)
         return SD_ERR_UNKNOWN_CARD;
 
 
