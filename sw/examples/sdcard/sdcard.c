@@ -1,10 +1,31 @@
+// SD card test: write a pattern to one block, read it back and check it, then write the block's
+// original contents back, so the card is left as it was.
 #include "platform.h"
 #include <stdio.h>
 #include <spi.h>
 #include <sd.h>
 
+// Block 1: on cards formatted by a PC it lies in the unused gap before the first partition
+#define TEST_BLOCK  1
 
-int main(){
+static int read_block(struct SPI_Config *cfg, uint32_t block, uint8_t *buf) {
+    uint8_t token;
+    return SD_RESP1_NO_ERROR(sdc_read_block(cfg, block, buf, &token)) && token == SD_START_TOKEN;
+}
+
+static int write_block(struct SPI_Config *cfg, uint32_t block, uint8_t *buf) {
+    uint8_t token;
+    return SD_RESP1_NO_ERROR(sdc_write_block(cfg, block, buf, &token)) && token == SD_DATA_ACCEPTED;
+}
+
+static int same(uint8_t *a, uint8_t *b) {
+    for(int i = 0; i < SD_BLOCK_LEN; i++)
+        if(a[i] != b[i])
+            return 0;
+    return 1;
+}
+
+int main() {
     struct SPI_Config cfg = {
         cfg.base_addr = SOC_SPI_ADDR,
         cfg.enable = true,
@@ -18,60 +39,31 @@ int main(){
         cfg.pre_cs_high_delay = 1,
         cfg.loopback_enable=false
     };
-    
-    uint8_t rc = sd_init(&cfg);
-    if(rc != SD_SUCCESS)
-        return 1;
 
-    printf("read Sector 0\n");
-    uint8_t rbuf[512], res[5], token;
-
-    res[0] = sdc_read_block(&cfg, 0x00000000, rbuf, &token);
-
-
-    // print response
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_START_TOKEN)) {
-        dumphexbuf((char*)rbuf, 512, 0x00000000);
-    }
-    else {
-        puts("Error reading sector\n");
+    if(sd_init(&cfg) != SD_SUCCESS) {
+        puts("no SD card\n");
         return 1;
     }
 
-
-    // initialize buffer
-    uint8_t wbuf[512];
-    for(uint16_t i = 0; i < 512; i++) wbuf[i] = 0x55;
-
-    res[0] = sdc_write_block(&cfg, 0x00000000, wbuf, &token);
-    // print response
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_DATA_ACCEPTED)) {
-        puts("Write OK\n");
-    }
-    else {
-        puts("Error writing\n");
+    uint8_t orig[SD_BLOCK_LEN], pattern[SD_BLOCK_LEN], buf[SD_BLOCK_LEN];
+    printf("block %d:\n", TEST_BLOCK);
+    if(!read_block(&cfg, TEST_BLOCK, orig)) {
+        puts("read failed\n");
         return 1;
     }
+    dumphexbuf((char *)orig, SD_BLOCK_LEN, TEST_BLOCK * SD_BLOCK_LEN);
 
+    for(int i = 0; i < SD_BLOCK_LEN; i++)
+        pattern[i] = i ^ 0x55;
+    int ok = write_block(&cfg, TEST_BLOCK, pattern) && read_block(&cfg, TEST_BLOCK, buf) && same(buf, pattern);
+    puts(ok ? "write and read back: OK\n" : "write and read back: FAILED\n");
 
-    // read again
-    res[0] = sdc_read_block(&cfg, 0x00000000, rbuf, &token);
-    if(SD_RESP1_NO_ERROR(res[0]) && (token == SD_START_TOKEN)) {
-        dumphexbuf((char*)rbuf, 512, 0x00000000);
-    }
-    else {
-        puts("Error reading sector\n");
+    // put the original contents back, whatever happened above
+    int restored = write_block(&cfg, TEST_BLOCK, orig) && read_block(&cfg, TEST_BLOCK, buf) && same(buf, orig);
+    puts(restored ? "original contents restored\n" : "RESTORE FAILED: block changed\n");
+
+    if(!(ok && restored))
         return 1;
-    }
-
-    // verify
-    for(int i=0; i<512; i++){
-        if(rbuf[i] != wbuf[i]){
-            printf("TEST FAIL! @ i=%d\n", i);
-            return 1;
-        }
-    }
-
     puts("TEST PASSED!\n");
     return 0;
 }

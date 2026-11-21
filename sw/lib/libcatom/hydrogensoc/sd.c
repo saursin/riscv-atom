@@ -5,10 +5,11 @@
 
 #include <sd.h>
 
-#ifdef SDCARD_SILENT_INIT
-    #define SD_DBG(x)
-#else
+// define SDCARD_DEBUG (in the libcatom build) to print each step of card initialization
+#ifdef SDCARD_DEBUG
     #define SD_DBG(x) x
+#else
+    #define SD_DBG(x)
 #endif
 
 // Configuration
