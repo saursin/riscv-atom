@@ -54,6 +54,7 @@ CONSOLE_PROMPT = b"atom-boot: "
 TYPE_DELAY = 0.03   # between typed command characters: the SoC echoes each one
 
 SOH, STX, EOT, ACK, NAK, CAN, CRC_REQ, PAD = b"\x01", b"\x02", b"\x04", b"\x06", b"\x15", b"\x18", b"C", b"\x1a"
+ENQ = b"\x05"       # not XMODEM: asks a receiver whose marker we missed to print it again
 
 
 def info(msg):
@@ -265,6 +266,7 @@ class Console:
         self.held = []
         self.uploading = threading.Event()  # upload owns the port: reader stays off it
         self.got_crc_req = False            # reader already consumed the bootloader's 'C'
+        self.enq_sent = False               # asked for the receive marker again (ENQ), not seen yet
         self.echo = None                    # typed command not echoed yet: output before it is old
         self.stdin = None                   # keyboard fd while interactive (polled during transfers)
         self.exit_req = False               # Ctrl-T q during a transfer: exit after it is cancelled
@@ -291,6 +293,7 @@ class Console:
     def reader(self):
         window = b""
         sample = b""        # first bytes after (re)connect, for the wrong-baud hint
+        lone_c = False      # the previous read was a lone 'C'
         while not self.stop.is_set():
             if self.uploading.is_set():
                 time.sleep(0.01)
@@ -342,11 +345,20 @@ class Console:
                 self.use_1k = b"1k" in (r.group(2) or b"").split(b",")
                 self.got_crc_req = CRC_REQ in window[r.end():]
                 window = b""
+                self.enq_sent = False
                 self.uploading.set()        # stop reading so the uploader gets what follows
                 self.upload_req.set()
+            elif (self.pending or self.binfile) and data == CRC_REQ and lone_c and not self.enq_sent:
+                # the receiver's handshake 'C's (one a second) with no marker before them: we
+                # connected after it was printed. Two lone 'C's in a row, so a 'C' in text does
+                # not trigger this.
+                info("the SoC is waiting for an upload: asking it to repeat its request (ENQ)")
+                self.ser.write(ENQ)
+                self.enq_sent = True
             elif self.steps and CONSOLE_PROMPT in window:
                 window = b""
                 self.step_req.set()
+            lone_c = data == CRC_REQ
 
     def show(self, data):
         if self.hexmode:

@@ -5,7 +5,8 @@
 // 1024-byte blocks and 128-byte ones for the tail. Both directions announce themselves with a
 // marker that scripts/atomterm watches for. Markers are "![NAME]!", optionally followed at once by
 // comma-separated parameters "(p1,p2,...)" (values without ',' or ')'):
-//   receive: "![XMODREQ]!(1k)" (1024-byte blocks accepted), then the 'C' handshake
+//   receive: "![XMODREQ]!(1k)" (1024-byte blocks accepted), then the 'C' handshake; an ENQ (0x05)
+//            during the handshake prints the marker again, for a terminal that connected late
 //   send:    "![XMODSND]!(<len>,<name>)", then waits for the receiver's 'C'
 
 #define XMODEM_RECV_MARKER  "![XMODREQ]!(1k)"

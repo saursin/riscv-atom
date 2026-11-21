@@ -5,6 +5,7 @@
 #define SOH 0x01                // 128-byte block
 #define STX 0x02                // 1024-byte block (XMODEM-1K)
 #define EOT 0x04
+#define ENQ 0x05                // not XMODEM: a terminal that missed the receive marker asks for it again
 #define ACK 0x06
 #define NAK 0x15
 #define CAN 0x18
@@ -75,6 +76,7 @@ int xmodem_recv(uint8_t *dest, uint32_t maxlen)
         c = serial_read_timeout(C_INTERVAL_MS);
         if(c == EOT) { serial_write(ACK); return 0; }
         if(c == CAN) return XMODEM_ERR_CANCEL;
+        if(c == ENQ) { puts(XMODEM_RECV_MARKER); serial_flush(); }
     }
     if(c != SOH && c != STX) {
         serial_write(CAN); serial_write(CAN); serial_write(CAN);
